@@ -1,0 +1,37 @@
+NSF Support
+-----------
+cxNES has support for NES Sound Format (NSF) files.  Currently, the following
+expansion audio chips are supported:
+
+- VRC6
+- FDS
+- MMC5
+- Namco 163
+- Sunsoft 5B
+
+The player ROM is based on Loopy's PowerPak NSF player.  On screen,
+you will see the title of the NSF, the artist/composer, and copyright
+information, plus the current and total number of songs.
+
+The player is controlled using Controller 1 as follows:
+
+Up: increase playback speed
+Down: decrease playback speed
+Left/B: previous track
+Right/A: next track
+Select: stop playback
+Start: start playback
+
+The NSF header specifies the starting track, but you can override that
+by passing '-t <n>' on the command line, where '<n>' is the track
+number you want to play first.
+
+The NSF player rom is stored in /usr/local/share/cxnes/nsf.rom by default,
+but if you have a modified version you may specify the location by setting
+the nsf_rom configuration option to the absoute path of your ROM.
+
+The source code for Loopy's NSF player (both with and without my
+modifications) is included in the source tarball and may be freely
+used, modified and distributed without any restrictions.
+
+

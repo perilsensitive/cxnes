@@ -1,0 +1,15 @@
+apu_reset/4015_cleared.nes
+apu_reset/4017_timing.nes
+apu_reset/4017_written.nes
+apu_reset/irq_flag_cleared.nes
+apu_reset/len_ctrs_enabled.nes
+apu_reset/works_immediately.nes
+apu_test/apu_test.nes
+apu_test/rom_singles/1-len_ctr.nes
+apu_test/rom_singles/2-len_table.nes
+apu_test/rom_singles/3-irq_flag.nes
+apu_test/rom_singles/4-jitter.nes
+apu_test/rom_singles/5-len_timing.nes
+apu_test/rom_singles/6-irq_flag_timing.nes
+apu_test/rom_singles/7-dmc_basics.nes
+apu_test/rom_singles/8-dmc_rates.nes

@@ -1,0 +1,3 @@
+[submodule "tests/nes_test_roms"]
+	path = tests/nes_test_roms
+	url = https://github.com/perilsensitive/nes_test_roms.git

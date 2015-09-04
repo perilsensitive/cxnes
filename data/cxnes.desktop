@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=cxNES
+Comment=NES/Famicom Emulator
+Exec=cxnes
+Icon=cxnes
+Terminal=false
+Type=Application
+Categories=Game;Emulator;
