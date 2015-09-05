@@ -422,8 +422,50 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
      This is true even for disk images in another supported format;
      cxNES can still correctly apply these save patches to a raw or QD
      format image.
+*/
 
-     BIOS images
+int fds_validate_image(struct rom *rom, struct fds_block_list **block_listp, int do_crc)
+{
+	struct fds_block_list *with_crcs, *without_crcs;
+	int with_rc, without_rc;
+	int with_block_count, without_block_count;
+	int final_rc;
+
+	final_rc = 0;
+
+	*block_listp = NULL;
+
+	without_crcs = fds_block_list_new();
+	with_crcs = fds_block_list_new();
+
+	without_rc = fds_validate_image_real(rom, without_crcs, do_crc, 1);
+	with_rc = fds_validate_image_real(rom, with_crcs, do_crc, 0);
+
+	without_block_count = without_crcs->total_entries;
+	with_block_count = with_crcs->total_entries;
+
+	if (((without_rc != 0) && (with_rc == 0)) ||
+	    (with_block_count >= without_block_count)) {
+		*block_listp = with_crcs;
+		with_crcs = NULL;
+	} else if (((with_rc != 0) && (without_rc == 0)) ||
+		   (without_block_count > with_block_count)) {
+		*block_listp = without_crcs;
+		without_crcs = NULL;
+	} else if ((without_rc != 0) && (with_rc != 0)) {
+		final_rc = -1;
+	}
+
+	if (with_crcs)
+		fds_block_list_free(with_crcs);
+
+	if (without_crcs)
+		fds_block_list_free(without_crcs);
+
+	return final_rc;
+}
+
+/*   BIOS images
 
      The FDS BIOS is required for FDS support.  While cxNES does do
      some high-level emulation of disk I/O, it does so by intercepting
@@ -492,47 +534,6 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
      sense.  You can store this as disksys.rom (as for the binary blob
      version) or specify the location in the config file.
  */
-
-int fds_validate_image(struct rom *rom, struct fds_block_list **block_listp, int do_crc)
-{
-	struct fds_block_list *with_crcs, *without_crcs;
-	int with_rc, without_rc;
-	int with_block_count, without_block_count;
-	int final_rc;
-
-	final_rc = 0;
-
-	*block_listp = NULL;
-
-	without_crcs = fds_block_list_new();
-	with_crcs = fds_block_list_new();
-
-	without_rc = fds_validate_image_real(rom, without_crcs, do_crc, 1);
-	with_rc = fds_validate_image_real(rom, with_crcs, do_crc, 0);
-
-	without_block_count = without_crcs->total_entries;
-	with_block_count = with_crcs->total_entries;
-
-	if (((without_rc != 0) && (with_rc == 0)) ||
-	    (with_block_count >= without_block_count)) {
-		*block_listp = with_crcs;
-		with_crcs = NULL;
-	} else if (((with_rc != 0) && (without_rc == 0)) ||
-		   (without_block_count > with_block_count)) {
-		*block_listp = without_crcs;
-		without_crcs = NULL;
-	} else if ((without_rc != 0) && (with_rc != 0)) {
-		final_rc = -1;
-	}
-
-	if (with_crcs)
-		fds_block_list_free(with_crcs);
-
-	if (without_crcs)
-		fds_block_list_free(without_crcs);
-
-	return final_rc;
-}
 
 int fds_load_bios(struct emu *emu, struct rom *rom)
 {
@@ -892,14 +893,6 @@ done:
 	return rc;
 }
 
-static int fds_get_showa_bcd_year(int year)
-{
-	year = (((year & 0xf0) >> 4) * 10) + (year & 0x0f);
-	year += 1925;
-
-	return year;
-}
-
 static void fix_name(char *dest, uint8_t *name)
 {
 	int i;
@@ -932,7 +925,6 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 	file_list_header = 0;
 	for (i = 0; i < list->total_entries; i++) {
 		uint8_t *ptr = rom->buffer + rom->offset + list->entries[i].offset;
-		int year, month, day;
 		int manufacturer, j;
 		char *type;
 		int addr, size;
@@ -962,12 +954,6 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 			text_buffer_append(buffer, "Size: %d\n", rom->disk_side_size);
 			text_buffer_append(buffer, "Boot file code: %02x\n",
 					   ptr[25]);
-
-			year = fds_get_showa_bcd_year(ptr[31]);
-			month = ptr[32];
-			day = ptr[33];
-			text_buffer_append(buffer, "Manufacturing date: %d-%02x-%02x\n",
-					   year, month, day);
 
 			manufacturer = -1;
 			for (j = 0; j < NUM_MANUFACTURERS; j++) {
