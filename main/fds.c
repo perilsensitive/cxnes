@@ -963,10 +963,10 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 				}
 			}
 
-			text_buffer_append(buffer, "Manufacturer: %s\n",
+			text_buffer_append(buffer, "Manufacturer: %s (0x%02x)\n",
 					   (manufacturer >= 0) ?
 					   manufacturers[manufacturer].name :
-					   "<unknown>");
+					   "<unknown>", manufacturer);
 
 			break;
 		case 2:
