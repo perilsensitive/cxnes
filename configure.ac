@@ -6,6 +6,7 @@ AC_CANONICAL_HOST
 AM_CONDITIONAL(WINDOWS, [ test "$host_os" = mingw || test $host_os = cygwin ])
 
 CC_LIST="gcc cc"
+EXTRA_GUI_LIBS=""
 case $host_os in
 	mingw32|cygwin)
 		# This is an ugly hack, but the windows build is not meant
@@ -26,6 +27,9 @@ case $host_os in
 		then
 				CC_LIST="i686-pc-mingw32-gcc"
 		fi
+		;;
+	*)
+		EXTRA_GUI_LIBS="-lX11 -lGL"
 		;;
 esac
 
@@ -87,6 +91,6 @@ CFLAGS="$CFLAGS $SDL2_ttf_CFLAGS $SDL2_image_CFLAGS"
 LIBS="$LIBS $SDL2_ttf_LIBS $SDL2_image_LIBS"
 
 AM_COND_IF([GUI_ENABLED], [CFLAGS="$CFLAGS $GTK_CFLAGS -DGUI_ENABLED"])
-AM_COND_IF([GUI_ENABLED], [LIBS="$LIBS $GTK_LIBS"])
+AM_COND_IF([GUI_ENABLED], [LIBS="$LIBS $GTK_LIBS $EXTRA_GUI_LIBS"])
 
 AC_OUTPUT([Makefile])

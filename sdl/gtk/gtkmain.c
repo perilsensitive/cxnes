@@ -24,6 +24,7 @@
 #include <gdk/gdkx.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <X11/Xlib.h>
 #elif _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <gdk/gdkwin32.h>
@@ -75,6 +76,18 @@ static Window window_handle;
 static Display *xdisplay;
 #elif _WIN32
 static HWND window_handle;
+#endif
+
+#if __unix__
+static GLint glxattributes[] = {
+  GLX_RGBA,
+  GLX_RED_SIZE, 3,
+  GLX_GREEN_SIZE, 3,
+  GLX_BLUE_SIZE, 2,
+  GLX_DOUBLEBUFFER,
+  GLX_DEPTH_SIZE, 16,
+  None
+};
 #endif
 
 static GdkRGBA bg = {0, 0, 0, 255};
@@ -729,10 +742,12 @@ void *gui_init(int argc, char **argv)
 	GdkDisplay *gdk_display;
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
-//	GdkScreen *screen;
+	GdkScreen *screen;
 	int window_w, window_h;
 #if __unix__
-//	int xscreen;
+	int xscreen;
+	XVisualInfo *vinfo = NULL;
+	GdkVisual *gdkvisual;
 #endif
 
 	gtk_init(&argc, &argv);
@@ -744,6 +759,7 @@ void *gui_init(int argc, char **argv)
 	crosshair_cursor = gdk_cursor_new(GDK_CROSSHAIR);
 
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
 	gtk_window_set_title(GTK_WINDOW(gtkwindow), "cxNES");
 	gtk_window_set_resizable(GTK_WINDOW(gtkwindow), FALSE);
 	gtk_window_set_icon(GTK_WINDOW(gtkwindow), icon);
@@ -760,14 +776,24 @@ void *gui_init(int argc, char **argv)
 	drawingarea = gtk_drawing_area_new();
 	video_get_windowed_size(&window_w, &window_h);
 	gtk_widget_set_size_request(drawingarea, window_w, window_h);
+
 #if __unix__
+	screen = gdk_screen_get_default();
 	xdisplay = gdk_x11_get_default_xdisplay();
-	//xscreen = DefaultScreen(xdisplay);
+	xscreen = DefaultScreen(xdisplay);
+	vinfo = glXChooseVisual(xdisplay, xscreen, glxattributes);
+
+	if (!vinfo)
+		return NULL;
+
+	gdkvisual = gdk_x11_screen_lookup_visual(screen, vinfo->visualid);
+	XFree(vinfo);
+
+	if (!gdkvisual)
+		return NULL;
+
+	gtk_widget_set_visual(drawingarea, gdkvisual);
 #endif
-	//screen = gdk_screen_get_default();
-	/* FIXME insert any code necessary to ensure that the drawingarea can
-	   be used by SDL for OpenGL.
-	*/
 
 	g_object_set_data(G_OBJECT(gtkwindow), "area", drawingarea);
 
