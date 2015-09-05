@@ -663,10 +663,10 @@ int main(int argc, char **argv)
 
 #if GUI_ENABLED
 	gui_enabled = config->gui_enabled;
-#endif
 
 	if (testing)
 		gui_enabled = 0;
+#endif
 
 	if (!testing)
 		audio_init(emu);
