@@ -1177,8 +1177,8 @@ static int fds_write_byte(struct board *board)
 		/* printf("write: _crc is now %04x\n", _crc); */
 	}
 
-	printf("writing byte at _offset %x; old=%x, new=%x\n",
-	       _offset, board->prg_rom.data[_offset], _write_buffer);
+	/* printf("writing byte at _offset %x; old=%x, new=%x\n", */
+	/*        _offset, board->prg_rom.data[_offset], _write_buffer); */
 	board->prg_rom.data[_disk_offset + _offset] =
 		_write_buffer;
 	_dirty_flag = 1;
