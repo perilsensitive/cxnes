@@ -243,8 +243,6 @@ static void fds_write_ips_save(struct board *board)
 	if (!block_list)
 		return;
 
-	writefile("/tmp/dump", board->emu->rom->buffer, board->emu->rom->buffer_size);
-
 	offset = 0;
 	for (i = 0; i < block_list->total_entries; i++) {
 		struct fds_block_list_entry *entry;
