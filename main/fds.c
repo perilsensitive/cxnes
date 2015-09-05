@@ -952,7 +952,7 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 			text_buffer_append(buffer, "Disk side: %c\n",
 					   ptr[21] ? 'B' : 'A');
 			text_buffer_append(buffer, "Size: %d\n", rom->disk_side_size);
-			text_buffer_append(buffer, "Boot file code: %02x\n",
+			text_buffer_append(buffer, "Boot file code: 0x%02x\n",
 					   ptr[25]);
 
 			manufacturer = -1;
