@@ -108,9 +108,9 @@ Default Bindings
 | Controller 1 Down   	      | Down, Joystick 0 D-Pad Down / Left Y +    |
 | Controller 1 Left   	      | Left, Joystick 0 D-Pad Down / Left X -    |
 | Controller 1 Right  	      | Right, Joystick 0 D-Pad Down / Left Y +   |
-| Controller 1 A      	      | C, Joystick 0 A 	      	       	        |
-| Controller 1 B      	      | X, Joystick 0 X 			        |
-| Controller 1 Select 	      | Z, Joystick 0 Back 	        |
+| Controller 1 A      	      | F, Joystick 0 A 	      	       	        |
+| Controller 1 B      	      | D, Joystick 0 X 			        |
+| Controller 1 Select 	      | S, Joystick 0 Back 	        |
 | Controller 1 Start  	      | Enter, Joystick 0 Start 		        |
 | Controller 2 Up     	      | Joystick 1 D-Pad Up / Left Y - 	        |
 | Controller 2 Down   	      | Joystick 1 D-Pad Down / Left Y + 	        |
