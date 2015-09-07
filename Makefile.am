@@ -166,4 +166,5 @@ install-data-hook:
 	  rm -f $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt.bak
 	cd $(DESTDIR)$(pkgdatadir) && \
 	  mkdir -p patch state save romcfg cheat screenshot
+	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
 endif

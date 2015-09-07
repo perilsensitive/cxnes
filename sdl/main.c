@@ -96,7 +96,11 @@ static int screensaver_counter;
 static int savestate_counter;
 
 int total_frame_time;
-int time_base = 1000000000;
+#if __unix__
+const int time_base = 1000000000;
+#else
+const int time_base = 1000;
+#endif
 static int frame_times[60];
 static int frame_index = 0;
 
