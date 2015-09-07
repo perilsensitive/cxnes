@@ -112,6 +112,8 @@ Default Bindings
 | Controller 1 B      	      | D, Joystick 0 X 			        |
 | Controller 1 Select 	      | S, Joystick 0 Back 	        |
 | Controller 1 Start  	      | Enter, Joystick 0 Start 		        |
+| Controller 1 A Turbo Toggle | V, Joystick 0 B 	        |
+| Controller 1 B Turbo Toggle | C, Joystick 0 Y 	        |
 | Controller 2 Up     	      | Joystick 1 D-Pad Up / Left Y - 	        |
 | Controller 2 Down   	      | Joystick 1 D-Pad Down / Left Y + 	        |
 | Controller 2 Left   	      | Joystick 1 D-Pad Down / Left X - 	        |
