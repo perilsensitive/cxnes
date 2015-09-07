@@ -47,7 +47,7 @@ int a12_timer_load_state(struct emu *emu, struct save_state *state);
 void a12_timer_reset_hook(struct emu *emu, uint32_t cycles);
 void a12_timer_hook(struct emu *emu, int address, int scanline,
 			   int scanline_cycle, int rendering);
-void a12_timer_run_new(struct a12_timer *timer, uint32_t cycles);
+void a12_timer_run(struct a12_timer *timer, uint32_t cycles);
 void a12_timer_set_delta(struct a12_timer *timer, int delta, uint32_t cycles);
 void a12_timer_set_flags(struct a12_timer *timer, int flags, uint32_t cycles);
 int a12_timer_get_flags(struct a12_timer *timer);

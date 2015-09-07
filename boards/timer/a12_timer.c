@@ -47,8 +47,7 @@ void a12_timer_end_frame(struct a12_timer *timer, uint32_t cycles);
 void a12_timer_hook(struct emu *emu, int address, int scanline,
 			   int scanline_cycle, int rendering);
 
-static void a12_timer_run(struct a12_timer *timer, uint32_t cycles);
-void a12_timer_run_new(struct a12_timer *timer, uint32_t cycle_count);
+void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count);
 static void a12_timer_schedule_irq(struct a12_timer *timer);
 static void update_sprite_a12_rises(struct a12_timer *timer);
 
@@ -141,12 +140,11 @@ static uint32_t calculate_next_clock(struct a12_timer *timer, int adjustment, ui
 void a12_timer_end_frame(struct a12_timer *timer, uint32_t cycles)
 {
 	int scanline, cycle, odd_frame, short_frame;
-	int starting_cycles;
 	/* printf("end_frame: %d %d\n", starting_cycles, timer->timestamp - cycles); */
 
 	timer->frame_start_cpu_cycles = cpu_get_cycles(timer->emu->cpu);
-	starting_cycles = ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
-					 &short_frame);
+	ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
+		       &short_frame);
 	//timer->timestamp = starting_cycles;
 	timer->timestamp -= cycles;
 
@@ -495,7 +493,6 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 	int scanline, cycle;
 	int short_frame, odd_frame;
 	int next_clock;
-	int counter_limit;
 
 #if FAST_IRQ	
 	int tested_fast_irq_method;
@@ -520,10 +517,8 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 
 	if (timer->flags & A12_TIMER_FLAG_COUNT_UP) {
 		count = 0xff - timer->counter;
-		counter_limit = 0xff;
 	} else {
 		count = timer->counter;
-		counter_limit = 0x00;
 	}
 
 	if (timer->flags & A12_TIMER_FLAG_IRQ_ON_WRAP)
@@ -788,7 +783,7 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 	cycles = ppu_get_cycles(emu->ppu, &scanline, &scanline_cycle,
 				&odd_frame, &short_frame);
 	/* printf("hook: %d vs %d (%d,%d vs %d,%d)\n", cycles, timer->timestamp, scanline, scanline_cycle, timer->scanline, timer->cycle); */
-//	a12_timer_run_new(timer, cycles);
+//	a12_timer_run(timer, cycles);
 	timer->prev_a12 = address;
 	timer->timestamp = cycles;
 	timer->scanline = scanline;
@@ -991,14 +986,6 @@ static CPU_WRITE_HANDLER(a12_timer_oam_dma_handler)
 	oam_dma(emu, addr, value, cycles);
 }
 
-/* FIXME ideally this would catch up the counter independently of the PPU,
-   but that's a bit tricky to get working. */
-static void a12_timer_run(struct a12_timer *timer, uint32_t cycles)
-{
-	if (timer->counter_enabled)
-		ppu_run(timer->emu->ppu, cycles);
-}
-
 int a12_timer_save_state(struct emu *emu, struct save_state *state)
 {
 	struct a12_timer *timer;
@@ -1140,7 +1127,7 @@ void a12_timer_set_force_reload_delay(struct a12_timer *timer, int value, uint32
 	timer->force_reload_delay = value;
 }
 
-void a12_timer_run_new(struct a12_timer *timer, uint32_t cycle_count)
+void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 {
 	struct emu *emu;
 	int scanline, cycle;

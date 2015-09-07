@@ -2506,7 +2506,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 					ppu->ppu_clock_divider;
 
 				/* if (ppu->a12_timer_enabled) */
-				/* 	a12_timer_run_new(ppu->emu->a12_timer, ppu->cycles); */
+				/* 	a12_timer_run(ppu->emu->a12_timer, ppu->cycles); */
 			}
 			if (ppu->cycles >= cycles)
 				goto end;
@@ -2517,7 +2517,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 
 end:
 	if (ppu->a12_timer_enabled)
-		a12_timer_run_new(ppu->emu->a12_timer, ppu->cycles);
+		a12_timer_run(ppu->emu->a12_timer, ppu->cycles);
 
 	ppu->catching_up = 0;
 
