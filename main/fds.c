@@ -941,17 +941,17 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 			disk++;
 			side++;
 
-			text_buffer_append(buffer, "Game ID: %c%c%c\n",
+			text_buffer_append(buffer, "Game ID: %c%c%c%c\n",
 					   ptr[16] ? ptr[16] : ' ',
 					   ptr[17] ? ptr[17] : ' ',
-					   ptr[18] ? ptr[18] : ' ');
+					   ptr[18] ? ptr[18] : ' ',
+					   ptr[19] ? ptr[19] : ' ');
 			text_buffer_append(buffer, "Revision: %d\n",
 					   ptr[20]);
 			text_buffer_append(buffer, "Disk #: %d\n",
 					   ptr[22] + 1);
 			text_buffer_append(buffer, "Disk side: %c\n",
 					   ptr[21] ? 'B' : 'A');
-			text_buffer_append(buffer, "Size: %d\n", rom->disk_side_size);
 			text_buffer_append(buffer, "Boot file code: 0x%02x\n",
 					   ptr[25]);
 
