@@ -151,7 +151,6 @@ void gui_joystick_dialog(GtkWidget *widget, gpointer user_data)
 	GtkWidget *dialog;
 	GtkWidget *gtkwindow;
 	GtkDialogFlags flags;
-	struct config *config;
 	int paused;
 
 	gtkwindow = (GtkWidget *)user_data;
@@ -164,7 +163,7 @@ void gui_joystick_dialog(GtkWidget *widget, gpointer user_data)
 	gtk_window_set_transient_for(GTK_WINDOW(dialog),
 				     GTK_WINDOW(gtkwindow));
 
-	configuration_setup_joysticks(dialog, config);
+	configuration_setup_joysticks(dialog, NULL);
 
 	paused = emu_paused(emu);
 	video_show_cursor(1);
