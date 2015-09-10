@@ -167,4 +167,7 @@ install-data-hook:
 	cd $(DESTDIR)$(pkgdatadir) && \
 	  mkdir -p patch state save romcfg cheat screenshot
 	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
+	cp *.dll $(DESTDIR)$(pkgdatadir)
+	cp -r share $(DESTDIR)$(pkgdatadir)
+	(cd $(DESTDIR)$(pkgdatadir) && zip -r ../../$(PACKAGE)-$(VERSION).zip .)
 endif
