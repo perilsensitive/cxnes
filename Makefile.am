@@ -12,6 +12,9 @@ if !WINDOWS
 dist_doc_DATA = \
 	COPYING \
 	README.md \
+	doc/example.cfg \
+	doc/icon_license.txt \
+	doc/icon_readme.txt \
 	doc/PressStart2P_LICENSE.txt 
 
 iconsdir = $(pkgdatadir)/icons
@@ -158,7 +161,8 @@ cxnes_SOURCES += sdl/gtk/windows_resources.rc
 
 install-data-hook:
 	sed 's/$$/\r/' COPYING > $(DESTDIR)$(pkgdatadir)/COPYING.txt
-	sed 's/$$/\r/' doc/PressStart2P_LICENSE.txt > $(DESTDIR)$(pkgdatadir)/PressStart2P_LICENSE.txt
+	sed 's/$$/\r/' doc/icon_license.txt > $(DESTDIR)$(pkgdatadir)/icon_license.txt
+	sed 's/$$/\r/' doc/icon_readme.txt > $(DESTDIR)$(pkgdatadir)/icon_readme.txt
 	sed 's/$$/\r/' README.md > $(DESTDIR)$(pkgdatadir)/README.txt
 	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/romdb.txt && \
 	  rm -f $(DESTDIR)$(pkgdatadir)/romdb.txt.bak
