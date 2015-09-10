@@ -528,7 +528,7 @@ static struct config_parameter config_parameters[] = {
 
 	CONFIG_INTEGER_LIST(sample_rate, 48000, valid_sample_rates),
 	CONFIG_INTEGER(audio_buffer_size, 2048, 1024, 8192), /* FIXME min? max? */
-	CONFIG_BOOLEAN(dynamic_rate_adjustment_enabled, 0),
+	CONFIG_BOOLEAN(dynamic_rate_adjustment_enabled, 1),
 	CONFIG_BOOLEAN(force_stereo, 0),
 	CONFIG_INTEGER(master_volume, 100, 0, 200),
 	CONFIG_INTEGER(apu_pulse0_volume, 100, 0, 100),
