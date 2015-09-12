@@ -71,7 +71,7 @@ General
   + Supports patch stacking
 * Soft-patching
 * NTSC video filter and palette generator
-  + Blargg'g nes_ntsc filter using Bisquit's NTSC palette
+  + Blargg's nes_ntsc filter using Bisquit's NTSC palette
     generator
   + External palettes can be loaded and used with NTSC filter
     as well
