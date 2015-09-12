@@ -382,7 +382,7 @@ static void create_scaled_texture(SDL_Rect *rect)
 		scaled_texture = NULL;
 	}
 
-	if (!rect || !renderer)
+	if (!rect || !renderer || (!rect->w && !rect->h))
 		return;
 
 	width = rect->w;
