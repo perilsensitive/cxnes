@@ -193,7 +193,7 @@ Default Bindings
 | Toggle Fullscreen   	      | Alt-Enter 				        |
 | Toggle Menubar 	      | Esc					        |
 | Toggle FPS Display 	      | Ctrl-F					        |
-| Pause/Resume Emulation      | P 					        |
+| Pause/Resume Emulation      | Shift-P 					        |
 | FDS Disk Eject/Insert       | Ctrl-F10 				        |
 | FDS Disk Select 	      | F10 					        |
 | Save Screenshot 	      | Alt-S 					        |
