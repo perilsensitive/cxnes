@@ -64,17 +64,19 @@ General
 * PNG screenshots
 * NSF player
 * Dynamic audio resampling
+  + Uses Blargg's blip_buf resampler
 * Cheat support (Game Genie, Pro Action Rocky, and raw formats)
   + Cheats can be auto-loaded/saved on ROM load/unload
 * Autopatching support (IPS, UPS and BPS formats)
   + Supports patch stacking
 * Soft-patching
 * NTSC video filter and palette generator
-* ROM Database (optional)
-  + Allows ROMS with bad or missing headers to run if their
-    checksums match the database.
-  + Provides sane defaults for input devices or VS. Unisystem
-    settings.
+  + Blargg'g nes_ntsc filter using Bisquit's NTSC palette
+    generator
+  + External palettes can be loaded and used with NTSC filter
+    as well
+* ROM Database (optional) for handling ROMs with incorrect or
+  missing headers to run properly.
 * High-level optimizations of FDS disk I/O routines (optional)
 * Automatic disk selection and change for most FDS games (optional)
 * FDS images saved as IPS patches
