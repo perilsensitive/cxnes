@@ -60,7 +60,7 @@ General
 -------
 * Savestates
   + Can auto-load/save states on ROM load/unload
-  + Can auto-save state at a particular interval
+  + Can auto-save state at a user-specified interval
 * PNG screenshots
 * NSF player
 * Dynamic audio resampling
