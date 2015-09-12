@@ -70,11 +70,11 @@ General
 * Autopatching support (IPS, UPS and BPS formats)
   + Supports patch stacking
 * Soft-patching
-* NTSC video filter and palette generator
-  + Blargg's nes_ntsc filter using Bisquit's NTSC palette
-    generator
-  + External palettes can be loaded and used with NTSC filter
-    as well
+* NTSC palette generator and video filter (optional)
+  + Bisquit's NTSC palette generator
+  + Blargg's nes_ntsc filter
+    + Can be used with generated palette or external 64 or 512
+      color palette
 * ROM Database (optional) for handling ROMs with incorrect or
   missing headers to run properly.
 * High-level optimizations of FDS disk I/O routines (optional)
@@ -99,7 +99,7 @@ General
     A and B buttons.
 * VS. Unisystem support
 * Can be compiled or run without the GUI
-  + Can specify configuration options, patches and cheats on command-line
+  + Can specify configuration options, patches and cheats on command line
 
 
 Default Bindings
