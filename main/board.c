@@ -1788,19 +1788,16 @@ void board_reset(struct board *board, int hard)
 	}
 
 	if (hard) {
-		/* HACK: right now boards can't specify the default
-		   mirroring setup at hard reset, so assume vertical
-		   mirroring for all mapper-controlled boards.
-		*/
-
 		int mirroring;
 
-		if (board->info->mirroring_values)
-			mirroring = board->info->mirroring_values[0];
-		else if (board->mirroring == MIRROR_M)
-			 mirroring = MIRROR_1A;
-		else
+		if (board->mirroring == MIRROR_M) {
+			if (board->info->mirroring_values)
+				mirroring = board->info->mirroring_values[0];
+			else
+				mirroring = MIRROR_1A;
+		} else {
 			mirroring = board->mirroring;
+		}
 
 		board_set_ppu_mirroring(board, mirroring);
 		board_internal_nmt_sync(board);
