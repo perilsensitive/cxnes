@@ -8199,6 +8199,15 @@ CHR: 128k
 CRC: 61179bfa
 SHA1: 8CF2EA5C72FD2EB3DD4493494DD959E4FC00BA2A
 %%
+Name: Jurassic Boy (Asia) (Unl)
+System: Famicom
+Board: TxROM
+Mirroring: Four-Screen
+PRG: 256k
+CHR: 128k
+CRC: 491cd95e
+SHA1: 203523818a348361584cdebe47aeb860808757fc
+%%
 Name: Jurassic Park (USA)
 System: NES-NTSC
 Board: NES-TSROM
