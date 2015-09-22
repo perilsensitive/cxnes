@@ -33,4 +33,9 @@ int process_file(const char *filename, void *data,
                  void (*callback)(char *, int, void *), int, int);
 int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr);
 
+char *get_user_data_path(void);
+char *get_base_path(void);
+
+int create_directory(const char *path, int recursive, int is_file);
+
 #endif				/* __FILE_IO_H__ */

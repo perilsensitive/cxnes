@@ -133,7 +133,7 @@ extern void gui_enable_event_timer(void);
 #endif
 
 void emu_deinit(struct emu *emu);
-static char *emu_generate_rom_config_path(struct emu *emu);
+static char *emu_generate_rom_config_path(struct emu *emu, int save);
 static int emu_set_rom_file(struct emu *emu, const char *rom_file);
 static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 			       int patch_count, char **patchfiles);
@@ -568,7 +568,7 @@ int emu_set_system_type(struct emu *emu, int system_type)
 
 		emu_reset(emu, 1);
 
-		path = emu_generate_rom_config_path(emu);
+		path = emu_generate_rom_config_path(emu, 1);
 		if (path) {
 			config_save_rom_config(emu->config, path);
 			free(path);
@@ -624,21 +624,14 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 
 	db_path = NULL;
 	if (emu->config->db_enabled) {
-		db_path = config_get_path(emu->config, CONFIG_DATA_DIR_BASE,
-					  "romdb.txt");
+		db_path = config_get_path_new(emu->config,
+					      CONFIG_DATA_FILE_ROM_DB,
+					      NULL, 0);
 		if (check_file_exists(db_path)) {
 			db_load_file(emu, db_path);
 			free(db_path);
 			db_path = NULL;
-		} else {
-			db_path = config_get_path(emu->config, CONFIG_DATA_DIR_SHARED,
-						  "romdb.txt");
-			if (check_file_exists(db_path))
-				db_load_file(emu, db_path);
 		}
-
-		if (db_path)
-			free(db_path);
 	}
 
 	rom = rom_load_file(emu, filename);
@@ -656,12 +649,13 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 	if (autopatches)
 		free(autopatches);
 
-	print_rom_info(rom);
-
 	db_cleanup();
 
-	video_set_window_title(rom->filename);
+	if (rc == 0) {
+		print_rom_info(rom);
 
+		video_set_window_title(rom->filename);
+	}
 
 	return rc;
 }
@@ -967,7 +961,8 @@ int emu_quick_save_state(struct emu *emu, int quick_save_index, int display)
 
 	state_file = emu->state_file;
 
-	path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE, state_file);
+	path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+				   state_file, 1);
 	len = strlen(path);
 
 	if (quick_save_index == 10)
@@ -1005,7 +1000,8 @@ int emu_quick_load_state(struct emu *emu, int quick_save_index, int display)
 
 	state_file = emu->state_file;
 
-	path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE, state_file);
+	path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+				   state_file, 1);
 	len = strlen(path);
 
 	if (quick_save_index == 10) {
@@ -1103,7 +1099,7 @@ int emu_system_is_vs(struct emu *emu)
 	return 0;
 }
 
-static char *emu_generate_rom_config_path(struct emu *emu)
+static char *emu_generate_rom_config_path(struct emu *emu, int save)
 {
 	char *romdir_cfg_file, *default_cfg_file, *buffer;
 	int len;
@@ -1121,9 +1117,9 @@ static char *emu_generate_rom_config_path(struct emu *emu)
 		return NULL;
 	}
 
-	default_cfg_file = config_get_path(emu->config,
-					   CONFIG_DATA_DIR_CONFIG,
-					   emu->cfg_file);
+	default_cfg_file = config_get_path_new(emu->config,
+					       CONFIG_DATA_DIR_CONFIG,
+					       emu->cfg_file, save);
 
 	if (!default_cfg_file) {
 		free(romdir_cfg_file);
@@ -1216,7 +1212,7 @@ void emu_load_rom_cfg(struct emu *emu)
 {
 	char *buffer;
 
-	buffer = emu_generate_rom_config_path(emu);
+	buffer = emu_generate_rom_config_path(emu, 0);
 	
 	if (check_file_exists(buffer)) {
 		printf("Config file: %s\n", buffer);
@@ -1232,7 +1228,7 @@ void emu_save_rom_config(struct emu *emu)
 {
 	char *path;
 
-	path = emu_generate_rom_config_path(emu);
+	path = emu_generate_rom_config_path(emu, 1);
 	if (path) {
 		config_save_rom_config(emu->config, path);
 		free(path);
@@ -1247,8 +1243,8 @@ void emu_load_cheat(struct emu *emu)
 	if (!emu->config->autoload_cheats)
 		return;
 
-	buffer = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT,
-				 emu->cheat_file);
+	buffer = config_get_path_new(emu->config, CONFIG_DATA_DIR_CHEAT,
+				     emu->cheat_file, 0);
 
 	if (check_file_exists(buffer)) {
 		if (cheat_load_file(emu, buffer) != 0) {

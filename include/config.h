@@ -23,7 +23,6 @@
 #include "emu.h"
 
 enum {
-	CONFIG_DATA_DIR_BASE,
 	CONFIG_DATA_DIR_SAVE,
 	CONFIG_DATA_DIR_CONFIG,
 	CONFIG_DATA_DIR_CHEAT,
@@ -31,10 +30,13 @@ enum {
 	CONFIG_DATA_DIR_PATCH,
 	CONFIG_DATA_DIR_ROM,
 	CONFIG_DATA_DIR_STATE,
-	CONFIG_DATA_DIR_SHARED,
+	CONFIG_DATA_FILE_OSD_FONT,
 	CONFIG_DATA_FILE_FDS_BIOS,
 	CONFIG_DATA_FILE_MAIN_CFG,
 	CONFIG_DATA_FILE_NSF_ROM,
+	CONFIG_DATA_FILE_GAMECONTROLLER_DB,
+	CONFIG_DATA_FILE_USER_GAMECONTROLLER_DB,
+	CONFIG_DATA_FILE_ROM_DB,
 };
 
 #if defined __unix__
@@ -226,12 +228,14 @@ int config_save_main_config(struct config *config);
 int config_save_rom_config(struct config *config, const char *path);
 void config_print_current_config(struct config *);
 char *config_get_path(struct config *, int prefix, const char *path);
+char *config_get_path_new(struct config *, int prefix, const char *path, int user);
 char *config_get_cfg_dir(struct config *);
 char *config_get_fds_bios(struct config *);
 char *config_get_nsf_rom(struct config *);
 char *config_get_cheat_dir(struct config *);
 struct config *config_init(struct emu *emu);
 void config_cleanup(struct config *);
+void config_shutdown(void);
 const void *config_get_valid_values(const char *name, int *count,
 				    const char ***value_names);
 

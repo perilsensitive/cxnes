@@ -543,6 +543,12 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	size_t bios_size;
 	int rc = 0;
 
+	bios_file = config_get_fds_bios(emu->config);
+	if (!bios_file) {
+		err_message("Unable to locate FDS BIOS\n");
+		return 1;
+	}
+
 	old_size = rom->buffer_size;
 	new_size = ((rom->buffer_size - 16) / SIZE_8K) + 1;
 
@@ -561,10 +567,6 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	rom->info.total_prg_size = new_size - 16;
 
 	memset(rom->buffer + old_size, 0, new_size - old_size);
-
-	bios_file = config_get_fds_bios(emu->config);
-	if (!bios_file)
-		return -1;
 
 	bios_size = get_file_size(bios_file);
 

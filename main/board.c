@@ -994,6 +994,9 @@ static int board_memmap_nvram(struct board *board, size_t size,
 	if (!board->use_mmap)
 		return -1;
 
+	if (create_directory(file, 1, 1))
+		return -1;
+
 	board->nv_ram_fd = open(file, O_RDWR | O_CREAT, 0600);
 	if (board->nv_ram_fd < 0)
 		goto err;
@@ -1064,6 +1067,9 @@ static int board_memmap_nvram(struct board *board, size_t size,
 		return -1;
 
 	if (size <= 0)
+		return -1;
+
+	if (create_directory(file, 1, 1))
 		return -1;
 
 #if UNICODE
@@ -1163,9 +1169,9 @@ static int board_init_nvram(struct board *board, size_t size)
 			 PATHSEP[0], board->emu->save_file);
 	}
 
-	save_file = config_get_path(board->emu->config,
-				    CONFIG_DATA_DIR_SAVE,
-				    board->emu->save_file);
+	save_file = config_get_path_new(board->emu->config,
+					CONFIG_DATA_DIR_SAVE,
+					board->emu->save_file, 1);
 
 	if (!romdir_save_file || !save_file)
 		return -1;
@@ -1460,9 +1466,9 @@ static void board_cleanup_nvram(struct board *board)
 		return;
 	}
 
-	save_file = config_get_path(board->emu->config,
-				    CONFIG_DATA_DIR_SAVE,
-				    board->emu->save_file);
+	save_file = config_get_path_new(board->emu->config,
+					CONFIG_DATA_DIR_SAVE,
+					board->emu->save_file, 1);
 
 	if (!save_file) {
 		free(romdir_save_file);
@@ -1548,9 +1554,9 @@ static int board_apply_ips_save(struct board *board)
 	p = NULL;
 	rc = -1;
 
-	save_file = config_get_path(board->emu->config,
-				    CONFIG_DATA_DIR_SAVE,
-				    board->emu->save_file);
+	save_file = config_get_path_new(board->emu->config,
+					CONFIG_DATA_DIR_SAVE,
+					board->emu->save_file, 1);
 
 	if (!save_file)
 		goto done;
@@ -1856,9 +1862,9 @@ void board_write_ips_save(struct board *board, struct range_list *range_list)
 
 	p = NULL;
 
-	save_file = config_get_path(board->emu->config,
-				    CONFIG_DATA_DIR_SAVE,
-				    board->emu->save_file);
+	save_file = config_get_path_new(board->emu->config,
+					CONFIG_DATA_DIR_SAVE,
+					board->emu->save_file, 1);
 
 	if (!save_file)
 		return;
@@ -1895,9 +1901,9 @@ void board_cleanup(struct board *board)
 	}
 
 	if (emu->cheat_file && board->emu->config->autosave_cheats) {
-		char *buffer = config_get_path(board->emu->config,
-					       CONFIG_DATA_DIR_CHEAT,
-					       emu->cheat_file);
+		char *buffer = config_get_path_new(board->emu->config,
+						   CONFIG_DATA_DIR_CHEAT,
+						   emu->cheat_file, 1);
 		if (buffer)
 			cheat_save_file(board->emu, buffer);
 

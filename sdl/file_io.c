@@ -24,10 +24,12 @@
 #include <tchar.h>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#define mkdir(path, mode) _mkdir(path)
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 #endif
 
 #include "SDL.h"
@@ -92,10 +94,88 @@ int readfile(const char *name, uint8_t *buf, uint32_t size)
 	return 0;
 }
 
+int create_directory(const char *path, int recursive, int is_file)
+{
+	char *tmp;
+	char *c;
+	char old;
+	char *sep;
+	int rc;
+
+	if (!path)
+		return -1;
+
+	if (!recursive) {
+		if (mkdir(path, 0777)) {
+			if (errno != EEXIST)
+				return -1;
+		}
+		return 0;
+	}
+
+	tmp = strdup(path);
+	if (!tmp)
+		return -1;
+
+	rc = 0;
+
+#if _WIN32
+	sep = "/\\";
+	/* Try to deal with UNC paths */
+	if ((tmp[0] == '\\' || tmp[0] == '/') &&
+	    (tmp[1] == '\\' || tmp[1] == '/')) {
+		c = tmp + 2;
+		c = strpbrk(c + 1, sep);
+		if (c)
+			c = strpbrk(c + 1, sep);
+
+		if (c)
+			c++;
+	}
+#else
+	sep = "/";
+#endif
+
+	c = strpbrk(tmp, sep);
+	if (c)
+		c++;
+
+	while (1) {
+		c = strpbrk(c, sep);
+
+		if (c) {
+			old = *c;
+			*c = '\0';
+		} else if (is_file) {
+			break;
+		}
+
+		if (mkdir(tmp, 0777)) {
+			if (errno != EEXIST) {
+				rc = -1;
+				break;
+			}
+		}
+
+		if (!c)
+			break;
+
+		*c = old;
+		c++;
+	}
+
+	free(tmp);
+
+	return rc;
+}
+
 /* write file "name" from buffer "buf" of size "size" */
 int writefile(const char *name, uint8_t *buf, uint32_t size)
 {
 	SDL_RWops *file;
+
+	if (create_directory(name, 1, 1))
+		return -1;
 
 	file = SDL_RWFromFile(name, "wb");
 	if (!file) {
@@ -250,3 +330,12 @@ int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 }
 #endif
 
+char *get_user_data_path(void)
+{
+	return SDL_GetPrefPath("", PACKAGE_NAME);
+}
+
+char *get_base_path(void)
+{
+	return SDL_GetBasePath();
+}

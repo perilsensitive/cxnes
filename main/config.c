@@ -27,7 +27,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <direct.h>
-#define mkdir(a, b) _mkdir(a)
 #endif
 
 #include "emu.h"
@@ -36,6 +35,15 @@
 #include "input.h"
 
 #define BUF_SIZE 256
+#define DEFAULT_USER_CONFIG_DIR ".cxnes"
+#define DEFAULT_USER_DATA_DIR ".cxnes"
+#define DEFAULT_OSD_FONT "PressStart2P.ttf"
+#define DEFAULT_MAIN_CONFIG "cxnes.cfg"
+#define DEFAULT_FDS_BIOS "disksys.rom"
+#define DEFAULT_NSF_ROM "nsf.rom"
+#define DEFAULT_GAMECONTROLLER_DB "gamecontrollerdb.txt"
+#define DEFAULT_USER_GAMECONTROLLER_DB "user_gamecontrollerdb.txt"
+#define DEFAULT_ROM_DB "romdb.txt"
 
 struct binding_item {
 	char *name;
@@ -980,172 +988,265 @@ static int config_save_file(struct config *config,
 static int config_check_changed(struct config *config,
 				struct config_parameter *parameters);
 
-char *config_get_path(struct config *config, int which,
-                      const char *filename)
+struct path_list {
+	char **paths;
+	int count;
+	int max_length;
+};
+
+static struct path_list *data_path_list;
+
+struct path_list *path_list_new(void)
 {
-	const char *default_value, *default_path;
-	const char *tmp;
-	char *base;
-	char *final;
-	int in_default_path, allow_filename;
-	int len;
+	struct path_list *list;
 
-	default_value = NULL;
+	list = malloc(sizeof(*list));
 
-#if defined __unix__
-	char *home;
-
-	len = 0;
-
-	home = getenv("HOME");
-	if (home)
-		len = strlen(home);
-
-	len += strlen(DEFAULT_DATA_DIR_BASE) + 2;
-	base = malloc(len);
-	if (!base)
-		return NULL;
-	
-	snprintf(base, len, "%s/%s", home, DEFAULT_DATA_DIR_BASE);
-#elif defined _WIN32
-	TCHAR exe_path[MAX_PATH];
-	TCHAR *t;
-
-	len = GetModuleFileName(NULL, exe_path, MAX_PATH);
-	if ((len == MAX_PATH) &&
-	     (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-		return NULL;
+	if (list) {
+		list->paths = NULL;
+		list->count = 0;
+		list->max_length = 0;
 	}
 
-	t = strrchr(exe_path, PATHSEP[0]);
-	if (t)
-		*t = '\0';
+	return list;
+}
 
-	base = strdup(exe_path);
+void path_list_free(struct path_list *list)
+{
+	int i;
+
+	if (!list)
+		return;
+
+	for (i = 0; i < list->count; i++)
+		free(list->paths[i]);
+
+	free(list);
+}
+
+int path_list_add_entry(struct path_list *list, char *path)
+{
+	char **tmp;
+	int count;
+	int length;
+
+	if (!list || !path)
+		return -1;
+
+	count = list->count + 1;
+
+	tmp = realloc(list->paths, count * sizeof(*list->paths));
+
+	if (!tmp)
+		return -1;
+
+	list->paths = tmp;
+	list->paths[list->count] = path;
+	list->count = count;
+
+	length = strlen(path);
+
+	if (length > list->max_length)
+		list->max_length = length;
+
+	return 0;
+}
+
+
+static int init_path_lists(void)
+{
+	char *path;
+#if __unix__
+	char *t, *c;
+	char *xdg_data_dirs;
 #endif
 
-	tmp = NULL;
-	default_path = base;
-	in_default_path = 1;
-	allow_filename = 1;
+	data_path_list = path_list_new();
+
+	if (!data_path_list)
+		return -1;
+
+#if defined __unix__
+	path = get_user_data_path();
+	if (!path)
+		return -1;
+	
+	if (path_list_add_entry(data_path_list, path)) {
+		free(path);
+		return -1;
+	}
+
+	xdg_data_dirs = getenv("XDG_DATA_DIRS");
+	if (xdg_data_dirs)
+		xdg_data_dirs = strdup(xdg_data_dirs);
+	else
+		xdg_data_dirs = strdup(DATADIR);
+
+	if (!xdg_data_dirs)
+		return 0;
+	
+	t = xdg_data_dirs;
+
+	do {
+		c = strchr(t, ':');
+		if (c)
+			*c = '\0';
+
+		if (strlen(t) && t[0] == '/') {
+			path = strdup(t);
+			if (path) {
+				path_list_add_entry(data_path_list,
+						    path);
+			}
+		}
+
+		if (c) {
+			*c = ':';
+			t = c + 1;
+		}
+	} while (c);
+
+	if (xdg_data_dirs)
+		free(xdg_data_dirs);
+
+#elif defined _WIN32
+	path = get_base_path();
+
+	if (!path)
+		return -1;
+
+	if (path_list_add_entry(data_path_list, path)) {
+		free(path);
+		return -1;
+	}
+#endif
+
+	return 0;
+}
+
+static void free_path_lists(void)
+{
+	if (data_path_list)
+		path_list_free(data_path_list);
+}
+
+char *config_get_path_new(struct config *config, int which, const char* filename, int user)
+{
+	const char *config_value;
+	const char *default_path;
+	char *buffer;
+	int length;
+	int i;
+
+	config_value = NULL;
+	default_path = "";
 
 	switch (which) {
-	case CONFIG_DATA_DIR_SHARED:
-		in_default_path = 0;
-#if defined __unix__
-		default_value = DATADIR;
-#elif defined _WIN32
-		default_value = base;
-#endif
-		break;
-	case CONFIG_DATA_DIR_BASE:
-		default_value = base;
-		in_default_path = 0;
-		break;
-	case CONFIG_DATA_DIR_SAVE:
-		tmp = config->save_path;
-		default_value = DEFAULT_SAVE_PATH;
-		break;
-	case CONFIG_DATA_DIR_SCREENSHOT:
-		tmp = config->screenshot_path;
-		default_value = DEFAULT_SCREENSHOT_PATH;
-		break;
 	case CONFIG_DATA_DIR_CONFIG:
-		tmp = config->romcfg_path;
-		default_value = DEFAULT_ROMCFG_PATH;
-		break;
-	case CONFIG_DATA_DIR_CHEAT:
-		tmp = config->cheat_path;
-		default_value = DEFAULT_CHEAT_PATH;
-		break;
-	case CONFIG_DATA_DIR_PATCH:
-		tmp = config->patch_path;
-		default_value = DEFAULT_PATCH_PATH;
-		break;
-	case CONFIG_DATA_DIR_ROM:
-		tmp = config->rom_path;
-		default_value = DEFAULT_ROM_PATH;
-		break;
-	case CONFIG_DATA_DIR_STATE:
-		tmp = config->state_path;
-		default_value = DEFAULT_STATE_PATH;
-		break;
-	case CONFIG_DATA_FILE_FDS_BIOS:
-		tmp = config->fds_bios_path;
-		default_value = "disksys.rom";
-		allow_filename = 0;
+		config_value = config->romcfg_path;
+		default_path = DEFAULT_ROMCFG_PATH;
 		break;
 	case CONFIG_DATA_FILE_MAIN_CFG:
-		tmp = config->maincfg_path;
-		default_value = "cxnes.cfg";
-		allow_filename = 0;
+		config_value = config->maincfg_path;
+		default_path = "";
+		filename = DEFAULT_MAIN_CONFIG;
+		break;
+	case CONFIG_DATA_FILE_OSD_FONT:
+		config_value = config->osd_font_path;
+		default_path = "";
+		filename = DEFAULT_OSD_FONT;
+		break;
+	case CONFIG_DATA_DIR_SAVE:
+		config_value = config->save_path;
+		default_path = DEFAULT_SAVE_PATH;
+		break;
+	case CONFIG_DATA_DIR_PATCH:
+		config_value = config->patch_path;
+		default_path = DEFAULT_PATCH_PATH;
+		break;
+	case CONFIG_DATA_DIR_STATE:
+		config_value = config->state_path;
+		default_path = DEFAULT_STATE_PATH;
+		break;
+	case CONFIG_DATA_DIR_CHEAT:
+		config_value = config->cheat_path;
+		default_path = DEFAULT_CHEAT_PATH;
+		break;
+	case CONFIG_DATA_DIR_SCREENSHOT:
+		config_value = config->screenshot_path;
+		default_path = DEFAULT_SCREENSHOT_PATH;
+		break;
+	case CONFIG_DATA_FILE_FDS_BIOS:
+		config_value = config->fds_bios_path;
+		filename = DEFAULT_FDS_BIOS;
 		break;
 	case CONFIG_DATA_FILE_NSF_ROM:
-		tmp = config->nsf_rom_path;
-		default_value = "nsf.rom";
-		allow_filename = 0;
-#if defined __unix__
-		default_path = DATADIR;
-#endif
+		config_value = config->nsf_rom_path;
+		filename = DEFAULT_NSF_ROM;
 		break;
-	}
-
-	if (tmp) {
-		len = strlen(tmp);
-	} else {
-		len = strlen(default_value);
-		if (in_default_path)
-			len += strlen(default_path) + 1;
-	}
-
-	if (allow_filename && filename)
-		len += strlen(filename) + 1;
-	else
-		filename = NULL;
-
-	final = malloc(len + 1);
-	if (!final) {
-		free(base);
+	case CONFIG_DATA_FILE_GAMECONTROLLER_DB:
+		filename = DEFAULT_GAMECONTROLLER_DB;
+		break;
+	case CONFIG_DATA_FILE_USER_GAMECONTROLLER_DB:
+		filename = DEFAULT_USER_GAMECONTROLLER_DB;
+		break;
+	case CONFIG_DATA_FILE_ROM_DB:
+		filename = DEFAULT_ROM_DB;
+		break;
+	default:
 		return NULL;
 	}
 
-	if (tmp) {
-		if (filename) {
-			snprintf(final, len + 1, "%s" PATHSEP "%s", tmp,
-				 filename);
-		} else {
-			strncpy(final, tmp, len);
-		}
-	} else if (in_default_path) {
-		if (filename) {
-			snprintf(final, len + 1,
-				 "%s" PATHSEP "%s" PATHSEP "%s", default_path,
-				 default_value, filename);
-		} else {
-			snprintf(final, len + 1, "%s" PATHSEP "%s", default_path,
-				 default_value);
-		}
+	if (config_value) {
+		length = strlen(config_value);
 	} else {
-		if (filename) {
-			snprintf(final, len + 1, "%s" PATHSEP "%s",
-				 default_value, filename);
-		} else {
-			strncpy(final, default_value, len);
-		}
+		length  = data_path_list->max_length;
+		if (default_path)
+			length += strlen(default_path) + 1;
 	}
 
-	free(base);
+	if (filename)
+		length += 1 + strlen(filename);
+	else
+		filename = "";
 
-	return final;
-	
+	length += 1; /* NUL terminator */
+
+	buffer = malloc(length);
+	if (!buffer)
+		return NULL;
+
+	if (config_value) {
+		snprintf(buffer, length, "%s%s%s",
+			 config_value, filename[0] ? "/" : "", filename);
+
+		return buffer;
+	}
+
+	for (i = 0; i < data_path_list->count; i++) {
+		snprintf(buffer, length, "%s%s%s%s",
+			 data_path_list->paths[i],
+			 default_path,
+			 filename[0] ? "/" : "", filename);
+
+		if (user || check_file_exists(buffer))
+			break;
+	}
+
+	if (i == data_path_list->count) {
+		free(buffer);
+		buffer = NULL;
+	}
+
+	return buffer;
 }
 
 char *config_get_fds_bios(struct config *config)
 {
 	char *filename;
 
-	filename = config_get_path(config, CONFIG_DATA_FILE_FDS_BIOS,
-				   NULL);
+	filename = config_get_path_new(config, CONFIG_DATA_FILE_FDS_BIOS,
+					       NULL, 0);
 
 	return filename;
 }
@@ -1154,108 +1255,14 @@ char *config_get_nsf_rom(struct config *config)
 {
 	char *filename;
 
-	filename = config_get_path(config, CONFIG_DATA_FILE_NSF_ROM,
-				   NULL);
+	filename = config_get_path_new(config, CONFIG_DATA_FILE_NSF_ROM,
+					       NULL, 0);
 
 	return filename;
 }
 
 void config_print_current_config(struct config *config)
 {
-}
-
-int config_create_dirs(struct config *config)
-{
-	char *data;
-
-	data = config_get_path(config, CONFIG_DATA_DIR_BASE, NULL);
-
-	if (!data)
-		return 0;
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create data dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_SAVE, NULL);
-
-	if (!data)
-		return 0;
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create save dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_CONFIG, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && errno != EEXIST) {
-		fprintf(stderr, "failed to create cfg dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_PATCH, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create patch dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_STATE, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create patch dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_SCREENSHOT, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create patch dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_CONFIG, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create patch dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-	data = config_get_path(config, CONFIG_DATA_DIR_CHEAT, NULL);
-
-	if (mkdir(data, S_IRWXU) < 0 && (errno != EEXIST)) {
-		fprintf(stderr, "failed to create patch dir: %s\n",
-			strerror(errno));
-		free(data);
-		return 0;
-	}
-
-	free(data);
-
-	return 1;
 }
 
 static int config_set_item(struct config *config,
@@ -1709,6 +1716,9 @@ struct config *config_init(struct emu *emu)
 	struct config *configptr;
 	struct config_parameter *parameter;
 
+	if (init_path_lists())
+		return NULL;
+
 	configptr = malloc(sizeof *configptr);
 
 	if (configptr)
@@ -1731,9 +1741,12 @@ struct config *config_init(struct emu *emu)
 		parameter++;
 	}
 
-	config_create_dirs(configptr);
-
 	return configptr;
+}
+
+void config_shutdown(void)
+{
+	free_path_lists();
 }
 
 void config_load_default_bindings(void)
@@ -1814,8 +1827,8 @@ int config_save_main_config(struct config *config)
 	char *buffer;
 	int rc;
 
-	buffer = config_get_path(config, CONFIG_DATA_FILE_MAIN_CFG,
-	                         NULL);
+	buffer = config_get_path_new(config, CONFIG_DATA_FILE_MAIN_CFG,
+				     NULL, 1);
 
 	if (!buffer)
 		return 1;
@@ -1846,21 +1859,20 @@ int config_load_main_config(struct config *config)
 	int skip;
 	int rc;
 
-	buffer = config_get_path(config, CONFIG_DATA_FILE_MAIN_CFG,
-	                         NULL);
+	buffer = config_get_path_new(config, CONFIG_DATA_FILE_MAIN_CFG,
+				     NULL, 1);
 
-	if (!buffer)
-		return 1;
+	rc = 0;
 
-	skip = config->skip_maincfg;
+	if (buffer) {
+		skip = config->skip_maincfg;
 
-	log_dbg("%s main config file %s\n", skip ? "Skipping" : "Loading",
-		buffer);
+		log_dbg("%s main config file %s\n", skip ? "Skipping" : "Loading",
+			buffer);
 
-	if (!skip)
-		rc = config_load_file(config, config_parameters, buffer);
-	else
-		rc = 0;
+		if (!skip)
+			rc = config_load_file(config, config_parameters, buffer);
+	}
 
 	/* Load default bindings if none were loaded from the config
 	   file. */
@@ -1895,8 +1907,11 @@ int config_load_rom_config(struct config *config, char *filename)
 	if (p) 
 		goto done;
 
-	configpath = config_get_path(config, CONFIG_DATA_DIR_CONFIG,
-	                             NULL);
+	configpath = config_get_path_new(config, CONFIG_DATA_DIR_CONFIG,
+					 NULL, 0);
+
+	if (!configpath)
+		return 0;
 
 	tmp = strlen(name) + strlen(configpath) + 6;
 

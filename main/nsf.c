@@ -126,9 +126,13 @@ int nsf_load(struct emu *emu, struct rom *rom)
 	rom->buffer = tmp;
 
 	nsf_player_rom = config_get_nsf_rom(emu->config);
+	if (!nsf_player_rom) {
+		err_message("Unable to locate NSF player ROM\n");
+		return 1;
+	}
+	
 	if (readfile(nsf_player_rom, rom->buffer + 16, NSF_PLAYER_SIZE)) {
-		fprintf(stderr, "nsf_load: failed to load NSF "
-			"player ROM\n");
+		err_message("Failed to load NSF player ROM\n");
 		free(nsf_player_rom);
 		return 1;
 	}

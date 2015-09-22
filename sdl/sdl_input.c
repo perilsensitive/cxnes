@@ -288,8 +288,9 @@ static int load_gamecontroller_mappings(struct config *config)
 	char *system_db_path;
 	SDL_RWops *file;
 
-	system_db_path = config_get_path(config, CONFIG_DATA_DIR_SHARED,
-	                                 "gamecontrollerdb.txt");
+	system_db_path = config_get_path_new(config,
+					     CONFIG_DATA_FILE_GAMECONTROLLER_DB,
+					     NULL, 0);
 
 	file = SDL_RWFromFile(system_db_path, "rb");
 	if (file) {
@@ -304,8 +305,9 @@ static int load_gamecontroller_mappings(struct config *config)
 	free(system_db_path);
 
 
-	filename = config_get_path(config, CONFIG_DATA_DIR_BASE,
-				   "user_gamecontrollerdb.txt");
+	filename = config_get_path_new(config,
+				       CONFIG_DATA_FILE_USER_GAMECONTROLLER_DB,
+				       NULL, 1);
 
 	file = SDL_RWFromFile(filename, "rb");
 	if (file) {

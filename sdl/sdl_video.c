@@ -41,7 +41,6 @@
 #endif
 
 #define MAX_OSD_MSG_LEN 65
-#define DEFAULT_OSD_FONT "PressStart2P.ttf"
 
 #define NTSC_WIDTH_STRETCH  8.0/7.0
 #define NTSC_HEIGHT_STRETCH 1
@@ -124,8 +123,7 @@ static int mouse_lasty;
 static int paused_due_to_lost_focus;
 
 /* OSD Options */
-static const char *osd_font_name;
-static char *default_font_name;
+static char *osd_font_name;
 static int osd_enabled;
 static int osd_min_font_size;
 static uint32_t osd_fg_rgba;
@@ -353,11 +351,6 @@ static void load_osd_font(void)
 		if (!font)
 			fprintf(stderr, "Font failed to load: %s\n",
 				TTF_GetError());
-	}
-
-	if (!font && default_font_name) {
-		font = TTF_OpenFont(default_font_name,
-				    osd_min_font_size * multiplier);
 	}
 
 	if (osd_timer) {
@@ -809,7 +802,6 @@ int video_apply_config(struct emu *emu)
 	window_rect.h = view_h * window_scaling_factor;
 
 	osd_enabled = emu->config->osd_enabled;
-	osd_font_name = emu->config->osd_font_path;
 
 	osd_fg_rgba = emu->config->osd_fg_rgba;
 	osd_bg_rgba = emu->config->osd_bg_rgba;
@@ -987,9 +979,9 @@ int video_init(struct emu *emu)
 	fps_timer = 0;
 	video_reset_autohide_timer();
 
-	default_font_name = config_get_path(emu->config,
-		                            CONFIG_DATA_DIR_SHARED,
-	                                    DEFAULT_OSD_FONT);
+	osd_font_name = config_get_path_new(emu->config,
+					    CONFIG_DATA_FILE_OSD_FONT,
+					    NULL, 0);
 
 	scaled_texture = NULL;
 
@@ -1207,8 +1199,8 @@ int video_shutdown(void)
 		TTF_Quit();
 	}
 
-	if (default_font_name)
-		free(default_font_name);
+	if (osd_font_name)
+		free(osd_font_name);
 
 #if GUI_ENABLED
 	if (gui_enabled)
