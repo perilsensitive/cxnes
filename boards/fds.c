@@ -895,7 +895,7 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 		   set (instead of reset). */
 		value ^= 0x02;
 
-		/* XXX is this correct? */
+		/* FIXME is this correct? */
 		cpu_interrupt_ack(emu->cpu, IRQ_DISK);
 		_status_reg &= ~FDS_STATUS_XFER;
 

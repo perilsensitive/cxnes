@@ -55,7 +55,7 @@
 
 #define NS_PER_SEC 1000000000L
 
-/* XXX hack */
+/* FIXME hack */
 int running = 1;
 
 static int testing = 0;

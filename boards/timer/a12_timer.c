@@ -63,7 +63,7 @@ struct a12_timer {
 	unsigned ppu_oam_addr_reg;
 	uint8_t *ppu_oam;
 	int in_oam_dma;
-	uint8_t sprite_a12_table[241];	/* XXX should this be static? */
+	uint8_t sprite_a12_table[241];	/* FIXME should this be static? */
 	int sprite_mode;
 	uint8_t sprite_mask;
 	uint32_t next_clock;

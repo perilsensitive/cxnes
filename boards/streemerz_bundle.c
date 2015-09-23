@@ -63,7 +63,7 @@ struct board_info board_streemerz_bundle = {
 
 static void streemerz_bundle_reset(struct board *board, int hard)
 {
-/* XXX move this into board_info now that I'm not tied down to using the macro */
+/* FIXME move this into board_info now that I'm not tied down to using the macro */
 	if (hard)
 		board->prg_or = 0x1fe;
 }

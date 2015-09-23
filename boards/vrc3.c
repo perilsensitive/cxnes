@@ -100,7 +100,7 @@ static CPU_WRITE_HANDLER(vrc3_write_handler)
 				  cycles);
 		m2_timer_force_reload(emu->m2_timer, cycles);
 		break;
-	case 0xd000:		/* XXX 0xe000? */
+	case 0xd000:		/* FIXME 0xe000? */
 		m2_timer_ack(emu->m2_timer, cycles);
 		if (emu->board->irq_control & 0x01) {
 			m2_timer_set_enabled(emu->m2_timer, 1, cycles);

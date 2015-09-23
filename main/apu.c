@@ -142,7 +142,7 @@ struct apu_state {
 	int swap_duty_cycles;
 	int raw_pcm_filter;
 
-	/* XXX is there any reason that these can't
+	/* FIXME is there any reason that these can't
 	   be ints vs uint16_ts?
 	 */
 	const uint16_t *noise_period_table;
@@ -802,7 +802,7 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 		cpu_interrupt_cancel(emu->cpu, IRQ_APU_DMC);
 		break;
 	case 1:
-		/* XXX Pop-reducing hack
+		/* FIXME Pop-reducing hack
 		   Ignore the write if we're currently playing a sample.  This doesn't
 		   eliminate all pops, but it reduces them without breaking raw PCM
 		   playback.
@@ -871,7 +871,7 @@ static CPU_WRITE_HANDLER(status_write_handler)
 		apu->dmc.bytes_remaining = apu->dmc.length;
 		apu->dmc.addr_current = apu->dmc.addr;
 		if (apu->dmc.empty) {
-			/* XXX previously set wait_cycles to 2 */
+			/* FIXME previously set wait_cycles to 2 */
 			next_dma = cycles;
 			apu->dmc.dma_timestamp = next_dma;
 			cpu_set_dma_timestamp(emu->cpu, next_dma,
@@ -1398,7 +1398,7 @@ static uint32_t apu_dmc_calc_dma_time(struct apu_state *apu, uint32_t cycles)
 	    (dmc->period * apu->emu->cpu_clock_divider);
 
 	/*
-	   XXX HACK ALERT Occasionally a dma restart via $4015 write
+	   FIXME HACK ALERT Occasionally a dma restart via $4015 write
 	   will happen on the same cycle as the last clock before
 	   refilling the shift register.  I'm not sure of what is
 	   correct in this case.  There are two possibilities: A)
@@ -1428,7 +1428,7 @@ void apu_dmc_load_buf(struct apu_state * apu, uint8_t data, uint32_t *dma_time_p
 
 	dmc = &apu->dmc;
 
-	/* XXX should this run forward one tick? */
+	/* FIXME should this run forward one tick? */
 	apu_run(apu, cycles);
 
 	dmc->dma_buf = data;
@@ -1458,7 +1458,7 @@ static uint32_t apu_dmc_set_period(struct apu_state *apu, int period, uint32_t c
 {
 	apu_run(apu, cycles);
 	apu->dmc.period = apu->dmc_rate_table[period & 0x0f];
-	/* XXX must update dma time if we change period while
+	/* FIXME must update dma time if we change period while
 	   playing sample */
 	return apu_dmc_calc_dma_time(apu, cycles);
 }

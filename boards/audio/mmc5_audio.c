@@ -20,7 +20,7 @@
 #include "emu.h"
 #include "audio.h"
 
-/* XXX this is what the APU uses on NTSC; what about PAL? */
+/* FIXME this is what the APU uses on NTSC; what about PAL? */
 /* looks NTSC is 7457 93/240, pal 6927 127/240 */
 #define FRAME_COUNTER_PERIOD_NTSC 7458
 #define FRAME_COUNTER_PERIOD_PAL 6928

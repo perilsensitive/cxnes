@@ -6,9 +6,9 @@ my $emu_bin = '../cxnes';
 my $emu_options = '-o blargg_test_rom_hack_enabled=true --regression-test';
 my $romdir = 'nes_test_roms';
 
-# XXX commandline options
-# XXX handle crashes, errors
-# XXX handle hangs with SIGALRM
+# FIXME commandline options
+# FIXME handle crashes, errors
+# FIXME handle hangs with SIGALRM
 
 my @roms;
 my @screenshot_roms;

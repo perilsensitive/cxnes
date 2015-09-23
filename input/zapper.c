@@ -112,7 +112,7 @@ static int check_pixel(uint32_t pixel)
 {
 	int lit = 0;
 
-	/* XXX hack works on 2C02 only */
+	/* FIXME hack works on 2C02 only */
 	if ((pixel & 0x0f) < 0x0e) {
 		lit = 1;
 
@@ -241,7 +241,7 @@ static int zapper_connect(struct io_device *dev)
 	state->trigger_counter = -1;
 	state->trigger_counter = -1;
 
-	/* XXX On the NES, it's possible to plug the zapper into
+	/* FIXME On the NES, it's possible to plug the zapper into
 	   either port and read it, although most games expect it to
 	   be plugged into the second port.  In fact, it's possible to
 	   use two zappers at the same time.  Only one commercial

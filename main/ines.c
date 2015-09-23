@@ -22,7 +22,7 @@
 
 #define INES_HEADER_SIZE 16
 
-/* XXX what are all the possible values
+/* FIXME what are all the possible values
    for vs mode? */
 #define VS_MODE_NORMAL         0
 #define VS_MODE_RBI_BASEBALL   1
@@ -70,7 +70,7 @@ static const char *garbage[] = {
 	"aster",
 	"sl1me",
 	"NeCo/WIN",
-	"NI 1.3",		/* XXX also "NI\x001.3", not sure how to check that */
+	"NI 1.3",		/* FIXME also "NI\x001.3", not sure how to check that */
 	"NI1.3",
 	"Turk",
 	"MJR",

@@ -25,7 +25,7 @@ static struct board_funcs singlechip_funcs = {
 	.init = singlechip_init,
 };
 
-/* XXX not sure what the default bank values should be */
+/* FIXME not sure what the default bank values should be */
 static struct bank singlechip_init_chr0[] = {
 	{0, 0, SIZE_1K, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_CIRAM},
 	{0, 0, SIZE_1K, 0x0400, MAP_PERM_READWRITE, MAP_TYPE_CIRAM},

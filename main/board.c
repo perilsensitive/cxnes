@@ -2159,7 +2159,7 @@ static void board_internal_nmt_sync(struct board *board)
 		case MAP_TYPE_MAPPER_RAM:
 			data = board->mapper_ram.data;
 			data_size = board->mapper_ram.size;
-			/* XXX should this be readonly? */
+			/* FIXME should this be readonly? */
 			break;
 		case MAP_TYPE_FILL:
 			data = board->fill_mode_nmt;
@@ -2437,7 +2437,7 @@ CPU_WRITE_HANDLER(standard_mirroring_handler)
 	board_set_ppu_mirroring(emu->board, info->mirroring_values[value]);
 }
 
-/* XXX I don't know if these should go in their own .c file */
+/* FIXME I don't know if these should go in their own .c file */
 struct bank std_prg_46k[] = {
 	{-23, 0, SIZE_2K, 0x4800, MAP_PERM_READ, MAP_TYPE_ROM},
 	{-11, 0, SIZE_4K, 0x5000, MAP_PERM_READ, MAP_TYPE_ROM},

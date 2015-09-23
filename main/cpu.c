@@ -768,7 +768,7 @@ cpu_write_handler_t *cpu_get_write_handler(struct cpu_state *cpu, int addr)
 static void read_dma_transfer(struct cpu_state *cpu, int addr)
 {
 #if 1
-	/* XXX should only be ==, not >= */
+	/* FIXME should only be ==, not >= */
 	if (cpu->cycles > cpu->dma_timestamp) {
 		fprintf(stderr,
 			"DEBUG read_mem: cycles should never be greater "
@@ -785,7 +785,7 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 static void write_dma_transfer(struct cpu_state *cpu, int addr)
 {
 #if 1
-	/* XXX should only be ==, not >= */
+	/* FIXME should only be ==, not >= */
 	if (cpu->cycles > cpu->dma_timestamp) {
 		fprintf(stderr,
 			"DEBUG write_mem: cycles should never be greater "
@@ -1076,7 +1076,7 @@ static void brk(struct cpu_state *cpu)
 		vector = RESET_VECTOR;
 		cpu->P &= ~B_FLAG;
 
-		/* XXX do we clear other interrupts as well? */
+		/* FIXME do we clear other interrupts as well? */
 		cpu->interrupts &= ~IRQ_RESET_MASK;
 
 		/* "Push" PC and flags onto stack (except

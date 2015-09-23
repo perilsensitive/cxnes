@@ -822,7 +822,7 @@ static CPU_WRITE_HANDLER(mmc3_write_handler)
 		if (_first_bank_select) {
 			if (_mmc6_compat_hack) {
 				if (value & 0x20) {
-					/* XXX should this be a debugging statement? */
+					/* FIXME should this be a debugging statement? */
 					printf
 					    ("MMC6 compatibility hack enabled\n");
 					board->prg_banks[0].perms =
