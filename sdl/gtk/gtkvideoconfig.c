@@ -32,7 +32,6 @@ static void ntsc_filter_preset_callback(GtkWidget *widget, GdkEvent *Event,
 
 static void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data);
 
-#if 0
 static void rgba_to_gdkrgba(uint32_t rgba, GdkRGBA *color)
 {
 	int red;
@@ -75,7 +74,6 @@ static void color_button_callback(GtkColorButton *button, gpointer user_data)
 
 	*ptr = rgba;
 }
-#endif
 
 static void palette_combo_box_callback(GtkComboBox *combo, gpointer user_data)
 {
@@ -98,7 +96,6 @@ static void palette_combo_box_callback(GtkComboBox *combo, gpointer user_data)
 	gtk_widget_set_sensitive(button, sensitive);
 }
 
-#if 0
 static void default_button_color_button_cb(GtkDialog *dialog,
 					   gint response_id,
 					   gpointer user_data)
@@ -156,7 +153,6 @@ static GtkWidget *config_color_button(GtkWidget *dialog, struct config *config,
 
 	return button;
 }
-#endif
 
 void ntsc_auto_tune_callback(GtkToggleButton *toggle, gpointer user_data)
 {
@@ -548,77 +544,79 @@ static GtkWidget *create_ntsc_palette_config_frame(GtkWidget *dialog, struct con
 	return ntsc_palette_options_frame;
 }
 
-/* static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *config) */
-/* { */
-/* 	GtkWidget *osd_options_frame; */
-/* 	GtkWidget *osd_options_grid; */
-/* 	GtkWidget *spin_osd_min_font_size; */
-/* 	GtkWidget *spin_osd_delay; */
-/* 	GtkWidget *osd_fg_color; */
-/* 	GtkWidget *osd_bg_color; */
-/* 	GtkWidget *button_font_path; */
-/* 	GtkWidget *check_osd_enabled; */
-/* 	GtkWidget *font_path_entry; */
+static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *config)
+{
+	GtkWidget *osd_options_frame;
+	GtkWidget *osd_options_grid;
+	GtkWidget *spin_osd_min_font_size;
+	GtkWidget *spin_osd_delay;
+	GtkWidget *osd_fg_color;
+	GtkWidget *osd_bg_color;
+	GtkWidget *button_font_path;
+	GtkWidget *check_osd_enabled;
+	GtkWidget *font_path_entry;
 
-/* 	GtkWidget *tmp; */
+	GtkWidget *tmp;
 
-/* 	osd_options_frame = gtk_frame_new(NULL); */
-/* 	tmp = gtk_label_new(NULL); */
-/* 	gtk_label_set_markup(GTK_LABEL(tmp), "<b>On-Screen Display Options</b>"); */
-/* 	gtk_frame_set_label_widget(GTK_FRAME(osd_options_frame), tmp); */
-/* 	gtk_frame_set_shadow_type(GTK_FRAME(osd_options_frame), GTK_SHADOW_NONE); */
+	osd_options_frame = gtk_frame_new(NULL);
+	tmp = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(tmp), "<b>On-Screen Display Options</b>");
+	gtk_frame_set_label_widget(GTK_FRAME(osd_options_frame), tmp);
+	gtk_frame_set_shadow_type(GTK_FRAME(osd_options_frame), GTK_SHADOW_NONE);
 
-/* 	osd_options_grid = gtk_grid_new(); */
-/* 	gtk_container_add(GTK_CONTAINER(osd_options_frame), */
-/* 			  osd_options_grid); */
+	osd_options_grid = gtk_grid_new();
+	gtk_grid_set_row_spacing(GTK_GRID(osd_options_grid), 8);
+	gtk_grid_set_column_spacing(GTK_GRID(osd_options_grid), 8);
+	gtk_container_add(GTK_CONTAINER(osd_options_frame),
+			  osd_options_grid);
 
-/* 	check_osd_enabled = config_checkbox(dialog, "On-Screen Display enabled", */
-/* 					    config, "osd_enabled"); */
-/* 	spin_osd_min_font_size = config_int_spinbutton(dialog, config, */
-/* 						       "osd_min_font_size"); */
-/* 	tmp = gtk_label_new("Minimum font size:"); */
-/* 	gtk_widget_set_halign(tmp, GTK_ALIGN_START); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 1, 1, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_min_font_size, 1, 1, 1, 1); */
+	check_osd_enabled = config_checkbox(dialog, "On-Screen Display enabled",
+					    config, "osd_enabled");
+	spin_osd_min_font_size = config_int_spinbutton(dialog, config,
+						       "osd_min_font_size");
+	tmp = gtk_label_new("Minimum font size:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_min_font_size, 1, 1, 1, 1);
 
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), check_osd_enabled, 0, 0, 1, 1); */
+	gtk_grid_attach(GTK_GRID(osd_options_grid), check_osd_enabled, 0, 0, 1, 1);
 
-/* 	tmp = gtk_label_new("Seconds OSD displayed:"); */
-/* 	gtk_widget_set_halign(tmp, GTK_ALIGN_START); */
+	tmp = gtk_label_new("Seconds OSD displayed:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 
-/* 	spin_osd_delay = config_int_spinbutton(dialog, config, */
-/* 					       "osd_delay"); */
+	spin_osd_delay = config_int_spinbutton(dialog, config,
+					       "osd_delay");
 
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 2, 1, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_delay, 1, 2, 1, 1); */
+	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_delay, 1, 2, 1, 1);
 
-/* 	tmp = gtk_label_new("Foreground color:"); */
-/* 	gtk_widget_set_halign(tmp, GTK_ALIGN_START); */
-/* 	osd_fg_color = config_color_button(dialog, config, "osd_fg_rgba"); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 3, 1, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_fg_color, 1, 3, 1, 1); */
+	tmp = gtk_label_new("Foreground color:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	osd_fg_color = config_color_button(dialog, config, "osd_fg_rgba");
+	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_fg_color, 1, 3, 1, 1);
 
-/* 	tmp = gtk_label_new("Background color:"); */
-/* 	gtk_widget_set_halign(tmp, GTK_ALIGN_START); */
-/* 	osd_bg_color = config_color_button(dialog, config, "osd_bg_rgba"); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 4, 1, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_bg_color, 1, 4, 1, 1); */
+	tmp = gtk_label_new("Background color:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	osd_bg_color = config_color_button(dialog, config, "osd_bg_rgba");
+	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_bg_color, 1, 4, 1, 1);
 
-/* 	tmp = gtk_label_new("Font path:"); */
-/* 	gtk_widget_set_halign(tmp, GTK_ALIGN_START); */
-/* 	font_path_entry = config_entry(dialog, config, "osd_font_path"); */
-/* 	// set width? */
-/* 	button_font_path = gtk_button_new_with_label("Browse..."); */
+	tmp = gtk_label_new("Font path:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	font_path_entry = config_entry(dialog, config, "osd_font_path");
+	// set width?
+	button_font_path = gtk_button_new_with_label("Browse...");
 
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 5, 1, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), font_path_entry, 1, 5, 2, 1); */
-/* 	gtk_grid_attach(GTK_GRID(osd_options_grid), button_font_path, 3, 5, 1, 1); */
-/* 	g_object_set_data(G_OBJECT(button_font_path), "dialog", dialog); */
-/* 	g_signal_connect(G_OBJECT(button_font_path), "clicked", */
-/* 			 G_CALLBACK(file_chooser_callback), font_path_entry); */
+	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), font_path_entry, 1, 5, 2, 1);
+	gtk_grid_attach(GTK_GRID(osd_options_grid), button_font_path, 3, 5, 1, 1);
+	g_object_set_data(G_OBJECT(button_font_path), "dialog", dialog);
+	g_signal_connect(G_OBJECT(button_font_path), "clicked",
+			 G_CALLBACK(file_chooser_callback), font_path_entry);
 
-/* 	return osd_options_frame; */
-/* } */
+	return osd_options_frame;
+}
 
 static void configuration_setup_palette(GtkWidget *dialog, struct config *config)
 {
@@ -652,7 +650,7 @@ static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 
 	GtkWidget *display_options_frame;
 	GtkWidget *display_size_frame;
-	/* GtkWidget *osd_config_frame; */
+	GtkWidget *osd_config_frame;
 
 	row1_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	row2_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -662,7 +660,7 @@ static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 
 	display_options_frame = create_display_options_frame(dialog, config);
 	display_size_frame = create_display_size_frame(dialog, config);
-	/* osd_config_frame = create_osd_config_frame(dialog, config); */
+	osd_config_frame = create_osd_config_frame(dialog, config);
 
 	gtk_box_set_spacing(GTK_BOX(row1_box), 70);
 
@@ -670,8 +668,8 @@ static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 			   FALSE, FALSE, 8);
 	gtk_box_pack_start(GTK_BOX(row1_box), display_size_frame,
 			   FALSE, FALSE, 8);
-	/* gtk_box_pack_start(GTK_BOX(row3_box), osd_config_frame, */
-	/* 		   FALSE, FALSE, 8); */
+	gtk_box_pack_start(GTK_BOX(row2_box), osd_config_frame,
+			   FALSE, FALSE, 8);
 }
 
 void gui_video_configuration_dialog(GtkWidget *widget, gpointer user_data)
