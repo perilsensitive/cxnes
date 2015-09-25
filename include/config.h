@@ -47,15 +47,6 @@ enum {
 #define PATHSEP "\\"
 #endif
 
-#define DEFAULT_CONFIG_PATH "cxnes.cfg"
-#define DEFAULT_ROMCFG_PATH "romcfg"
-#define DEFAULT_CHEAT_PATH "cheat"
-#define DEFAULT_SAVE_PATH "save"
-#define DEFAULT_SCREENSHOT_PATH "screenshot"
-#define DEFAULT_PATCH_PATH "patch"
-#define DEFAULT_STATE_PATH "state"
-#define DEFAULT_ROM_PATH "."
-
 struct config {
 	/* PPU/Video options */
 	const char *sprite_limit_mode;

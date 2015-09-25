@@ -44,6 +44,12 @@
 #define DEFAULT_GAMECONTROLLER_DB "gamecontrollerdb.txt"
 #define DEFAULT_USER_GAMECONTROLLER_DB "user_gamecontrollerdb.txt"
 #define DEFAULT_ROM_DB "romdb.txt"
+#define DEFAULT_CHEAT_PATH "cheat"
+#define DEFAULT_SAVE_PATH "save"
+#define DEFAULT_PATCH_PATH "patch"
+#define DEFAULT_STATE_PATH "state"
+#define DEFAULT_ROMCFG_PATH "romcfg"
+#define DEFAULT_SCREENSHOT_PATH "screenshot"
 
 struct binding_item {
 	char *name;
