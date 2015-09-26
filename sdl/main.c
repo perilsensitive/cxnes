@@ -64,6 +64,7 @@ static int test_duration = -1;
 static const char *frame_dumpfile;
 static const char *rom_dumpfile;
 
+static int portable;
 static int nomaincfg;
 static int noromcfg;
 static int show_help;
@@ -147,6 +148,7 @@ static struct option long_options[] = {
 	{ "frame-dumpfile", required_argument, 0, 'D'},
 	{ "rom-dumpfile", required_argument, 0, 'F'},
 	{ "test-duration", required_argument, &passed_duration, 1 },
+	{ "portable", no_argument, &portable, 1 },
 	{ 0, 0, 0, 0 },
 };
 
@@ -513,6 +515,7 @@ void help(const char *name, int brief)
 	printf("  -w, --window\t\tstart in windowed mode\n");
 	printf("      --help\t\tdisplay this help and exit\n");
 	printf("      --version\t\tdisplay version information and exit\n");
+	printf("      --portable\t\trun " PACKAGE_NAME " in portable mode\n");
 }
 
 int parse_command_line(struct cheat_state *cheats,
@@ -631,6 +634,7 @@ int main(int argc, char **argv)
 	noromcfg = 0;
 	show_help = 0;
 	show_version = 0;
+	portable = 0;
 
 	rc = parse_command_line(cheats, emu->config, argc, argv);
 	if (rc)
@@ -661,6 +665,13 @@ int main(int argc, char **argv)
 	
 	if (noromcfg)
 		config->skip_romcfg = 1; /* FIXME true */
+
+	if (portable) {
+		if (config_set_portable_mode()) {
+			fprintf(stderr, "failed to set portable mode\n");
+			return 1;
+		}
+	}
 
 	rc = config_load_main_config(emu->config);
 	rc = parse_command_line(cheats, emu->config, argc, argv);

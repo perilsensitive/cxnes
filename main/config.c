@@ -1072,7 +1072,6 @@ static int init_path_lists(void)
 	if (!data_path_list)
 		return -1;
 
-#if defined __unix__
 	path = get_user_data_path();
 	if (!path)
 		return -1;
@@ -1082,6 +1081,7 @@ static int init_path_lists(void)
 		return -1;
 	}
 
+#if defined __unix__
 	xdg_data_dirs = getenv("XDG_DATA_DIRS");
 	if (xdg_data_dirs)
 		xdg_data_dirs = strdup(xdg_data_dirs);
@@ -2099,4 +2099,26 @@ static int config_check_changed(struct config *config,
 	}
 
 	return rc;
+}
+
+int config_set_portable_mode(void)
+{
+	char *path;
+
+	path_list_free(data_path_list);
+	data_path_list = path_list_new();
+
+	if (!data_path_list)
+		return -1;
+
+	path = get_base_path();
+	if (!path)
+		return -1;
+
+	if (path_list_add_entry(data_path_list, path)) {
+		free(path);
+		return -1;
+	}
+
+	return 0;
 }
