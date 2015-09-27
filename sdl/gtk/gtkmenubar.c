@@ -183,7 +183,8 @@ static void about_callback(GtkWidget *widget, gpointer userdata) {
 	GtkWidget *aboutdialog = gtk_about_dialog_new();
 	GdkPixbuf *logo;
 
-	logo = gdk_pixbuf_new_from_file_at_size(DATADIR "/icons/cxnes.svg", 128, 128, NULL);
+	logo = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.svg",
+						128, 128, NULL);
 
 	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(aboutdialog), license);
 	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_NAME);

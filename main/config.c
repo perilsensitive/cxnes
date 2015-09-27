@@ -35,8 +35,7 @@
 #include "input.h"
 
 #define BUF_SIZE 256
-#define DEFAULT_USER_CONFIG_DIR ".cxnes"
-#define DEFAULT_USER_DATA_DIR ".cxnes"
+#define DEFAULT_DATA_DIR "cxnes"
 #define DEFAULT_OSD_FONT "PressStart2P.ttf"
 #define DEFAULT_MAIN_CONFIG "cxnes.cfg"
 #define DEFAULT_FDS_BIOS "disksys.rom"
@@ -1052,6 +1051,8 @@ int path_list_add_entry(struct path_list *list, char *path)
 
 	length = strlen(path);
 
+	printf("adding path %s\n", path);
+
 	if (length > list->max_length)
 		list->max_length = length;
 
@@ -1099,7 +1100,12 @@ static int init_path_lists(void)
 			*c = '\0';
 
 		if (strlen(t) && t[0] == '/') {
-			path = strdup(t);
+			int length = strlen(t) + 1 + strlen("/" PACKAGE_NAME);
+			path = malloc(length);
+			if (!path)
+				return -1;
+
+			snprintf(path, length, "%s/%s", t, PACKAGE_NAME);
 			if (path) {
 				path_list_add_entry(data_path_list,
 						    path);
@@ -2101,22 +2107,15 @@ static int config_check_changed(struct config *config,
 	return rc;
 }
 
-int config_set_portable_mode(void)
+int config_set_portable_mode(char *path)
 {
-	char *path;
-
 	path_list_free(data_path_list);
 	data_path_list = path_list_new();
 
 	if (!data_path_list)
 		return -1;
 
-	path = get_base_path();
-	if (!path)
-		return -1;
-
 	if (path_list_add_entry(data_path_list, path)) {
-		free(path);
 		return -1;
 	}
 

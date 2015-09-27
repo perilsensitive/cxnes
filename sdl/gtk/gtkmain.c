@@ -753,7 +753,8 @@ void *gui_init(int argc, char **argv)
 	gtk_init(&argc, &argv);
 	keycode_map_init();
 
-	icon = gdk_pixbuf_new_from_file_at_size(DATADIR "/icons/cxnes.png", 128, 128, NULL);
+	icon = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.png",
+						128, 128, NULL);
 
 	blank_cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
 	crosshair_cursor = gdk_cursor_new(GDK_CROSSHAIR);

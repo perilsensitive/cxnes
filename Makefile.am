@@ -1,5 +1,5 @@
 AM_CFLAGS = --param large-function-growth=600 -I ./include -Wall -Werror=format-security \
-            -DDATADIR='"$(pkgdatadir)"'
+            -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"'
 AM_LDFLAGS = -lm
 
 .rc.o:
