@@ -1,5 +1,6 @@
 AM_CFLAGS = --param large-function-growth=600 -I ./include -Wall -Werror=format-security \
-            -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"'
+            -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
+            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"'
 AM_LDFLAGS = -lm
 
 .rc.o:
