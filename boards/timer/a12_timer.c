@@ -343,6 +343,7 @@ void a12_timer_set_irq_enabled(struct a12_timer *timer, int enabled, uint32_t cy
 	ppu_run(timer->emu->ppu, cycles);
 
 	if (!enabled) {
+		timer->next_irq = ~0;
 		cpu_interrupt_ack(timer->emu->cpu, IRQ_A12_TIMER);
 		cpu_interrupt_cancel(timer->emu->cpu, IRQ_A12_TIMER);
 	}
