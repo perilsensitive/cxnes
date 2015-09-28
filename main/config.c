@@ -1901,6 +1901,7 @@ int config_load_rom_config(struct config *config, char *filename)
 	int rc;
 
 	path = NULL;
+	configpath = NULL;
 	rc = 0;
 	skip = config->skip_romcfg;
 
@@ -1959,7 +1960,7 @@ int config_load_rom_config(struct config *config, char *filename)
 	if (check_file_exists(path))
 		goto done;
 
-
+	free(configpath);
 	free(path);
 	return 0;
 
@@ -1975,6 +1976,8 @@ done:
 		free(path);
 	}
 
+	if (configpath)
+		free(configpath);
 	return rc;
 }
 

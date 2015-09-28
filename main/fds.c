@@ -559,8 +559,10 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	new_size += 16;
 
 	tmp = realloc(rom->buffer, new_size);
-	if (!tmp)
+	if (!tmp) {
+		free(bios_file);
 		return -1;
+	}
 
 	rom->buffer = tmp;
 	rom->buffer_size = new_size;

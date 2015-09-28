@@ -627,11 +627,12 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 		db_path = config_get_path(emu->config,
 					      CONFIG_DATA_FILE_ROM_DB,
 					      NULL, 0);
-		if (check_file_exists(db_path)) {
+
+		if (check_file_exists(db_path))
 			db_load_file(emu, db_path);
-			free(db_path);
-			db_path = NULL;
-		}
+
+		free(db_path);
+		db_path = NULL;
 	}
 
 	rom = rom_load_file(emu, filename);
@@ -1118,8 +1119,8 @@ static char *emu_generate_rom_config_path(struct emu *emu, int save)
 	}
 
 	default_cfg_file = config_get_path(emu->config,
-					       CONFIG_DATA_DIR_CONFIG,
-					       emu->cfg_file, save);
+					   CONFIG_DATA_DIR_CONFIG,
+					   emu->cfg_file, save);
 
 	if (!default_cfg_file) {
 		free(romdir_cfg_file);
