@@ -306,7 +306,7 @@ static int load_gamecontroller_mappings(struct config *config)
 
 
 	filename = config_get_path(config,
-				       CONFIG_DATA_FILE_USER_GAMECONTROLLER_DB,
+				       CONFIG_DATA_FILE_GAMECONTROLLER_DB,
 				       NULL, 1);
 
 	file = SDL_RWFromFile(filename, "rb");

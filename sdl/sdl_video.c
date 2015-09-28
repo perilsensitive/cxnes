@@ -981,7 +981,7 @@ int video_init(struct emu *emu)
 
 	osd_font_name = config_get_path(emu->config,
 					    CONFIG_DATA_FILE_OSD_FONT,
-					    NULL, 0);
+					    NULL, -1);
 
 	scaled_texture = NULL;
 

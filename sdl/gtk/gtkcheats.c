@@ -247,7 +247,7 @@ static void load_callback(GtkButton *button, gpointer user_data)
 	parent = g_object_get_data(G_OBJECT(button), "parent");
 
 	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT,
-				     NULL, 0);
+				     NULL, -1);
 	shortcuts[0] = cheat_path;
 	file = file_dialog(parent, "Select Cheat File",
 			   GTK_FILE_CHOOSER_ACTION_OPEN,

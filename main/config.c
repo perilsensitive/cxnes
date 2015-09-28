@@ -40,7 +40,6 @@
 #define DEFAULT_FDS_BIOS "disksys.rom"
 #define DEFAULT_NSF_ROM "nsf.rom"
 #define DEFAULT_GAMECONTROLLER_DB "gamecontrollerdb.txt"
-#define DEFAULT_USER_GAMECONTROLLER_DB "user_gamecontrollerdb.txt"
 #define DEFAULT_ROM_DB "romdb.txt"
 #define DEFAULT_CHEAT_PATH "cheat"
 #define DEFAULT_SAVE_PATH "save"
@@ -1145,6 +1144,7 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 	const char *default_path;
 	char *buffer;
 	int length;
+	int limit;
 	int i;
 
 	config_value = NULL;
@@ -1196,9 +1196,6 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 	case CONFIG_DATA_FILE_GAMECONTROLLER_DB:
 		filename = DEFAULT_GAMECONTROLLER_DB;
 		break;
-	case CONFIG_DATA_FILE_USER_GAMECONTROLLER_DB:
-		filename = DEFAULT_USER_GAMECONTROLLER_DB;
-		break;
 	case CONFIG_DATA_FILE_ROM_DB:
 		filename = DEFAULT_ROM_DB;
 		break;
@@ -1232,17 +1229,21 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 		return buffer;
 	}
 
-	for (i = 0; i < data_path_list->count; i++) {
+	limit = data_path_list->count;
+	if (user > 0 && limit)
+		limit = 1;
+
+	for (i = (user ? 0 : 1); i < limit; i++) {
 		snprintf(buffer, length, "%s%s%s%s",
 			 data_path_list->paths[i],
 			 default_path,
 			 filename[0] ? "/" : "", filename);
 
-		if (user || check_file_exists(buffer))
+		if ((user > 0) || check_file_exists(buffer))
 			break;
 	}
 
-	if (i == data_path_list->count) {
+	if (i == limit) {
 		free(buffer);
 		buffer = NULL;
 	}
@@ -1255,7 +1256,7 @@ char *config_get_fds_bios(struct config *config)
 	char *filename;
 
 	filename = config_get_path(config, CONFIG_DATA_FILE_FDS_BIOS,
-					       NULL, 0);
+					       NULL, -1);
 
 	return filename;
 }
@@ -1265,7 +1266,7 @@ char *config_get_nsf_rom(struct config *config)
 	char *filename;
 
 	filename = config_get_path(config, CONFIG_DATA_FILE_NSF_ROM,
-					       NULL, 0);
+					       NULL, -1);
 
 	return filename;
 }
@@ -1916,7 +1917,7 @@ int config_load_rom_config(struct config *config, char *filename)
 		goto done;
 
 	configpath = config_get_path(config, CONFIG_DATA_DIR_CONFIG,
-					 NULL, 0);
+					 NULL, -1);
 
 	if (!configpath)
 		return 0;

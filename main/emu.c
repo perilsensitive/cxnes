@@ -626,7 +626,7 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 	if (emu->config->db_enabled) {
 		db_path = config_get_path(emu->config,
 					      CONFIG_DATA_FILE_ROM_DB,
-					      NULL, 0);
+					      NULL, -1);
 
 		if (check_file_exists(db_path))
 			db_load_file(emu, db_path);
@@ -1245,7 +1245,7 @@ void emu_load_cheat(struct emu *emu)
 		return;
 
 	buffer = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT,
-				     emu->cheat_file, 0);
+				     emu->cheat_file, -1);
 
 	if (check_file_exists(buffer)) {
 		if (cheat_load_file(emu, buffer) != 0) {
