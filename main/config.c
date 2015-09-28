@@ -2165,19 +2165,19 @@ int config_set_portable_mode(int portable)
 			if (path_list_add_entry(data_path_list, base_path) == 0)
 				base_path = NULL;
 		}
+
+		if (tmp) {
+			free(tmp);
+			rc = -1;
+		}
+
+		if (base_path) {
+			free(base_path);
+			rc = -1;
+		}
 	}
 
 	rc = 0;
-
-	if (base_path) {
-		free(base_path);
-		rc = -1;
-	}
-
-	if (tmp) {
-		free(tmp);
-		rc = -1;
-	}
 
 	if (!rc && portable) {
 		log_info("Enabling portable mode\n");
