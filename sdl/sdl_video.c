@@ -979,7 +979,7 @@ int video_init(struct emu *emu)
 	fps_timer = 0;
 	video_reset_autohide_timer();
 
-	osd_font_name = config_get_path_new(emu->config,
+	osd_font_name = config_get_path(emu->config,
 					    CONFIG_DATA_FILE_OSD_FONT,
 					    NULL, 0);
 

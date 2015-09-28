@@ -246,7 +246,7 @@ static void load_callback(GtkButton *button, gpointer user_data)
 	store = (GtkTreeStore *)user_data;
 	parent = g_object_get_data(G_OBJECT(button), "parent");
 
-	cheat_path = config_get_path_new(emu->config, CONFIG_DATA_DIR_CHEAT,
+	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT,
 				     NULL, 0);
 	shortcuts[0] = cheat_path;
 	file = file_dialog(parent, "Select Cheat File",
@@ -279,7 +279,7 @@ static void save_callback(GtkButton *button, gpointer user_data)
 	const char *default_cheat_file;
 
 	default_cheat_file = emu->cheat_file;
-	cheat_path = config_get_path_new(emu->config, CONFIG_DATA_DIR_CHEAT, NULL, 1);
+	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT, NULL, 1);
 	cheat_folder = g_file_new_for_path(cheat_path);
 	free(cheat_path);
 

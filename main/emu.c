@@ -624,7 +624,7 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 
 	db_path = NULL;
 	if (emu->config->db_enabled) {
-		db_path = config_get_path_new(emu->config,
+		db_path = config_get_path(emu->config,
 					      CONFIG_DATA_FILE_ROM_DB,
 					      NULL, 0);
 		if (check_file_exists(db_path)) {
@@ -961,7 +961,7 @@ int emu_quick_save_state(struct emu *emu, int quick_save_index, int display)
 
 	state_file = emu->state_file;
 
-	path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+	path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 				   state_file, 1);
 	len = strlen(path);
 
@@ -1000,7 +1000,7 @@ int emu_quick_load_state(struct emu *emu, int quick_save_index, int display)
 
 	state_file = emu->state_file;
 
-	path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+	path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 				   state_file, 1);
 	len = strlen(path);
 
@@ -1117,7 +1117,7 @@ static char *emu_generate_rom_config_path(struct emu *emu, int save)
 		return NULL;
 	}
 
-	default_cfg_file = config_get_path_new(emu->config,
+	default_cfg_file = config_get_path(emu->config,
 					       CONFIG_DATA_DIR_CONFIG,
 					       emu->cfg_file, save);
 
@@ -1243,7 +1243,7 @@ void emu_load_cheat(struct emu *emu)
 	if (!emu->config->autoload_cheats)
 		return;
 
-	buffer = config_get_path_new(emu->config, CONFIG_DATA_DIR_CHEAT,
+	buffer = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT,
 				     emu->cheat_file, 0);
 
 	if (check_file_exists(buffer)) {

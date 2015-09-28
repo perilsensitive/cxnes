@@ -207,7 +207,7 @@ static void apply_patch_callback(GtkWidget *widget, gpointer user_data)
 	char *patch_path;
 	GtkWidget *gtkwindow = user_data;
 
-	patch_path = config_get_path_new(emu->config, CONFIG_DATA_DIR_PATCH,
+	patch_path = config_get_path(emu->config, CONFIG_DATA_DIR_PATCH,
 					 NULL, 1);
 	shortcuts[0] = patch_path;
 
@@ -293,7 +293,7 @@ static void load_state(GtkWidget *widget, gpointer user_data)
 	if (!paused)
 		emu_pause(emu, 1);
 
-	state_path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+	state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 					 NULL, 1);
 	shortcuts[0] = state_path;
 
@@ -339,7 +339,7 @@ static void save_state(GtkWidget *widget, gpointer user_data)
 		emu_pause(emu, 1);
 
 	default_state_file = emu->state_file;
-	state_path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+	state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 					 NULL, 1);
 	shortcuts[0] = state_path;
 

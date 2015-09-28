@@ -1140,7 +1140,7 @@ static void free_path_lists(void)
 		path_list_free(data_path_list);
 }
 
-char *config_get_path_new(struct config *config, int which, const char* filename, int user)
+char *config_get_path(struct config *config, int which, const char* filename, int user)
 {
 	const char *config_value;
 	const char *default_path;
@@ -1255,7 +1255,7 @@ char *config_get_fds_bios(struct config *config)
 {
 	char *filename;
 
-	filename = config_get_path_new(config, CONFIG_DATA_FILE_FDS_BIOS,
+	filename = config_get_path(config, CONFIG_DATA_FILE_FDS_BIOS,
 					       NULL, 0);
 
 	return filename;
@@ -1265,7 +1265,7 @@ char *config_get_nsf_rom(struct config *config)
 {
 	char *filename;
 
-	filename = config_get_path_new(config, CONFIG_DATA_FILE_NSF_ROM,
+	filename = config_get_path(config, CONFIG_DATA_FILE_NSF_ROM,
 					       NULL, 0);
 
 	return filename;
@@ -1835,7 +1835,7 @@ int config_save_main_config(struct config *config)
 	char *buffer;
 	int rc;
 
-	buffer = config_get_path_new(config, CONFIG_DATA_FILE_MAIN_CFG,
+	buffer = config_get_path(config, CONFIG_DATA_FILE_MAIN_CFG,
 				     NULL, 1);
 
 	if (!buffer)
@@ -1867,7 +1867,7 @@ int config_load_main_config(struct config *config)
 	int skip;
 	int rc;
 
-	buffer = config_get_path_new(config, CONFIG_DATA_FILE_MAIN_CFG,
+	buffer = config_get_path(config, CONFIG_DATA_FILE_MAIN_CFG,
 				     NULL, 1);
 
 	rc = 0;
@@ -1915,7 +1915,7 @@ int config_load_rom_config(struct config *config, char *filename)
 	if (p) 
 		goto done;
 
-	configpath = config_get_path_new(config, CONFIG_DATA_DIR_CONFIG,
+	configpath = config_get_path(config, CONFIG_DATA_DIR_CONFIG,
 					 NULL, 0);
 
 	if (!configpath)

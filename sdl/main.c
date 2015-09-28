@@ -285,7 +285,7 @@ int save_screenshot(void)
 	int rc;
 
 	rc = -1;
-	screenshot_path = config_get_path_new(emu->config,
+	screenshot_path = config_get_path(emu->config,
 					      CONFIG_DATA_DIR_SCREENSHOT,
 					      NULL, 1);
 
@@ -823,7 +823,7 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 
 	if (emu->config->autoload_state) {
 		char *path;
-		path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+		path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 					   emu->state_file, 1);
 		printf("path is %s\n", path);
 		if (check_file_exists(path)) {
@@ -846,7 +846,7 @@ int close_rom(struct emu *emu)
 
 	if (emu->config->autosave_state) {
 		char *path;
-		path = config_get_path_new(emu->config, CONFIG_DATA_DIR_STATE,
+		path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
 					   emu->state_file, 1);
 
 		if (emu_save_state(emu, path) == 0)

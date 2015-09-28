@@ -668,7 +668,7 @@ char **rom_find_autopatches(struct config *config, struct rom *rom)
 		return NULL;
 	}
 
-	patch_path = config_get_path_new(config, CONFIG_DATA_DIR_PATCH, NULL, 1);
+	patch_path = config_get_path(config, CONFIG_DATA_DIR_PATCH, NULL, 1);
 	if (!patch_path) {
 		free(tmp);
 		free(tmp2);

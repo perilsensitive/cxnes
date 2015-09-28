@@ -1169,7 +1169,7 @@ static int board_init_nvram(struct board *board, size_t size)
 			 PATHSEP[0], board->emu->save_file);
 	}
 
-	save_file = config_get_path_new(board->emu->config,
+	save_file = config_get_path(board->emu->config,
 					CONFIG_DATA_DIR_SAVE,
 					board->emu->save_file, 1);
 
@@ -1466,7 +1466,7 @@ static void board_cleanup_nvram(struct board *board)
 		return;
 	}
 
-	save_file = config_get_path_new(board->emu->config,
+	save_file = config_get_path(board->emu->config,
 					CONFIG_DATA_DIR_SAVE,
 					board->emu->save_file, 1);
 
@@ -1554,7 +1554,7 @@ static int board_apply_ips_save(struct board *board)
 	p = NULL;
 	rc = -1;
 
-	save_file = config_get_path_new(board->emu->config,
+	save_file = config_get_path(board->emu->config,
 					CONFIG_DATA_DIR_SAVE,
 					board->emu->save_file, 1);
 
@@ -1862,7 +1862,7 @@ void board_write_ips_save(struct board *board, struct range_list *range_list)
 
 	p = NULL;
 
-	save_file = config_get_path_new(board->emu->config,
+	save_file = config_get_path(board->emu->config,
 					CONFIG_DATA_DIR_SAVE,
 					board->emu->save_file, 1);
 
@@ -1901,7 +1901,7 @@ void board_cleanup(struct board *board)
 	}
 
 	if (emu->cheat_file && board->emu->config->autosave_cheats) {
-		char *buffer = config_get_path_new(board->emu->config,
+		char *buffer = config_get_path(board->emu->config,
 						   CONFIG_DATA_DIR_CHEAT,
 						   emu->cheat_file, 1);
 		if (buffer)
