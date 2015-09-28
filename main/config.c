@@ -1051,8 +1051,6 @@ int path_list_add_entry(struct path_list *list, char *path)
 
 	length = strlen(path);
 
-	printf("adding path %s\n", path);
-
 	if (length > list->max_length)
 		list->max_length = length;
 
@@ -2107,17 +2105,84 @@ static int config_check_changed(struct config *config,
 	return rc;
 }
 
-int config_set_portable_mode(char *path)
+int config_set_portable_mode(int portable)
 {
-	path_list_free(data_path_list);
-	data_path_list = path_list_new();
+	char *base_path, *tmp;
+	char sep;
+	int length;
+	int rc;
 
-	if (!data_path_list)
+#if _WIN32
+	sep = '\\';
+#else
+	sep = '/';
+#endif
+
+	rc = 0;
+
+	base_path = get_base_path();
+	if (!base_path)
 		return -1;
 
-	if (path_list_add_entry(data_path_list, path)) {
+	length = strlen(base_path);
+	length += strlen("data/" PACKAGE_NAME "/portable.txt.txt") + 1;
+
+	tmp = malloc(length);
+	if (!tmp) {
+		free(base_path);
 		return -1;
 	}
 
-	return 0;
+	snprintf(tmp, length, "%sdata%c%s%cportable.txt", base_path, sep,
+		 PACKAGE_NAME, sep);
+
+	rc = check_file_exists(tmp);
+	if (!rc) {
+		snprintf(tmp, length, "%sdata%c%s%cportable.txt.txt", base_path,
+			 sep, PACKAGE_NAME, sep);
+		rc = check_file_exists(tmp);
+	}
+
+	if (rc > 0)
+		portable = 1;
+	else
+		rc = -1;
+
+	if (portable) {
+		char *p;
+
+		p = strrchr(tmp, sep);
+		if (p)
+			*p = '\0';
+		
+		path_list_free(data_path_list);
+		data_path_list = path_list_new();
+
+		if (data_path_list) {
+			if (path_list_add_entry(data_path_list, tmp) == 0)
+				tmp = NULL;
+
+			if (path_list_add_entry(data_path_list, base_path) == 0)
+				base_path = NULL;
+		}
+	}
+
+	rc = 0;
+
+	if (base_path) {
+		free(base_path);
+		rc = -1;
+	}
+
+	if (tmp) {
+		free(tmp);
+		rc = -1;
+	}
+
+	if (!rc && portable) {
+		fprintf(stdout, "Enabling portable mode\n");
+	}
+
+	return rc;
 }
+

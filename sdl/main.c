@@ -607,59 +607,6 @@ int parse_command_line(struct cheat_state *cheats,
 	return 0;
 }
 
-static int check_portable_flag(int portable)
-{
-	char *path, *tmp;
-	char sep;
-	int length;
-	int rc;
-
-#if _WIN32
-	sep = '\\';
-#else
-	sep = '/';
-#endif
-
-	rc = 0;
-
-	path = get_base_path();
-	if (!path)
-		return -1;
-
-	length = strlen(path);
-	length += strlen("data/" PACKAGE_NAME "/portable.txt.txt");
-
-	tmp = malloc(length + 1);
-	if (!tmp) {
-		free(path);
-		return -1;
-	}
-
-	snprintf(tmp, length, "%sdata%c%s%cportable.txt", path, sep,
-		 PACKAGE_NAME, sep);
-
-	rc = check_file_exists(tmp);
-	if (!rc) {
-		snprintf(tmp, length, "%sdata%c%s%cportable.txt.txt", path, sep,
-			 PACKAGE_NAME, sep);
-		rc = check_file_exists(tmp);
-	}
-
-	if ((rc > 1) || portable) {
-		char *p = strrchr(tmp, sep);
-		if (*p) {
-			*p = '\0';
-			config_set_portable_mode(tmp);
-		}
-	} else {
-		free(tmp);
-	}
-
-	free(path);
-
-	return rc;
-}
-
 int main(int argc, char **argv)
 {
 	struct config *config;
@@ -719,9 +666,8 @@ int main(int argc, char **argv)
 	if (noromcfg)
 		config->skip_romcfg = 1;
 
-	if (check_portable_flag(portable) < -1) {
+	if (config_set_portable_mode(portable))
 		return 1;
-	}
 
 	rc = config_load_main_config(emu->config);
 	rc = parse_command_line(cheats, emu->config, argc, argv);
