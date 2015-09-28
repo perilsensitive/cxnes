@@ -1248,10 +1248,12 @@ void emu_load_cheat(struct emu *emu)
 
 	if (check_file_exists(buffer)) {
 		if (cheat_load_file(emu, buffer) != 0) {
-			/* fprintf(stderr, "failed to read config file \"%s\"\n", */
-			/*      emu->cfg_file); */
+			/* log_warn("failed to read cheat file \"%s\"\n", */
+			/*      buffer); */
 		}
 	}
+
+	free(buffer);
 }
 
 

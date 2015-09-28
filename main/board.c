@@ -1486,7 +1486,7 @@ static void board_cleanup_nvram(struct board *board)
 
 	if (writefile(file, board->nv_ram_data,
 		      board->save_file_size)) {
-		fprintf(stderr, "failed to write file \"%s\"\n",
+		log_err("failed to write file \"%s\"\n",
 			file);
 	}
 
@@ -1661,14 +1661,14 @@ int board_init(struct emu *emu, struct rom *rom)
 	memset(zero_nmt, 0, sizeof(zero_nmt));
 
 	if (board->prg_rom.data && board->prg_rom.size > info->max_prg_rom_size) {
-		fprintf(stderr, "board_init: WARNING "
+		log_err("board_init: WARNING "
 			"PRG-ROM size %zu greater than allowed for %s (%zu)\n",
 			board->prg_rom.size, info->name,
 			info->max_prg_rom_size);
 	}
 
 	if (board->chr_rom.data && board->chr_rom.size > info->max_chr_rom_size) {
-		fprintf(stderr, "board_init: WARNING "
+		log_err("board_init: WARNING "
 			"CHR-ROM size %zu greater than allowed for %s (%zu)\n",
 			board->chr_rom.size, info->name,
 			info->max_chr_rom_size);
@@ -1873,7 +1873,7 @@ void board_write_ips_save(struct board *board, struct range_list *range_list)
 				&p);
 
 	if (size && writefile(save_file, p, size)) {
-		fprintf(stderr, "failed to write IPS save file \"%s\"\n",
+		log_err("failed to write IPS save file \"%s\"\n",
 			save_file);
 	}
 
@@ -2080,7 +2080,7 @@ void board_prg_sync(struct board *board)
 			data_size = board->mapper_ram.size;
 			break;
 		default:
-			fprintf(stderr, "board_prg_sync: invalid type %d\n",
+			log_err("board_prg_sync: invalid type %d\n",
 				type);
 			type = MAP_TYPE_NONE;
 			break;
@@ -2272,7 +2272,7 @@ void board_chr_sync(struct board *board, int set)
 			data_size = b->size;
 			break;
 		default:
-			fprintf(stderr, "board_chr_sync: invalid type %d\n",
+			log_err("board_chr_sync: invalid type %d\n",
 				type);
 			type = MAP_TYPE_NONE;
 			break;

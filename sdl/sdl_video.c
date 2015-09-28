@@ -349,7 +349,7 @@ static void load_osd_font(void)
 		font = TTF_OpenFont(osd_font_name, osd_min_font_size *
 				    multiplier);
 		if (!font)
-			fprintf(stderr, "Font failed to load: %s\n",
+			log_err("Font failed to load: %s\n",
 				TTF_GetError());
 	}
 
@@ -388,7 +388,7 @@ static void create_scaled_texture(SDL_Rect *rect)
 					   width, height);
 
 	if (!scaled_texture) {
-		fprintf(stderr, "failed to create scaled texture: %s\n",
+		log_err("failed to create scaled texture: %s\n",
 			SDL_GetError());
 	}
 }
@@ -660,13 +660,13 @@ int video_apply_config(struct emu *emu)
 
 		renderer = SDL_CreateRenderer(window, 0, flags);
 		if (!renderer) {
-			fprintf(stderr, "video_init: SDL_CreateRenderer() failed: %s\n",
+			log_err("video_init: SDL_CreateRenderer() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}
 
 		if (SDL_GetRendererInfo(renderer, &renderer_info) < 0) {
-			fprintf(stderr, "video_init: SDL_GetRendererInfo() failed: %s\n",
+			log_err("video_init: SDL_GetRendererInfo() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}
@@ -701,7 +701,7 @@ int video_apply_config(struct emu *emu)
 						width, height);
 				  
 		if (!nes_texture) {
-			fprintf(stderr, "video_init: SDL_CreateTexture() failed: %s\n",
+			log_err("video_init: SDL_CreateTexture() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}
@@ -752,7 +752,7 @@ int video_apply_config(struct emu *emu)
 		width_stretch_factor = 1;
 		height_stretch_factor = 1;
 		if (strcasecmp(aspect, "square") != 0) {
-			fprintf(stderr, "Invalid aspect ratio \"%s\"\n",
+			log_err("Invalid aspect ratio \"%s\"\n",
 				aspect);
 		}
 	}
@@ -927,7 +927,7 @@ static int video_create_window(void)
 
 
 	if (!window) {
-		fprintf(stderr, "video_init: SDL_CreateWindow() failed: %s\n",
+		log_err("video_init: SDL_CreateWindow() failed: %s\n",
 			SDL_GetError());
 		return 1;
 	}
@@ -938,7 +938,7 @@ static int video_create_window(void)
 	display_index = SDL_GetWindowDisplayIndex(window);
 
 	if (SDL_GetCurrentDisplayMode(display_index, &display_mode)) {
-		fprintf(stderr, "video_init: "
+		log_err("video_init: "
 			"SDL_GetCurrentDisplayMode() failed: %s\n",
 			SDL_GetError());
 		return 1;
@@ -946,7 +946,7 @@ static int video_create_window(void)
 
 	display_mode.refresh_rate = 60;
 	if (SDL_SetWindowDisplayMode(window, &display_mode) < 0) {
-		fprintf(stderr, "failed to set mode\n");
+		log_err("failed to set mode\n");
 	}
 
 	emu->display_framerate = display_mode.refresh_rate;
@@ -990,7 +990,7 @@ int video_init(struct emu *emu)
 	paused_due_to_lost_focus = 0;
 
 	if (TTF_Init() < 0)
-		fprintf(stderr, "failed to init TTF\n");
+		log_err("failed to init TTF\n");
 
 	/* Apply config to calculate rect sizes */
 	video_apply_config(emu);

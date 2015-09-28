@@ -158,7 +158,7 @@ void update_clock(void)
 #if __unix__
 	long ticks = prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec;
 	if (clock_gettime(CLOCK_MONOTONIC, &prev_clock) < 0) {
-		fprintf(stderr, "clock_gettime() failed\n");
+		log_err("clock_gettime() failed\n");
 	}
 	ticks = (prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec) - ticks;
 	frame_times[frame_index] = ticks;
@@ -177,7 +177,7 @@ static void deactivate_screensaver(void)
 	int child = fork();
 
 	if (child < 0) {
-		fprintf(stderr, "failed to fork screensaver command: %s\n",
+		log_err("failed to fork screensaver command: %s\n",
 			strerror(errno));
 		return;
 	} else if (child > 0) {
@@ -224,7 +224,7 @@ static void throttle(int draw_frame)
 	} while (rc == EINTR);
 
 	if (rc && (rc != EINTR)) {
-		fprintf(stderr, "clock_nanosleep() failed: %s\n",
+		log_err("clock_nanosleep() failed: %s\n",
 			strerror(errno));
 	}
 #else
@@ -356,7 +356,7 @@ static int main_loop(struct emu *emu)
 	}
 
 	if (clock_gettime(CLOCK_MONOTONIC, &prev_clock) < 0) {
-		fprintf(stderr, "clock_gettime() failed\n");
+		log_err("clock_gettime() failed\n");
 		return -1;
 	}
 #else
@@ -569,7 +569,7 @@ int parse_command_line(struct cheat_state *cheats,
 		case 'o':
 			p = strchr(optarg, '=');
 			if (!p) {
-				fprintf(stderr, "Invalid option: format should"
+				log_err("Invalid option: format should"
 					" be 'key=value'\n");
 				return 1;
 			}
@@ -590,7 +590,7 @@ int parse_command_line(struct cheat_state *cheats,
 			add_cheat(cheats, optarg);
 			break;
 		case '?':
-			fprintf(stderr, "Try '%s --help' for more "
+			log_err("Try '%s --help' for more "
 				"information.\n", argv[0]);
 			/* Error message already printed */
 			return 1;
@@ -616,11 +616,11 @@ int main(int argc, char **argv)
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	log_set_loglevel(LOG_PRIORITY_WARN);
+	log_set_loglevel(LOG_PRIORITY_INFO);
 
 	emu = emu_new();
 	if (!emu) {
-		fprintf(stderr, "failed to allocate memory for emu\n");
+		log_err("failed to allocate memory for emu\n");
 		return -1;
 	}
 
@@ -642,7 +642,7 @@ int main(int argc, char **argv)
 
 	if (!testing && SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK|
 		     SDL_INIT_GAMECONTROLLER)) {
-		fprintf(stderr, "SDL_Init() failed: %s\n",
+		log_err("SDL_Init() failed: %s\n",
 			SDL_GetError());
 		return 1;
 	}

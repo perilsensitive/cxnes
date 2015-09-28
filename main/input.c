@@ -756,7 +756,7 @@ int input_bind(const char *binding, const char *emu_actions)
 	memset(&event, 0, sizeof(event));
 
 	if (input_parse_binding(binding, &event, &mod) != 0) {
-		fprintf(stderr, "invalid binding %s\n", binding);
+		log_err("invalid binding %s\n", binding);
 		return -1;
 	}
 
@@ -790,7 +790,7 @@ int input_bind(const char *binding, const char *emu_actions)
 		}
 
 		if (emu_action_lookup_by_name(token, &emu_action) < 0) {
-			fprintf(stderr, "invalid emu_action '%s' for binding %s\n",
+			log_err("invalid emu_action '%s' for binding %s\n",
 				token, binding);
 		} else {
 			e = input_insert_emu_action(emu_action);
@@ -1716,7 +1716,7 @@ static void configure_modifier(const char *key, const char *value)
 	if (!parse_keyboard_binding(buf, &event) &&
 	    !parse_joystick_binding(buf, &event) &&
 	    !parse_mouse_binding(buf, &event)) {
-		fprintf(stderr, "invalid event %s\n", key);
+		log_err("invalid event %s\n", key);
 		return;
 	}
 
@@ -1728,12 +1728,12 @@ static void configure_modifier(const char *key, const char *value)
 	}
 
 	if ((mod == INPUT_MOD_COUNT) && (strcasecmp(value, "none") != 0)) {
-		fprintf(stderr, "invalid modifier %s\n", value);
+		log_err("invalid modifier %s\n", value);
 		return;
 	}
 
 	if (input_add_modifier(&event, mod) < 0) {
-		fprintf(stderr, "error adding modifier\n");
+		log_err("error adding modifier\n");
 	} /* else if (mod >= 0) { */
 	/* 	printf("assigning modifier %s (%x) to %s\n", value, mod, key); */
 	/* } else { */
@@ -1747,7 +1747,7 @@ void input_configure_modifier(const char *name, const char *value)
 
 	for (i = 0; i < KEYBOARD_MODIFIER_COUNT; i++) {
 		if (!strcasecmp(name, keyboard_modifiers[i])) {
-			fprintf(stderr, "Cannot change modifier for keyboard "
+			log_err("Cannot change modifier for keyboard "
 				"modifier key %s\n", name);
 
 			return;

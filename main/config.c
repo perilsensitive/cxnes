@@ -1300,7 +1300,7 @@ static int config_set_item(struct config *config,
 	}
 
 	if (!parameter->name && value) {
-		fprintf(stderr, "unknown configuration parameter \"%s\"\n",
+		log_warn("unknown configuration parameter \"%s\"\n",
 			name);
 		return -1;
 	}
@@ -1315,9 +1315,8 @@ static int config_set_item(struct config *config,
 		errno = 0;
 		svalue = strtol(value, &end, 0);
 		if (errno || *end) {
-			fprintf(stderr,
-				"%s must be an integer value\n",
-				name);
+			log_warn("%s must be an integer value\n",
+				 name);
 			return -1;
 		}
 
@@ -1335,13 +1334,13 @@ static int config_set_item(struct config *config,
 			}
 
 			if (i == parameter->valid_value_count) {
-				fprintf(stderr, "invalid value '%lu' for %s\n",
+				log_warn("invalid value '%lu' for %s\n",
 					svalue, parameter->name);
 				return -1;
 			}
 		} else if ((svalue < parameter->min.svalue) ||
 			   (svalue > parameter->max.svalue)) {
-			fprintf(stderr, "%s must be a value from %d to %d\n",
+			log_warn("%s must be a value from %d to %d\n",
 				name, parameter->min.svalue,
 				parameter->max.svalue);
 			return -1;
@@ -1357,9 +1356,8 @@ static int config_set_item(struct config *config,
 		errno = 0;
 		uvalue = strtoul(value, &end, 0);
 		if (errno || *end) {
-			fprintf(stderr,
-				"%s must be an unsigned integer value\n",
-				name);
+			log_warn("%s must be an unsigned integer value\n",
+				 name);
 			return -1;
 		}
 
@@ -1377,13 +1375,13 @@ static int config_set_item(struct config *config,
 			}
 
 			if (i == parameter->valid_value_count) {
-				fprintf(stderr, "invalid value '%lu' for %s\n",
+				log_warn("invalid value '%lu' for %s\n",
 					uvalue, parameter->name);
 				return -1;
 			}
 		} else if ((uvalue < parameter->min.uvalue) ||
 			   (uvalue > parameter->max.uvalue)) {
-			fprintf(stderr, "%s must be a value from %u to %u\n",
+			log_warn("%s must be a value from %u to %u\n",
 				name, parameter->min.uvalue,
 				parameter->max.uvalue);
 			return -1;
@@ -1416,7 +1414,7 @@ static int config_set_item(struct config *config,
 		}
 
 		if (svalue < 0) {
-			fprintf(stderr, "%s must be true or false\n",
+			log_warn("%s must be true or false\n",
 				name);
 
 			return -1;
@@ -1432,7 +1430,7 @@ static int config_set_item(struct config *config,
 		errno = 0;
 		fvalue = strtod(value, &end);
 		if (errno || *end) {
-			fprintf(stderr, "%s must be a floating-point value\n",
+			log_warn("%s must be a floating-point value\n",
 				name);
 			return -1;
 		}
@@ -1451,13 +1449,13 @@ static int config_set_item(struct config *config,
 			}
 
 			if (i == parameter->valid_value_count) {
-				fprintf(stderr, "invalid value '%f' for %s\n",
+				log_warn("invalid value '%f' for %s\n",
 					fvalue, parameter->name);
 				return -1;
 			}
 		} else if ((fvalue < parameter->min.fvalue) ||
 			   (fvalue > parameter->max.fvalue)) {
-			fprintf(stderr, "%s must be a value from %f to %f\n",
+			log_warn("%s must be a value from %f to %f\n",
 				name, parameter->min.fvalue,
 				parameter->max.fvalue);
 			return -1;
@@ -1482,7 +1480,7 @@ static int config_set_item(struct config *config,
 			}
 
 			if (i == parameter->valid_value_count) {
-				fprintf(stderr, "invalid value '%s' for %s\n",
+				log_warn("invalid value '%s' for %s\n",
 					value, name);
 				return -1;
 			}
@@ -1563,7 +1561,7 @@ static struct config_parameter *get_config_parameter(const char *name)
 		}
 
 		if (!parameter->name) {
-			fprintf(stderr, "unknown configuration parameter \"%s\"\n",
+			log_warn("unknown configuration parameter \"%s\"\n",
 				name);
 			return NULL;
 		}
@@ -1691,8 +1689,8 @@ void config_callback(char *line, int num, void *data)
 	sep = strchr(line, '=');
 
 	if (!sep || sep == line) {
-		fprintf(stderr, "config_load_file: line %d: "
-			"invalid key/value pair\n", num);
+		log_warn("config_load_file: line %d: "
+			 "invalid key/value pair\n", num);
 		return;
 	}
 
@@ -2180,7 +2178,7 @@ int config_set_portable_mode(int portable)
 	}
 
 	if (!rc && portable) {
-		fprintf(stdout, "Enabling portable mode\n");
+		log_info("Enabling portable mode\n");
 	}
 
 	return rc;

@@ -770,8 +770,7 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 #if 1
 	/* FIXME should only be ==, not >= */
 	if (cpu->cycles > cpu->dma_timestamp) {
-		fprintf(stderr,
-			"DEBUG read_mem: cycles should never be greater "
+		log_err("DEBUG read_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
 			cpu->dma_timestamp);
 	}
@@ -787,8 +786,7 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 #if 1
 	/* FIXME should only be ==, not >= */
 	if (cpu->cycles > cpu->dma_timestamp) {
-		fprintf(stderr,
-			"DEBUG write_mem: cycles should never be greater "
+		log_err("DEBUG write_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
 			cpu->dma_timestamp);
 	}

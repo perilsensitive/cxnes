@@ -506,9 +506,8 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles)
 
 			uint8_t *tmp = realloc(patch_buffer, patch_size);
 			if (!tmp) {
-				fprintf(stderr,
-					"rom_apply_patches: %s: failed to allocate memory for patch\n",
-					patch_file);
+				err_message("rom_apply_patches: %s: failed to allocate memory for patch\n",
+					    patch_file);
 				return -1;
 			}
 
@@ -517,9 +516,8 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles)
 		}
 
 		if (readfile(patch_file, patch_buffer, patch_size)) {
-			fprintf(stderr,
-				"rom_apply_patches: %s: failed to load file\n",
-				patch_file);
+			err_message("rom_apply_patches: %s: failed to load file\n",
+				    patch_file);
 			return -1;
 		}
 

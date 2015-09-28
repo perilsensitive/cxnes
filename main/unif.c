@@ -100,7 +100,7 @@ int unif_load(struct emu *emu, struct rom *rom)
 		size |= (p[7] << 24);
 
 		if ((p + size + 8) > (rom->buffer + rom->buffer_size)) {
-			fprintf(stderr, "invalid chunk size %d for "
+			log_err("invalid chunk size %d for "
 				"chunk %c%c%c%c\n", (int)size,
 				p[0], p[1], p[2], p[3]);
 			goto cleanup;
@@ -115,7 +115,7 @@ int unif_load(struct emu *emu, struct rom *rom)
 			}
 		} else if (memcmp(p, "MIRR", 4) == 0) {
 			if (size < 1) {
-				fprintf(stderr, "%c%c%c%c size must be at least 1\n",
+				log_err("%c%c%c%c size must be at least 1\n",
 					p[0], p[1], p[2], p[3]);
 				goto cleanup;
 			}
@@ -129,13 +129,13 @@ int unif_load(struct emu *emu, struct rom *rom)
 			case 4: mirroring = MIRROR_4;  break;
 			case 5: mirroring = MIRROR_M;  break;
 			default:
-				fprintf(stderr, "invalid mirroring type %d\n",
+				log_err("invalid mirroring type %d\n",
 					mirroring);
 				mirroring = MIRROR_V;
 			}
 		} else if (memcmp(p, "TVCI", 4) == 0) {
 			if (size < 1) {
-				fprintf(stderr, "%c%c%c%c size must be at least 1\n",
+				log_err("%c%c%c%c size must be at least 1\n",
 					p[0], p[1], p[2], p[3]);
 				goto cleanup;
 			}
@@ -145,7 +145,7 @@ int unif_load(struct emu *emu, struct rom *rom)
 			battery = 1;
 		} else if (memcmp(p, "CTRL", 4) == 0) {
 			if (size < 1) {
-				fprintf(stderr, "%c%c%c%c size must be at least 1\n",
+				log_err("%c%c%c%c size must be at least 1\n",
 					p[0], p[1], p[2], p[3]);
 				goto cleanup;
 			}
@@ -162,7 +162,7 @@ int unif_load(struct emu *emu, struct rom *rom)
 			c[1] = '\0';
 			chunk = strtol(c, &end, 16);
 			if (errno || *end) {
-				fprintf(stderr, "invalid chunk id %c%c%c%c\n",
+				log_err("invalid chunk id %c%c%c%c\n",
 					p[0], p[1], p[2], p[3]);
 			} else {
 				if (p[0] == 'P') {
@@ -231,8 +231,8 @@ int unif_load(struct emu *emu, struct rom *rom)
 		rom->info.system_type = EMU_SYSTEM_TYPE_PAL_NES;
 		break;
 	default:
-		fprintf(stderr, "invalid TV standard type %d, "
-			"falling back to NTSC\n", tv_system);
+		log_warn("invalid TV standard type %d, "
+			 "falling back to NTSC\n", tv_system);
 		rom->info.system_type = EMU_SYSTEM_TYPE_NES;
 	}
 

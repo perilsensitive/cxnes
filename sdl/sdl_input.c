@@ -199,7 +199,7 @@ static void add_joystick(int index)
 	if (axis_count) {
 		axis_status = malloc(axis_count * sizeof(*axis_status));
 		if (!axis_status) {
-			fprintf(stderr, "add_joystick: malloc() failed\n");
+			log_err("add_joystick: malloc() failed\n");
 			if (controller)
 				SDL_GameControllerClose(controller);
 			else
@@ -217,7 +217,7 @@ static void add_joystick(int index)
 	if (hat_count) {
 		hat_status = malloc(hat_count * sizeof(*hat_status));
 		if (!hat_status) {
-			fprintf(stderr, "add_joystick: malloc() failed\n");
+			log_err("add_joystick: malloc() failed\n");
 			if (controller)
 				SDL_GameControllerClose(controller);
 			else
@@ -295,7 +295,7 @@ static int load_gamecontroller_mappings(struct config *config)
 	file = SDL_RWFromFile(system_db_path, "rb");
 	if (file) {
 		if (SDL_GameControllerAddMappingsFromRW(file, 0) < 0) {
-			fprintf(stderr, "failed to load %s: %s\n",
+			log_err("failed to load %s: %s\n",
 			        system_db_path, SDL_GetError());
 		}
 
@@ -312,7 +312,7 @@ static int load_gamecontroller_mappings(struct config *config)
 	file = SDL_RWFromFile(filename, "rb");
 	if (file) {
 		if (SDL_GameControllerAddMappingsFromRW(file, 0) < 0) {
-			fprintf(stderr, "failed to load %s: %s\n",
+			log_err("failed to load %s: %s\n",
 			        filename, SDL_GetError());
 		}
 

@@ -115,7 +115,7 @@ int nsf_load(struct emu *emu, struct rom *rom)
 
 	tmp = malloc(new_buffer_size);
 	if (!tmp) {
-		fprintf(stderr, "nsf_load: %s: failed to allocate memory\n",
+		log_err("nsf_load: %s: failed to allocate memory\n",
 			rom->filename);
 		return 1;
 	}

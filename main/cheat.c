@@ -471,7 +471,7 @@ static void cheat_callback(char *line, int num, void *data)
 	       &enabled, &description_start);
 
 	if ((!gg_end || !rocky_end || !raw_end || !description_start || (enabled < 0))) {
-		fprintf(stderr, "error parsing line %d\n", num);
+		log_err("error parsing line %d\n", num);
 		return;
 	}
 
