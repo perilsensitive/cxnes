@@ -140,14 +140,17 @@ static uint32_t calculate_next_clock(struct a12_timer *timer, int adjustment, ui
 void a12_timer_end_frame(struct a12_timer *timer, uint32_t cycles)
 {
 	int scanline, cycle, odd_frame, short_frame;
+	int foo;
 	/* printf("end_frame: %d %d\n", starting_cycles, timer->timestamp - cycles); */
 
 	timer->frame_start_cpu_cycles = cpu_get_cycles(timer->emu->cpu);
-	ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
+	foo = ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
 		       &short_frame);
-	//timer->timestamp = starting_cycles;
-	timer->timestamp -= cycles;
 
+	timer->timestamp = foo;
+
+	/* printf("end_frame: timestamp: %d (%d), scanline: %d, cycles: %d\n", */
+	/*        timer->timestamp, foo, scanline, cycle); */
 	/* printf("timestamp: %d scanline: %d cycles: %d\n", timer->timestamp, */
 	/*        timer->scanline, timer->cycle); */
 
@@ -1141,6 +1144,8 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 	int counter_delta;
 	int rendering;
 	int next_cycle;
+	int clocks;
+	int tmp;
 
 	emu = timer->emu;
 	prev_a12 = timer->prev_a12;
@@ -1163,21 +1168,6 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 		return;
 	}
 
-	/* FIXME what about even cycles? is this the right way to handle them? */
-	if (!(cycle & 1)) {
-		cycle++;
-		cycles += emu->ppu_clock_divider;
-
-		if (cycle == 341) {
-			cycle = 1;
-			scanline++;
-			cycles += emu->ppu_clock_divider;
-			if (scanline == 241 + timer->vblank_scanlines) {
-				scanline = -1;
-			}
-		}
-	}
-
 	if (timer->flags & A12_TIMER_FLAG_COUNT_UP) {
 		counter_delta = 1;
 		counter_limit = 0xff;
@@ -1188,18 +1178,38 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 
 	prescaler_wrapped = 0;
 
-	while (cycles < ppu_cycles) {
+	if (ppu_cycles >= cycles)
+		clocks = (ppu_cycles - cycles) / emu->ppu_clock_divider;
+	else
+		clocks = 0;
+
+	while (clocks) {
 		int clock;
+//		printf("clocks: %d, scanline: %d cycle: %d %d\n", clocks, scanline, cycle, timer->timestamp);
+
+		if (!(cycle & 1)) {
+			cycle++;
+			clocks--;
+			cycles += emu->ppu_clock_divider;
+			if (cycle == 341) {
+				scanline++;
+				cycle = 0;
+				if (scanline == 241 + timer->vblank_scanlines) {
+					scanline = -1;
+				}
+			}
+			continue;
+		}
 
 		if (scanline > 239) {
-			int ppu_clocks_available = (ppu_cycles - cycles) /
-				emu->ppu_clock_divider;
 			int ppu_clocks_left = (240 + timer->vblank_scanlines + 1 - scanline) *
 				341 - cycle;
 
-			if (ppu_clocks_available < ppu_clocks_left)
-				ppu_clocks_left = ppu_clocks_available;
+			if (clocks < ppu_clocks_left)
+				ppu_clocks_left = clocks;
 
+			clocks -= ppu_clocks_left;
+//			printf("clocks is now: %d\n", clocks);
 			cycle += ppu_clocks_left;
 			cycles += ppu_clocks_left * emu->ppu_clock_divider;
 			scanline += cycle / 341;
@@ -1207,11 +1217,6 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 
 			if (scanline >= 240 + 1 + timer->vblank_scanlines) {
 				scanline -= 240 + 1 + timer->vblank_scanlines + 1;
-			}
-
-			if (scanline < 0) {
-				cycle = 1;
-				cycles += emu->ppu_clock_divider;
 			}
 	/* printf("ending with count=%d, scanline=%d, cycle=%d (%d %d), (%d, %d) (v)\n", */
 	/*        timer->counter, scanline, cycle, ppu_scanline, ppu_cycle, cycles, ppu_cycles); */
@@ -1305,21 +1310,30 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			next_cycle = 337;
 		}
 
-		if (next_cycle != -1) {
-			cycles += (next_cycle - cycle) * emu->ppu_clock_divider;
-			cycle = next_cycle;
-		} else if (cycle % 4 == 1) {
-			cycle += 4;
-			cycles += 4 * emu->ppu_clock_divider;
+		if ((next_cycle != -1) && (clocks >= (next_cycle - cycle))) {
+			tmp = next_cycle - cycle;
+		} else if ((cycle % 4 == 1) && (clocks >= 4)) {
+			tmp = 4;
+		} else if (clocks >= 2) {
+			tmp = 2;
 		} else {
-			cycle += 2;
-			cycles += 2 * emu->ppu_clock_divider;
+			tmp = 1;
 		}
 
-		if (cycle == 341) {
+		if (cycle + tmp == 341) {
+			cycles += tmp * emu->ppu_clock_divider;
+			clocks -= tmp;
+
+			if (odd_frame && (scanline == -1))
+				cycle = 1;
+			else
+				cycle = 0;
 			scanline++;
-			cycles += emu->ppu_clock_divider;
-			cycle = 1;
+			continue;
+		} else {
+			cycles += tmp * emu->ppu_clock_divider;
+			cycle += tmp;
+			clocks -= tmp;
 		}
 
 		//printf("1. cycles: %d ppu_cycles: %d\n", cycles, ppu_cycles);
