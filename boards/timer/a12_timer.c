@@ -140,14 +140,13 @@ static uint32_t calculate_next_clock(struct a12_timer *timer, int adjustment, ui
 void a12_timer_end_frame(struct a12_timer *timer, uint32_t cycles)
 {
 	int scanline, cycle, odd_frame, short_frame;
-	int foo;
 	/* printf("end_frame: %d %d\n", starting_cycles, timer->timestamp - cycles); */
 
 	timer->frame_start_cpu_cycles = cpu_get_cycles(timer->emu->cpu);
-	foo = ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
+	ppu_get_cycles(timer->emu->ppu, &scanline, &cycle, &odd_frame,
 		       &short_frame);
 
-	timer->timestamp = foo;
+	timer->timestamp -= cycles;
 
 	/* printf("end_frame: timestamp: %d (%d), scanline: %d, cycles: %d\n", */
 	/*        timer->timestamp, foo, scanline, cycle); */
