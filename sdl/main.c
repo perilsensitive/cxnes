@@ -666,8 +666,10 @@ int main(int argc, char **argv)
 	if (noromcfg)
 		config->skip_romcfg = 1;
 
+#if _WIN32
 	if (config_set_portable_mode(portable))
 		return 1;
+#endif
 
 	rc = config_load_main_config(emu->config);
 	rc = parse_command_line(cheats, emu->config, argc, argv);
