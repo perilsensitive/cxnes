@@ -200,16 +200,13 @@ static void throttle(int draw_frame)
 	uint32_t clock;
 #endif
 
-	if (!window_minimized && emu->config->vsync) {
-		update_clock();
+	update_clock();
+
+	if ((!window_minimized && emu->config->vsync) ||
+	    !draw_frame) {
 		return;
 	}
 	
-	if (!draw_frame) {
-		update_clock();
-		return;
-	}
-
 #if __unix__
 	sleep_time.tv_sec = prev_clock.tv_sec;
 	sleep_time.tv_nsec = prev_clock.tv_nsec;
@@ -228,7 +225,7 @@ static void throttle(int draw_frame)
 	}
 #else
 	clock = SDL_GetTicks();
-	frame_times[frame_index] = clock - prev_clock;
+	//frame_times[frame_index] = clock - prev_clock;
 
 	int fdelay = clock - prev_clock;
 	if (fdelay > 16)
@@ -237,7 +234,6 @@ static void throttle(int draw_frame)
 	//printf("delay: %d\n", delay_ns / 1000000 - fdelay);
 	SDL_Delay((emu->delay_ns / 1000000) - fdelay);
 #endif
-	update_clock();
 }
 
 extern int input_process_event(SDL_Event *event);

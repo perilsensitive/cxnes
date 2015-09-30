@@ -576,6 +576,7 @@ int video_apply_config(struct emu *emu)
 	int create_nes_texture;
 	int recreate_scaled_texture;
 	int scaling_mode_changed;
+	int vsync_changed;
 	int new_use_ntsc_filter;
 	char *new_scaling_mode;
 	int nes_screen_size;
@@ -620,6 +621,12 @@ int video_apply_config(struct emu *emu)
 	if (!nes_screen)
 		return 1;
 
+	vsync_changed = 0;
+	if (!!(renderer_info.flags & SDL_RENDERER_PRESENTVSYNC) !=
+	    !!emu->config->vsync) {
+		vsync_changed = 1;
+	}
+
 	scaling_mode_changed = 0;
 	if (!scaling_mode ||
 	    (strcasecmp(scaling_mode, new_scaling_mode) != 0)) {
@@ -640,6 +647,9 @@ int video_apply_config(struct emu *emu)
 	if (!renderer) {
 		create_renderer = 1;
 	}
+
+	if (vsync_changed)
+		create_renderer = 1;
 
 	create_nes_texture = 0;
 	if (!nes_texture || create_renderer || scaling_mode_changed)
