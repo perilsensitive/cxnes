@@ -334,10 +334,22 @@ int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 
 char *get_user_data_path(void)
 {
-	return SDL_GetPrefPath("", PACKAGE_NAME);
+	char *path, *ret;
+
+	path = SDL_GetPrefPath("", PACKAGE_NAME);
+	ret = strdup(path);
+	SDL_free(path);
+
+	return ret;
 }
 
 char *get_base_path(void)
 {
-	return SDL_GetBasePath();
+	char *path, *ret;
+
+	path = SDL_GetBasePath();
+	ret = strdup(path);
+	SDL_free(path);
+
+	return ret;
 }
