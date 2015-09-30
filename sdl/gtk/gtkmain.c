@@ -742,9 +742,9 @@ void *gui_init(int argc, char **argv)
 	GdkDisplay *gdk_display;
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
-	GdkScreen *screen;
 	int window_w, window_h;
 #if __unix__
+	GdkScreen *screen;
 	int xscreen;
 	XVisualInfo *vinfo = NULL;
 	GdkVisual *gdkvisual;
