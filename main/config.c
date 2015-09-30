@@ -658,6 +658,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_STRING_LIST(raw_pcm_filter, "never", valid_raw_pcm_filters,
 		valid_pcm_filter_names),
 
+	CONFIG_STRING(screensaver_deactivate_command, "xdg-screensaver reset"),
 	CONFIG_BOOLEAN(gui_enabled, 1),
 	CONFIG_STRING(save_path, NULL),
 	CONFIG_STRING(screenshot_path, NULL),

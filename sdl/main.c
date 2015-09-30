@@ -90,7 +90,6 @@ static uint32_t prev_clock;
 
 #if __unix__
 static int screensaver_deactivate_delay;
-static char *screensaver_deactivate_command = "xdg-screensaver reset";
 static int screensaver_counter;
 #endif
 
@@ -187,7 +186,7 @@ static void deactivate_screensaver(void)
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
 
-	exit(system(screensaver_deactivate_command) & 0xff);
+	exit(system(emu->config->screensaver_deactivate_command) & 0xff);
 }
 #endif
 

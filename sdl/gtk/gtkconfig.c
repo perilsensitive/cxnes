@@ -975,6 +975,9 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	GtkWidget *main_grid;
 	GtkWidget *spinbutton;
 	GtkWidget *scale;
+#if __unix__
+	GtkWidget *entry;
+#endif
 	int i;
 	
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -1017,6 +1020,15 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	check = config_checkbox(dialog, "Auto_patch enabled", config,
 					     "autopatch_enabled");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+
+#if __unix__
+	tmp = gtk_label_new_with_mnemonic("Screensaver deactivate command:");
+	entry = config_entry(dialog, config, "screensaver_deactivate_command");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), entry);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 42);
+	gtk_grid_attach(GTK_GRID(grid), tmp, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
+#endif
 
 	input_frame = gtk_frame_new(NULL);
 	tmp = gtk_label_new_with_mnemonic(NULL);

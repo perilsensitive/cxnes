@@ -146,6 +146,7 @@ struct config {
 	int cpu_trace_enabled;
 	int blargg_test_rom_hack_enabled;
 	int screensaver_deactivate_delay;
+	const char *screensaver_deactivate_command;
 	int nsf_first_track;
 	int mmc6_compat_hack_enabled;
 	int fds_bios_patch_enabled;
