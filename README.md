@@ -104,7 +104,7 @@ General
 Portable Mode (Windows only)
 ----------------------------
 The Windows build of cxNES stores all user data (save files, state files, cheats,
-etc.) in %APPDATA%\cxnes\cxnes by default.  To run cxNES as a portable app so
+etc.) in %APPDATA%\cxnes by default.  To run cxNES as a portable app so
 that user data is stored in the same folder as cxNES itself, you can enable portable
 mode.  This can be done by passing '--portable' on the cxNES command line, but this
 will only enable portable mode until you exit cxNES.  To make cxNES always use portable
@@ -122,12 +122,12 @@ mode, follow these steps:
    exists, cxNES wil run in portable mode.  If not, and you didn't pass
    '--portable' on the command line, it will run normally.
 
-3. If you have user data in %APPDATA%\cxnes\cxnes already, you may want to
+3. If you have user data in %APPDATA%\cxnes already, you may want to
    copy it to data\cxnes inside the folder where cxNES is installed.
 
 cxNES should now always look for user data in the data\cxnes folder
 inside the folder where cxNES is located rather than in
-%APPDATA%\cxnes\cxnes.
+%APPDATA%\cxnes.
 
 To upgrade a portable installation, you can unzip the new version of
 cxNES into the same folder as the old one.  User data (stuff in the
