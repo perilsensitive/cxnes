@@ -813,6 +813,16 @@ static int is_visible_if_has_dip_switches(void)
 		return 0;
 }
 
+/*
+  Capture key events while in menus in order to capture the release events for the
+  accelerator modifiers.  This prevents the emu core from thinking the modifier
+  keys involved in the accelerator are still pressed, leading to "stuck" keys.
+ */
+static void generic_menu_unmap_callback(GtkWidget *widget, gpointer user_data)
+{
+	input_release_all();
+}
+
 static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 				    void (*activate_callback)(GtkWidget *widget,
 							      gpointer userdata),
@@ -828,9 +838,11 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 		g_signal_connect(G_OBJECT(item), "activate",
 				 G_CALLBACK(activate_callback), userdata);
 	}
+	g_signal_connect(G_OBJECT(item), "unmap",
+			 G_CALLBACK(generic_menu_unmap_callback), userdata);
 
 	if (is_visible || is_sensitive) {
-		g_signal_connect(G_OBJECT(menu), "show",
+		g_signal_connect(G_OBJECT(menu), "destroy",
 				 G_CALLBACK(menu_shown_callback), item);
 
 		if (is_visible) {
@@ -1272,16 +1284,6 @@ static GtkWidget *gui_build_help_menu(void)
 	return GTK_WIDGET(menu);
 }
 
-/*
-  Capture key events while in menus in order to capture the release events for the
-  accelerator modifiers.  This prevents the emu core from thinking the modifier
-  keys involved in the accelerator are still pressed, leading to "stuck" keys.
- */
-static void generic_menu_activate_callback(GtkWidget *widget, gpointer user_data)
-{
-	input_release_all();
-}
-
 GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 {
 	GtkMenuShell *menubar;
@@ -1292,25 +1294,25 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 
 	submenu = gui_build_file_menu();
 	item = gui_add_menu_item(menubar, "_File",
-				 generic_menu_activate_callback,
+				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	submenu = gui_build_emulator_menu();
 	item = gui_add_menu_item(menubar, "_Emulator",
-				 generic_menu_activate_callback,
+				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	submenu = gui_build_options_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Options",
-				 generic_menu_activate_callback,
+				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	submenu = gui_build_help_menu();
 	item = gui_add_menu_item(menubar, "_Help",
-				 generic_menu_activate_callback,
+				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
