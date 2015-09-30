@@ -1,6 +1,6 @@
 cxNES Documentation
 
-Version 0.10
+Version 0.1.0
 Updated 2015-09-07
 
 Website: http://github.com/perilsensitive/cxnes
