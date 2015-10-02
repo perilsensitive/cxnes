@@ -14,7 +14,7 @@ layout: default
 {% for asset in release.assets %}
 {% assign: sz = asset.size | times: 100.0 | divided_by: 1048576.0 | plus: 0.5 %}
 {% assign: sz = sz %}
-{% capture sz %}{{ sz }}{% endcapture %}}
+{% capture sz %}{{ sz }}{% endcapture %}
 {% assign: sz = sz | split: "."  | first %}
 [{% if asset.label %}{{ asset.label }}{% else %}{{ asset.name }}{% endif %}]({{ asset.browser_download_url }}) {{ sz }} MiB  
 {% endfor %}[Source code (.zip)]({{ release.zipball_url }})  
