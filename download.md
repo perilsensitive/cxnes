@@ -12,7 +12,7 @@ layout: default
   {{ release.body }}
 
 {% for asset in release.assets %}
-  [{{ asset.label | default: asset.name }}]({{ asset.browser_download_url }}) {{ asset.size }}  
+[{{ asset.label | default: asset.name }}]({{ asset.browser_download_url }}) {{ asset.size }}  
 {% endfor %}
   [Source code (.zip)]({{ release.zipball_url }})  
   [Source code (.tar.gz)]({{ release.tarball_url }})
