@@ -7,7 +7,7 @@ layout: default
  {% if release.draft %}
     {% continue %}
   {% endif %}
-# [{{ release.name }}]({{ release.html_url }})  
+<h2>[{{ release.name }}]({{ release.html_url }})</h2> {{ release.created_at }}  
 
   {{ release.body }}
 
