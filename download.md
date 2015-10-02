@@ -12,9 +12,6 @@ layout: default
   {{ release.body }}
 
   {% for asset in release.assets %}
-    {% if asset.state != "uploaded" %}
-      {% continue %}
-    {% endif %}
     [{{ asset.label }}]({{ asset.browser_download_url }}) {{ asset.size }}  
   {% endfor %}
   [Source code (.zip)]({{ release.zipball_url }})  
