@@ -38,6 +38,13 @@ a {
   text-decoration:none;
 }
 
+a.release_link {
+    font-size: 1.5em;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    font-weight: bold;
+}
+
 a:hover {
   color:#069;
 }
