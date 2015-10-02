@@ -4,7 +4,10 @@ layout: default
 ---
 
 {% for release in site.github.releases %}
-  [{{ release.name }}]({{ release.html_url }})
+  {% if release.draft %}
+    {% continue %}
+  {% endif %}
+### [{{ release.name }}]({{ release.html_url }})
 
 {{ release.body }}
   
