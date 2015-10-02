@@ -1,5 +1,5 @@
 ---
-title: cxNES : Download
+title: cxNES Download
 layout: default
 ---
 

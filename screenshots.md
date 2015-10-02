@@ -1,4 +1,4 @@
 ---
-title: cxNES : Screenshots
+title: cxNES Screenshots
 layout: default
 ---
