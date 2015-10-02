@@ -11,7 +11,7 @@ layout: default
 
   {{ release.body }}
 
-{% for asset in release.assets %}[{% if asset.label %}{{ asset.label }}{% else %}{{ asset.name }}{% endif %}]({{ asset.browser_download_url }}) {{ asset.size | divided_by: 1048576.0 }}  
+{% for asset in release.assets %}[{% if asset.label %}{{ asset.label }}{% else %}{{ asset.name }}{% endif %}]({{ asset.browser_download_url }}) {{ asset.size | divided_by: 1048576.0 | round 2 }}  
 {% endfor %}[Source code (.zip)]({{ release.zipball_url }})  
 [Source code (.tar.gz)]({{ release.tarball_url }})
 {% endfor %}
