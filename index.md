@@ -112,4 +112,4 @@ Misc
   + Automatic disk selection and change for most FDS games (optional)
   + Writes to FDS images saved as IPS patches
 * Windows builds can be configured to run in portable mode, storing all
-  user data (save files, states, etc.) to the application directory.
+  user data (save files, states, etc.) in the application directory.
