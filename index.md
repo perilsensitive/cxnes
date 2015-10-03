@@ -16,7 +16,7 @@ coming as soon as the author can get a Mac for development and
 testing.  Other unix variants may work as well provided they have
 working SDL 2.0 and GTK+ libraries, but none have been tested.
 
-You can contact the author at [mailto:perilsensitive@gmail.com](perilsensitive@gmail.com).
+You can contact the author at [perilsensitive@gmail.com](mailto:perilsensitive@gmail.com).
 
 Features
 ========
