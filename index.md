@@ -3,10 +3,21 @@ title: cxNES
 layout: default
 ---
 
-cxNES is an open source NES/Famicom emulator written in C.  It is
-primarily written as a part-time hobby project to suit the needs of
+cxNES is an open source and cross-platform NES/Famicom emulator.  It
+is primarily written as a part-time hobby project to suit the needs of
 its author, but with accuracy, performance and portability as primary
 goals.
+
+cxNES is written in C and uses SDL 2.0 for graphics, sound and input,
+and GTK+ for the GUI toolkit.  It should have the same functionality
+and roughly the same look and feel on all supported platforms.
+Currently only Windows and Linux are supported; OS X support will be
+coming as soon as the author can get a Mac for development and
+testing.  Other unix variants may work as well provided they have
+working SDL 2.0 and GTK+ libraries, but none have been tested.
+
+cxNES is licensed under the terms of the GNU General Public License
+version 2 or later.
 
 You can contact the author at perilsensitive@gmail.com.
 
@@ -57,7 +68,7 @@ iNES Mapper Support
 
 Patching
 --------
-* Supports IPS, BPS and UPS patch formats
+* Supports IPS, UPS and BPS patch formats
 * Autopatching support
 * Soft-patching
 * Patches may be applied via GUI or specified on
