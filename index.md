@@ -16,9 +16,8 @@ Supported Image/ROM Formats
 * iNES/NES 2.0
 * UNIF
 * FDS
-  + High-level optimizations of FDS disk I/O routines (optional)
-  + Automatic disk selection and change for most FDS games (optional)
-  + Writes to FDS images saved as IPS patches
+  + fwNES format, with or without header
+  + "Raw" format (includes gaps, start marks and checksums)
 * NSF
 
 Input Devices/Accessories
@@ -69,9 +68,9 @@ Video
 * User can specify a 64 or 512 color external palette
   file to be used instead of the generated palette.
 * Enhanced sprite limit workaround: limits sprites for scanlines where
-  the limit appears to be triggered intentionally, otherwise does not
+  the limit appears to be exploited intentionally, otherwise does not
   limit sprites.
-* Supports correct TV aspect ratios for NTSC and PAL consoles,
+* Supports correct TV aspect ratios for NTSC and PAL consoles
 * PNG screenshots
 
 Input
@@ -101,22 +100,10 @@ Misc
 * Cheat support (Game Genie, Pro Action Rocky, and raw formats)
   + Cheats can be auto-loaded/saved on ROM load/unload
 * ROM Database (optional) for handling ROMs with incorrect or
-  missing headers to run properly.
+  missing headers.
 * Can be compiled or run without the GUI
-  + Can specify configuration options, patches and cheats on command line
-
-License
-=======
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation.; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+* Can specify configuration options, patches and cheats on command line
+* FDS enhancements
+  + High-level optimizations of FDS disk I/O routines (optional)
+  + Automatic disk selection and change for most FDS games (optional)
+  + Writes to FDS images saved as IPS patches
