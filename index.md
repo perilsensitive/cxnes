@@ -8,6 +8,8 @@ primarily written as a part-time hobby project to suit the needs of
 its author, but with accuracy, performance and portability as primary
 goals.
 
+You can contact the author at perilsensitive@gmail.com.
+
 Features
 ========
 
@@ -76,6 +78,8 @@ Video
 Input
 -----
 * Flexible input binding support
+  + Nearly all emulator actions can have custom keyboard and/or
+    joystick mappings
   + User-defined 'modifiers' useful for button combos on gamepads
     with few buttons (such as standard NES controllers)
 * SDL GameController API
@@ -107,3 +111,5 @@ Misc
   + High-level optimizations of FDS disk I/O routines (optional)
   + Automatic disk selection and change for most FDS games (optional)
   + Writes to FDS images saved as IPS patches
+* Windows builds can be configured to run in portable mode, storing all
+  user data (save files, states, etc.) to the application directory.
