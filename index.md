@@ -6,11 +6,40 @@ layout: default
 cxNES is an open source NES/Famicom emulator written in C.  It is
 primarily written as a part-time hobby project to suit the needs of
 its author, but with accuracy, performance and portability as primary
-goals.  It has been in development, in various forms, since 2011 and
-was initially released for the Linux and Windows platforms in 2015.
+goals.
 
 Features
 ========
+
+Supported Image/ROM Formats
+---------------------------
+* iNES/NES 2.0
+* UNIF
+* FDS
+  + High-level optimizations of FDS disk I/O routines (optional)
+  + Automatic disk selection and change for most FDS games (optional)
+  + Writes to FDS images saved as IPS patches
+* NSF
+
+Input Devices/Accessories
+-------------------------
+* Standard Controllers
+* Four-player adapters (NES and Famicom types)
+* Arkanoid Controllers (NES and Famicom variants)
+* Zapper
+* Power Pad
+* Family Trainer
+* Family BASIC Keyboard
+* SNES Mouse
+* VS. Unisystem support
+
+Supported Expansion Audio Chips
+-------------------------------
+* Nintendo MMC5
+* Konami VRC6
+* Sunsoft 5B
+* Namco 163
+* Famicom Disk System
 
 iNES Mapper Support
 -------------------
@@ -25,60 +54,28 @@ iNES Mapper Support
 * 200, 201, 203, 205, 206, 207, 209, 210, 211, 218, 225, 228,
 * 230, 231, 232, 234, 240, 241, 245, 246
 
-Supported Image/ROM Formats
----------------------------
-* iNES/NES 2.0
-* UNIF
-* FDS
-  + With or without fwNES header
-  + With or without gaps and checksums
-
-Input Devices/Accessories
--------------------------
-* Standard Controllers
-* Four-player adapters (NES and Famicom types)
-* Arkanoid Controllers (NES and Famicom variants)
-* Zapper
-* Power Pad
-* Family Trainer
-* Family BASIC Keyboard
-* SNES Mouse
-
-Supported Expansion Audio Chips
--------------------------------
-* Nintendo MMC5
-* Konami VRC6
-* Sunsoft 5B
-* Namco 163
-* Famicom Disk System
-
-General
--------
-* Savestates
-  + Can auto-load/save states on ROM load/unload
-  + Can auto-save state at a user-specified interval
-* PNG screenshots
-* NSF player
-* Dynamic audio resampling
-  + Uses Blargg's blip_buf resampler
-* Cheat support (Game Genie, Pro Action Rocky, and raw formats)
-  + Cheats can be auto-loaded/saved on ROM load/unload
-* Autopatching support (IPS, UPS and BPS formats)
-  + Supports patch stacking
+Patching
+--------
+* Supports IPS, BPS and UPS patch formats
+* Autopatching support
 * Soft-patching
-* NTSC palette generator and video filter (optional)
-  + Bisquit's NTSC palette generator
-  + Blargg's nes_ntsc filter
-    + Can be used with generated palette or external 64 or 512
-      color palette
-* ROM Database (optional) for handling ROMs with incorrect or
-  missing headers to run properly.
-* High-level optimizations of FDS disk I/O routines (optional)
-* Automatic disk selection and change for most FDS games (optional)
-* FDS images saved as IPS patches
+* Patches may be applied via GUI or specified on
+  the command line
+
+Video
+-----
+* Bisquit's NTSC palette generator
+* Blargg's nes_ntsc filter
+* User can specify a 64 or 512 color external palette
+  file to be used instead of the generated palette.
 * Enhanced sprite limit workaround: limits sprites for scanlines where
   the limit appears to be triggered intentionally, otherwise does not
   limit sprites.
+* Supports correct TV aspect ratios for NTSC and PAL consoles,
+* PNG screenshots
+
+Input
+-----
 * Flexible input binding support
   + User-defined 'modifiers' useful for button combos on gamepads
     with few buttons (such as standard NES controllers)
@@ -93,7 +90,18 @@ General
   + Supports dedicated turbo buttons
   + Supports toggle buttons to enable/disable turbo on the standard
     A and B buttons.
-* VS. Unisystem support
+
+Misc
+----
+* Savestates
+  + Can auto-load/save states on ROM load/unload
+  + Can auto-save state at a user-specified interval
+* Dynamic audio resampling
+  + Uses Blargg's blip_buf resampler
+* Cheat support (Game Genie, Pro Action Rocky, and raw formats)
+  + Cheats can be auto-loaded/saved on ROM load/unload
+* ROM Database (optional) for handling ROMs with incorrect or
+  missing headers to run properly.
 * Can be compiled or run without the GUI
   + Can specify configuration options, patches and cheats on command line
 
