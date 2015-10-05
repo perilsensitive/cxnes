@@ -142,7 +142,7 @@ int create_directory(const char *path, int recursive, int is_file)
 	if (c)
 		c++;
 
-	while (1) {
+	while (c) {
 		c = strpbrk(c, sep);
 
 		if (c) {
