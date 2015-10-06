@@ -1,0 +1,21 @@
+Source: cxnes
+Section: games
+Priority: extra
+Maintainer: Ryan Jackson <perilsensitive@gmail.com>
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>= 9),
+               libsdl2-dev,
+	       libsdl2-ttf-dev,
+	       libsdl2-image-dev,
+	       libgtk-3-dev
+
+Package: cxnes
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: NES/Famicom Emulator
+ RNES is a portable, cross-platform emulator for the Nintendo Entertainment
+ System.
+
+
+
+ 
