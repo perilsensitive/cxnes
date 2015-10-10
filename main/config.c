@@ -492,6 +492,9 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_BOOLEAN(stretch_to_fit, 0),
 	CONFIG_BOOLEAN(gamecontroller, 1),
 
+	CONFIG_INTEGER(alternate_speed, 180, 1, 240),
+	CONFIG_BOOLEAN(alternate_speed_mute, 1),
+
 	CONFIG_STRING_LIST(palette, "auto", valid_palettes,
 			   valid_palette_names),
 	CONFIG_STRING(palette_path, NULL),
@@ -744,6 +747,7 @@ static struct binding_item default_modifiers[] = {
 
 static struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
+	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
 	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },
 	{ .name = "Keyboard F6", .value = "DEVICE_SELECT_PORT1" },
 	{ .name = "[CTRL] Keyboard F7", .value = "DEVICE_CONNECT_PORT2" },

@@ -29,5 +29,6 @@ void audio_add_delta(unsigned time, int delta);
 int audio_buffer_check(void);
 void audio_pause(int);
 int audio_apply_config(struct emu *emu);
+void audio_mute(int);
 
 #endif				/* __AUDIO_H__ */

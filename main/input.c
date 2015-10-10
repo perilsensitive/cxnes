@@ -92,6 +92,7 @@ extern int save_screenshot(void);
 }
 
 struct emu_action_id_map emu_action_id_map[] = {
+	EMU_ACTION_ID_MAP(ALT_SPEED, EMULATOR, "Alternate Speed"),
 	EMU_ACTION_ID_MAP(TOGGLE_CPU_TRACE, EMULATOR, "CPU Trace Toggle"),
 	EMU_ACTION_ID_MAP(SWITCH_FOUR_PLAYER_MODE, MISC, "Four-Player Mode Switch"),
 	EMU_ACTION_ID_MAP(TOGGLE_SCANLINE_RENDERER, PPU, "Scanline Renderer Toggle"),
@@ -1203,6 +1204,12 @@ static int misc_buttons(void *data, uint32_t pressed, uint32_t button)
 	int state_index;
 
 	switch (button) {
+	case ACTION_ALT_SPEED:
+		if (pressed)
+			emu_set_framerate(emu, emu->config->alternate_speed);
+		else
+			emu_set_framerate(emu, emu->nes_framerate);
+		break;
 	case ACTION_SYSTEM_TYPE_SELECT:
 		if (pressed)
 			emu_select_next_system_type(emu);
@@ -1412,6 +1419,7 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 }
 
 static struct input_event_handler misc_handlers[] = {
+	{ ACTION_ALT_SPEED, misc_buttons },
 	{ ACTION_STATE_LOAD_NEWEST, misc_buttons },
 	{ ACTION_STATE_LOAD_0, misc_buttons },
 	{ ACTION_STATE_LOAD_1, misc_buttons },

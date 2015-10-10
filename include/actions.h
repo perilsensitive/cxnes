@@ -313,4 +313,6 @@
 #define ACTION_SAVE_SCREENSHOT      0x20ffff51
 #define ACTION_SYSTEM_TYPE_SELECT   0x00ffff52
 
+#define ACTION_ALT_SPEED            0x20ffff53
+
 #endif

@@ -156,6 +156,8 @@ struct config {
 	int guess_region_from_filename;
 	int auto_wram;
 	int dip_switch[8];
+	int alternate_speed;
+	int alternate_speed_mute;
 
 	/* Input/Controller options */
 

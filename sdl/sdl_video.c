@@ -69,7 +69,7 @@ typedef struct SDL_Window SDL_Window;
 #endif
 
 /* FIXME use getters/setters for these? */
-int display_fps = 0;
+int display_fps = -1;
 int fps_timer = 0;
 int autohide_timer;
 extern int total_frame_time;
@@ -289,7 +289,9 @@ static void draw_fps_display(void)
 
 	snprintf(fps_display, sizeof(fps_display), "%3.4f",
 	         (double) time_base / ((double)total_frame_time /
-				       emu->vsync_target_framerate));
+				       (emu->display_framerate > emu->user_framerate ?
+					emu->user_framerate :
+					emu->display_framerate)));
 
 	TTF_SizeUTF8(font, fps_display, &text_w, &text_h);
 //	text_line_skip = TTF_FontLineSkip(font);
@@ -359,7 +361,7 @@ static void load_osd_font(void)
 	}
 
 
-	if (display_fps) {
+	if (display_fps > 0) {
 		calc_fps_display_rects();
 		draw_fps_display();
 	}
@@ -727,7 +729,8 @@ int video_apply_config(struct emu *emu)
 	/* FIXME Fullscreen is always scaled as large as possible now, so this will go away */
 	fullscreen_scaling_factor = 0;
 
-	display_fps = emu->config->fps_display_enabled;
+	if (display_fps == -1)
+		display_fps = emu->config->fps_display_enabled;
 
 	if (fullscreen < 0)
 		fullscreen = emu->config->fullscreen;
@@ -848,16 +851,6 @@ int video_apply_config(struct emu *emu)
 		SDL_SetWindowSize(window, window_rect.w, window_rect.h);
 	} else {
 		video_resize_window();
-	}
-
-	emu->idle_frame_timer_reload = 0;
-	if (emu->display_framerate > emu->vsync_target_framerate) {
-		int num_frames;
-
-		num_frames = emu->display_framerate -
-			emu->vsync_target_framerate;
-		emu->idle_frame_timer_reload = (emu->display_framerate /
-						  num_frames) - 1;
 	}
 
 	return 0;
@@ -985,7 +978,7 @@ int video_init_testing(struct emu *emu)
 int video_init(struct emu *emu)
 {
 	cursor_visible = 1;
-	display_fps = 0;
+	display_fps = -1;
 	fps_timer = 0;
 	video_reset_autohide_timer();
 
@@ -1158,7 +1151,7 @@ int video_draw_buffer(void)
 		osd_timer--;
 	}
 
-	if (display_fps) {
+	if (display_fps > 0) {
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(renderer, osd_bg_color.r, osd_bg_color.g,
 				       osd_bg_color.b, osd_bg_color.a);
@@ -1296,6 +1289,11 @@ void video_resize_window(void)
 	center_x = dest_rect.x + dest_rect.w / 2;
 	center_y = dest_rect.y + dest_rect.h / 2;
 
+	if (scaled_texture && (dest_rect.w == old_width) &&
+	    (dest_rect.h == old_height)) {
+		return;
+	}
+
 	/* Reset video device */
 	/* Need to do this twice if we're
 	   double-buffered */
@@ -1321,11 +1319,6 @@ void video_resize_window(void)
 		return;
 	}
 
-	if (scaled_texture && (dest_rect.w == old_width) &&
-	    (dest_rect.h == old_height)) {
-		return;
-	}
-
 	/* FIXME re-load OSD font */
 	load_osd_font();
 
@@ -1342,7 +1335,7 @@ void video_resize_window(void)
 void video_toggle_fps(int enabled)
 {
 	if (enabled < 0)
-		enabled = !display_fps;
+		enabled = !(display_fps > 0);
 
 	display_fps = enabled;
 	if (enabled)

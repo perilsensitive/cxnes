@@ -32,10 +32,12 @@ static int force_stereo;
 /* Audio state */
 int sdl_audio_device;
 static blip_buffer_t* blip = NULL;
+static int audio_muted = -1;
 static int audio_buffer_size;
 static int samples_per_frame;
 static int samples_per_nes_frame;
 static int samples_per_display_frame;
+static int samples_per_larger_frame;
 static int samples_available;
 static int sample_reserve;
 static int channels;
@@ -71,7 +73,10 @@ void audio_add_delta(unsigned time, int delta)
 		return;
 
 	SDL_LockMutex(audiobuf_lock);
-	delta = (delta * emu->config->master_volume) / 100;
+	if (audio_muted > 0)
+		delta = 0;
+	else if (!audio_muted)
+		delta = (delta * emu->config->master_volume) / 100;
 	blip_add_delta(blip, time, delta);
 	SDL_UnlockMutex(audiobuf_lock);
 }
@@ -96,8 +101,8 @@ static int audio_setup(struct emu *emu)
 	force_stereo = emu->config->force_stereo;
 
 	/* FIXME what if display framerate changes? */
-	samples_per_nes_frame = sample_rate / emu->nes_framerate;
-	nes_framerate = emu->nes_framerate;
+	samples_per_nes_frame = sample_rate / emu->user_framerate;
+	nes_framerate = emu->user_framerate;
 
 	samples_per_display_frame = sample_rate / emu->display_framerate;
 
@@ -105,6 +110,11 @@ static int audio_setup(struct emu *emu)
 		samples_per_frame = samples_per_display_frame;
 	else
 		samples_per_frame = samples_per_nes_frame;
+
+	if (samples_per_display_frame > samples_per_nes_frame)
+		samples_per_larger_frame = samples_per_display_frame;
+	else
+		samples_per_larger_frame = samples_per_nes_frame;
 
 	if (force_stereo)
 		channels = 2;
@@ -170,7 +180,7 @@ static int audio_setup(struct emu *emu)
 	*/
 	/* printf("returned: %d, samples %d\n", returned.samples, samples_per_nes_frame); */
 	audio_buffer_size = (2 * (returned.samples /
-				  samples_per_nes_frame + 1) + 1)* samples_per_nes_frame;
+				  samples_per_larger_frame + 1) + 1)* samples_per_larger_frame;
 	
 
 	blip = blip_new(audio_buffer_size * 1.03);
@@ -178,7 +188,7 @@ static int audio_setup(struct emu *emu)
 		return 1;
 
 	log_dbg("sample_rate: %f\n", sample_rate);
-	blip_set_rates(blip, emu->clock_rate, sample_rate);
+	blip_set_rates(blip, emu->current_clock_rate, sample_rate);
 
 	low_target = sdl_audio_buffer_size % samples_per_frame;
 	low_target = low_target +
@@ -277,7 +287,7 @@ static void audio_callback(void* unused, uint8_t* out, int byte_count)
 
 	if (audio_buffer_size - (actual_samples_available -
 				 (byte_count / 2)) >
-	    samples_per_nes_frame * 2) {
+	    samples_per_larger_frame * 2) {
 		SDL_CondBroadcast(audiobuf_cond);
 	}
 }
@@ -367,20 +377,39 @@ void audio_fill_buffer(uint32_t cycles)
 		new_samples = blip_samples_avail(blip);
 		sample_count = new_samples - old_samples;
 		tmp = sample_count;
-		if (emu->config->vsync && emu->idle_frame_timer_reload) {
-			if (tmp < samples_per_display_frame) {
-				int reload = emu->idle_frame_timer_reload;
-				tmp = tmp * (reload + 1) / reload;
-			} else {
-				tmp = samples_per_display_frame;
+		if (emu->config->vsync && emu->frame_timer_reload) {
+			if (emu->user_framerate < emu->display_framerate) {
+				if (tmp < samples_per_display_frame) {
+					int diff = samples_per_display_frame - tmp;
+
+					if (diff > sample_reserve)
+						diff = sample_reserve;
+
+					tmp += diff;
+				} else {
+					tmp = samples_per_display_frame;
+				}
 			}
 		}
 		samples_available += tmp;
 //		printf("adding %d samples %f (%d) (%d s %d)\n", tmp, adjusted_sample_rate, samples_per_display_frame, sample_count, samples_per_nes_frame);
 		sample_reserve += sample_count - tmp;
 	} else {
-		samples_available += sample_reserve;
-		sample_reserve = 0;
+		if (emu->config->vsync && emu->frame_timer_reload) {
+			if (emu->user_framerate < emu->display_framerate) {
+				/* if (sample_reserve > samples_per_display_frame) { */
+				/* 	samples_available += samples_per_display_frame; */
+				/* 	sample_reserve -= samples_per_display_frame; */
+				/* } else { */
+//					printf("here: %d %d\n", sample_reserve, emu->frame_timer_reload);
+					samples_available += sample_reserve;
+					sample_reserve = 0;
+				/* } */
+			} else {
+				samples_available += sample_reserve;
+				sample_reserve = 0;
+			}
+		}
 	}
 //	level = (double)samples / audio_buffer_size;
 	do_adjust = 0;
@@ -481,7 +510,7 @@ void audio_fill_buffer(uint32_t cycles)
 		/*        frame_count, adjusted_sample_rate, old_diff, difference, low_target, */
 		/*        high_target, samples); */
 		/* printf("last_counter: %d, counter: %d\n", last_counter, counter); */
-		blip_set_rates(blip, emu->clock_rate, adjusted_sample_rate);
+		blip_set_rates(blip, emu->current_clock_rate, adjusted_sample_rate);
 		samples_per_frame = adjusted_sample_rate / emu->current_framerate;
 		low_target = (sdl_audio_buffer_size % samples_per_frame) / 2;
 		low_target += emu->config->dynamic_rate_adjustment_low_watermark *
@@ -499,3 +528,9 @@ void audio_fill_buffer(uint32_t cycles)
 	SDL_UnlockMutex(audiobuf_lock);
 }
 
+void audio_mute(int muted)
+{
+	SDL_LockMutex(audiobuf_lock);
+	audio_muted = !!muted;
+	SDL_UnlockMutex(audiobuf_lock);
+}

@@ -1019,6 +1019,21 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 	check = config_checkbox(dialog, "Auto_patch enabled", config,
 					     "autopatch_enabled");
+
+	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+
+	tmp = gtk_label_new_with_mnemonic("_Alternate emulation speed:");
+	box2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	gtk_box_pack_start(GTK_BOX(box), box2, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box2), tmp, FALSE, FALSE, 0);
+
+	scale = config_int_scale(0, 240, 1, 240, dialog, config, "alternate_speed");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), scale);
+	gtk_range_set_round_digits(GTK_RANGE(scale), 0);
+	gtk_box_pack_start(GTK_BOX(box2), scale, FALSE, FALSE, 0);
+
+	check = config_checkbox(dialog, "Mute audio when running at alternate speed", config,
+					     "alternate_speed_mute");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
 #if __unix__
@@ -1102,7 +1117,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_frame_set_shadow_type(GTK_FRAME(state_frame), GTK_SHADOW_NONE);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
 	gtk_container_add(GTK_CONTAINER(state_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), state_frame, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(main_grid), state_frame, 0, 2, 1, 1);
 
 	check = config_checkbox(dialog,
 				"Automatically load state when l_oading ROM",
@@ -1136,7 +1151,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_frame_set_shadow_type(GTK_FRAME(ines_frame), GTK_SHADOW_NONE);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
 	gtk_container_add(GTK_CONTAINER(ines_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), ines_frame, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(main_grid), ines_frame, 1, 1, 1, 1);
 	
 	check = config_checkbox(dialog,
 				"_Allocate 8KiB of SRAM at $6000-$7FFF (if possible)",

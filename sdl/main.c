@@ -153,17 +153,21 @@ static struct option long_options[] = {
 
 void update_clock(void)
 {
-	total_frame_time -= frame_times[frame_index];
 #if __unix__
 	long ticks = prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec;
 	if (clock_gettime(CLOCK_MONOTONIC, &prev_clock) < 0) {
 		log_err("clock_gettime() failed\n");
 	}
 	ticks = (prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec) - ticks;
+
+	total_frame_time -= frame_times[frame_index];
 	frame_times[frame_index] = ticks;
 #else
 	int ticks = SDL_GetTicks();
+
+	total_frame_time -= frame_times[frame_index];
 	frame_times[frame_index] = ticks - prev_clock;
+
 	prev_clock = ticks;
 #endif
 	total_frame_time += frame_times[frame_index];
@@ -210,7 +214,7 @@ static void throttle(int draw_frame)
 #if __unix__
 	sleep_time.tv_sec = prev_clock.tv_sec;
 	sleep_time.tv_nsec = prev_clock.tv_nsec;
-	ns = sleep_time.tv_nsec + emu->delay_ns;
+	ns = sleep_time.tv_nsec + emu->current_delay_ns;
 	sleep_time.tv_sec  += ns / NS_PER_SEC;
 	sleep_time.tv_nsec = ns % NS_PER_SEC;
 
@@ -232,7 +236,7 @@ static void throttle(int draw_frame)
 		fdelay = 0;
 
 	//printf("delay: %d\n", delay_ns / 1000000 - fdelay);
-	SDL_Delay((emu->delay_ns / 1000000) - fdelay);
+	SDL_Delay((emu->current_delay_ns / 1000000) - fdelay);
 #endif
 }
 
@@ -332,8 +336,6 @@ int save_screenshot(void)
 
 static int main_loop(struct emu *emu)
 {
-	int draw_frame;
-
 #if __unix__
 	if (screensaver_deactivate_delay) {
 		screensaver_counter = emu->current_framerate *
@@ -360,7 +362,7 @@ static int main_loop(struct emu *emu)
 
 	fps_timer = 0;
 
-	draw_frame = 1;
+	emu->draw_frame = 1;
 	while (running) {
 		int cycles;
 
@@ -427,7 +429,7 @@ static int main_loop(struct emu *emu)
 		if (testing)
 			continue;
 
-		if (draw_frame) {
+		if (emu->draw_frame) {
 			video_update_texture();
 			video_draw_buffer();
 		/* } else { */
@@ -438,9 +440,9 @@ static int main_loop(struct emu *emu)
 			video_warp_mouse(center_x, center_y);
 		}
 
-		throttle(draw_frame);
+		throttle(emu->draw_frame);
 
-		draw_frame = audio_buffer_check();
+		emu->draw_frame = audio_buffer_check();
 
 #if __unix__
 		if (screensaver_counter > 0) {

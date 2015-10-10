@@ -294,6 +294,50 @@ int emu_select_next_system_type(struct emu *emu)
 	return 0;
 }
 
+int emu_set_framerate(struct emu *emu, int framerate)
+{
+	int old_framerate;
+
+	if (!emu)
+		return -1;
+
+	old_framerate = emu->user_framerate;
+
+	if (framerate < 1)
+		framerate = emu->nes_framerate;
+
+	emu->user_framerate = framerate;
+	emu->current_clock_rate = emu->clock_rate * emu->user_framerate /
+		emu->nes_framerate;
+	emu->current_delay_ns = NS_PER_SEC / emu->user_framerate;
+
+	if (emu->config->vsync)
+		emu->current_framerate = emu->display_framerate;
+	else
+		emu->current_framerate = emu->user_framerate;
+
+	emu->frame_timer_reload = 0;
+	if (emu->user_framerate != emu->display_framerate) {
+		emu->frame_timer_reload = emu->user_framerate -
+			emu->display_framerate;
+
+		if (emu->frame_timer_reload < 0)
+			emu->frame_timer_reload *= -1;
+
+		emu->frame_timer = emu->frame_timer_reload;
+	}
+
+	if (old_framerate != framerate) {
+		if (emu->config->alternate_speed_mute)
+			audio_mute(framerate != emu->nes_framerate);
+		video_apply_config(emu);
+		audio_apply_config(emu);
+		emu_apply_config(emu);
+	}
+
+	return 0;
+}
+
 int emu_set_system_type(struct emu *emu, int system_type)
 {
 	int old_system_type;
@@ -466,7 +510,6 @@ int emu_set_system_type(struct emu *emu, int system_type)
 	}
 
 	emu->system_type = system_type;
-	emu->vsync_target_framerate = 60;
 	emu->nes_framerate = NTSC_FRAMERATE;
 	emu->clock_rate = NTSC_MASTER_CLOCK_RATE;
 	ppu_set_reset_connected(emu->ppu, 1);
@@ -501,7 +544,6 @@ int emu_set_system_type(struct emu *emu, int system_type)
 		cpu_set_type(emu->cpu, CPU_TYPE_RP2A07);
 		apu_set_type(emu->apu, APU_TYPE_RP2A07);
 		ppu_set_type(emu->ppu, PPU_TYPE_RP2C07);
-		emu->vsync_target_framerate = 50;
 		emu->nes_framerate = PAL_FRAMERATE;
 		emu->clock_rate = PAL_MASTER_CLOCK_RATE;
 		break;
@@ -509,7 +551,6 @@ int emu_set_system_type(struct emu *emu, int system_type)
 		cpu_set_type(emu->cpu, CPU_TYPE_DENDY);
 		apu_set_type(emu->apu, APU_TYPE_DENDY);
 		ppu_set_type(emu->ppu, PPU_TYPE_DENDY);
-		emu->vsync_target_framerate = 50;
 		emu->nes_framerate = DENDY_FRAMERATE;
 		emu->clock_rate = DENDY_MASTER_CLOCK_RATE;
 		break;
@@ -543,17 +584,7 @@ int emu_set_system_type(struct emu *emu, int system_type)
 		return 1;
 	}
 
-	emu->ns_per_vsync_frame = NS_PER_SEC / emu->vsync_target_framerate;
-	emu->ns_per_nes_frame = NS_PER_SEC / emu->nes_framerate;
-
-	emu->current_framerate = emu->nes_framerate;
-	if (emu->config->vsync)
-		emu->current_framerate = emu->display_framerate;
-
-	if (emu->config->vsync)
-		emu->delay_ns = emu->ns_per_vsync_frame;
-	else
-		emu->delay_ns = emu->ns_per_nes_frame;
+	emu_set_framerate(emu, emu->nes_framerate);
 
 	if (emu->loaded && (system_type != old_system_type)) {
 		char *path;
@@ -764,10 +795,26 @@ int emu_run_frame(struct emu *emu, uint32_t *buffer, uint16_t *nes_buffer)
 {
 	int cycles;
 
-	if (!emu->idle_frame_timer && emu->idle_frame_timer_reload) {
-		emu->idle_frame_timer = emu->idle_frame_timer_reload;
-		if (emu->config->vsync)
-			return 0;
+	if (emu->config->vsync && emu->frame_timer_reload) {
+		int old_frame_timer = emu->frame_timer;
+
+		if (emu->user_framerate > emu->display_framerate) {
+			if (emu->frame_timer > 0)
+				emu->frame_timer -= emu->display_framerate;
+			else
+				emu->frame_timer += emu->frame_timer_reload;
+
+			if (old_frame_timer > 0)
+				emu->draw_frame = 0;
+		} else if (emu->user_framerate < emu->display_framerate) {
+			if (emu->frame_timer > 0)
+				emu->frame_timer -= emu->user_framerate;
+			else
+				emu->frame_timer += emu->frame_timer_reload;
+
+			if (old_frame_timer > 0)
+				return 0;
+		}
 	}
 
 	ppu_begin_frame(emu->ppu, buffer, nes_buffer);
@@ -781,9 +828,6 @@ int emu_run_frame(struct emu *emu, uint32_t *buffer, uint16_t *nes_buffer)
 	apu_end_frame(emu->apu, cycles);
 	board_end_frame(emu->board, cycles);
 	io_end_frame(emu->io, cycles);
-
-	if (emu->idle_frame_timer_reload)
-		emu->idle_frame_timer--;
 
 	return cycles;
 }

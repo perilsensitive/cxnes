@@ -119,16 +119,18 @@ struct emu {
 	/* Timing variables */
 	int cpu_clock_divider;
 	int ppu_clock_divider;
-	int idle_frame_timer;
-	int idle_frame_timer_reload;
-	double current_framerate;
-	double vsync_target_framerate;
-	double display_framerate;
-	double nes_framerate;
-	long ns_per_vsync_frame;
-	long ns_per_nes_frame;
+	int draw_frame;
+	int frame_timer;
+	int frame_timer_reload;
+	int frame_timer_mode;
+	int current_framerate;
+	int display_framerate;
+	int nes_framerate;
+	int user_framerate;
 	long delay_ns;
+	long current_delay_ns;
 	double clock_rate;
+	double current_clock_rate;
 
 	int blargg_reset_timer;
 	int resetting;
@@ -183,6 +185,8 @@ void emu_load_rom_cfg(struct emu *emu);
 void emu_save_rom_config(struct emu *emu);
 void emu_load_cheat(struct emu *emu);
 void emu_save_rom_config(struct emu *emu);
+
+int emu_set_framerate(struct emu *emu, int framerate);
 
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);
