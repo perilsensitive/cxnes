@@ -1,9 +1,9 @@
 cxNES Documentation
 
-Version 0.1.0
-Updated 2015-09-07
+Version 0.1.1
+Updated 2015-10-12
 
-Website: http://github.com/perilsensitive/cxnes
+Website: http://perilsensitive.github.io/cxnes
 
 Intro
 =====
@@ -228,7 +228,7 @@ Default Bindings
 | Toggle Fullscreen   	      | Alt-Enter 				        |
 | Toggle Menubar 	      | Esc					        |
 | Toggle FPS Display 	      | Ctrl-F					        |
-| Pause/Resume Emulation      | Shift-P 					        |
+| Pause/Resume Emulation      | Shift-P 				        |
 | FDS Disk Eject/Insert       | Ctrl-F10 				        |
 | FDS Disk Select 	      | F10 					        |
 | Save Screenshot 	      | Alt-S 					        |
@@ -242,10 +242,28 @@ Default Bindings
 | VS. Coin Switch  	      | F10 					        |
 | VS. Service Switch 	      | Ctrl-F10 				        |
 | Four-Player Mode Switch     | F9 					        |
+| Alternate Speed             | Tab					        |
 | Exit cxNES 	      	      | Alt-X 					        |
 
 All other Famicom Keyboard keys are mapped to the key with the same
 symbol on the keycap (e.g., 'U' is mapped to 'U').
+
+Famicom Disk System
+===================
+Famicom Disk System support requires a copy of the Famicom Disk System BIOS. 
+You can configure cxNES with the location of this file via the GUI
+(Options -> Path Configuration -> FDS BIOS Path) or the config file (set fds_bios_path).
+You can also put it in the directories listed below (which you use will depend on your
+platform), but you must name the file 'disksys.rom' if you want cxNES to use it automatically.
+
+Linux:  
+* $HOME/.local/share/cxnes
+* The global data directory for cxnes (/usr/local/share/cxnes by default, or
+  /usr/share/cxnes if you installed from a package)
+
+Windows:  
+* %APPDATA%\cxnes
+* The same folder as cxnes.exe
 
 
 Credits
