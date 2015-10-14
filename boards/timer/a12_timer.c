@@ -1247,10 +1247,10 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			timer->next_clock *= emu->cpu_clock_divider;
 			timer->next_clock += timer->frame_start_cpu_cycles;
 		} else if (!prev_a12 && address) {
-			if (cycles <= timer->next_clock)
-				timer-> next_clock = ~0;
-			else
+			if (cycles > timer->next_clock)
 				clock = 1;
+
+			timer-> next_clock = ~0;
 		}
 
 		if (clock) {
