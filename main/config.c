@@ -48,11 +48,6 @@
 #define DEFAULT_ROMCFG_PATH "romcfg"
 #define DEFAULT_SCREENSHOT_PATH "screenshot"
 
-struct binding_item {
-	char *name;
-	char *value;
-};
-
 struct config_binding {
 	char name[32];
 	int mod;
@@ -740,12 +735,12 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_END()
 };
 
-static struct binding_item default_modifiers[] = {
+struct binding_item default_modifiers[] = {
 	{ .name = "Keyboard Home", .value = "KBD" },
 	{ .name = NULL },
 };
 
-static struct binding_item default_bindings[] = {
+struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
 	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },

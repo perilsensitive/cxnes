@@ -46,6 +46,14 @@ enum {
 #define PATHSEP "\\"
 #endif
 
+struct binding_item {
+	char *name;
+	char *value;
+};
+
+extern struct binding_item default_bindings[];
+extern struct binding_item default_modifiers[];
+
 struct config {
 	/* PPU/Video options */
 	const char *sprite_limit_mode;
