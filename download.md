@@ -11,7 +11,7 @@ layout: default
 
   {{ release.body }}
 
-{% for asset in release.assets %}{% if asset.state != "uploaded" %}{% continue %}{% endif %}{% assign: sz = asset.size | times: 100.0 | divided_by: 1048576.0 | plus: 0.5 %}{% assign: sz = sz %}{% capture sz %}{{ sz }}{% endcapture %}{% assign: sz = sz | split: "."  | first %}[{% if asset.label %}{{ asset.label }}{% else %}{{ asset.name }}{% endif %}]({{ asset.browser_download_url }}) {{ sz | divided_by: 100.0 }} MB  
+{% for asset in release.assets %}{% if asset.state != "uploaded" %}{% continue %}{% endif %}{% assign: sz = asset.size | times: 100.0 | divided_by: 1048576.0 | plus: 0.5 %}{% assign: sz = sz %}{% capture sz %}{{ sz }}{% endcapture %}{% assign: sz = sz | split: "."  | first %}[{{ asset.name }}]({{ asset.browser_download_url }}) {{ sz | divided_by: 100.0 }} MB  
 {% endfor %}[Source code (.zip)]({{ release.zipball_url }})  
 [Source code (.tar.gz)]({{ release.tarball_url }})
 {% endfor %}
