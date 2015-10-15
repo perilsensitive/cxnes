@@ -1,3 +1,11 @@
+cxnes (0.1.2-1) unstable; urgency=low
+
+  * Fixes bug in GTK menus that would cause emulator to crash.
+  * Fix bug in A12 timer code.
+  * Make port numbers in input binding categories more obvious.
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Thu, 15 Oct 2015 01:35:39 -0600
+
 cxnes (0.1.1-1) unstable; urgency=low
 
   * Initial Linux release
