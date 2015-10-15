@@ -842,7 +842,7 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 			 G_CALLBACK(generic_menu_unmap_callback), userdata);
 
 	if (is_visible || is_sensitive) {
-		g_signal_connect(G_OBJECT(menu), "destroy",
+		g_signal_connect(G_OBJECT(menu), "show",
 				 G_CALLBACK(menu_shown_callback), item);
 
 		if (is_visible) {
