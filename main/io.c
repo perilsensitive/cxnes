@@ -902,8 +902,8 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 		return;
 
 	if (mode < 0)
-		mode = (io->four_player_mode + 1) % 3;
-	else if (mode > 2)
+		mode = (io->four_player_mode + 1) % 4;
+	else if (mode > 3)
 		return;
 
 	io->four_player_mode = mode;
