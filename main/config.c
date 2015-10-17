@@ -1234,10 +1234,12 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 		limit = 1;
 
 	for (i = (user ? 0 : 1); i < limit; i++) {
-		snprintf(buffer, length, "%s%s%s%s",
+		int len = strlen(data_path_list->paths[i]);
+		snprintf(buffer, length, "%s%s%s%s%s",
 			 data_path_list->paths[i],
+			 (data_path_list->paths[i][len-1] == PATHSEP[0]) ? "" : "/",
 			 default_path,
-			 filename[0] ? "/" : "", filename);
+			 filename[0] ? PATHSEP: "", filename);
 
 		if ((user > 0) || check_file_exists(buffer))
 			break;
