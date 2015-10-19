@@ -964,8 +964,8 @@ static CPU_WRITE_HANDLER(rambo1_irq_reload)
 		m2_timer_set_prescaler(emu->m2_timer, 3, cycles);
 		m2_timer_set_force_reload_delay(emu->m2_timer, delay ? 2 : 0, cycles);
 	} else {
+		//a12_timer_set_force_reload_delay(emu->a12_timer, delay, cycles);
 		a12_timer_force_reload(emu->a12_timer, cycles);
-		a12_timer_set_force_reload_delay(emu->a12_timer, delay, cycles);
 	}
 }
 
