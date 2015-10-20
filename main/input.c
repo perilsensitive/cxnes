@@ -361,7 +361,7 @@ static char *controller_axes[] = {
 	"Right Trigger", NULL
 };
 
-static const char *modifier_names[INPUT_MOD_COUNT] = {
+const char *modifier_names[INPUT_MOD_COUNT] = {
 	"MOD1",
 	"MOD2",
 	"MOD3",
@@ -661,8 +661,8 @@ static void sanitize_binding(char *dest, const char *src, int dest_len)
 	dest[j] = '\0';
 }
 
-static int input_parse_binding(const char *string, union input_new_event *event,
-			       int *modp)
+int input_parse_binding(const char *string, union input_new_event *event,
+			int *modp)
 {
 	const char *ptr;
 	int mod;
@@ -717,7 +717,7 @@ static int input_parse_binding(const char *string, union input_new_event *event,
 	return 0;
 }
 
-static int emu_action_lookup_by_name(const char *name, uint32_t *ptr)
+int emu_action_lookup_by_name(const char *name, uint32_t *ptr)
 {
 	int i, count;
 

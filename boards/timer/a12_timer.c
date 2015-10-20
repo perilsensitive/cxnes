@@ -210,7 +210,7 @@ int a12_timer_init(struct emu *emu, int variant)
 		break;
 	case A12_TIMER_VARIANT_RAMBO1:
 		timer->delay = 0;
-		timer->force_reload_delay = 0;
+		timer->force_reload_delay = 1;
 		timer->alt = 0;
 		timer->a12_rise_delta = 4;
 		break;
@@ -275,7 +275,6 @@ void a12_timer_reset(struct a12_timer *timer, int hard)
 		timer->vblank_scanlines = 20;
 		timer->has_short_frame = 0;
 		timer->frame_start_cpu_cycles = 0;
-		timer->force_reload_delay = 0;
 		timer->reload = 0;
 		timer->counter = 0;
 		timer->prescaler = 0;
@@ -608,8 +607,16 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 		    ((starting_cycles + (cycles * emu->ppu_clock_divider) > next_clock) &&
 		     (cycle == 5))) {
 			int c = count;
-			if (!c || reload_flag)
+			if (!c || reload_flag) {
 				c = timer->reload + 1;
+
+				if (reload_flag) {
+					if ((timer->variant != A12_TIMER_VARIANT_RAMBO1) ||
+					    (timer->reload > 1)) {
+						c += timer->force_reload_delay;
+					}
+				}
+			}
 
 			int rc = a12_timer_fast_calculate_irq(timer, &cycles, c,
 							      &scanline, &cycle);
@@ -654,8 +661,13 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 					else
 						count = timer->reload;
 
-					if (reload_flag)
-						count += timer->force_reload_delay;
+					if (reload_flag) {
+
+						if (timer->variant != A12_TIMER_VARIANT_RAMBO1 ||
+						    (timer->reload > 1)) {
+							count += timer->force_reload_delay;
+						}
+					}
 
 					reload_flag = 0;
 				} else {
@@ -708,8 +720,8 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 	/* Convert cycles to master cycles, add them to the starting
 	 * cycle count */
 	cycles *= timer->emu->ppu_clock_divider;
+	cycles += starting_cycles;
 	if (timer->variant == A12_TIMER_VARIANT_RAMBO1) {
-		int remainder;
 		/* RAMBO-1 checks the counter status on the falling edge of M2,
 		   and if the counter is now 0 it does not assert IRQ until the
 		   next falling edge.  Since we started our calculations from
@@ -720,18 +732,11 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 		   but handling other alignments would only require a small
 		   adjustment dependent on the alignment used.
 		 */
-		cycles += starting_cycles;
 		cycles -= timer->frame_start_cpu_cycles;
-		remainder = cycles % timer->emu->cpu_clock_divider;
 		cycles /= timer->emu->cpu_clock_divider;
-		if (remainder)
-			cycles += 2;
-		else
-			cycles++;
+		cycles += 2;
 		cycles *= timer->emu->cpu_clock_divider;
 		cycles += timer->frame_start_cpu_cycles;
-	} else {
-		cycles += starting_cycles;
 	}
 
  done:
@@ -849,13 +854,21 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 			reload = timer->reload;
 		}
 
+		old_counter = timer->counter;
 		timer->counter = reload;
 
 		if (timer->reload_flag) {
+			int delay = 0;
+
+			if ((timer->variant != A12_TIMER_VARIANT_RAMBO1) ||
+			    (timer->reload > 1)) {
+				delay = timer->force_reload_delay;
+			}
+
 			if (!(timer->flags & A12_TIMER_FLAG_COUNT_UP))
-				timer->counter += timer->force_reload_delay;
+				timer->counter += delay;
 			else
-				timer->counter -= timer->force_reload_delay;
+				timer->counter -= delay;
 		}
 	} else {
 		timer->counter += counter_delta;
@@ -876,19 +889,14 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 		cpu_interrupt_cancel(emu->cpu, IRQ_A12_TIMER);
 
 		if (timer->variant == A12_TIMER_VARIANT_RAMBO1) {
-			int remainder;
 			/* Round down to the nearest CPU cycle
 			   boundary and add two CPU cycles.  This
 			   assumes the "standard" CPU-PPU alignment.
 			*/
 			int cpu_cycles = cpu_get_cycles(emu->cpu);
 			tmp = cycles - cpu_cycles;
-			remainder = tmp % emu->cpu_clock_divider;
 			tmp /= emu->cpu_clock_divider;
-			if (remainder)
-				tmp += 2;
-			else
-				tmp++;
+			tmp += 2;
 			tmp *= emu->cpu_clock_divider;
 			tmp += cpu_cycles;
 		} else {
@@ -1272,7 +1280,6 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			if ((timer->counter == counter_limit) || timer->reload_flag) {
 				int reload;
 
-				timer->reload_flag = 0;
 				if (timer->flags & A12_TIMER_FLAG_WRAP) {
 					reload = (~counter_limit) & 0xff;
 				} else {
@@ -1287,6 +1294,8 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 					else
 						timer->counter -= timer->force_reload_delay;
 				}
+
+				timer->reload_flag = 0;
 			} else {
 				timer->counter += counter_delta;
 			}

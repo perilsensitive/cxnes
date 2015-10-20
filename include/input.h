@@ -221,6 +221,8 @@ struct emu_action_id_map {
 	uint32_t emu_action_id;
 };
 
+const char *modifier_names[INPUT_MOD_COUNT];
+
 extern struct input_event *event_hash[EVENT_HASH_SIZE];
 extern struct emu_action_id_map emu_action_id_map[];
 extern const char *category_names[];
@@ -258,4 +260,7 @@ int input_get_num_joysticks(void);
 const char *input_get_joystick_name(int index);
 int input_get_joystick_guid(int index, char *buffer, size_t size);
 int input_joystick_is_gamecontroller(int index);
+int input_parse_binding(const char *string, union input_new_event *event,
+			int *modp);
+int emu_action_lookup_by_name(const char *name, uint32_t *ptr);
 #endif				/* __INPUT_H__ */
