@@ -20,6 +20,7 @@
 #include <SDL.h>
 #include <gtk/gtk.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "emu.h"
 #include "input.h"
@@ -61,6 +62,9 @@ enum binding_columns {
 	COLUMN_COUNT,
 };
 
+#if _WIN32
+extern char *strtok_r(char *str, const char *delim, char **saveptr);
+#endif
 static gboolean row_is_visible(GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
 static void clear_store(GtkTreeStore *store);
 static void apply_input_bindings(GtkTreeStore *store);
