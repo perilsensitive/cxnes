@@ -8199,15 +8199,6 @@ CHR: 128k
 CRC: 61179bfa
 SHA1: 8CF2EA5C72FD2EB3DD4493494DD959E4FC00BA2A
 %%
-Name: Jurassic Boy (Asia) (Unl)
-System: Famicom
-Board: TxROM
-Mirroring: Four-Screen
-PRG: 256k
-CHR: 128k
-CRC: 491cd95e
-SHA1: 203523818a348361584cdebe47aeb860808757fc
-%%
 Name: Jurassic Park (USA)
 System: NES-NTSC
 Board: NES-TSROM
@@ -18047,6 +18038,7 @@ PRG: 128k
 CRC: b1b16b8a
 SHA1: BB40175966F18EFAD8D82BEBEA3D4D8444A133E6
 VRAM0: 8k
+Four-Player: famicom
 %%
 Name: Wizardry II - Llylgamyn no Isan (Japan)
 System: Famicom
@@ -22021,6 +22013,796 @@ PRG: 32k
 CHR: 64k
 CRC: fffdc310
 SHA1: C8983B705D6A413DEBFDEF1CE1567C11C39E212E
+%%
+Name: Shatterhand (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: 15a1cbb0
+SHA1: F511FAEA6814C5558BA8513E7F85B25BCD4F6EFE
+%%
+Name: U.S. Championship V'Ball (Japan) (Beta)
+System: Famicom
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: d7077d96
+SHA1: 5656DB8DB3F4E52461354BB6E6A2B314B5FEE5FF
+Four-Player: famicom
+%%
+Name: Wally Bear and the No! Gang (USA) (Beta) (Unl)
+System: NES-NTSC
+Board: COLORDREAMS-74*377
+Mirroring: Vertical
+PRG: 128k
+CRC: 6025c660
+SHA1: 055A9529D07E17C77DD7BDF5620653B61DFC422F
+VRAM0: 8k
+%%
+Name: Gremlins 2 - The New Batch (Europe) (Beta)
+System: NES-PAL
+Board: TxROM
+PRG: 128k
+CHR: 256k
+CRC: 8bdd3d93
+SHA1: 5235B0AF85421E98DDBBD88D02D44A824330B16A
+%%
+Name: RoboCop (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: 7ac3e8a1
+SHA1: 176293CB81E451CD2D3B83A80237E74812BA9C00
+%%
+Name: Sou Setsu Ryuu II - The Revenge (Japan) (Beta)
+System: Famicom
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: e56aa5e8
+SHA1: 893A4DD4D500733F5CD4AFE4E783DB1B20A420BC
+%%
+Name: Nagagutsu o Haita Neko - Sekai Isshuu 80 Nichi Daibouken (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: fe9fe4da
+SHA1: 8C54307601B0680E10FC0F311FCE9E707868D929
+%%
+Name: Takeshi no Sengoku Fuuunji (Japan) (Beta)
+System: Famicom
+Board: TAITO-TC0190FMC/TC0350FMR
+PRG: 128k
+CHR: 128k
+CRC: 3cd4b420
+SHA1: 0F96AFD3C09671854358A30C11C4E18D826D50CC
+%%
+Name: Superman (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: de84354a
+SHA1: 61C84D91BB3D51A3D37198DF64CAAFBB92FFE4A0
+%%
+Name: Sou Setsu Ryuu (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 41462d21
+SHA1: 2002924BA3CCAE75E3AC4E4533A776FC30A9DCAE
+%%
+Name: Ikinari Musician (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 16k
+CRC: b9dc755e
+SHA1: 76A229C62E708413840B8505BDCD5C7A538563BF
+%%
+Name: Tecmo Super Bowl (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 256k
+CHR: 128k
+CRC: db2d4f9d
+SHA1: ACD4EBAC21DC04D7C8BD8A108EA4630B98038D00
+WRAM0: 8k
+WRAM0-Battery: True
+%%
+Name: Exploding Fist (USA) (Proto 1)
+System: NES-NTSC
+Board: CNROM
+Mirroring: Horizontal
+PRG: 32k
+CHR: 32k
+CRC: b97bfdd7
+SHA1: 570661C23D994FA299F1185AFC1874DD10E5E0AB
+%%
+Name: Color a Dinosaur (USA) (Beta)
+System: NES-NTSC
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: cb17d41e
+SHA1: C9F15FCB8389EF25CB16AF0B277EC6885DC4B6D7
+VRAM0: 8k
+%%
+Name: Little Mermaid - Ningyo Hime (Japan) (Beta)
+System: Famicom
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: ebb5e666
+SHA1: 4DFF40A24173C73291FE89072E5FAD895D1518B4
+VRAM0: 8k
+%%
+Name: Maniac Mansion (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 256k
+CRC: de0c29a9
+SHA1: 2E18EBB1E0DAE649818A1D42B38F99FB3A0824E8
+WRAM0: 8k
+WRAM0-Battery: True
+VRAM0: 8k
+%%
+Name: M.C. Kids (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: ae7df77f
+SHA1: F917DE6911BFE1151228E4506173C3054DAEA0DA
+WRAM0: 8k
+%%
+Name: Karateka (Japan) (Beta)
+System: Famicom
+Board: NROM
+Mirroring: Vertical
+PRG: 16k
+CHR: 8k
+CRC: e9edba24
+SHA1: A940C09A50B58C3BD6FF8A3516C5340DEC08499B
+%%
+Name: Totsuzen! Macchoman (Japan) (Beta)
+System: Famicom
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: fbdd0f1b
+SHA1: 46CF20CF6703B32B8D057B926D6235AD4FC20061
+VRAM0: 8k
+%%
+Name: Wanpaku Duck Yume Bouken (Japan) (Beta)
+System: Famicom
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: 98c7b4da
+SHA1: 664D49AF3E0C7148B23FD3814C25C79864A2C622
+VRAM0: 8k
+%%
+Name: Garfield - A Week of Garfield (Japan) (Sample)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CHR: 32k
+CRC: fb77099e
+SHA1: C13D77A980C828A416BA501830851779B71923FB
+%%
+Name: Caesars Palace (USA) (Beta)
+System: NES-NTSC
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: a48d26c1
+SHA1: 1975953854A630C34D40025A508C544B0D02590A
+VRAM0: 8k
+%%
+Name: Super Mario Bros. 2 (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CRC: 52387646
+SHA1: D8B0D44821403CDED1318E4C279DDB17AE8B01F3
+WRAM0: 8k
+VRAM0: 8k
+%%
+Name: Adventures in the Magic Kingdom (USA) (Beta 2)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 4fbbe319
+SHA1: 7ED2283CD9634EF58656A97C392F12E32DE2742F
+%%
+Name: Hokuto no Ken (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: 2337f45e
+SHA1: 70262201C86EDB9753D9C77C76862D9ED088F712
+%%
+Name: Escape from Atlantis, The (USA) (Proto 1) (Unl)
+System: NES-NTSC
+Board: COLORDREAMS-74*377
+Mirroring: Vertical
+PRG: 64k
+CHR: 64k
+CRC: bd139be7
+SHA1: 9DA5DF0820418832F3ADCAA4C792AE6DCE320189
+%%
+Name: Dengeki - Big Bang! (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 0c462638
+SHA1: B65E8A63D6AEA549502B0E79A83B3EBE42809C4C
+%%
+Name: Ghostbusters (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Horizontal
+PRG: 32k
+CHR: 32k
+CRC: c8bd1908
+SHA1: 61559AD94C2ACF2F78B2A694221758A39CD7FACE
+%%
+Name: Hottarman no Chitei Tanken (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: b96f8321
+SHA1: 75BE8046156A0F4C30D77B9216C82E823D3499BB
+%%
+Name: Gegege no Kitarou - Youkai Daimakyou (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: ce2450c0
+SHA1: 6893B9E699A36A9C63CB275BB98550CB1C9DABE0
+%%
+Name: Venice Beach Volleyball (USA) (Beta) (Unl)
+System: NES-NTSC
+Board: AVE-NINA-03/06
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: c226157d
+SHA1: 39E5DF79DF773672A4CA76A74C5B84BA3C3054CA
+%%
+Name: Sansuu 5 & 6 Nen - Keisan Game (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: 9ef351dc
+SHA1: 07366162DD81027CBC82BE470E0DD6FA8123E838
+%%
+Name: Rockin' Kats (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: 63d3aff4
+SHA1: 87F900F363D96C5167A136AA293CBB0966C38E7A
+%%
+Name: Adventures in the Magic Kingdom (USA) (Beta 1)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 3cf749de
+SHA1: 0E6792AE7516468F62E57D1DA5248F76D0E76837
+%%
+Name: Urusei Yatsura - Lum no Wedding Bell (Japan) (Beta)
+System: Famicom
+Board: 74*139/74
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: 2b750bf9
+SHA1: 5F11E7570C9385BE4FA9F70D93D8E2143E6B6703
+%%
+Name: Teenage Mutant Ninja Turtles (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 1ff251ae
+SHA1: F6D3B4EB1A4F1D16C7F405EBF886606FA230D5D3
+%%
+Name: Mezase Pachi Pro - Pachio-kun (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CRC: 9568eb74
+SHA1: C88716864533FA76795EDFAC6730E34BF7723CAB
+VRAM0: 8k
+%%
+Name: Ninja Gaiden (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 6eea1b10
+SHA1: 475F5CBC3EF19FFBC2FDB83F4ED7C7AE9912C620
+%%
+Name: Baltron (Japan) (Beta)
+System: Famicom
+Board: NROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 8k
+CRC: 1e407387
+SHA1: DEAD834974E4DE6802FFEE26DB18B0566905E19A
+%%
+Name: Star Wars - The Empire Strikes Back (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 256k
+CHR: 256k
+CRC: cfd29c93
+SHA1: F0F7D25ACBEE3BE2509B81E67783E562ADF42BF6
+%%
+Name: S.C.A.T. - Special Cybernetic Attack Team (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 78c72c75
+SHA1: E5C632F504B78610ADB3B09074997620F6639AED
+%%
+Name: Parodius (Europe) (Beta)
+System: NES-PAL
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: 6328b44d
+SHA1: A10270E2170B6727BACA98B17CF7E742260F937E
+WRAM0: 8k
+%%
+Name: King Neptune's Adventure (USA) (Beta)
+System: NES-NTSC
+Board: COLORDREAMS-74*377
+Mirroring: Vertical
+PRG: 64k
+CHR: 32k
+CRC: 4bc75f16
+SHA1: C0E3BD39A95D9BFB9C1D2A6932D99D618389D087
+%%
+Name: Sweet Home (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 256k
+CRC: af6b5b85
+SHA1: 20970DDDCE40A8D006CD6C08B36DC909BAE0AC68
+WRAM0: 8k
+WRAM0-Battery: True
+VRAM0: 8k
+%%
+Name: TwinBee 3 - Poko Poko Daimaou (Japan) (Beta)
+System: Famicom
+Board: KONAMI-VRC-2B
+PRG: 128k
+CHR: 128k
+CRC: 203583d5
+SHA1: BDAA842F8C203D06CDCAA7B550D582DFA9D395CE
+%%
+Name: Ultimate Air Combat (Europe) (En,Fr,De) (Beta)
+System: NES-PAL
+Board: TxROM
+PRG: 256k
+CHR: 256k
+CRC: 690afe9f
+SHA1: 617C38F02EA4976DFA38A5BF8FB976AB7528F9B4
+%%
+Name: Solstice - The Quest for the Staff of Demnos (USA) (Beta)
+System: NES-NTSC
+Board: AxROM
+PRG: 128k
+CRC: 5dc9bc41
+SHA1: 1CA6565D62E5A953BE3CD7A13925FECD2006A296
+VRAM0: 8k
+%%
+Name: Super Pinball (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CRC: e14f0a3f
+SHA1: A99DE60A5DB387981A4D0B3D5031A0BFE9B458C0
+VRAM0: 8k
+%%
+Name: Sansuu 4 Nen - Keisan Game (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: 162f328e
+SHA1: 0C0844C97D4A7D0A718EA473358415BA97C4DE33
+%%
+Name: California Raisins - The Grape Escape (USA) (Proto 1)
+System: NES-NTSC
+Board: UxROM
+Mirroring: Vertical
+PRG: 128k
+CRC: f2096d9c
+SHA1: 1D8DF12125DFF9ABB6E6097482C004AA4827CC57
+VRAM0: 8k
+%%
+Name: Monster in My Pocket (USA) (Beta)
+System: NES-NTSC
+Board: TxROM
+PRG: 128k
+CHR: 128k
+CRC: fe84fcac
+SHA1: 28EAAE2D06E257FD59C8BB22381E0375C75298C8
+%%
+Name: Banana (Japan) (Beta)
+System: Famicom
+Board: CNROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 16k
+CRC: cf4483af
+SHA1: 003AD76CD9D6BEDC7CA8EB0C6E6334634ABE1EED
+%%
+Name: Famicom Shougi - Ryuuousen (Japan) (Beta)
+System: Famicom
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: 2c5fac1c
+SHA1: 22725F5112C497A5CFB2512FEBD6E8AA7DAB89F5
+WRAM0: 8k
+WRAM0-Battery: True
+%%
+Name: Ninja Jajamaru - Ginga Daisakusen (Japan) (Beta)
+System: Famicom
+Board: JALECO-JF-23/24/25/27/29/37/40
+PRG: 128k
+CHR: 128k
+CRC: 965834bd
+SHA1: 4D17DB19565A6F754128B90ECEF3A2A46514DD12
+%%
+Name: Shanghai (Japan) (Sample)
+System: Famicom
+Board: SUNSOFT-3R
+Mirroring: Vertical
+PRG: 128k
+CRC: 05c4af33
+SHA1: A97667693162C5FA223CE5DA39C31E8D83832417
+VRAM0: 8k
+%%
+Name: Secret Scout in the Temple of Demise (USA) (Beta) (Unl)
+System: NES-NTSC
+Board: COLORDREAMS-74*377
+Mirroring: Vertical
+PRG: 64k
+CHR: 64k
+CRC: 692f2096
+SHA1: 0FAECB09767528CC2C9CD4FE4EDBD0C6ECEFB999
+%%
+Name: Rescue - The Embassy Mission (USA) (Beta)
+System: NES-NTSC
+Board: SxROM
+PRG: 128k
+CHR: 128k
+CRC: f6ab12a2
+SHA1: 09DC053E4F5396BDFB07D123F2C88D0B6FA06FCB
+%%
+Name: Puzzle (USA) (Beta) (Unl)
+System: NES-NTSC
+Board: CNROM
+Mirroring: Horizontal
+PRG: 32k
+CHR: 32k
+CRC: 2fa8cbb4
+SHA1: FF7F9E8AFDCB2DDEE1BEC13609FE032204C2BF47
+%%
+Name: Challenge of the Dragon (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-TC-U01-1.5M
+Mirroring: Vertical
+PRG: 64k
+CHR: 128k
+CRC: 7dd0afc8
+SHA1: B9902886D1739983B315B67B02133E44620E4381
+%%
+Name: Dancing Blocks (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-NROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 8k
+CRC: bd018f0f
+SHA1: 68ABE1E49C9E9CCEA978A48232432C252E5912C0
+%%
+Name: Final Combat (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-Sachen-8259C
+PRG: 64k
+CHR: 16k
+CRC: 58d1f46a
+SHA1: DFAF6D81280ADBEB2ADF3DAB38E536B0F2FDFC76
+%%
+Name: Final Combat (Asia) (NTSC) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259C
+PRG: 64k
+CHR: 16k
+CRC: 3e170708
+SHA1: 5A6DFDD8A2D62EBE313A6FDB986C3585077BB348
+%%
+Name: Gaiapolis (Asia) (Unl)
+System: Famicom
+Board: NES-TLROM
+PRG: 128k
+CHR: 256k
+CRC: a7ef8f80
+SHA1: E843AB3D779D4F0BB1F933D6EE99DAA526EFBCF1
+%%
+Name: Hell Fighter (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-Sachen-8259C
+PRG: 256k
+CHR: 64k
+CRC: 47ea8047
+SHA1: 8694B8351D1F476FEA9D376205234853A00948D7
+%%
+Name: Jurassic Boy (Asia) (Unl)
+System: Famicom
+Board: NES-TVROM
+Mirroring: Four-Screen
+PRG: 256k
+CHR: 128k
+CRC: 491cd95e
+SHA1: 203523818A348361584CDEBE47AEB860808757FC
+%%
+Name: Locksmith (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: NES-NROM-256
+Mirroring: Vertical
+PRG: 32k
+CHR: 8k
+CRC: 7cf6b30a
+SHA1: B12A8C135C214330B15A532416A43521EC72A893
+%%
+Name: Lucky Bingo 777 (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-016-1M
+Mirroring: Horizontal
+PRG: 16k
+CHR: 16k
+CRC: a2d074f5
+SHA1: 0AB0B9780FF4F7F74911FBA1CA24E750F82443B5
+%%
+Name: Magical Mathematics (Asia) (NTSC) (Unl)
+System: Famicom
+Board: UNL-SA-NROM
+Mirroring: Vertical
+PRG: 32k
+CHR: 8k
+CRC: 15454cb2
+SHA1: 4D190222246A66FF2F6712B6BD7B25FEFA963E93
+%%
+Name: Mahjong World, The - Ma Que Shi Jie (Asia) (NTSC) (Unl)
+System: Famicom
+Board: UNL-SA-0037
+Mirroring: Horizontal
+PRG: 64k
+CHR: 64k
+CRC: fc778215
+SHA1: 82880C2F4A0D18E4CB67324334F2B3B76B818F31
+%%
+Name: Mahjong World, The - Ma Que Shi Jie (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-0037
+Mirroring: Horizontal
+PRG: 64k
+CHR: 64k
+CRC: a8e6a7c2
+SHA1: 01D7CE2C74046BA6F7BE2C31DADB21A36BDCA117
+%%
+Name: Master Chu and the Drunkard Hu (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-016-1M
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: eb4cca31
+SHA1: DFD04F8090C5788AF0676A8BA93DE2443FD8AB74
+%%
+Name: Metal Fighter (Asia) (Sachen) (Unl)
+System: NES-NTSC
+Board: UNL-SA-016-1M
+Mirroring: Vertical
+PRG: 32k
+CHR: 32k
+CRC: 7739672e
+SHA1: CAAC1E829133851648BA7C7CD6EAA7D26A464999
+%%
+Name: Millionaire (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: 
+Mirroring: Vertical
+PRG: 32k
+CHR: 16k
+CRC: f8c358d7
+SHA1: 5617015BD38C01926E0486387D687CDEC8526C0F
+%%
+Name: Poker Mahjong - Pu Ke Mao Que (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 32k
+CHR: 32k
+CRC: 2d8730e2
+SHA1: C282316D30790E41D0A4A0E8949024B980CEE572
+%%
+Name: Popo Team (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 128k
+CHR: 64k
+CRC: a20b4983
+SHA1: 6A07B7C55359E1826F670DEDEBF969B9DD2F0A2F
+%%
+Name: Pyramid II (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-016-1M
+Mirroring: Vertical
+PRG: 64k
+CHR: 16k
+CRC: bbf464eb
+SHA1: B21CFE30197727C1C8E8DB6D28AD696A708F8FF5
+%%
+Name: Rockball (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 64k
+CHR: 64k
+CRC: e2265bf4
+SHA1: 8898B1E70D561AF31564689E0C942C181C78E55F
+%%
+Name: Sidewinder (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-72007
+Mirroring: Horizontal
+PRG: 16k
+CHR: 16k
+CRC: 80d63472
+SHA1: 2FB0401EA8249233EFA399F305D83672D5600B4A
+%%
+Name: Silent Assault (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-SA-016-1M
+Mirroring: Vertical
+PRG: 64k
+CHR: 64k
+CRC: 1488e95f
+SHA1: 7117413766ABC02F3BB767C2CE96065B6F3CBA85
+%%
+Name: Silver Eagle (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-Sachen-8259B
+PRG: 128k
+CHR: 128k
+CRC: 9ace456e
+SHA1: 313CDE2F9829B8BC30978BA7C534AFD8896B7BCA
+%%
+Name: Super Cartridge Ver 2 - 10 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 128k
+CHR: 64k
+CRC: 2f1686e5
+SHA1: 0EA22D830B93AB455F8C1F5E2C4B894EABA30AA3
+%%
+Name: Super Cartridge Ver 3 - 8 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 256k
+CRC: 4bf80af8
+SHA1: D24D3104E28FD3F428CDBC8AE2D3F4ACA9A69D6F
+%%
+Name: Super Cartridge Ver 4 - 6 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 256k
+CRC: dbc5ecd9
+SHA1: 87D232F4BE2CDFFE374C061B089D075393022E46
+%%
+Name: Super Cartridge Ver 5 - 7 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 128k
+CRC: dc320617
+SHA1: 53DD3AB854093B7015DD16D0F6696EDCCBDEBD64
+%%
+Name: Super Cartridge Ver 6 - 6 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 128k
+CRC: f7a9822e
+SHA1: 197FB77AE4B716648DBFDB62BB7AD6882CF661B9
+%%
+Name: Super Cartridge Ver 7 - 4 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 256k
+CRC: 0d15687d
+SHA1: C46C73B6FC814D2168501CE2874C0F3AF83D99D7
+%%
+Name: Super Cartridge Ver 8 - 4 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 128k
+CRC: 517611fe
+SHA1: 616DC9A852024FD05A85D0D578F4504B4AABD87A
+%%
+Name: Super Cartridge Ver 9 - 3 in 1 (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 256k
+CHR: 256k
+CRC: 0d203de5
+SHA1: 1477FD89A26B8F6E3460FE078794D79BEC944C00
+%%
+Name: Super Pang II (Asia) (Unl)
+System: Famicom
+Board: UNL-Sachen-8259A
+PRG: 64k
+CHR: 32k
+CRC: 198f1c37
+SHA1: 88E6ADE9934EFCDE38D7482FDDE1C00C4C13652D
+%%
+Name: Super Pang (Asia) (PAL) (Unl)
+System: NES-PAL
+Board: UNL-Sachen-8259A
+PRG: 32k
+CHR: 32k
+CRC: 4185ada1
+SHA1: 8E7D4B855A507A6D3A5D68A5B3803F266AF4D4D3
+%%
+Name: Taiwan Mahjong - Tai Wan Ma Que 16 (Asia) (Unl)
+System: Famicom
+Board: UNL-SA-0036
+Mirroring: Horizontal
+PRG: 32k
+CHR: 16k
+CRC: d4924cba
+SHA1: 5239EECED4510EF3D540DD39D629D9E7C5E55251
+%%
+Name: World of Card Games, The (Asia) (Unl)
+System: Famicom
+Board: NES-NROM-128
+Mirroring: Vertical
+PRG: 16k
+CHR: 8k
+CRC: 65b6af68
+SHA1: CF3B74B9AB12E7FA85ADE2EC3F430F3C8EFDDC74
 %%
 Name: Vs. Castlevania
 Board: UxROM

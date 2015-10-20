@@ -1,3 +1,11 @@
+cxnes (0.1.3-1) unstable; urgency=low
+
+  * Fixes some bugs in RAMBO-1 timer code
+  * Add more records to database
+  * Cleanup of binding configuration dialog
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Mon, 19 Oct 2015 20:14:03 -0600
+
 cxnes (0.1.2-1) unstable; urgency=low
 
   * Fixes bug in GTK menus that would cause emulator to crash.

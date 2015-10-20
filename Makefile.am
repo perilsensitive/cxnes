@@ -160,7 +160,12 @@ endif
 if HAVE_WINDRES
 cxnes_SOURCES += sdl/gtk/windows_resources.rc
 
+clean-local:
+	rm -rf $(DESTDIR)$(pkgdatadir)
+	rm -rf $(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip
+
 install-data-hook:
+	rm -rf $(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip
 	sed 's/$$/\r/' COPYING > $(DESTDIR)$(pkgdatadir)/COPYING.txt
 	sed 's/$$/\r/' doc/icon_license.txt > $(DESTDIR)$(pkgdatadir)/icon_license.txt
 	sed 's/$$/\r/' doc/icon_readme.txt > $(DESTDIR)$(pkgdatadir)/icon_readme.txt
@@ -173,5 +178,5 @@ install-data-hook:
 	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
 	cp *.dll $(DESTDIR)$(pkgdatadir)
 	cp -r share $(DESTDIR)$(pkgdatadir)
-	(cd $(DESTDIR)$(pkgdatadir) && zip -r ../../$(PACKAGE)-$(VERSION).zip .)
+	(cd $(DESTDIR)$(pkgdatadir) && zip -r ../../$(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip .)
 endif

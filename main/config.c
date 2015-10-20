@@ -48,11 +48,6 @@
 #define DEFAULT_ROMCFG_PATH "romcfg"
 #define DEFAULT_SCREENSHOT_PATH "screenshot"
 
-struct binding_item {
-	char *name;
-	char *value;
-};
-
 struct config_binding {
 	char name[32];
 	int mod;
@@ -740,12 +735,12 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_END()
 };
 
-static struct binding_item default_modifiers[] = {
+struct binding_item default_modifiers[] = {
 	{ .name = "Keyboard Home", .value = "KBD" },
 	{ .name = NULL },
 };
 
-static struct binding_item default_bindings[] = {
+struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
 	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },
@@ -1239,10 +1234,12 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 		limit = 1;
 
 	for (i = (user ? 0 : 1); i < limit; i++) {
-		snprintf(buffer, length, "%s%s%s%s",
+		int len = strlen(data_path_list->paths[i]);
+		snprintf(buffer, length, "%s%s%s%s%s",
 			 data_path_list->paths[i],
+			 (data_path_list->paths[i][len-1] == PATHSEP[0]) ? "" : "/",
 			 default_path,
-			 filename[0] ? "/" : "", filename);
+			 filename[0] ? PATHSEP: "", filename);
 
 		if ((user > 0) || check_file_exists(buffer))
 			break;

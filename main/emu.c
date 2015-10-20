@@ -1164,7 +1164,7 @@ static char *emu_generate_rom_config_path(struct emu *emu, int save)
 
 	default_cfg_file = config_get_path(emu->config,
 					   CONFIG_DATA_DIR_CONFIG,
-					   emu->cfg_file, save);
+					   emu->cfg_file, save ? 1 : -1);
 
 	if (!default_cfg_file) {
 		free(romdir_cfg_file);

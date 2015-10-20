@@ -180,20 +180,28 @@ static void rom_info_callback(GtkWidget *widget, gpointer userdata)
 }
 
 static void about_callback(GtkWidget *widget, gpointer userdata) {
-	GtkWidget *aboutdialog = gtk_about_dialog_new();
+	GtkWidget *aboutdialog;
 	GdkPixbuf *logo;
+	GtkWindow *gtkwindow;
 
 	logo = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.svg",
 						128, 128, NULL);
 
+	gtkwindow = userdata;
+	aboutdialog = gtk_about_dialog_new();
+
 	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(aboutdialog), license);
-	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_NAME);
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), "cxNES");
 	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_VERSION);
 	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(aboutdialog), "NES/Famicom Emulator");
-	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(aboutdialog), "https://github.com/perilsensitive/cxnes");
-	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(aboutdialog), "(c) 2014 Ryan Jackson");
+	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(aboutdialog), "https://perilsensitive.github.io/cxnes");
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(aboutdialog), "(c) 2015 Ryan Jackson");
 	if (logo)
 		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(aboutdialog), logo);
+
+	gtk_window_set_transient_for(GTK_WINDOW(aboutdialog),
+				     GTK_WINDOW(gtkwindow));
+
 	gtk_dialog_run(GTK_DIALOG(aboutdialog));
 	gtk_widget_destroy(aboutdialog);
 }
@@ -1269,17 +1277,17 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 	return GTK_WIDGET(menu);
 }
 
-static GtkWidget *gui_build_help_menu(void)
+static GtkWidget *gui_build_help_menu(GtkWidget *gtkwindow)
 {
 	GtkMenuShell *menu;
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
 	gui_add_menu_item(menu, "_ROM Info...", rom_info_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  gtkwindow, NULL, is_sensitive_if_loaded);
 
 	gui_add_menu_item(menu, "_About...", about_callback,
-			  NULL, NULL, NULL);
+			  gtkwindow, NULL, NULL);
 
 	return GTK_WIDGET(menu);
 }
@@ -1310,7 +1318,7 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
-	submenu = gui_build_help_menu();
+	submenu = gui_build_help_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Help",
 				 NULL,
 				 NULL, NULL, NULL);

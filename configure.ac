@@ -1,4 +1,4 @@
-AC_INIT([cxnes], [0.1.2])
+AC_INIT([cxnes], [0.1.3])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CANONICAL_HOST
@@ -13,10 +13,10 @@ case $host_os in
 		# to be used like a *nix program so the standard rules don't
 		# apply.  We want everything to be copied to one directory
 		# so that the program is portable.
-		AC_SUBST([bindir], ['portable'])
-		AC_SUBST([datarootdir], ['portable'])
-		AC_SUBST([docdir], ['portable'])
-		pkgdatadir="$(datarootdir)"
+		AC_SUBST([bindir], ['target'])
+		AC_SUBST([datarootdir], ['target'])
+		AC_SUBST([docdir], ['target'])
+		pkgdatadir=""
 		
 		CFLAGS="$CFLAGS -mwindows -D__USE_MINGW_ANSI_STDIO=1"
 		LIBS="$LIBS -lshlwapi"
@@ -38,6 +38,7 @@ AC_PROG_CC([$CC_LIST])
 case $CC in
 	*i686-w64-mingw32-gcc*)
 		AC_SUBST(WINDRESFLAGS, "-F pe-i386")
+		AC_SUBST(ZIP_ARCH, "win32")
 		if test x$PKG_CONFIG_PATH = 'x'
 		then
 			PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig
@@ -46,6 +47,7 @@ case $CC in
 		;;
 	*i686-pc-mingw32-gcc*)
 		AC_SUBST(WINDRESFLAGS, "-F pe-i386")
+		AC_SUBST(ZIP_ARCH, "win32")
 		if test x$PKG_CONFIG_PATH = 'x'
 		then
 			PKG_CONFIG_PATH=/usr/i686-pc-mingw32/sys-root/mingw/lib/pkgconfig
@@ -54,6 +56,7 @@ case $CC in
 		;;
 	*x86_64-w64-mingw32-gcc*)
 		AC_SUBST(WINDRESFLAGS, "-F pe-x86-64")
+		AC_SUBST(ZIP_ARCH, "win64")
 		if test x$PKG_CONFIG_PATH = 'x'
 		then
 			PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig
