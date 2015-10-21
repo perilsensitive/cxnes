@@ -30,6 +30,7 @@
 
 extern struct emu *emu;
 
+static GtkWidget *grab_event_dialog;
 static GtkWidget *label, *category, *action, *bind;
 static GtkWidget *check_alt, *check_ctrl, *check_shift, *check_gui;
 static GtkWidget *check_mod1, *check_mod2, *check_mod3, *check_kbd;
@@ -405,7 +406,10 @@ static gboolean _event_timer_callback(gpointer data)
 
 	timer_count -= 250;
 	if (event_grabbed || timer_count <= 0) {
-		gtk_widget_destroy(data);
+		if (grab_event_dialog) {
+			gtk_widget_destroy(grab_event_dialog);
+			grab_event_dialog = NULL;
+		}
 		return FALSE;
 	}
 
@@ -414,7 +418,6 @@ static gboolean _event_timer_callback(gpointer data)
 
 static void grab_event_callback(GtkButton *button, gpointer user_data)
 {
-	GtkWidget *dialog;
 	GtkTreeSelection *selection;
 	GdkWindow *parent_gdk_window;
 	GtkWindow *parent;
@@ -453,31 +456,34 @@ static void grab_event_callback(GtkButton *button, gpointer user_data)
 	action_text = gtk_entry_get_text(GTK_ENTRY(action));
 
 	/* FIXME parent? and flags? */
-	dialog = gtk_message_dialog_new(parent, GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_MESSAGE_OTHER, GTK_BUTTONS_CANCEL,
-					fmt, category_text, action_text);
+	grab_event_dialog = gtk_message_dialog_new(parent, GTK_DIALOG_DESTROY_WITH_PARENT,
+						   GTK_MESSAGE_OTHER, GTK_BUTTONS_CANCEL,
+						   fmt, category_text, action_text);
 
 	timer_count = 5000;
 	run_timer = 1;
 	event_grabbed = 0;
 	orig_x = orig_y = 0.0;
 
-	g_timeout_add(250, _event_timer_callback, dialog);
+	g_timeout_add(250, _event_timer_callback, grab_event_dialog);
 
-	g_signal_connect(G_OBJECT(dialog), "key_press_event",
+	g_signal_connect(G_OBJECT(grab_event_dialog), "key_press_event",
 			 G_CALLBACK(key_event_callback), NULL);
 
-	g_signal_connect(G_OBJECT(dialog), "button_press_event",
+	g_signal_connect(G_OBJECT(grab_event_dialog), "button_press_event",
 			 G_CALLBACK(button_event_callback), NULL);
 
-	g_signal_connect(G_OBJECT(dialog), "motion_notify_event",
+	g_signal_connect(G_OBJECT(grab_event_dialog), "motion_notify_event",
 			 G_CALLBACK(motion_event_callback), NULL);
 
 	sdl_grab_event = 1;
-	response = gtk_dialog_run(GTK_DIALOG(dialog));
+	response = gtk_dialog_run(GTK_DIALOG(grab_event_dialog));
 	if (response == GTK_RESPONSE_CANCEL) {
 		run_timer = 0;
-		gtk_widget_destroy(dialog);
+		if (grab_event_dialog) {
+			gtk_widget_destroy(grab_event_dialog);
+			grab_event_dialog = NULL;
+		}
 	}
 
 	modify = GPOINTER_TO_INT(user_data);
