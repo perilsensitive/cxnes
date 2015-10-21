@@ -287,12 +287,12 @@ static char **rom_posix_find_autopatches(const char *patch_path,
 	/* First look for patches that don't include the ROM's
 	   extension in the filename.
 	 */
-	snprintf(buffer, path_max + 1, "%s-*.[biu]ps", escaped_path);
+	snprintf(buffer, path_max + 1, "%s-*.[biuBIU][pP][sS]", escaped_path);
 	patch_glob.gl_offs = 0;
 	glob(buffer, 0, NULL, &patch_glob);
 	if (patch_glob.gl_pathc == 0) {
 		globfree(&patch_glob);
-		snprintf(buffer, length, "%s.[biu]ps", escaped_path);
+		snprintf(buffer, length, "%s.[biuBIU][pP][sS]", escaped_path);
 		glob(buffer, 0, NULL, &patch_glob);
 	}
 
@@ -302,12 +302,12 @@ static char **rom_posix_find_autopatches(const char *patch_path,
 	 */
 	if (patch_glob.gl_pathc == 0 && rom_ext) {
 		globfree(&patch_glob);
-		snprintf(buffer, length, "%s.%s-*.[biu]ps",
+		snprintf(buffer, length, "%s.%s-*.[biuBIU][pP][sS]",
 			 escaped_path, rom_ext);
 		glob(buffer, 0, NULL, &patch_glob);
 		if (patch_glob.gl_pathc == 0) {
 			globfree(&patch_glob);
-			snprintf(buffer, length, "%s.%s.[biu]ps",
+			snprintf(buffer, length, "%s.%s.[biuBIU][pP][sS]",
 				 escaped_path, rom_ext);
 			glob(buffer, 0, NULL, &patch_glob);
 		}
