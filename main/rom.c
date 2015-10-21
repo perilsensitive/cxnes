@@ -27,6 +27,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+#if ZIP_ENABLED
+#include <zlib.h>
+#include <unzip.h>
+#endif
 
 #include "config.h"
 #include "emu.h"
@@ -41,45 +45,19 @@
 #include "sha1.h"
 
 int rom_apply_patches(struct rom *rom, int count,
-		      char **patchfiles);
+		      char **patchfiles, int from_zip);
 
-int rom_load_single_file(struct emu *emu, const char *filename, struct rom **romptr)
+static int rom_load_file_data(struct emu *emu, const char *filename,
+			      struct rom **romptr, uint8_t *buffer,
+			      size_t size)
 {
-	size_t file_size;
-	uint8_t *buffer;
 	struct rom *rom;
 	int rc;
-
-	if (!romptr)
-		return 1;
-
-	*romptr = NULL;
-
-	if (!filename)
-		return 1;
-
-	if (!check_file_exists(filename))
-		return 1;
-
-	file_size = get_file_size(filename);
-	if ((int)file_size < 0)
-		return 1;
-
-	/* FIXME enforce maximum size */
-	buffer = malloc(file_size + 16);
-	if (!buffer)
-		return 1;
-
-	if (readfile(filename, buffer, file_size)) {
-		free(buffer);
-		return 1;
-	}
-
-	rom = rom_alloc(filename, buffer, file_size);
+	
+	rom = rom_alloc(filename, buffer, size);
 
 	if (!rom) {
-		free(buffer);
-		return 1;
+		return -1;
 	}
 
 	rc = db_rom_load(emu, rom);
@@ -131,6 +109,141 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 	}
 
 	return rc;
+}
+
+int rom_load_single_file(struct emu *emu, const char *filename, struct rom **romptr)
+{
+	size_t file_size;
+	uint8_t *buffer;
+	char filename_inzip[256];
+#if ZIP_ENABLED
+	unzFile zip;
+	unz_file_info file_info;
+	unz_global_info global_info;
+#endif
+
+	if (!romptr)
+		return -1;
+
+	*romptr = NULL;
+
+	if (!filename)
+		return -1;
+
+	if (!check_file_exists(filename))
+		return -1;
+
+#if ZIP_ENABLED
+	zip = unzOpen(filename);
+	if (zip != NULL) {
+		int err, i;
+		int rc;
+		char *ext;
+
+		buffer = NULL;
+		rc = -1;
+
+		err = unzGetGlobalInfo(zip, &global_info);
+		if (err != UNZ_OK)
+			return -1;
+
+		for (i = 0; i < global_info.number_entry; i++) {
+			err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
+						    sizeof(filename_inzip), NULL, 0, NULL, 0);
+			if (err != UNZ_OK)
+				break;
+
+			/* Only try to load files in the root of the zip.
+			   This lets users stick other, potentially large
+			   data files in a subdirectory.
+			*/
+			if (strchr(filename_inzip, '/')) {
+				err = unzGoToNextFile(zip);
+				if (err != UNZ_OK)
+					break;
+				else
+					continue;
+			}
+
+			ext = strrchr(filename_inzip, '.');
+			if (!ext || (strcasecmp(ext, ".nes") &&
+				     strcasecmp(ext, ".unf") && 
+				     strcasecmp(ext, ".unif") && 
+				     strcasecmp(ext, ".fds") && 
+				     strcasecmp(ext, ".nsf"))) {
+				err = unzGoToNextFile(zip);
+				if (err != UNZ_OK)
+					break;
+				else
+					continue;
+			}
+
+			err = unzOpenCurrentFile(zip);
+			if (err != UNZ_OK)
+				break;
+
+			file_size = file_info.uncompressed_size;
+			buffer = malloc(file_size + 16);
+			if (!buffer)
+				break;
+
+			err = unzReadCurrentFile(zip, buffer, file_size);
+
+			if (err != file_size) {
+				free(buffer);
+				buffer = NULL;
+				break;
+			}
+
+			if (rom_load_file_data(emu, filename, romptr,
+					       buffer, file_size) >= 0) {
+				err = unzCloseCurrentFile(zip);
+				if (err != UNZ_OK)
+					break;
+
+				rc = 0;
+				break;
+			}
+
+			err = unzCloseCurrentFile(zip);
+			if (err != UNZ_OK)
+				break;
+
+			err = unzGoToNextFile(zip);
+			if (err != UNZ_OK)
+				break;
+		}
+
+		if (rc < 0) {
+			unzCloseCurrentFile(zip);
+		}
+
+		unzClose(zip);
+
+		return rc;
+	}
+#endif
+
+	file_size = get_file_size(filename);
+	if ((int)file_size < 0)
+		return -1;
+
+	/* FIXME enforce maximum size */
+	buffer = malloc(file_size + 16);
+	if (!buffer)
+		return -1;
+
+	if (readfile(filename, buffer, file_size)) {
+		free(buffer);
+		return -1;
+	}
+
+	if (rom_load_file_data(emu, filename, romptr,
+			       buffer, file_size) < 0) {
+		return -1;
+	}
+
+	return 0;
 }
 
 struct rom *rom_load_file(struct emu *emu, const char *filename)
@@ -465,6 +578,78 @@ static char **rom_win32_find_autopatches(const char *patch_path,
 
 #endif
 
+static int rom_apply_patch_data(struct rom *rom, uint8_t *buffer, size_t size,
+				uint32_t rom_buffer_crc)
+{
+	size_t input_size, output_size;
+	off_t data_offset, target_offset;
+	int rc;
+
+	data_offset = 0;
+	target_offset = 0;
+
+
+	if (rom->info.board_type == BOARD_TYPE_FDS) {
+		int input_size_rc;
+		int output_size_rc;
+
+		input_size_rc = patch_get_input_size(buffer, size,
+						     &input_size);
+
+		output_size_rc = patch_get_output_size(buffer, size,
+						       &output_size);
+
+		if (!input_size_rc && !(input_size % 65500))
+			data_offset = 16;
+
+		if (!output_size_rc && !(output_size % 65500))
+			target_offset = 16;
+
+		if (patch_is_ips(buffer, size)) {
+			uint8_t *tmp, *orig;
+			size_t orig_size;
+
+			orig = rom->buffer;
+			orig_size = rom->buffer_size;
+
+			tmp = malloc(orig_size);
+			if (tmp) {
+				memcpy(tmp, rom->buffer, rom->buffer_size);
+
+				rc = patch_apply(&tmp, &rom->buffer_size, 0, 0,
+						 rom_buffer_crc, buffer, size);
+
+				rom->buffer = tmp;
+				if (fds_disk_sanity_checks(rom) > 0) {
+					data_offset = 16;
+					target_offset = 16;
+				}
+
+				free(tmp);
+
+				rom->buffer = orig;
+				rom->buffer_size = orig_size;
+			}
+		}
+	}
+
+	if (data_offset) {
+		rom_buffer_crc = crc32buf(rom->buffer + data_offset,
+					  rom->buffer_size -
+					  data_offset,
+					  NULL);
+	}
+
+	rc = patch_apply(&rom->buffer, &rom->buffer_size, data_offset,
+			 target_offset, rom_buffer_crc, buffer, size);
+
+	if (rc) {
+		return -1;
+	}
+
+	return 0;
+}
+
 /* Apply patches to rom
    - 'count' is the number of patch files to apply. If < 0, patchfiles
      is assumed to be a NULL-terminated list.
@@ -472,41 +657,72 @@ static char **rom_win32_find_autopatches(const char *patch_path,
    - 'rom' is a pointer to the rom struct which points to the rom data
    - returns -1 on error, or the number of patches applied if successful
 */
-int rom_apply_patches(struct rom *rom, int count, char **patchfiles)
+int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zip)
 {
 	uint32_t buffer_crc;
 	uint8_t *patch_buffer;
 	int patch_buffer_size;
 	int patches_applied;
 	int i;
-	int rc;
+#if ZIP_ENABLED
+	unzFile zip;
+	unz_file_info file_info;
+	int err;
+#endif
 
 	patch_buffer = NULL;
+	zip = NULL;
 	patch_buffer_size = 0;
 	patches_applied = 0;
 
 	buffer_crc = crc32buf(rom->buffer, rom->buffer_size, NULL);
 
+#if ZIP_ENABLED
+	if (from_zip) {
+		zip = unzOpen(rom->filename);
+		if (!zip)
+			return -1;
+	}
+#endif
+
 	for (i = 0; (i < count) || (patchfiles[i]); i++) {
 		char *patch_file;
 		int patch_size;
-		size_t input_size, output_size;
-		off_t data_offset, target_offset;
-
-		data_offset = 0;
-		target_offset = 0;
 
 		patch_file = patchfiles[i];
-		printf("Applying patch \"%s\"\n", patch_file);
+		patch_size = 0;
 
+		printf("Applying patch \"%s\"%s\n", patch_file,
+		       from_zip ? " (from ZIP)" : "");
+
+#if ZIP_ENABLED
+		if (from_zip) {
+			err = unzLocateFile(zip, patch_file, 0);
+			if (err != UNZ_OK) {
+				break;
+			}
+
+			err = unzGetCurrentFileInfo(zip, &file_info, NULL, 0,
+						    NULL, 0, NULL, 0);
+			if (err != UNZ_OK)
+				break;
+
+			patch_size = file_info.uncompressed_size;
+		} else {
+#endif
 		patch_size = get_file_size(patch_file);
+#if ZIP_ENABLED
+		}
+#endif
+
 		if (patch_size < 0) {
 			return -1;
 		} else if (patch_size > patch_buffer_size) {
 
 			uint8_t *tmp = realloc(patch_buffer, patch_size);
 			if (!tmp) {
-				err_message("rom_apply_patches: %s: failed to allocate memory for patch\n",
+				err_message("rom_apply_patches: %s: failed to"
+					    " allocate memory for patch\n",
 					    patch_file);
 				return -1;
 			}
@@ -515,77 +731,43 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles)
 			patch_buffer_size = patch_size;
 		}
 
+#if ZIP_ENABLED
+		if (from_zip) {
+			err = unzOpenCurrentFile(zip);
+			if (err != UNZ_OK)
+				break;
+
+			err = unzReadCurrentFile(zip, patch_buffer, patch_size);
+			unzCloseCurrentFile(zip);
+			if (err != patch_size) {
+				err_message("rom_apply_patches: %s: failed to load file\n",
+					patch_file);
+				break;
+			}
+		} else {
+#endif
 		if (readfile(patch_file, patch_buffer, patch_size)) {
 			err_message("rom_apply_patches: %s: failed to load file\n",
 				    patch_file);
 			return -1;
 		}
-
-		if (rom->info.board_type == BOARD_TYPE_FDS) {
-			int input_size_rc;
-			int output_size_rc;
-
-			input_size_rc = patch_get_input_size(patch_buffer,
-							     patch_size,
-							     &input_size);
-
-			output_size_rc = patch_get_output_size(patch_buffer,
-							       patch_size,
-							       &output_size);
-
-			if (!input_size_rc && !(input_size % 65500))
-				data_offset = 16;
-
-			if (!output_size_rc && !(output_size % 65500))
-				target_offset = 16;
-
-			if (patch_is_ips(patch_buffer, patch_size)) {
-				uint8_t *tmp, *orig;
-				size_t orig_size;
-
-				orig = rom->buffer;
-				orig_size = rom->buffer_size;
-
-				tmp = malloc(orig_size);
-				if (tmp) {
-					memcpy(tmp, rom->buffer, rom->buffer_size);
-
-					rc = patch_apply(&tmp, &rom->buffer_size, 0, 0,
-							 buffer_crc, patch_buffer,
-							 patch_size);
-
-					rom->buffer = tmp;
-					if (fds_disk_sanity_checks(rom) > 0) {
-						data_offset = 16;
-						target_offset = 16;
-					}
-
-					free(tmp);
-
-					rom->buffer = orig;
-					rom->buffer_size = orig_size;
-				}
-			}
+#if ZIP_ENABLED
 		}
+#endif
 
-		if (data_offset) {
-			buffer_crc = crc32buf(rom->buffer + data_offset,
-					      rom->buffer_size -
-					      data_offset,
-					      NULL);
-		}
-
-		rc = patch_apply(&rom->buffer, &rom->buffer_size, data_offset,
-				 target_offset, buffer_crc, patch_buffer,
-				 patch_size);
-
-		if (rc) {
-			err_message("rom_apply_patches: %s: "
-				    "failed to apply patch\n",
-				    patch_file);
-			return -1;
+		if (rom_apply_patch_data(rom, patch_buffer, patch_size,
+					 buffer_crc) == 0) {
+			patches_applied++;
+		} else {
+			break;
 		}
 	}
+
+#if ZIP_ENABLED
+	if (from_zip) {
+		unzClose(zip);
+	}
+#endif
 
 	if (patch_buffer)
 		free(patch_buffer);
@@ -637,6 +819,118 @@ void rom_free(struct rom *rom)
 	free(rom);
 }
 
+#if ZIP_ENABLED
+static int cmpstringp(const void *p1, const void *p2)
+{
+	return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+
+char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
+{
+	char **patch_list;
+	char *buffer;
+	unzFile zip;
+	unz_file_info file_info;
+	unz_global_info global_info;
+	char filename[256];
+	size_t buffer_size;
+	int err;
+	int count;
+	int i;
+
+	patch_list = NULL;
+	buffer = NULL;
+	buffer_size = 0;
+
+	zip = unzOpen(rom->filename);
+	if (!zip)
+		return NULL;
+
+	err = unzGetGlobalInfo(zip, &global_info);
+	if (err != UNZ_OK) {
+		unzClose(zip);
+		return NULL;
+	}
+
+	count = 0;
+	for (i = 0; i < global_info.number_entry; i++) {
+		char *ext;
+		err = unzGetCurrentFileInfo(zip, &file_info,
+					    filename, sizeof(filename),
+					    NULL, 0, NULL, 0);
+		if (err != UNZ_OK) {
+			unzClose(zip);
+			break;
+		}
+
+		ext = strrchr(filename, '.');
+
+		/* FIXME skip if no ext */
+
+		if (ext && (!strcasecmp(ext, ".ips") ||
+			    !strcasecmp(ext, ".ups") ||
+			    !strcasecmp(ext, ".bps"))) {
+			char *tmp;
+			int offset;
+			int length;
+
+			/* Patches must be placed in the root
+			   directory of the zip file.
+			*/
+			if (strchr(filename, '/'))
+				continue;
+
+			offset = buffer_size;
+			length = strlen(filename) + 1;
+
+			buffer_size += length;
+			tmp = realloc(buffer, buffer_size);
+			if (!tmp) {
+				free(buffer);
+				unzClose(zip);
+				break;
+			}
+
+			buffer = tmp;
+			memcpy(buffer + offset, filename, length);
+			count++;
+		}
+
+		err = unzGoToNextFile(zip);
+		if (err != UNZ_OK) {
+			unzClose(zip);
+			break;
+		}
+	}
+
+	if (buffer) {
+		int offset = sizeof(char *) * (count + 1);
+		char *tmp = realloc(buffer, buffer_size + offset);
+		int i;
+
+		if (!tmp) {
+			free(buffer);
+			return NULL;
+		}
+
+		buffer = tmp;
+		memmove(buffer + offset, buffer, buffer_size);
+		patch_list = (char **)buffer;
+
+		for (i = 0; i < count; i++) {
+			patch_list[i] = buffer + offset;
+			offset += strlen(patch_list[i]) + 1;
+		}
+
+		patch_list[i] = NULL;
+
+		qsort(patch_list, count, sizeof(char *), cmpstringp);
+	}
+
+	return patch_list;
+}
+#endif
+
 /* Returns a list of patches to be automatically applied to the rom. The
    list is a char ** array with a terminating NULL pointer, so no explicit
    patch count is necessary.
@@ -652,6 +946,17 @@ char **rom_find_autopatches(struct config *config, struct rom *rom)
 	char *rom_base;
 	char *rom_ext;
 	char **patch_list;
+	int i;
+
+	patch_list = rom_find_zip_autopatches(config, rom);
+	i = 0;
+	while (patch_list && patch_list[i]) {
+		printf("patch %d: %s\n", i, patch_list[i]);
+		i++;
+	}
+
+	if (patch_list)
+		free(patch_list);
 
 	patch_list = NULL;
 
