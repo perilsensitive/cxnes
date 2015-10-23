@@ -65,13 +65,22 @@ static uint8_t controller_read(struct io_device *, int port, int mode,
 static void controller_write(struct io_device *, uint8_t value,
 			     int mode, uint32_t cycles);
 static int controller_apply_config(struct io_device *dev);
+static int controller_save_state(struct io_device *dev, int port,
+				 struct save_state *state);
+static int controller_load_state(struct io_device *dev, int port,
+				 struct save_state *state);
 
 struct controller_state {
-	int prev_latch;
 	int latch;
 	int strobe;
 	int index;
 	struct controller_common_state *common_state;
+};
+
+static struct state_item controller_state_items[] = {
+	STATE_16BIT(controller_state, latch),
+	STATE_8BIT(controller_state, strobe), /* BOOLEAN */
+	STATE_ITEM_END(),
 };
 
 struct io_device controller1_device = {
@@ -82,6 +91,8 @@ struct io_device controller1_device = {
 	.disconnect = controller_disconnect,
 	.read = controller_read,
 	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.port = PORT_1,
 	.removable = 1,
@@ -95,6 +106,8 @@ struct io_device controller2_device = {
 	.disconnect = controller_disconnect,
 	.read = controller_read,
 	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.port = PORT_2,
 	.removable = 1,
@@ -108,6 +121,8 @@ struct io_device controller3_device = {
 	.disconnect = controller_disconnect,
 	.read = controller_read,
 	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.port = PORT_3,
 	.removable = 1,
@@ -121,6 +136,8 @@ struct io_device controller4_device = {
 	.disconnect = controller_disconnect,
 	.read = controller_read,
 	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.port = PORT_4,
 	.removable = 1,
@@ -321,6 +338,92 @@ static int controller_apply_config(struct io_device *dev)
 	/* struct config *config; */
 
 	/* config = dev->emu->config; */
+
+	return 0;
+}
+
+static int controller_save_state(struct io_device *dev, int port,
+				 struct save_state *state)
+{
+	struct controller_state *controller_state;
+	uint8_t *buf, *ptr;
+	char *chunk_name;
+	size_t size;
+	int rc;
+
+	if (port < 0 || port > 3)
+		return -1;
+
+	controller_state = dev->private;
+
+	size = pack_state(controller_state, controller_state_items, NULL);
+
+	buf = malloc(size);
+	if (!buf)
+		return -1;
+
+	ptr = buf;
+	ptr += pack_state(controller_state, controller_state_items, ptr);
+
+	switch(port) {
+	case 0:
+		chunk_name = "PAD0";
+		break;
+	case 1:
+		chunk_name = "PAD1";
+		break;
+	case 2:
+		chunk_name = "PAD2";
+		break;
+	case 3:
+		chunk_name = "PAD3";
+		break;
+	}
+
+	rc = save_state_add_chunk(state, chunk_name, buf, size);
+	free(buf);
+
+	if (rc < 0)
+		return -1;
+
+	return 0;
+}
+
+static int controller_load_state(struct io_device *dev, int port,
+				 struct save_state *state)
+{
+	struct controller_state *controller_state;
+	uint8_t *buf;
+	char *chunk_name;
+	size_t size;
+
+	if (port < 0 || port > 3)
+		return -1;
+
+	controller_state = dev->private;
+
+	switch(port) {
+	case 0:
+		chunk_name = "PAD0";
+		break;
+	case 1:
+		chunk_name = "PAD1";
+		break;
+	case 2:
+		chunk_name = "PAD2";
+		break;
+	case 3:
+		chunk_name = "PAD3";
+		break;
+	}
+
+	if (save_state_find_chunk(state, chunk_name, &buf, &size) < 0) {
+		log_warn("Missing state chunk %s\n", chunk_name);
+		return 0;
+	}
+
+	buf += unpack_state(controller_state, controller_state_items, buf);
+	controller_state->latch |= 0xffff0000;
 
 	return 0;
 }
