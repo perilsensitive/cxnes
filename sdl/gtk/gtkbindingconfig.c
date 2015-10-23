@@ -941,8 +941,11 @@ static void delete_callback(GtkButton *button, gpointer user_data)
 	if (binding_string) {
 		gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
 	} else {
-		gtk_tree_model_iter_nth_child(model, &child_iter,
-					      &iter, 0);
+		if (!gtk_tree_model_iter_nth_child(model, &child_iter,
+						   &iter, 0)) {
+			return;
+		}
+
 		while (1) {
 			if (!gtk_tree_store_remove(GTK_TREE_STORE(model),
 						   &child_iter)) {
