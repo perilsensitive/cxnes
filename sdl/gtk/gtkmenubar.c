@@ -255,6 +255,7 @@ static void file_open(GtkWidget *widget, gpointer user_data)
 				    "*.[uU][nN][fF]",
 				    "*.[fF][dD][sS]",
 				    "*.[nN][sS][fF]",
+				    "*.[zZ][iI][pP]",
 				    NULL };
 	char *shortcuts[] = { (char *)emu->config->rom_path, NULL };
 	GtkWidget *gtkwindow = user_data;
