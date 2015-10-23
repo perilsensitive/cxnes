@@ -76,6 +76,7 @@ extern int total_frame_time;
 extern int frame_times[60];
 extern int time_base;
 extern int frame_count;
+extern int running;
 extern int autohide_timer;
 int fullscreen = -1;
 int cursor_visible;
@@ -1491,6 +1492,9 @@ int video_process_event(SDL_Event *event)
 			video_update_texture();
 			video_draw_buffer();
 		}
+		break;
+	case SDL_WINDOWEVENT_CLOSE:
+		running = 0;
 		break;
 	}
 
