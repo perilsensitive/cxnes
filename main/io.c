@@ -1093,7 +1093,6 @@ static void controller_update_button_state(struct io_device *dev, int controller
 	state->current_state[controller] |= tmp;
 	state->current_state[controller] |= state->turbo_buttons[controller] &
 		state->turbo_mask[controller];
-	state->current_state[controller] |= ~0xff;
 }
 
 static void controller_common_end_frame(struct io_device *dev, uint32_t cycles)

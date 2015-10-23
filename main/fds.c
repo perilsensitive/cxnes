@@ -30,17 +30,6 @@
 #define FDS_MIN_GAP_LENGTH 480
 #define FDS_GAP_LENGTH 968
 
-/*
-  Byte AC BIOS's value Internet BIOS's value
-  00000239 42 85
-  00000406 42 85
-  0000073E 4C A2
-  0000073F 43 B2
-  00000740 E7 CA
-  000007A4 42 4C
-  00000EF4 42 A5
- */
-
 static void fix_vc_bios(uint8_t *bios)
 {
 
@@ -844,31 +833,10 @@ int fds_convert_to_raw(struct rom *rom)
 		size_t size;
 		int crc;
 
-		/* printf("%d: %d %d %d %d\n", i, list->entries[i].type, list->entries[i].offset, */
-		/*        list->entries[i].size, list->entries[i].new_offset); */
-
 		src = data + list->entries[i].offset;
 		dest = tmp_buffer + list->entries[i].new_offset + 16;
 		size = list->entries[i].size;
 		crc = list->entries[i].calculated_crc;
-
-		/* if (list->entries[i].type == 5) { */
-		/* 	/\* For unknown data, we have no choice but to truncate the */
-		/* 	   chunk so that the gaps will fit.  This is probably fine */
-		/* 	   since unknown data is in all probability garbage and/or */
-		/* 	   zero bytes. If it's not, then somebody has created a disk */
-		/* 	   image incompatible with real hardware. */
-		/* 	*\/ */
-		/* 	size_t new_size; */
-
-		/* 	new_size = (list->entries[i].new_offset /  65500 + 1) * 65500 - */
-		/* 		list->entries[i].new_offset; */
-
-		/* 	if (new_size < size) */
-		/* 		size = new_size; */
-		/* } */
-
-//		printf("%d: offset=%d size=%d type=%x\n", i, list->entries[i].new_offset, size, list->entries[i].type);
 
 		memcpy(dest, src, size);
 		if (list->entries[i].type != 5) {

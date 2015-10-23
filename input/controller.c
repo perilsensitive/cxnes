@@ -262,7 +262,7 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 	state->latch >>= 1;
 
 	if (mode != FOUR_PLAYER_MODE_NES)
-		state->latch |= (1 << 15);
+		state->latch |= (1 << 7);
 
 	return data;
 }
