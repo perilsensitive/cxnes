@@ -104,6 +104,8 @@ struct io_device {
 	void (*write) (struct io_device *, uint8_t value, int mode,
 		       uint32_t cycles);
 	int (*apply_config) (struct io_device *);
+	int (*save_state) (struct io_device *, int, struct save_state *);
+	int (*load_state) (struct io_device *, int, struct save_state *);
 	struct input_event_handler *handlers;
 	const char *name;
 	const char *config_id;
@@ -147,5 +149,8 @@ struct io_device *io_find_device_by_config_id(struct io_state *io, int port, con
 void io_device_connect(struct io_state *io, int port, int connected);
 void io_device_select(struct io_state *io, int port, int id);
 int io_device_connected(struct io_state *io, int port);
+
+int io_save_state(struct io_state *io, struct save_state *state);
+int io_load_state(struct io_state *io, struct save_state *state);
 
 #endif				/* __IO_H__ */

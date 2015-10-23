@@ -1092,6 +1092,7 @@ int emu_save_state(struct emu *emu, const char *filename)
 	apu_save_state(emu->apu, state);
 	board_save_state(emu->board, state);
 	save_state_add_chunk(state, "RAM ", emu->ram, 2048);
+	io_save_state(emu->io, state);
 	rc = save_state_write(state, filename);
 
 	destroy_save_state(state);
@@ -1127,6 +1128,7 @@ int emu_load_state(struct emu *emu, const char *filename)
 
 	memcpy(emu->ram, buf, 2048);
 	board_load_state(emu->board, state);
+	io_load_state(emu->io, state);
 	
 	destroy_save_state(state);
 

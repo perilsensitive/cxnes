@@ -1218,3 +1218,45 @@ int io_get_auto_vs_controller_mode(struct io_state *io)
 {
 	return io->auto_vs_controller_mode;
 }
+
+int io_save_state(struct io_state *io, struct save_state *state)
+{
+	struct io_device *device;
+	int port;
+	int rc;
+
+	for (port = 0; port < PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (!device->connected || !device->save_state)
+				continue;
+
+			rc = device->save_state(device, port, state);
+
+			if (rc)
+				return rc;
+		}
+	}
+
+	return 0;
+}
+
+int io_load_state(struct io_state *io, struct save_state *state)
+{
+	struct io_device *device;
+	int port;
+	int rc;
+
+	for (port = 0; port < PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (!device->connected || !device->load_state)
+				continue;
+
+			rc = device->load_state(device, port, state);
+
+			if (rc)
+				return rc;
+		}
+	}
+
+	return 0;
+}
