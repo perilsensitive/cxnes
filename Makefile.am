@@ -157,6 +157,10 @@ if GUI_ENABLED
 cxnes_SOURCES += sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c
 endif
 
+if ZIP_ENABLED
+cxnes_SOURCES += main/unzip.c main/ioapi.c
+endif
+
 if HAVE_WINDRES
 cxnes_SOURCES += sdl/gtk/windows_resources.rc
 
