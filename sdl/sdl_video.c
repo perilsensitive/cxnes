@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <SDL_syswm.h>
 #include <SDL_thread.h>
 #include <SDL_image.h>
@@ -50,6 +51,16 @@
 #define NES_WIDTH  256
 #define NES_HEIGHT 240
 
+struct texture {
+	int w;
+	int h;
+	int target;
+	GLfloat texw;
+	GLfloat texh;
+	GLuint id;
+	GLuint fbo;
+};
+
 #if __unix__
 struct SDL_Window
 {
@@ -67,6 +78,15 @@ struct SDL_Window
 
 typedef struct SDL_Window SDL_Window;
 #endif
+		
+
+static const float inv255f = 1.0f / 255.0f;
+
+static PFNGLGENFRAMEBUFFERSEXTPROC glGenFramebuffersEXT;
+static PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT;
+static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT;
+static PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT;
+static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT;
 
 /* FIXME use getters/setters for these? */
 int display_fps = -1;
@@ -102,17 +122,18 @@ static char osd_msg[MAX_OSD_MSG_LEN];
 static char fps_display[32];
 static TTF_Font *font;
 static SDL_Surface *text_surface;
-static SDL_Texture *text_texture;
+static struct texture *text_texture;
 static SDL_Surface *fps_text_surface;
-static SDL_Texture *fps_text_texture;
-static SDL_Rect bg_dest_rect;
+static struct texture *fps_text_texture;
+static SDL_Rect osd_bg_dest_rect;
 static SDL_Rect text_dest_rect;
 static SDL_Rect text_clip_rect;
-static SDL_Rect fps_bg_dest_rect;
+static SDL_Rect fps_osd_bg_dest_rect;
 static SDL_Rect fps_text_dest_rect;
 static SDL_Rect fps_text_clip_rect;
 static SDL_Color osd_fg_color;
 static SDL_Color osd_bg_color;
+static SDL_Color bg_color;
 static int osd_timer = 0;
 
 #if GUI_ENABLED
@@ -149,10 +170,10 @@ static int scanlines_enabled = -1;
 
 /* Video state */
 static SDL_Window *window;
-static SDL_Renderer *renderer;
-static SDL_RendererInfo renderer_info;
-static SDL_Texture *nes_texture;
-static SDL_Texture *scaled_texture;
+static SDL_GLContext context;
+static struct texture *nes_texture;
+static struct texture *scaled_texture;
+static struct texture *render_target;
 static int has_target_texture;
 static double current_scaling_factor;
 static SDL_Rect clip_rect;
@@ -191,6 +212,10 @@ static float const sony_decoder [6] =
 
 void video_resize_window(void);
 void video_toggle_fullscreen(int fs);
+static void set_render_target(struct texture *texture);
+static struct texture *create_texture(int width, int height,
+				      int linear, int target);
+static void destroy_texture(struct texture *texture);
 
 static void calc_osd_rects(void)
 {
@@ -212,18 +237,18 @@ static void calc_osd_rects(void)
 	bg_margin = 8 * current_scaling_factor;
 	text_margin = floor(current_scaling_factor) * 2;
 
-	bg_dest_rect.x = dest_rect.x + bg_margin;
-	bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
-	if (text_w + 2 * text_margin < bg_dest_rect.w)
-		bg_dest_rect.w = text_w + 2 * text_margin;
+	osd_bg_dest_rect.x = dest_rect.x + bg_margin;
+	osd_bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
+	if (text_w + 2 * text_margin < osd_bg_dest_rect.w)
+		osd_bg_dest_rect.w = text_w + 2 * text_margin;
 
-	bg_dest_rect.h = text_line_skip + 2 * text_margin;
-	bg_dest_rect.y = dest_rect.h - bg_dest_rect.h - bg_margin;
+	osd_bg_dest_rect.h = text_line_skip + 2 * text_margin;
+	osd_bg_dest_rect.y = dest_rect.h - osd_bg_dest_rect.h - bg_margin;
 
-	text_dest_rect.x = bg_dest_rect.x + text_margin;
-	text_dest_rect.w = bg_dest_rect.w - 2 * text_margin;
+	text_dest_rect.x = osd_bg_dest_rect.x + text_margin;
+	text_dest_rect.w = osd_bg_dest_rect.w - 2 * text_margin;
 	text_dest_rect.h = text_line_skip;
-	text_dest_rect.y = bg_dest_rect.y + text_margin;
+	text_dest_rect.y = osd_bg_dest_rect.y + text_margin;
 
 	text_clip_rect.x = 0;
 	text_clip_rect.y = 0;
@@ -251,17 +276,17 @@ static void calc_fps_display_rects(void)
 	bg_margin = 4 * current_scaling_factor;
 	text_margin = current_scaling_factor * 2;
 
-	fps_bg_dest_rect.x = dest_rect.x + dest_rect.w -
+	fps_osd_bg_dest_rect.x = dest_rect.x + dest_rect.w -
 	                     (text_w + 2 * text_margin) - bg_margin;
-	fps_bg_dest_rect.w = text_w + 2 * text_margin;
+	fps_osd_bg_dest_rect.w = text_w + 2 * text_margin;
 
-	fps_bg_dest_rect.h = text_line_skip + 2 * text_margin;
-	fps_bg_dest_rect.y = dest_rect.y + bg_margin;
+	fps_osd_bg_dest_rect.h = text_line_skip + 2 * text_margin;
+	fps_osd_bg_dest_rect.y = dest_rect.y + bg_margin;
 
-	fps_text_dest_rect.x = fps_bg_dest_rect.x + text_margin;
-	fps_text_dest_rect.w = fps_bg_dest_rect.w - 2 * text_margin;
+	fps_text_dest_rect.x = fps_osd_bg_dest_rect.x + text_margin;
+	fps_text_dest_rect.w = fps_osd_bg_dest_rect.w - 2 * text_margin;
 	fps_text_dest_rect.h = text_line_skip;
-	fps_text_dest_rect.y = fps_bg_dest_rect.y + text_margin;
+	fps_text_dest_rect.y = fps_osd_bg_dest_rect.y + text_margin;
 
 	fps_text_clip_rect.x = 0;
 	fps_text_clip_rect.y = 0;
@@ -283,7 +308,7 @@ static void draw_fps_display(void)
 	}
 
 	if (fps_text_texture) {
-		SDL_DestroyTexture(fps_text_texture);
+		destroy_texture(fps_text_texture);
 		fps_text_texture = NULL;
 	}
 
@@ -298,9 +323,17 @@ static void draw_fps_display(void)
 	fps_text_surface = TTF_RenderUTF8_Blended(font, fps_display, osd_fg_color);
 
 	if (fps_text_surface) {
-		fps_text_texture = SDL_CreateTextureFromSurface(renderer,
-							    fps_text_surface);
-
+		fps_text_texture = create_texture(fps_text_surface->w,
+						  fps_text_surface->h,
+						  0, 0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, fps_text_texture->id);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+				fps_text_texture->w,
+				fps_text_texture->h,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+				fps_text_surface->pixels);
+		glDisable(GL_TEXTURE_2D);
 		calc_fps_display_rects();
 	}
 
@@ -319,7 +352,7 @@ static void draw_osd(int count)
 	}
 
 	if (text_texture) {
-		SDL_DestroyTexture(text_texture);
+		destroy_texture(text_texture);
 		text_texture = NULL;
 	}
 
@@ -327,9 +360,17 @@ static void draw_osd(int count)
 	text_surface = TTF_RenderUTF8_Blended(font, osd_msg, osd_fg_color);
 
 	if (text_surface) {
-		text_texture = SDL_CreateTextureFromSurface(renderer,
-							    text_surface);
+		text_texture = create_texture(text_surface->w, text_surface->h,
+					      0, 0);
 
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, text_texture->id);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+				text_texture->w,
+				text_texture->h,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+				text_surface->pixels);
+		glDisable(GL_TEXTURE_2D);
 		calc_osd_rects();
 		if (count > 0)
 			osd_timer = count;
@@ -367,27 +408,102 @@ static void load_osd_font(void)
 	}
 }
 
+static int power_of_2(int input)
+{
+	int value = 1;
+
+	while (value < input) {
+		value <<= 1;
+	}
+
+	return value;
+}
+
+static struct texture *create_texture(int width, int height,
+				      int linear, int target)
+{
+	struct texture *texture;
+	GLenum scale_mode;
+	int texture_h;
+	int texture_w;
+
+	texture = malloc(sizeof(*texture));
+	if (!texture)
+		return NULL;
+
+	memset(texture, 0, sizeof(*texture));
+
+	if (target && has_target_texture) {
+		texture->target = 1;
+		glGenFramebuffersEXT(1, &texture->fbo);
+	} else {
+		texture->target = 0;
+	}
+
+	glGenTextures(1, &texture->id);
+	/* FIXME error checking */
+
+	texture->w = width;
+	texture->h = height;
+	texture_w = power_of_2(texture->w);
+	texture_h = power_of_2(texture->h);
+	texture->texw = (GLfloat) (texture->w) / texture_w;
+	texture->texh = (GLfloat) (texture->h) / texture_h;
+
+	if (linear) {
+		scale_mode = GL_LINEAR;
+	} else {
+		scale_mode = GL_NEAREST;
+	}
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scale_mode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scale_mode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	/* FIXME bunch of mac os specific stuff here in sdl */
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texture_w, texture_h, 0,
+		     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+
+	glDisable(GL_TEXTURE_2D);
+
+	return texture;
+}
+
+static void destroy_texture(struct texture *texture)
+{
+	if (!texture)
+		return;
+
+	if (texture->fbo) {
+		glDeleteFramebuffersEXT(1, &texture->fbo);
+	}
+
+	glDeleteTextures(1, &texture->id);
+
+	free(texture);
+}
+
 static void create_scaled_texture(SDL_Rect *rect)
 {
 	int height;
 	int width;
-	
+
 	if (scaled_texture) {
-		SDL_DestroyTexture(scaled_texture);
+		destroy_texture(scaled_texture);
 		scaled_texture = NULL;
 	}
 
-	if (!rect || !renderer || (!rect->w && !rect->h))
+	if (!rect || (!rect->w && !rect->h))
 		return;
 
 	width = rect->w;
 	height = rect->h;
 
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-	scaled_texture = SDL_CreateTexture(renderer,
-					   SDL_PIXELFORMAT_ARGB8888,
-					   SDL_TEXTUREACCESS_TARGET,
-					   width, height);
+	scaled_texture = create_texture(width, height, 1, 1);
 
 	if (!scaled_texture) {
 		log_err("failed to create scaled texture: %s\n",
@@ -466,8 +582,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 			   nes_ntsc_init() will force them on if necessary, like
 			   if emulating an RGB PPU. */
 			
-			if (emu->config->vsync &&
-			    (renderer_info.flags & SDL_RENDERER_PRESENTVSYNC)) {
+			if (emu->config->vsync) {
 				ntsc_setup.merge_fields = 0;
 			} else {
 				ntsc_setup.merge_fields = 1;
@@ -562,6 +677,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 			rgb_palette[i]  = tmp_pal[i * 3 + 0] << 16;
 			rgb_palette[i] |= tmp_pal[i * 3 + 1] << 8;
 			rgb_palette[i] |= tmp_pal[i * 3 + 2];
+			rgb_palette[i] |= 0xff << 24;
 		}
 
 		if (tmp_pal)
@@ -573,12 +689,9 @@ static void video_apply_palette_and_filter(struct emu *emu)
 int video_apply_config(struct emu *emu)
 {
 	int ppu_type;
-	int flags;
-	int create_renderer;
 	int create_nes_texture;
 	int recreate_scaled_texture;
 	int scaling_mode_changed;
-	int vsync_changed;
 	int new_use_ntsc_filter;
 	char *new_scaling_mode;
 	int nes_screen_size;
@@ -611,7 +724,7 @@ int video_apply_config(struct emu *emu)
 		}
 
 		if (nes_texture) {
-			SDL_DestroyTexture(nes_texture);
+			destroy_texture(nes_texture);
 			nes_texture = NULL;
 		}
 	}
@@ -623,12 +736,6 @@ int video_apply_config(struct emu *emu)
 	if (!nes_screen)
 		return 1;
 
-	vsync_changed = 0;
-	if (!!(renderer_info.flags & SDL_RENDERER_PRESENTVSYNC) !=
-	    !!emu->config->vsync) {
-		vsync_changed = 1;
-	}
-
 	scaling_mode_changed = 0;
 	if (!scaling_mode ||
 	    (strcasecmp(scaling_mode, new_scaling_mode) != 0)) {
@@ -638,55 +745,30 @@ int video_apply_config(struct emu *emu)
 		scaling_mode = strdup(new_scaling_mode);
 
 		if (strcasecmp(scaling_mode, "nearest_then_linear") != 0) {
-			SDL_DestroyTexture(scaled_texture);
+			destroy_texture(scaled_texture);
 			scaled_texture = NULL;
 		} else {
 			create_scaled_texture(&scaled_rect);
 		}
 	}
 
-	create_renderer = 0;
-	if (!renderer) {
-		create_renderer = 1;
-	}
-
-	if (vsync_changed)
-		create_renderer = 1;
-
 	create_nes_texture = 0;
-	if (!nes_texture || create_renderer || scaling_mode_changed)
+	if (window && (!nes_texture || scaling_mode_changed))
 		create_nes_texture = 1;
 
 	recreate_scaled_texture = 0;
-	if (scaled_texture && (create_renderer || scaling_mode_changed))
+	if (scaled_texture && scaling_mode_changed)
 		recreate_scaled_texture = 1;
 
-	if (window && create_renderer) {
-		if (renderer)
-			SDL_DestroyRenderer(renderer);
+	if (emu->config->vsync)
+		SDL_GL_SetSwapInterval(1);
+	else
+		SDL_GL_SetSwapInterval(0);
 
-		flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
-		if (emu->config->vsync) {
-			flags |= SDL_RENDERER_PRESENTVSYNC;
-		}
-
-		renderer = SDL_CreateRenderer(window, 0, flags);
-		if (!renderer) {
-			log_err("video_init: SDL_CreateRenderer() failed: %s\n",
-				SDL_GetError());
-			return 1;
-		}
-
-		if (SDL_GetRendererInfo(renderer, &renderer_info) < 0) {
-			log_err("video_init: SDL_GetRendererInfo() failed: %s\n",
-				SDL_GetError());
-			return 1;
-		}
-	}
-
-	if (renderer && create_nes_texture) {
+	if (create_nes_texture) {
 		int height;
 		int width;
+		int linear;
 
 		height = NES_HEIGHT;
 		if (use_ntsc_filter) {
@@ -700,28 +782,23 @@ int video_apply_config(struct emu *emu)
 		}
 		
 		if (nes_texture)
-			SDL_DestroyTexture(nes_texture);
+			destroy_texture(nes_texture);
 
 		if (strcasecmp(scaling_mode, "linear") == 0)
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+			linear = 1;
 		else
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+			linear = 0;
 
-		nes_texture = SDL_CreateTexture(renderer,
-						SDL_PIXELFORMAT_ARGB8888,
-						SDL_TEXTUREACCESS_STREAMING,
-						width, height);
+		nes_texture = create_texture(width, height, 0, linear);
 				  
 		if (!nes_texture) {
-			log_err("video_init: SDL_CreateTexture() failed: %s\n",
-				SDL_GetError());
+			log_err("video_init: create_texture() failed\n");
 			return 1;
 		}
 	}
 
-
 	has_target_texture = 0;
-	if (renderer_info.flags & SDL_RENDERER_TARGETTEXTURE)
+	if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object"))
 		has_target_texture = 1;
 
 	window_scaling_factor = emu->config->window_scaling_factor;
@@ -819,15 +896,25 @@ int video_apply_config(struct emu *emu)
 	osd_fg_rgba = emu->config->osd_fg_rgba;
 	osd_bg_rgba = emu->config->osd_bg_rgba;
 
-	osd_fg_color.r = (osd_fg_rgba >> 24) & 0xff;
-	osd_fg_color.g = (osd_fg_rgba >> 16) & 0xff;
-	osd_fg_color.b = (osd_fg_rgba >>  8) & 0xff;
-	osd_fg_color.a = osd_fg_rgba & 0xff;
+	/* osd_fg_color.r = (osd_fg_rgba >> 24) & 0xff; */
+	/* osd_fg_color.g = (osd_fg_rgba >> 16) & 0xff; */
+	/* osd_fg_color.b = (osd_fg_rgba >>  8) & 0xff; */
+	/* osd_fg_color.a = osd_fg_rgba & 0xff; */
+	osd_fg_color.r = 0xff;
+	osd_fg_color.g = 0xff;
+	osd_fg_color.b = 0xff;
+	osd_fg_color.a = 0xff;
+	
 
 	osd_bg_color.r = (osd_bg_rgba >> 24) & 0xff;
 	osd_bg_color.g = (osd_bg_rgba >> 16) & 0xff;
 	osd_bg_color.b = (osd_bg_rgba >>  8) & 0xff;
 	osd_bg_color.a = osd_bg_rgba & 0xff;
+
+	bg_color.r = 0;
+	bg_color.g = 0;
+	bg_color.b = 0;
+	bg_color.a = 255;
 
 	osd_delay = emu->config->osd_delay;
 
@@ -915,9 +1002,9 @@ static int video_create_window(void)
 		window = SDL_CreateWindowFrom((void *)native_window);
 #if __unix__
 		window->flags |= SDL_WINDOW_OPENGL;
-		/* FIXME may need additional magic to get gl working in all cases (set visual?) */
 		SDL_GL_LoadLibrary(NULL); /* FIXME check result */
 #endif
+	
 	}
 	else
 #endif
@@ -925,7 +1012,8 @@ static int video_create_window(void)
 		window = SDL_CreateWindow(PACKAGE_NAME,
 					  SDL_WINDOWPOS_UNDEFINED,
 					  SDL_WINDOWPOS_UNDEFINED,
-					  window_rect.w, window_rect.h, 0);
+					  window_rect.w, window_rect.h,
+					  SDL_WINDOW_OPENGL);
 	}
 
 
@@ -933,6 +1021,32 @@ static int video_create_window(void)
 		log_err("video_init: SDL_CreateWindow() failed: %s\n",
 			SDL_GetError());
 		return 1;
+	}
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+	context = SDL_GL_CreateContext(window);
+	if (!context)
+		return -1;
+
+	if (SDL_GL_MakeCurrent(window, context) < 0)
+		return -1;
+
+	if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object")) {
+		has_target_texture = 1;
+		glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC)
+			SDL_GL_GetProcAddress("glGenFramebuffersEXT");
+		glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC)
+			SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
+		glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)
+			SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
+		glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC)
+			SDL_GL_GetProcAddress("glBindFramebufferEXT");
+		glCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)
+			SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
+		
 	}
 
 	SDL_VERSION(&wm_info.version);
@@ -958,7 +1072,9 @@ static int video_create_window(void)
 	   so that renderer can be created
 	 */
 	video_apply_config(emu);
-
+	set_render_target(NULL);
+	glMatrixMode( GL_MODELVIEW );
+	glLoadIdentity();
 	return 0;
 }
 
@@ -987,6 +1103,7 @@ int video_init(struct emu *emu)
 					    NULL, -1);
 
 	scaled_texture = NULL;
+	nes_texture = NULL;
 
 	window_minimized = 0;
 
@@ -1105,6 +1222,129 @@ void double_output_height( void )
 	}
 }
 
+static void set_color(SDL_Color *color)
+{
+	glColor4f(color->r * inv255f, color->g * inv255f,
+		  color->b * inv255f, color->a * inv255f);
+}
+
+static void set_alpha_blending(int enabled)
+{
+	if (!enabled) {
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glDisable(GL_BLEND);
+		return;
+	}
+	
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+static void fill_rect(SDL_Rect *rect)
+{
+	glRectf(rect->x, rect->y, rect->x + rect->w, rect->y + rect->h);
+}
+
+static void render_copy(struct texture *texture, SDL_Rect *srcrect,
+			SDL_Rect *dstrect)
+{
+	GLfloat minx, miny, maxx, maxy;
+	GLfloat minu, maxu, minv, maxv;
+	SDL_Rect real_srcrect, real_dstrect;
+
+	
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+
+	real_srcrect.x = 0;
+	real_srcrect.y = 0;
+	real_srcrect.w = texture->w;
+	real_srcrect.h = texture->h;
+
+	real_dstrect.x = 0;
+	real_dstrect.y = 0;
+	if (render_target) {
+		real_dstrect.w = render_target->w;
+		real_dstrect.h = render_target->h;
+	} else {
+		int window_w, window_h;
+
+		SDL_GetWindowSize(window, &window_w, &window_h);
+		real_dstrect.w = window_w;
+		real_dstrect.h = window_h;
+	}
+
+	if (srcrect && !SDL_IntersectRect(srcrect, &real_srcrect,
+					  &real_srcrect)) {
+		return;
+	}
+
+	if (dstrect) {
+		if (!SDL_HasIntersection(dstrect, &real_dstrect))
+			return;
+		real_dstrect.x = dstrect->x;
+		real_dstrect.y = dstrect->y;
+		real_dstrect.w = dstrect->w;
+		real_dstrect.h = dstrect->h;
+	}
+
+	minx = real_dstrect.x;
+	miny = real_dstrect.y;
+	maxx = real_dstrect.x + real_dstrect.w;
+	maxy = real_dstrect.y + real_dstrect.h;
+
+	minu = (GLfloat) real_srcrect.x / texture->w;
+	minu *= texture->texw;
+	maxu = (GLfloat) (real_srcrect.x + real_srcrect.w) / texture->w;
+	maxu *= texture->texw;
+	minv = (GLfloat) real_srcrect.y / texture->h;
+	minv *= texture->texh;
+	maxv = (GLfloat) (real_srcrect.y + real_srcrect.h) / texture->h;
+	maxv *= texture->texh;
+
+	glBegin(GL_TRIANGLE_STRIP);
+	glTexCoord2f(minu, minv);
+	glVertex2f(minx, miny);
+	glTexCoord2f(maxu, minv);
+	glVertex2f(maxx, miny);
+	glTexCoord2f(minu, maxv);
+	glVertex2f(minx, maxy);
+	glTexCoord2f(maxu, maxv);
+	glVertex2f(maxx, maxy);
+	glEnd();
+
+	glDisable(GL_TEXTURE_2D);
+}
+
+static void set_render_target(struct texture *texture)
+{
+	int window_w, window_h;
+
+	render_target = texture;
+
+	if (texture == NULL) {
+		SDL_GetWindowSize(window, &window_w, &window_h);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+		glViewport(0, 0, window_w, window_h);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, window_w, window_h, 0, 0.0, 1.0);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		
+		return;
+	}
+
+	glViewport(0, 0, texture->w, texture->h);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, texture->fbo);
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+				  GL_TEXTURE_2D, texture->id, 0);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, texture->w, 0, texture->h, 0.0, 1.0);
+}
+
 int video_draw_buffer(void)
 {
 	int i;
@@ -1129,39 +1369,38 @@ int video_draw_buffer(void)
 	}
 
 	if (has_target_texture && scaled_texture) {
-		SDL_SetRenderTarget(renderer, scaled_texture);
-		SDL_RenderCopy(renderer, nes_texture, &clip_rect,
-			       NULL);
-		SDL_SetRenderTarget(renderer, NULL);
-		SDL_RenderCopy(renderer, scaled_texture, NULL,
-			       &dest_rect);
+		set_render_target(scaled_texture);
+		render_copy(nes_texture, &clip_rect, NULL);
+		set_render_target(NULL);
+		render_copy(scaled_texture, NULL, &dest_rect);
 	} else {
-		SDL_RenderCopy(renderer, nes_texture, &clip_rect,
-			       &dest_rect);
+		render_copy(nes_texture, &clip_rect, &dest_rect);
 	}
 
 	if (osd_timer > 0) {
-		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(renderer, osd_bg_color.r, osd_bg_color.g,
-				       osd_bg_color.b, osd_bg_color.a);
-		SDL_RenderFillRect(renderer, &bg_dest_rect);
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderCopy(renderer, text_texture, &text_clip_rect,
-			       &text_dest_rect);
+		set_alpha_blending(1);
+		set_color(&osd_bg_color);
+		fill_rect(&osd_bg_dest_rect);
+		set_color(&osd_fg_color);
+		render_copy(text_texture, &text_clip_rect,
+			    &text_dest_rect);
+		set_color(&bg_color);
+		set_alpha_blending(0);
 		osd_timer--;
 	}
 
 	if (display_fps > 0) {
-		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(renderer, osd_bg_color.r, osd_bg_color.g,
-				       osd_bg_color.b, osd_bg_color.a);
-		SDL_RenderFillRect(renderer, &fps_bg_dest_rect);
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderCopy(renderer, fps_text_texture, &fps_text_clip_rect,
-			       &fps_text_dest_rect);
+		set_alpha_blending(1);
+		set_color(&osd_bg_color);
+		fill_rect(&fps_osd_bg_dest_rect);
+		set_color(&osd_fg_color);
+		render_copy(fps_text_texture, &fps_text_clip_rect,
+			    &fps_text_dest_rect);
+		set_color(&bg_color);
+		set_alpha_blending(0);
 	}
 
-	SDL_RenderPresent(renderer);
+	SDL_GL_SwapWindow(window);
 
 	return 0;
 }
@@ -1182,20 +1421,23 @@ int video_shutdown_testing(void)
 int video_shutdown(void)
 {
 	if (nes_texture)
-		SDL_DestroyTexture(nes_texture);
+		destroy_texture(nes_texture);
 
 	if (scaled_texture)
-		SDL_DestroyTexture(scaled_texture);
-
-	if (renderer)
-		SDL_DestroyRenderer(renderer);
+		destroy_texture(scaled_texture);
 
 	if (TTF_WasInit()) {
 		if (text_surface)
 			SDL_FreeSurface(text_surface);
 
 		if (text_texture)
-			SDL_DestroyTexture(text_texture);
+			destroy_texture(text_texture);
+
+		if (fps_text_surface)
+			SDL_FreeSurface(fps_text_surface);
+
+		if (fps_text_texture)
+			destroy_texture(fps_text_texture);
 
 		if (font)
 			TTF_CloseFont(font);
@@ -1205,11 +1447,13 @@ int video_shutdown(void)
 	if (osd_font_name)
 		free(osd_font_name);
 
+	SDL_GL_DeleteContext(context);
+
 #if GUI_ENABLED
 	if (gui_enabled)
 		gui_cleanup();
 	else
-#endif	
+#endif
 		SDL_DestroyWindow(window);
 
 	return 0;
@@ -1220,10 +1464,11 @@ void video_clear(void)
 	/* Reset video device */
 	/* Need to do this twice if we're
 	   double-buffered */
-	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
-	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
+	glClearColor(0, 0, 0, 0xff);
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapWindow(window);
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapWindow(window);
 }
 
 void video_resize_window(void)
@@ -1301,9 +1546,9 @@ void video_resize_window(void)
 		/* Make sure to clear the memory used by the
 		   target texture as well.
 		*/
-		SDL_SetRenderTarget(renderer, scaled_texture);
+		set_render_target(scaled_texture);
 		video_clear();
-		SDL_SetRenderTarget(renderer, NULL);
+		set_render_target(NULL);
 	}
 
 	/* Yes, calling this twice is intentional. For some
@@ -1323,11 +1568,9 @@ void video_resize_window(void)
 	load_osd_font();
 
 	if (scaled_texture) {
-		SDL_DestroyTexture(scaled_texture);
+		destroy_texture(scaled_texture);
 		scaled_texture = NULL;
 	}
-
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
 	create_scaled_texture(&scaled_rect);
 }
@@ -1404,16 +1647,15 @@ void video_calc_nes_coord(int *x, int *y)
 
 void video_update_texture(void)
 {
-	int width;
-
-	if (use_ntsc_filter)
-		width = NES_NTSC_OUT_WIDTH(NES_WIDTH);
-	else
-		width = NES_WIDTH;
-	
-	SDL_UpdateTexture(nes_texture, NULL, nes_screen,
-			  width * sizeof(*nes_screen));
-
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, nes_texture->id);
+	/* glPixelStorei(GL_UNPACK_ALIGNMENT, 1); */
+	/* glPixelStorei(GL_UNPACK_ROW_LENGTH, nes_texture->w); */
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+			nes_texture->w,	nes_texture->h,
+			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+			nes_screen);
+	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -1572,10 +1814,7 @@ void video_resize(int w, int h)
 */
 void video_redraw(void)
 {
-	if (!renderer)
-		return;
-
-	SDL_RenderPresent(renderer);
+	SDL_GL_SwapWindow(window);
 }
 
 void video_focus(int focused)
