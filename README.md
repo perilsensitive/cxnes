@@ -33,6 +33,7 @@ Supported Image/ROM Formats
   + fwNES format, with or without header
   + "Raw" format (includes gaps, start marks and checksums)
 * NSF
+* Any of the above in a ZIP container
 
 Input Devices/Accessories
 -------------------------
