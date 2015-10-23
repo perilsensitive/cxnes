@@ -1,4 +1,4 @@
-AC_INIT([cxnes], [0.1.3])
+AC_INIT([cxnes], [0.2.0])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CANONICAL_HOST
@@ -74,6 +74,12 @@ AC_ARG_ENABLE(gui,
     [enable the GTK+ user interface (default enabled)])])
 AM_CONDITIONAL([GUI_ENABLED], [test "${enable_gui}" != "no"])
 
+dnl Check for zip support
+AC_ARG_ENABLE(zip,
+  [AS_HELP_STRING([--enable-zip],
+    [enable support for ZIP files (default enabled)])])
+AM_CONDITIONAL([ZIP_ENABLED], [test "${enable_zip}" != "no"])
+
 AM_CONDITIONAL(HAVE_WINDRES, which windres > /dev/null)
 
 AM_PATH_SDL2($SDL_VERSION,:,
@@ -95,5 +101,8 @@ LIBS="$LIBS $SDL2_ttf_LIBS $SDL2_image_LIBS"
 
 AM_COND_IF([GUI_ENABLED], [CFLAGS="$CFLAGS $GTK_CFLAGS -DGUI_ENABLED"])
 AM_COND_IF([GUI_ENABLED], [LIBS="$LIBS $GTK_LIBS $EXTRA_GUI_LIBS"])
+
+AM_COND_IF([ZIP_ENABLED], [CFLAGS="$CFLAGS -DZIP_ENABLED"])
+AM_COND_IF([ZIP_ENABLED], [LIBS="$LIBS -lz"])
 
 AC_OUTPUT([Makefile])

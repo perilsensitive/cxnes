@@ -81,7 +81,8 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = cxnes$(EXEEXT)
 @GUI_ENABLED_TRUE@am__append_1 = sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c
-@HAVE_WINDRES_TRUE@am__append_2 = sdl/gtk/windows_resources.rc
+@ZIP_ENABLED_TRUE@am__append_2 = main/unzip.c main/ioapi.c
+@HAVE_WINDRES_TRUE@am__append_3 = sdl/gtk/windows_resources.rc
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) depcomp \
@@ -141,8 +142,8 @@ am__cxnes_SOURCES_DIST = sdl/main.c sdl/file_io.c sdl/log.c \
 	boards/irem_74x161_161_21_138.c boards/inlnsf.c \
 	sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c \
 	sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c \
-	sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c \
-	sdl/gtk/windows_resources.rc
+	sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c main/unzip.c \
+	main/ioapi.c sdl/gtk/windows_resources.rc
 am__dirstamp = $(am__leading_dot)dirstamp
 @GUI_ENABLED_TRUE@am__objects_1 = sdl/gtk/gtkmain.$(OBJEXT) \
 @GUI_ENABLED_TRUE@	sdl/gtk/gtkconfig.$(OBJEXT) \
@@ -151,7 +152,9 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @GUI_ENABLED_TRUE@	sdl/gtk/gtkbindingconfig.$(OBJEXT) \
 @GUI_ENABLED_TRUE@	sdl/gtk/gtkmenubar.$(OBJEXT) \
 @GUI_ENABLED_TRUE@	sdl/gtk/gtkjoystickinfo.$(OBJEXT)
-@HAVE_WINDRES_TRUE@am__objects_2 =  \
+@ZIP_ENABLED_TRUE@am__objects_2 = main/unzip.$(OBJEXT) \
+@ZIP_ENABLED_TRUE@	main/ioapi.$(OBJEXT)
+@HAVE_WINDRES_TRUE@am__objects_3 =  \
 @HAVE_WINDRES_TRUE@	sdl/gtk/windows_resources.$(OBJEXT)
 am_cxnes_OBJECTS = sdl/main.$(OBJEXT) sdl/file_io.$(OBJEXT) \
 	sdl/log.$(OBJEXT) sdl/sdl_audio.$(OBJEXT) \
@@ -210,7 +213,8 @@ am_cxnes_OBJECTS = sdl/main.$(OBJEXT) sdl/file_io.$(OBJEXT) \
 	boards/fds.$(OBJEXT) boards/camerica.$(OBJEXT) \
 	boards/taito_x1_005.$(OBJEXT) boards/nina003-006.$(OBJEXT) \
 	boards/irem_74x161_161_21_138.$(OBJEXT) \
-	boards/inlnsf.$(OBJEXT) $(am__objects_1) $(am__objects_2)
+	boards/inlnsf.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3)
 cxnes_OBJECTS = $(am_cxnes_OBJECTS)
 cxnes_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -496,7 +500,7 @@ cxnes_SOURCES = sdl/main.c sdl/file_io.c sdl/log.c sdl/sdl_audio.c \
 	boards/vrc1.c boards/axrom.c boards/fds.c boards/camerica.c \
 	boards/taito_x1_005.c boards/nina003-006.c \
 	boards/irem_74x161_161_21_138.c boards/inlnsf.c \
-	$(am__append_1) $(am__append_2)
+	$(am__append_1) $(am__append_2) $(am__append_3)
 all: all-am
 
 .SUFFIXES:
@@ -859,6 +863,10 @@ sdl/gtk/gtkmenubar.$(OBJEXT): sdl/gtk/$(am__dirstamp) \
 	sdl/gtk/$(DEPDIR)/$(am__dirstamp)
 sdl/gtk/gtkjoystickinfo.$(OBJEXT): sdl/gtk/$(am__dirstamp) \
 	sdl/gtk/$(DEPDIR)/$(am__dirstamp)
+main/unzip.$(OBJEXT): main/$(am__dirstamp) \
+	main/$(DEPDIR)/$(am__dirstamp)
+main/ioapi.$(OBJEXT): main/$(am__dirstamp) \
+	main/$(DEPDIR)/$(am__dirstamp)
 sdl/gtk/windows_resources.$(OBJEXT): sdl/gtk/$(am__dirstamp) \
 	sdl/gtk/$(DEPDIR)/$(am__dirstamp)
 
@@ -978,6 +986,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/ines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/io.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/ioapi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/nes_ntsc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/nsf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/palette.Po@am__quote@
@@ -988,6 +997,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/state.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/text_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/unif.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/unzip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/file_io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sdl/$(DEPDIR)/main.Po@am__quote@

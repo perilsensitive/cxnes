@@ -1,3 +1,10 @@
+cxnes (0.2.0-1) unstable; urgency=low
+
+  * Fixes some bugs in configuration dialogs
+  * Add zipfile support for zipped roms (with optional patches)
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Thurs, 22 Oct 2015 21:08:03 -0600
+
 cxnes (0.1.3-1) unstable; urgency=low
 
   * Fixes some bugs in RAMBO-1 timer code

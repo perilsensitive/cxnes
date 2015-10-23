@@ -599,6 +599,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG
 HAVE_WINDRES_FALSE
 HAVE_WINDRES_TRUE
+ZIP_ENABLED_FALSE
+ZIP_ENABLED_TRUE
 GUI_ENABLED_FALSE
 GUI_ENABLED_TRUE
 ZIP_ARCH
@@ -701,6 +703,7 @@ enable_option_checking
 enable_silent_rules
 enable_dependency_tracking
 enable_gui
+enable_zip
 with_sdl_prefix
 with_sdl_exec_prefix
 enable_sdltest
@@ -1348,6 +1351,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --enable-gui            enable the GTK+ user interface (default enabled)
+  --enable-zip            enable support for ZIP files (default enabled)
   --disable-sdltest       Do not try to compile and run a test SDL program
   --disable-gtktest       do not try to compile and run a test GTK+ program
 
@@ -3598,6 +3602,20 @@ else
 fi
 
 
+# Check whether --enable-zip was given.
+if test "${enable_zip+set}" = set; then :
+  enableval=$enable_zip;
+fi
+
+ if test "${enable_zip}" != "no"; then
+  ZIP_ENABLED_TRUE=
+  ZIP_ENABLED_FALSE='#'
+else
+  ZIP_ENABLED_TRUE='#'
+  ZIP_ENABLED_FALSE=
+fi
+
+
  if which windres > /dev/null; then
   HAVE_WINDRES_TRUE=
   HAVE_WINDRES_FALSE='#'
@@ -4528,6 +4546,13 @@ if test -z "$GUI_ENABLED_TRUE"; then :
   LIBS="$LIBS $GTK_LIBS $EXTRA_GUI_LIBS"
 fi
 
+if test -z "$ZIP_ENABLED_TRUE"; then :
+  CFLAGS="$CFLAGS -DZIP_ENABLED"
+fi
+if test -z "$ZIP_ENABLED_TRUE"; then :
+  LIBS="$LIBS -lz"
+fi
+
 ac_config_files="$ac_config_files Makefile"
 
 cat >confcache <<\_ACEOF
@@ -4705,6 +4730,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GUI_ENABLED_TRUE}" && test -z "${GUI_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"GUI_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ZIP_ENABLED_TRUE}" && test -z "${ZIP_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"ZIP_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_WINDRES_TRUE}" && test -z "${HAVE_WINDRES_FALSE}"; then
