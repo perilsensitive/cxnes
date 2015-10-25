@@ -62,7 +62,7 @@ struct texture {
 	GLuint fbo;
 };
 
-#if __unix__
+//#if __unix__
 struct SDL_Window
 {
 	const void *magic;
@@ -78,7 +78,7 @@ struct SDL_Window
 };
 
 typedef struct SDL_Window SDL_Window;
-#endif
+//#endif
 		
 
 static const float inv255f = 1.0f / 255.0f;
@@ -1002,10 +1002,10 @@ static int video_create_window(void)
 	if (gui_enabled) {
 		native_window = gui_init(0, NULL);
 		window = SDL_CreateWindowFrom((void *)native_window);
-#if __unix__
+//#if __unix__
 		window->flags |= SDL_WINDOW_OPENGL;
 		SDL_GL_LoadLibrary(NULL); /* FIXME check result */
-#endif
+//#endif
 	
 	}
 	else
@@ -1018,20 +1018,25 @@ static int video_create_window(void)
 					  SDL_WINDOW_OPENGL);
 	}
 
-
 	if (!window) {
 		log_err("video_init: SDL_CreateWindow() failed: %s\n",
 			SDL_GetError());
 		return 1;
 	}
 
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
 	context = SDL_GL_CreateContext(window);
-	if (!context)
+	if (!context) {
+		printf("failed to create context: %s\n", SDL_GetError());
 		return -1;
+	}
+
+printf("initialized glew\n");
+
 
 	if (SDL_GL_MakeCurrent(window, context) < 0)
 		return -1;

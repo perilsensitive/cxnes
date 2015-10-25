@@ -1,6 +1,6 @@
 AC_INIT([cxnes], [0.1.3])
 AM_INIT_AUTOMAKE([subdir-objects])
-AM_SILENT_RULES([yes])
+AM_SILENT_RULES([no])
 AC_CANONICAL_HOST
 
 AM_CONDITIONAL(WINDOWS, [ test "$host_os" = mingw || test $host_os = cygwin ])
@@ -19,7 +19,7 @@ case $host_os in
 		pkgdatadir=""
 		
 		CFLAGS="$CFLAGS -mwindows -D__USE_MINGW_ANSI_STDIO=1"
-		LIBS="$LIBS -lshlwapi"
+		LIBS="$LIBS -lshlwapi -lopengl32"
 		if test $host_cpu = x86_64
 		then
 				CC_LIST="x86_64-w64-mingw32-gcc i686-w64-mingw32-gcc"
