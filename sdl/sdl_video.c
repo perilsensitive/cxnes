@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <glew/glew.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_syswm.h>
@@ -82,11 +83,11 @@ typedef struct SDL_Window SDL_Window;
 
 static const float inv255f = 1.0f / 255.0f;
 
-static PFNGLGENFRAMEBUFFERSEXTPROC glGenFramebuffersEXT;
-static PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT;
-static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT;
-static PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT;
-static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT;
+/* static PFNGLGENFRAMEBUFFERSEXTPROC glGenFramebuffersEXT; */
+/* static PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT; */
+/* static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT; */
+/* static PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT; */
+/* static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT; */
 
 /* FIXME use getters/setters for these? */
 int display_fps = -1;
@@ -435,7 +436,7 @@ static struct texture *create_texture(int width, int height,
 
 	if (target && has_target_texture) {
 		texture->target = 1;
-		glGenFramebuffersEXT(1, &texture->fbo);
+		glGenFramebuffers(1, &texture->fbo);
 	} else {
 		texture->target = 0;
 	}
@@ -479,7 +480,7 @@ static void destroy_texture(struct texture *texture)
 		return;
 
 	if (texture->fbo) {
-		glDeleteFramebuffersEXT(1, &texture->fbo);
+		glDeleteFramebuffers(1, &texture->fbo);
 	}
 
 	glDeleteTextures(1, &texture->id);
@@ -994,6 +995,7 @@ static int video_create_window(void)
 	SDL_DisplayMode display_mode;
 #if GUI_ENABLED
 	void *native_window;
+	int rc;
 #endif
 
 #if GUI_ENABLED
@@ -1034,19 +1036,14 @@ static int video_create_window(void)
 	if (SDL_GL_MakeCurrent(window, context) < 0)
 		return -1;
 
-	if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object")) {
+	rc = glewInit();
+	if (rc != GLEW_OK) {
+		printf("failed to initialize glew: %d\n", rc);
+		return 1;
+	}
+
+	if (GLEW_EXT_framebuffer_object) {
 		has_target_texture = 1;
-		glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC)
-			SDL_GL_GetProcAddress("glGenFramebuffersEXT");
-		glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC)
-			SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
-		glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)
-			SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
-		glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC)
-			SDL_GL_GetProcAddress("glBindFramebufferEXT");
-		glCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)
-			SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
-		
 	}
 
 	SDL_VERSION(&wm_info.version);
@@ -1325,7 +1322,7 @@ static void set_render_target(struct texture *texture)
 
 	if (texture == NULL) {
 		SDL_GetWindowSize(window, &window_w, &window_h);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 		glViewport(0, 0, window_w, window_h);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -1337,8 +1334,8 @@ static void set_render_target(struct texture *texture)
 	}
 
 	glViewport(0, 0, texture->w, texture->h);
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, texture->fbo);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, texture->fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
 				  GL_TEXTURE_2D, texture->id, 0);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();

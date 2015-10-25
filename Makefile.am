@@ -1,6 +1,6 @@
 AM_CFLAGS = --param large-function-growth=600 -I ./include -Wall -Werror=format-security \
             -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
-            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"'
+            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"' -DGLEW_STATIC
 AM_LDFLAGS = -lm
 
 .rc.o:
@@ -51,6 +51,7 @@ cxnes_SOURCES = \
 	input/mat.c \
 	input/snes_mouse.c \
 	input/microphone.c \
+	main/glew.c \
 	main/board.c \
 	main/crc32.c \
 	main/sha1.c \
