@@ -149,7 +149,7 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 
 		for (i = 0; i < global_info.number_entry; i++) {
 			err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
-						    sizeof(filename_inzip), NULL, 0, NULL, 0);
+						    sizeof(filename_inzip) - 1, NULL, 0, NULL, 0);
 			if (err != UNZ_OK)
 				break;
 
@@ -166,11 +166,14 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 					continue;
 			}
 
+			file_size = file_info.uncompressed_size;
+			if (file_size == 0)
+				continue;
+
 			err = unzOpenCurrentFile(zip);
 			if (err != UNZ_OK)
 				break;
 
-			file_size = file_info.uncompressed_size;
 			buffer = malloc(file_size + 16);
 			if (!buffer)
 				break;
@@ -844,12 +847,15 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	for (i = 0; i < global_info.number_entry; i++) {
 		char *ext;
 		err = unzGetCurrentFileInfo(zip, &file_info,
-					    filename, sizeof(filename),
+					    filename, sizeof(filename) - 1,
 					    NULL, 0, NULL, 0);
 		if (err != UNZ_OK) {
 			unzClose(zip);
 			break;
 		}
+
+		if (file_info.uncompressed_size == 0)
+			continue;
 
 		ext = strrchr(filename, '.');
 
