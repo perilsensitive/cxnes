@@ -153,18 +153,6 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 			if (err != UNZ_OK)
 				break;
 
-			/* Only try to load files in the root of the zip.
-			   This lets users stick other, potentially large
-			   data files in a subdirectory.
-			*/
-			if (strchr(filename_inzip, '/')) {
-				err = unzGoToNextFile(zip);
-				if (err != UNZ_OK)
-					break;
-				else
-					continue;
-			}
-
 			ext = strrchr(filename_inzip, '.');
 			if (!ext || (strcasecmp(ext, ".nes") &&
 				     strcasecmp(ext, ".unf") && 
