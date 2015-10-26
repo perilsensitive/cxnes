@@ -115,7 +115,7 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 {
 	size_t file_size;
 	uint8_t *buffer;
-	char filename_inzip[256];
+	char filename_inzip[512];
 #if ZIP_ENABLED
 	unzFile zip;
 	unz_file_info file_info;
@@ -820,7 +820,7 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	unzFile zip;
 	unz_file_info file_info;
 	unz_global_info global_info;
-	char filename[256];
+	char filename[512];
 	size_t buffer_size;
 	int err;
 	int count;
