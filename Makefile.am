@@ -74,6 +74,7 @@ cxnes_SOURCES = \
 	main/state.c \
 	main/nes_ntsc.c \
 	main/text_buffer.c \
+	boards/gamestar.c \
 	boards/cne_psb.c \
 	boards/jycompany.c \
 	boards/waixing_sgzlz.c \
