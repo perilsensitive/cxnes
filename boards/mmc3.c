@@ -33,6 +33,7 @@
 static CPU_WRITE_HANDLER(mmc3_write_handler);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
 static CPU_WRITE_HANDLER(superbig7in1_write_handler);
+static CPU_WRITE_HANDLER(superhik4in1_write_handler);
 static CPU_READ_HANDLER(mmc6_wram_read_handler);
 static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
@@ -107,6 +108,18 @@ static struct board_write_handler superbig7in1_write_handlers[] = {
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{superbig7in1_write_handler, 0xa001, SIZE_8K, 0xa001},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{NULL}
+};
+
+static struct board_write_handler superhik4in1_write_handlers[] = {
+	{superhik4in1_write_handler, 0x6000, SIZE_8K, 0},
+	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
@@ -470,9 +483,22 @@ struct board_info board_superbig_7in1 = {
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
 	.write_handlers = superbig7in1_write_handlers,
-	.max_prg_rom_size = SIZE_2048K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_prg_rom_size = SIZE_1024K,
+	.max_chr_rom_size = SIZE_1024K,
 	.max_wram_size = {SIZE_8K, 0},
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_vh,
+};
+
+struct board_info board_superhik_4in1 = {
+	.board_type = BOARD_TYPE_SUPERHIK_4_IN_1,
+	.name = "BMC SUPERHIK 4-IN-1",
+	.funcs = &mmc3_funcs,
+	.init_prg = mmc3_init_prg,
+	.init_chr0 = std_chr_2k_1k,
+	.write_handlers = superhik4in1_write_handlers,
+	.max_prg_rom_size = SIZE_512K,
+	.max_chr_rom_size = SIZE_512K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
 	.mirroring_values = std_mirroring_vh,
 };
@@ -597,6 +623,14 @@ static void mmc3_reset(struct board *board, int hard)
 		board->chr_or = 0;
 
 		switch (board->info->board_type) {
+		case BOARD_TYPE_SUPERHIK_4_IN_1:
+			board->prg_and = 0x0f;
+			board->chr_and = 0x7f;
+			board->prg_or = 0x00;
+			board->chr_or = 0x000;
+			board->prg_banks[5].size = SIZE_32K;
+			board->prg_banks[5].bank = 0;
+			break;
 		case BOARD_TYPE_SUPERBIG_7_IN_1:
 			board->prg_and = 0x0f;
 			board->prg_or = 0x00;
@@ -1051,6 +1085,35 @@ static CPU_WRITE_HANDLER(rambo1_irq_enable)
 		m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
 	else
 		a12_timer_set_irq_enabled(emu->a12_timer, 1, cycles);
+}
+
+static CPU_WRITE_HANDLER(superhik4in1_write_handler)
+{
+	struct board *board;
+	size_t size;
+
+	board = emu->board;
+
+
+	if (board->prg_banks[0].perms != MAP_PERM_READWRITE)
+		return;
+
+	board->prg_banks[5].bank = (value >> 4) & 0x03;
+
+	if (!(value & 0x01)) {
+		size = SIZE_32K;
+		board->prg_or = 0;
+		board->chr_or = 0;
+	} else {
+		size = 0;
+		board->prg_or = (value & 0xc0) >> 2;
+		board->chr_or = (value & 0xc0) << 1;
+	}
+
+	board->prg_banks[5].size = size;
+
+	board_prg_sync(board);
+	board_chr_sync(board, 0);
 }
 
 static CPU_WRITE_HANDLER(txc_tw_write_handler)

@@ -47,6 +47,7 @@ struct board_fixup {
 
 extern int running;
 
+extern struct board_info board_superhik_4in1;
 extern struct board_info board_superbig_7in1;
 extern struct board_info board_resetbased_4_in_1;
 extern struct board_info board_hosenkan_electronics;
@@ -203,6 +204,7 @@ extern struct board_info board_waixing_type_h;
 extern struct board_info board_waixing_sgzlz;
 
 static struct board_info *board_info_list[] = {
+	&board_superhik_4in1,
 	&board_superbig_7in1,
 	&board_resetbased_4_in_1,
 	&board_hosenkan_electronics,
