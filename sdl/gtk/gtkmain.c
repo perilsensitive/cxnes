@@ -737,77 +737,6 @@ static void f10_accelerator_fix(void)
 	gtk_window_add_accel_group(GTK_WINDOW(gtkwindow), group);
 }
 
-#if _WIN32
-int windows_init_for_opengl(GdkWindow *window)
-{
-	HWND hwnd;
-	DWORD wndclass_style;
-	gboolean need_release_dc;
-	HDC hdc = NULL;
-	PIXELFORMATDESCRIPTOR pfd;
-	int pixel_format;
-	int rc;
-
-
-	rc = -1;
-
-	printf("window is %p\n", window);
-
-	hwnd = (HWND) gdk_win32_window_get_handle(window);
-	wndclass_style = GetClassLong(hwnd, GCL_STYLE);
-	if (wndclass_style & CS_OWNDC)
-		need_release_dc = FALSE;
-	else
-		need_release_dc = TRUE;
-
-	hdc = GetDC(hwnd);
-	if (hdc == NULL)
-		return -1;
-
-
-	/*
-	pixel_format = GetPixelFormat(hdc);
-	if (!pixel_format) {
-		printf("failed to get pixel format\n");
-		goto error;
-	}
-
-	DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
-	*/
-
-	memset(&pfd, 0, sizeof(pfd));
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-	              PFD_DOUBLEBUFFER;
-	pfd.cColorBits = 32;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-
-	pfd.cColorBits = pfd.cRedBits + pfd.cGreenBits + pfd.cBlueBits;
-
-	pixel_format = ChoosePixelFormat(hdc, &pfd);
-
-	if (!pixel_format) {
-		printf("failed to choose pixel format\n");
-		goto error;
-	}
-
-	if (!SetPixelFormat(hdc, pixel_format, &pfd)) {
-		printf("failed to set pixel format\n");
-		goto error;
-	}
-
-	rc = 0;
-
-error:
-	if (hdc && need_release_dc) {
-		ReleaseDC(hwnd, hdc);
-		hdc = NULL;
-	}
-
-	return rc; 
-}
-#endif
-
 void *gui_init(int argc, char **argv)
 {
 	GdkDisplay *gdk_display;
@@ -949,9 +878,6 @@ void *gui_init(int argc, char **argv)
 	mouse = gdk_device_manager_get_client_pointer(device_manager);
 
 	f10_accelerator_fix();
-#if _WIN32
-	windows_init_for_opengl(gtk_widget_get_window(drawingarea));
-#endif
 
 	return (void *)window_handle;
 }

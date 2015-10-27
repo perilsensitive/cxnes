@@ -20,6 +20,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <glew/glew.h>
+#if _WIN32
+#include <glew/wglew.h>
+#endif
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_syswm.h>
@@ -62,7 +65,6 @@ struct texture {
 	GLuint fbo;
 };
 
-//#if __unix__
 struct SDL_Window
 {
 	const void *magic;
@@ -78,16 +80,8 @@ struct SDL_Window
 };
 
 typedef struct SDL_Window SDL_Window;
-//#endif
-		
 
 static const float inv255f = 1.0f / 255.0f;
-
-/* static PFNGLGENFRAMEBUFFERSEXTPROC glGenFramebuffersEXT; */
-/* static PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT; */
-/* static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT; */
-/* static PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT; */
-/* static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT; */
 
 /* FIXME use getters/setters for these? */
 int display_fps = -1;
@@ -217,6 +211,16 @@ static void set_render_target(struct texture *texture);
 static struct texture *create_texture(int width, int height,
 				      int linear, int target);
 static void destroy_texture(struct texture *texture);
+
+static void set_swap_interval(int interval)
+{
+#if _WIN32
+	if (gui_enabled && WGLEW_EXT_swap_control)
+		wglSwapIntervalEXT(interval);
+#endif
+
+	SDL_GL_SetSwapInterval(interval);
+}
 
 static void calc_osd_rects(void)
 {
@@ -762,9 +766,9 @@ int video_apply_config(struct emu *emu)
 		recreate_scaled_texture = 1;
 
 	if (emu->config->vsync)
-		SDL_GL_SetSwapInterval(1);
+		set_swap_interval(1);
 	else
-		SDL_GL_SetSwapInterval(0);
+		set_swap_interval(0);
 
 	if (create_nes_texture) {
 		int height;
@@ -989,6 +993,109 @@ void video_show_cursor(int show)
 	SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
 }
 
+#if _WIN32
+static int windows_init_for_opengl(HWND hwnd)
+{
+	HDC hdc = NULL;
+	HGLRC hglrc, old_hglrc;
+	PIXELFORMATDESCRIPTOR pfd;
+	int iAttribs[64];
+	int *iAttr;
+	float fAttribs[1] = { 0 };
+	int pixel_format;
+	UINT matching;
+	int rc;
+
+
+	rc = -1;
+
+	printf("window is %p\n", window);
+
+	hdc = GetDC(hwnd);
+	if (hdc == NULL)
+		return -1;
+
+
+	/*
+	pixel_format = GetPixelFormat(hdc);
+	if (!pixel_format) {
+		printf("failed to get pixel format\n");
+		goto error;
+	}
+
+	DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
+	*/
+
+	iAttr = &iAttribs[0];
+	*iAttr++ = WGL_DRAW_TO_WINDOW_ARB;
+	*iAttr++ = GL_TRUE;
+	*iAttr++ = WGL_RED_BITS_ARB;
+	*iAttr++ = 8;
+	*iAttr++ = WGL_GREEN_BITS_ARB;
+	*iAttr++ = 8;
+	*iAttr++ = WGL_BLUE_BITS_ARB;
+	*iAttr++ = 8;
+	*iAttr++ = WGL_ALPHA_BITS_ARB;
+	*iAttr++ = 8;
+	*iAttr++ = WGL_DOUBLE_BUFFER_ARB;
+	*iAttr++ = 1;
+	*iAttr++ = WGL_ACCELERATION_ARB;
+	*iAttr++ = WGL_FULL_ACCELERATION_ARB;
+	*iAttr = 0;
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.nVersion = 1;
+	pfd.nSize = sizeof(pfd);
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+	              PFD_DOUBLEBUFFER;
+	pfd.iLayerType = PFD_MAIN_PLANE;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cRedBits = 8;
+	pfd.cGreenBits = 8;
+	pfd.cBlueBits = 8;
+	pfd.cAlphaBits = 8;
+	pfd.cColorBits = 24;
+
+	pixel_format = ChoosePixelFormat(hdc, &pfd);
+
+	if (!pixel_format) {
+		printf("failed to choose pixel format\n");
+		goto error;
+	}
+
+	if (!SetPixelFormat(hdc, pixel_format, &pfd)) {
+		printf("failed to set pixel format\n");
+		goto error;
+	}
+
+	hglrc = wglCreateContext(hdc);
+	if (!hglrc) {
+		printf("failed to create WGL context\n");
+		goto error;
+	}
+
+	old_hglrc = wglGetCurrentContext();
+	wglMakeCurrent(hdc, hglrc);
+
+	if (WGLEW_ARB_pixel_format) {
+		wglChoosePixelFormatARB(hdc, iAttribs, fAttribs, 1,
+		                        &pixel_format, &matching);
+
+	}
+
+	wglMakeCurrent(hdc, old_hglrc);
+	wglDeleteContext(hglrc);
+
+	rc = 0;
+
+error:
+	ReleaseDC(hwnd, hdc);
+
+	return rc; 
+}
+#endif
+
+
 static int video_create_window(void)
 {
 	int display_index;
@@ -1002,11 +1109,11 @@ static int video_create_window(void)
 	if (gui_enabled) {
 		native_window = gui_init(0, NULL);
 		window = SDL_CreateWindowFrom((void *)native_window);
-//#if __unix__
+#if _WIN32
+		windows_init_for_opengl(native_window);
+#endif
 		window->flags |= SDL_WINDOW_OPENGL;
 		SDL_GL_LoadLibrary(NULL); /* FIXME check result */
-//#endif
-	
 	}
 	else
 #endif
@@ -1028,6 +1135,7 @@ static int video_create_window(void)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	context = SDL_GL_CreateContext(window);
 	if (!context) {
@@ -1035,17 +1143,22 @@ static int video_create_window(void)
 		return -1;
 	}
 
-printf("initialized glew\n");
-
 
 	if (SDL_GL_MakeCurrent(window, context) < 0)
 		return -1;
+
 
 	rc = glewInit();
 	if (rc != GLEW_OK) {
 		printf("failed to initialize glew: %d\n", rc);
 		return 1;
 	}
+
+	//wglSwapIntervalEXT(1);
+
+#if _WIN32
+	windows_init_for_opengl(native_window);
+#endif
 
 	if (GLEW_EXT_framebuffer_object) {
 		has_target_texture = 1;
@@ -1069,6 +1182,7 @@ printf("initialized glew\n");
 	}
 
 	emu->display_framerate = display_mode.refresh_rate;
+	printf("framerate: %d\n", emu->display_framerate);
 
 	/* FIXME apply config again now that window is created
 	   so that renderer can be created

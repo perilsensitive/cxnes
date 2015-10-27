@@ -432,8 +432,8 @@ static int main_loop(struct emu *emu)
 		if (emu->draw_frame) {
 			video_update_texture();
 			video_draw_buffer();
-		/* } else { */
-		/* 	printf("skipping frame\n"); */
+		} else {
+			//printf("skipping frame\n");
 		}
 
 		if (mouse_grabbed) {
