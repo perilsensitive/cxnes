@@ -32,6 +32,7 @@
 
 static CPU_WRITE_HANDLER(mmc3_write_handler);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
+static CPU_WRITE_HANDLER(superbig7in1_write_handler);
 static CPU_READ_HANDLER(mmc6_wram_read_handler);
 static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
@@ -95,6 +96,17 @@ static struct board_write_handler mmc3_write_handlers[] = {
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{NULL}
+};
+
+static struct board_write_handler superbig7in1_write_handlers[] = {
+	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{superbig7in1_write_handler, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
@@ -451,6 +463,20 @@ struct board_info board_hosenkan_electronics = {
 	.mirroring_values = std_mirroring_vh,
 };
 
+struct board_info board_superbig_7in1 = {
+	.board_type = BOARD_TYPE_SUPERBIG_7_IN_1,
+	.name = "BMC SUPERBIG 7-IN-1",
+	.funcs = &mmc3_funcs,
+	.init_prg = mmc3_init_prg,
+	.init_chr0 = std_chr_2k_1k,
+	.write_handlers = superbig7in1_write_handlers,
+	.max_prg_rom_size = SIZE_2048K,
+	.max_chr_rom_size = SIZE_256K,
+	.max_wram_size = {SIZE_8K, 0},
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_vh,
+};
+
 static void mmc3_end_frame(struct board *board, uint32_t cycles)
 {
 	a12_timer_end_frame(board->emu->a12_timer, cycles);
@@ -571,6 +597,12 @@ static void mmc3_reset(struct board *board, int hard)
 		board->chr_or = 0;
 
 		switch (board->info->board_type) {
+		case BOARD_TYPE_SUPERBIG_7_IN_1:
+			board->prg_and = 0x0f;
+			board->prg_or = 0x00;
+			board->chr_and = 0x7f;
+			board->chr_or = 0x000;
+			break;
 		case BOARD_TYPE_15_IN_1:
 			board->prg_and = 0x1f;
 			board->prg_or = 0x00;
@@ -805,6 +837,34 @@ static CPU_WRITE_HANDLER(hosenkan_write_handler)
 	} else if (addr == 0xc001) {
 		a12_timer_irq_latch(emu, addr, value, cycles);
 		a12_timer_irq_reload(emu, addr, value, cycles);
+	}
+}
+
+static CPU_WRITE_HANDLER(superbig7in1_write_handler)
+{
+	struct board *board;
+	int bank;
+
+	board = emu->board;
+
+	bank = value & 7;
+
+	if ((addr & 0xe001) == 0xa001) {
+		mmc3_write_handler(emu, 0xa001, value & 0xc0, cycles);
+		if (bank < 6) {
+			board->prg_and = 0x0f;
+			board->chr_and = 0x7f;
+			board->prg_or = (bank << 4);
+			board->chr_or = (bank << 7);
+		} else {
+			board->prg_and = 0x1f;
+			board->chr_and = 0xff;
+			board->prg_or = 0x60;
+			board->chr_or = 0x300;
+		}
+
+		board_prg_sync(board);
+		board_chr_sync(board, 0);
 	}
 }
 
