@@ -74,6 +74,7 @@ cxnes_SOURCES = \
 	main/state.c \
 	main/nes_ntsc.c \
 	main/text_buffer.c \
+	boards/mortalkombat2.c \
 	boards/super700in1.c \
 	boards/gamestar.c \
 	boards/cne_psb.c \
