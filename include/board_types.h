@@ -271,6 +271,7 @@
 #define BOARD_TYPE_SUPERBIG_7_IN_1         INES_TO_BOARD_TYPE( 44,  0, 0, 0)
 #define BOARD_TYPE_SUPERHIK_4_IN_1         INES_TO_BOARD_TYPE( 49,  0, 0, 0)
 #define BOARD_TYPE_GAMESTAR_B              INES_TO_BOARD_TYPE( 58,  0, 0, 0)
+#define BOARD_TYPE_SUPER700IN1             INES_TO_BOARD_TYPE( 62,  0, 0, 0)
 
 #define BOARD_TYPE_CNE_SHLZ                INES_TO_BOARD_TYPE(240,  0, 0, 0)
 #define BOARD_TYPE_TXC_TW                  INES_TO_BOARD_TYPE(189,  0, 0, 0)
