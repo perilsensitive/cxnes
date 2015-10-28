@@ -46,6 +46,7 @@ struct board_fixup {
 };
 
 extern int running;
+extern struct board_info board_m150in1;
 extern struct board_info board_magicseries;
 extern struct board_info board_unl_mortalkombat2;
 extern struct board_info board_super700in1;
@@ -207,6 +208,7 @@ extern struct board_info board_waixing_type_h;
 extern struct board_info board_waixing_sgzlz;
 
 static struct board_info *board_info_list[] = {
+	&board_m150in1,
 	&board_magicseries,
 	&board_unl_mortalkombat2,
 	&board_super700in1,
