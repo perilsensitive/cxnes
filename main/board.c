@@ -46,6 +46,7 @@ struct board_fixup {
 };
 
 extern int running;
+extern struct board_info board_76in1;
 extern struct board_info board_cufrom;
 extern struct board_info board_m150in1;
 extern struct board_info board_magicseries;
@@ -209,6 +210,7 @@ extern struct board_info board_waixing_type_h;
 extern struct board_info board_waixing_sgzlz;
 
 static struct board_info *board_info_list[] = {
+	&board_76in1,
 	&board_cufrom,
 	&board_m150in1,
 	&board_magicseries,
@@ -388,6 +390,8 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "BANDAI-NROM-128", BOARD_TYPE_NROM },
 	{ "BANDAI-NROM-256", BOARD_TYPE_NROM },
 	{ "BANDAI-PT-554", BOARD_TYPE_CNROM },
+	{ "BMC 76-IN-1", BOARD_TYPE_76_IN_1 },
+	{ "BMC SUPER 42-IN-1", BOARD_TYPE_76_IN_1 },
 	{ "CAMERICA-GAMEGENIE", BOARD_TYPE_NROM },
 	{ "HVC-AMROM", BOARD_TYPE_AxROM },
 	{ "HVC-AOROM", BOARD_TYPE_AxROM },
