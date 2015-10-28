@@ -33,7 +33,6 @@ struct board_info board_cufrom = {
 	.init_chr0 = std_chr_8k,
 	.write_handlers = cufrom_write_handlers,
 	.max_prg_rom_size = SIZE_128K,
-	.max_chr_rom_size = SIZE_32K,
 	.max_wram_size = {SIZE_8K, 0},
 	.min_vram_size = {SIZE_32K, 0},
 	.max_vram_size = {SIZE_32K, 0},
