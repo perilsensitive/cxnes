@@ -478,6 +478,11 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return 1;
 
 	switch (header.mapper) {
+	case 39:
+		/* Subor Study & Game 32-in-1 is oversized BNROM */
+		header.mapper = 34;
+		header.submapper = 2;
+		break;
 	case 241:
 		header.mapper = 34;
 		header.submapper = 0;

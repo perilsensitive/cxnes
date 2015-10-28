@@ -289,6 +289,7 @@
    here so that I can automate extracting the list of supported mappers
    from this file and not need to account for these by hand.
 
+#define BOARD_TYPE_INES_39                 INES_TO_BOARD_TYPE( 39,  0, 0, 0)
 #define BOARD_TYPE_INES_79                 INES_TO_BOARD_TYPE( 79,  0, 0, 0)
 #define BOARD_TYPE_INES_146                INES_TO_BOARD_TYPE(146,  0, 0, 0)
 #define BOARD_TYPE_INES_151                INES_TO_BOARD_TYPE(151,  0, 0, 0)
