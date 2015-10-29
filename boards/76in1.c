@@ -35,6 +35,7 @@ struct board_info board_76in1 = {
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
 	.mirroring_values = std_mirroring_hv,
 	.mirroring_shift = 6,
 };
