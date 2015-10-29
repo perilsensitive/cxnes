@@ -106,7 +106,7 @@ static SDL_Surface *text_surface;
 static SDL_Texture *text_texture;
 static SDL_Surface *fps_text_surface;
 static SDL_Texture *fps_text_texture;
-static SDL_Rect bg_dest_rect;
+static SDL_Rect osd_bg_dest_rect;
 static SDL_Rect text_dest_rect;
 static SDL_Rect text_clip_rect;
 static SDL_Rect fps_bg_dest_rect;
@@ -213,18 +213,18 @@ static void calc_osd_rects(void)
 	bg_margin = 8 * current_scaling_factor;
 	text_margin = floor(current_scaling_factor) * 2;
 
-	bg_dest_rect.x = dest_rect.x + bg_margin;
-	bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
-	if (text_w + 2 * text_margin < bg_dest_rect.w)
-		bg_dest_rect.w = text_w + 2 * text_margin;
+	osd_bg_dest_rect.x = dest_rect.x + bg_margin;
+	osd_bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
+	if (text_w + 2 * text_margin < osd_bg_dest_rect.w)
+		osd_bg_dest_rect.w = text_w + 2 * text_margin;
 
-	bg_dest_rect.h = text_line_skip + 2 * text_margin;
-	bg_dest_rect.y = dest_rect.y + dest_rect.h - bg_dest_rect.h - bg_margin;
+	osd_bg_dest_rect.h = text_line_skip + 2 * text_margin;
+	osd_bg_dest_rect.y = dest_rect.y + dest_rect.h - osd_bg_dest_rect.h - bg_margin;
 
-	text_dest_rect.x = bg_dest_rect.x + text_margin;
-	text_dest_rect.w = bg_dest_rect.w - 2 * text_margin;
+	text_dest_rect.x = osd_bg_dest_rect.x + text_margin;
+	text_dest_rect.w = osd_bg_dest_rect.w - 2 * text_margin;
 	text_dest_rect.h = text_line_skip;
-	text_dest_rect.y = bg_dest_rect.y + text_margin;
+	text_dest_rect.y = osd_bg_dest_rect.y + text_margin;
 
 	text_clip_rect.x = 0;
 	text_clip_rect.y = 0;
@@ -1145,7 +1145,7 @@ int video_draw_buffer(void)
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(renderer, osd_bg_color.r, osd_bg_color.g,
 				       osd_bg_color.b, osd_bg_color.a);
-		SDL_RenderFillRect(renderer, &bg_dest_rect);
+		SDL_RenderFillRect(renderer, &osd_bg_dest_rect);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderCopy(renderer, text_texture, &text_clip_rect,
 			       &text_dest_rect);
