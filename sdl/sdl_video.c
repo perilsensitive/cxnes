@@ -219,7 +219,7 @@ static void calc_osd_rects(void)
 		bg_dest_rect.w = text_w + 2 * text_margin;
 
 	bg_dest_rect.h = text_line_skip + 2 * text_margin;
-	bg_dest_rect.y = dest_rect.h - bg_dest_rect.h - bg_margin;
+	bg_dest_rect.y = dest_rect.y + dest_rect.h - bg_dest_rect.h - bg_margin;
 
 	text_dest_rect.x = bg_dest_rect.x + text_margin;
 	text_dest_rect.w = bg_dest_rect.w - 2 * text_margin;
