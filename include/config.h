@@ -121,7 +121,7 @@ struct config {
 	int vrc6_pulse0_volume;
 	int vrc6_pulse1_volume;
 	int vrc6_sawtooth_volume;
-	int namco163_volume;
+	int vrc7_channel_volume[6];
 	int mmc5_pulse0_volume;
 	int mmc5_pulse1_volume;
 	int mmc5_pcm_volume;

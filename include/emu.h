@@ -89,6 +89,7 @@ extern const int system_type_vs_values[];
 extern const int system_type_playchoice_values[];
 
 struct vrc6_audio_state;
+struct vrc7_audio_state;
 struct fds_audio_state;
 struct namcot163_audio_state;
 struct mmc5_audio_state;
@@ -104,6 +105,7 @@ struct emu {
 	struct cheat_state *cheats;
 
 	struct vrc6_audio_state *vrc6_audio;
+	struct vrc7_audio_state *vrc7_audio;
 	struct fds_audio_state *fds_audio;
 	struct namco163_audio_state *namco163_audio;
 	struct mmc5_audio_state *mmc5_audio;

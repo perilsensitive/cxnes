@@ -126,10 +126,12 @@ cxnes_SOURCES = \
 	boards/jaleco_jf13.c \
 	boards/namco108.c \
 	boards/cprom.c \
+	boards/audio/emu2413.c \
 	boards/audio/mmc5_audio.c \
 	boards/audio/fds_audio.c \
 	boards/audio/sunsoft5b_audio.c \
 	boards/audio/vrc6_audio.c \
+	boards/audio/vrc7_audio.c \
 	boards/audio/namco163_audio.c \
 	boards/bnrom.c \
 	boards/sunsoft1.c \
