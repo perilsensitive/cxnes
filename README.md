@@ -51,6 +51,7 @@ Supported Expansion Audio Chips
 -------------------------------
 * Nintendo MMC5
 * Konami VRC6
+* Konami VRC7
 * Sunsoft 5B
 * Namco 163
 * Famicom Disk System
