@@ -84,10 +84,10 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_F6, keyboard_set_key},
 	{ ACTION_KEYBOARD_F7, keyboard_set_key},
 	{ ACTION_KEYBOARD_F8, keyboard_set_key},
-	/* { ACTION_KEYBOARD_F9, keyboard_set_key}, */
-	/* { ACTION_KEYBOARD_F10, keyboard_set_key}, */
-	/* { ACTION_KEYBOARD_F11, keyboard_set_key}, */
-	/* { ACTION_KEYBOARD_F12, keyboard_set_key}, */
+	{ ACTION_KEYBOARD_F9, keyboard_set_key},
+	{ ACTION_KEYBOARD_F10, keyboard_set_key},
+	{ ACTION_KEYBOARD_F11, keyboard_set_key},
+	{ ACTION_KEYBOARD_F12, keyboard_set_key},
 	{ ACTION_KEYBOARD_1, keyboard_set_key},
 	{ ACTION_KEYBOARD_2, keyboard_set_key},
 	{ ACTION_KEYBOARD_3, keyboard_set_key},
