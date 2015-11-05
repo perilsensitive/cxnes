@@ -1128,7 +1128,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 				if ((mod_bits & INPUT_MOD_BITS_KBD) &&
 				    (m != INPUT_MOD_KBD)) {
 					mod = INPUT_MOD_BITS_KBD;
-					m = 0;
+					m = -1;
 				} else {
 					mod = 0;
 				}
