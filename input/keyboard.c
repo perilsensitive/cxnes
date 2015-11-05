@@ -43,6 +43,38 @@ struct keyboard_state {
 	int connected;
 };
 
+/* KANA */
+/* @ */
+/* CLR */
+/* : */
+/* GRPH */
+/* DEL */
+/* STOP */
+/* ^ */
+
+#define F(x,y) (((x) << 8)| (y))
+
+static uint16_t subor_keyboard_translation[72] = {
+	F(0x05,0x02), F(0x08,0x04), F(0x09,0x04), F(0x08,0x02),
+	F(0xff,0xff), F(0x0f,0x10), F(0x09,0x08), F(0xff,0xff),
+	F(0x09,0x02), F(0xff,0xff), F(0xff,0xff), F(0x0e,0x04),
+	F(0xff,0xff), F(0x0e,0x10), F(0x0e,0x02), F(0xff,0xff),
+	F(0x0f,0x02), F(0x07,0x04), F(0x06,0x08), F(0x0c,0x08),
+	F(0x07,0x10), F(0x06,0x10), F(0x0f,0x04), F(0x07,0x08),
+	F(0x07,0x02), F(0x06,0x04), F(0x0d,0x04), F(0x0d,0x10),
+	F(0x0c,0x10), F(0x10,0x08), F(0x06,0x02), F(0x0d,0x08),
+	F(0x0d,0x02), F(0x0c,0x04), F(0x00,0x04), F(0x10,0x04),
+	F(0x11,0x10), F(0x01,0x10), F(0x0c,0x02), F(0x11,0x08),
+	F(0x11,0x02), F(0x10,0x02), F(0x11,0x04), F(0x02,0x04),
+	F(0x00,0x08), F(0x00,0x10), F(0x01,0x08), F(0x00,0x02),
+	F(0x01,0x02), F(0x03,0x04), F(0x02,0x08), F(0x0b,0x04),
+	F(0x03,0x10), F(0x0a,0x08), F(0x01,0x04), F(0x03,0x08),
+	F(0x03,0x02), F(0x0b,0x02), F(0x0a,0x02), F(0x0b,0x10),
+	F(0x0f,0x10), F(0xff,0xff), F(0x0b,0x08), F(0x02,0x02),
+	F(0xff,0xff), F(0x08,0x08), F(0x04,0x10), F(0x08,0x10),
+	F(0x09,0x10), F(0x10,0x10), F(0x05,0x08), F(0x04,0x02),
+};
+
 static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_F1, keyboard_set_key},
 	{ ACTION_KEYBOARD_F2, keyboard_set_key},
@@ -52,6 +84,10 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_F6, keyboard_set_key},
 	{ ACTION_KEYBOARD_F7, keyboard_set_key},
 	{ ACTION_KEYBOARD_F8, keyboard_set_key},
+	/* { ACTION_KEYBOARD_F9, keyboard_set_key}, */
+	/* { ACTION_KEYBOARD_F10, keyboard_set_key}, */
+	/* { ACTION_KEYBOARD_F11, keyboard_set_key}, */
+	/* { ACTION_KEYBOARD_F12, keyboard_set_key}, */
 	{ ACTION_KEYBOARD_1, keyboard_set_key},
 	{ ACTION_KEYBOARD_2, keyboard_set_key},
 	{ ACTION_KEYBOARD_3, keyboard_set_key},
@@ -115,6 +151,21 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_DOWN, keyboard_set_key},
 	{ ACTION_KEYBOARD_LEFT, keyboard_set_key},
 	{ ACTION_KEYBOARD_RIGHT, keyboard_set_key},
+	{ ACTION_KEYBOARD_BS, keyboard_set_key},
+	{ ACTION_KEYBOARD_TAB, keyboard_set_key},
+ 	{ ACTION_KEYBOARD_CAPS, keyboard_set_key},
+	{ ACTION_KEYBOARD_PGUP, keyboard_set_key},
+	{ ACTION_KEYBOARD_PGDN, keyboard_set_key},
+	{ ACTION_KEYBOARD_HOME, keyboard_set_key},
+	{ ACTION_KEYBOARD_END, keyboard_set_key},
+	{ ACTION_KEYBOARD_ALT, keyboard_set_key},
+	{ ACTION_KEYBOARD_TILDE, keyboard_set_key},
+	{ ACTION_KEYBOARD_APOSTROPHE, keyboard_set_key},
+	{ ACTION_KEYBOARD_EQUALS, keyboard_set_key},
+	{ ACTION_KEYBOARD_PAUSE, keyboard_set_key},
+	{ ACTION_KEYBOARD_BREAK, keyboard_set_key},
+	{ ACTION_KEYBOARD_RESET, keyboard_set_key},
+	{ ACTION_KEYBOARD_NUMLOCK, keyboard_set_key},
 	{ ACTION_NONE },
 };
 
@@ -122,6 +173,19 @@ struct io_device keyboard_device = {
 	.name = "Famicom Keyboard",
 	.id = IO_DEVICE_KEYBOARD,
 	.config_id = "familykeyboard",
+	.connect = keyboard_connect,
+	.disconnect = keyboard_disconnect,
+	.read = keyboard_read,
+	.write = keyboard_write,
+	.handlers = keyboard_handlers,
+	.port = PORT_EXP,
+	.removable = 1,
+};
+
+struct io_device subor_keyboard_device = {
+	.name = "Subor Keyboard",
+	.id = IO_DEVICE_SUBOR_KEYBOARD,
+	.config_id = "suborkeyboard",
 	.connect = keyboard_connect,
 	.disconnect = keyboard_disconnect,
 	.read = keyboard_read,
@@ -208,14 +272,75 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 	dev = data;
 	state = dev->private;
 
+	/* Keep gcc happy */
+	mask = 0;
+	offset = 0;
+
 	if (key == ACTION_KEYBOARD_ENABLE) {
 		return 0;
 	}
 
-	key &= 0xffff;
+	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) {
+		uint16_t map;
 
-	offset = key >> 8;
-	mask = (key & 0x1e);
+		printf("key: %x\n", key);
+
+		switch (key) {
+		case ACTION_KEYBOARD_BS:
+			offset = 4; mask = 0x04; break;
+		case ACTION_KEYBOARD_CAPS:
+			offset = 10; mask = 0x04; break;
+		case ACTION_KEYBOARD_PGUP:
+			offset = 5; mask = 0x04; break;
+		case ACTION_KEYBOARD_PGDN:
+			offset = 4; mask = 0x08; break;
+		case ACTION_KEYBOARD_END:
+			offset = 2; mask = 0x10; break;
+		case ACTION_KEYBOARD_APOSTROPHE:
+			offset = 14; mask = 0x08; break;
+		case ACTION_KEYBOARD_EQUALS:
+			offset = 15; mask = 0x08; break;
+		case ACTION_KEYBOARD_PAUSE:
+			offset = 10; mask = 0x10; break;
+		case ACTION_KEYBOARD_TAB:
+		case ACTION_KEYBOARD_TILDE:
+		case ACTION_KEYBOARD_BREAK:
+		case ACTION_KEYBOARD_RESET:
+		case ACTION_KEYBOARD_NUMLOCK:
+		case ACTION_KEYBOARD_ALT:
+		case ACTION_KEYBOARD_F9:
+		case ACTION_KEYBOARD_F10:
+		case ACTION_KEYBOARD_F11:
+		case ACTION_KEYBOARD_F12:
+			break;
+		default:
+			key &= 0xffff;
+
+			offset = key >> 8;
+			mask = (key & 0x1e);
+
+			printf("old offset = %d, mask = %d\n", offset, mask);
+
+			switch (mask) {
+			case 0x02: mask = 0; break;
+			case 0x04: mask = 1; break;
+			case 0x08: mask = 2; break;
+			case 0x10: mask = 3; break;
+			}
+
+			map = subor_keyboard_translation[(offset << 2) + mask];
+			offset = map >> 8;
+			mask = map & 0x1e;
+			printf("new offset = %d, mask = %d\n", offset, mask);
+		}
+
+	} else {
+		key &= 0xffff;
+
+		offset = key >> 8;
+		mask = (key & 0x1e);
+	}
+
 
 	if (pressed)
 		state->key_state[offset] &= ~mask;

@@ -448,6 +448,8 @@ int convert_key_event(GdkEventKey *event, SDL_Event *sdlevent)
 		return 0;
 
 	sdlkeycode = keycode_map_lookup(event->hardware_keycode);
+	if (sdlkeycode == SDLK_UNKNOWN)
+		return 0;
 
 	sdlevent->key.repeat = 0;
 	sdlevent->key.windowID = 0;

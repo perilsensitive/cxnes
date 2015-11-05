@@ -44,6 +44,7 @@ extern struct io_device arkanoid_fc_device;
 extern struct io_device arkanoidII_device;
 extern struct io_device vs_zapper_device;
 extern struct io_device keyboard_device;
+extern struct io_device subor_keyboard_device;
 extern struct io_device vs_unisystem_device;
 extern struct io_device ftrainer_a_device;
 extern struct io_device ftrainer_b_device;
@@ -534,6 +535,7 @@ void io_reset(struct io_state *io, int hard)
 			io_register_device(io, &snes_mouse4_device, -1);
 
 			io_register_device(io, &keyboard_device, -1);
+			io_register_device(io, &subor_keyboard_device, -1);
 			io_register_device(io, &ftrainer_a_device, -1);
 			io_register_device(io, &ftrainer_b_device, -1);
 			io_register_device(io, &arkanoid_fc_device, -1);

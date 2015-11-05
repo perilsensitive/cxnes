@@ -464,6 +464,7 @@ struct input_device expansion_port_input_devices[] = {
 	{ "Auto", IO_DEVICE_AUTO },
 	{ "None", IO_DEVICE_NONE },
 	{ "Family BASIC _Keyboard", IO_DEVICE_KEYBOARD },
+	{ "_Subor Keyboard", IO_DEVICE_SUBOR_KEYBOARD },
 	{ "_Family Trainer Side A", IO_DEVICE_FTRAINER_A },
 	{ "F_amily Trainer Side B", IO_DEVICE_FTRAINER_B },
 	{ "_Arkanoid Controller (Famicom)", IO_DEVICE_ARKANOID_FC },

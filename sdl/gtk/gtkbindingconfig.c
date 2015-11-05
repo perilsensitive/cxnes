@@ -361,9 +361,9 @@ static gboolean key_event_callback(GtkWidget *widget, GdkEventKey *event,
 	SDL_Event sdlevent;
 	if (event->type == GDK_KEY_PRESS) {
 		if (!convert_key_event(event, &sdlevent))
-		    return TRUE;
+			return TRUE;
 
-		    if (input_convert_event(&sdlevent, &grabbed_event.event)) {
+		if (input_convert_event(&sdlevent, &grabbed_event.event)) {
 			if ((binding_config_action_id & ACTION_TYPE_MASK) !=
 			    ACTION_TYPE_DIGITAL) {
 				return TRUE;

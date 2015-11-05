@@ -274,7 +274,7 @@ static const char *exp_device_names[] = {
 
 static const char *valid_exp_devices[] = {
 	"auto", "none", "arkanoid_fc", "arkanoid2", "vs_zapper",
-	"keyboard", "ftrainer_a", "ftrainer_b"
+	"familykeyboard", "suborkeyboard", "ftrainer_a", "ftrainer_b"
 };
 
 static const int valid_sample_rates[] = {
@@ -954,7 +954,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard 9", .value = "KEYBOARD_9" },
 	{ .name = "[KBD] Keyboard 0", .value = "KEYBOARD_0" },
 	{ .name = "[KBD] Keyboard -", .value = "KEYBOARD_minus" },
-	{ .name = "[KBD] Keyboard +", .value = "KEYBOARD_yen" },
+	{ .name = "[KBD] Keyboard Equals", .value = "KEYBOARD_equals" },
 	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_stop" },
 	{ .name = "[KBD] Keyboard Escape", .value = "KEYBOARD_ESCAPE" },
 	{ .name = "[KBD] Keyboard q", .value = "KEYBOARD_q" },
@@ -999,13 +999,28 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard Right Shift", .value = "KEYBOARD_rshift" },
 	{ .name = "[KBD] Keyboard Right Alt", .value = "KEYBOARD_grph" },
 	{ .name = "[KBD] Keyboard Space", .value = "KEYBOARD_space" },
-	{ .name = "[KBD] Keyboard Delete", .value = "KEYBOARD_clr" },
+	{ .name = "[KBD] Keyboard Delete", .value = "KEYBOARD_del" },
 	{ .name = "[KBD] Keyboard Insert", .value = "KEYBOARD_ins" },
-	{ .name = "[KBD] Keyboard Backspace", .value = "KEYBOARD_del" },
+	{ .name = "[KBD] Keyboard Backspace", .value = "KEYBOARD_bs" },
+	{ .name = "[KBD] Keyboard Tab", .value = "KEYBOARD_tab" },
 	{ .name = "[KBD] Keyboard Up", .value = "KEYBOARD_up" },
 	{ .name = "[KBD] Keyboard Down", .value = "KEYBOARD_down" },
 	{ .name = "[KBD] Keyboard Left", .value = "KEYBOARD_left" },
 	{ .name = "[KBD] Keyboard Right", .value = "KEYBOARD_right" },
+	{ .name = "[KBD] Keyboard PageUp", .value = "KEYBOARD_PGUP" },
+	{ .name = "[KBD] Keyboard PageDown", .value = "KEYBOARD_PGDN" },
+	{ .name = "[KBD] Keyboard CapsLock", .value = "KEYBOARD_CAPS" },
+	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_END" },
+	{ .name = "[KBD] Keyboard F9", .value = "KEYBOARD_F9" },
+	{ .name = "[KBD] Keyboard F10", .value = "KEYBOARD_F10" },
+	{ .name = "[KBD] Keyboard F11", .value = "KEYBOARD_F11" },
+	{ .name = "[KBD] Keyboard F12", .value = "KEYBOARD_F12" },
+	{ .name = "[KBD] Keyboard '", .value = "KEYBOARD_APOSTROPHE" },
+	{ .name = "[KBD] Keyboard `", .value = "KEYBOARD_TILDE" },
+	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
+	{ .name = "[KBD] Keyboard Pause", .value = "KEYBOARD_PAUSE" },
+	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
+	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
 
 /* Mat (Power Pad, Family Trainer) Input Bindings */
 	{ .name = "Keyboard u", .value = "MAT_2_1" },

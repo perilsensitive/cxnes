@@ -85,8 +85,19 @@ static int joystick_list_size;
 const char *input_lookup_keyname_from_code(uint32_t keycode)
 {
 	const char *keyname;
+	int i;
 
-	keyname = SDL_GetKeyName(keycode);
+	for (i = 0; keyname_to_keycode[i].keyname; i++) {
+		if (keyname_to_keycode[i].keycode == keycode)
+			break;
+	}
+
+	if (keyname_to_keycode[i].keyname) {
+		keyname = keyname_to_keycode[i].keyname;
+	} else {
+		keyname = SDL_GetKeyName(keycode);
+	}
+
 	if (!keyname || !keyname[0])
 		return NULL;
 
