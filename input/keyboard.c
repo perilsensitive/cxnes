@@ -166,6 +166,7 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_BREAK, keyboard_set_key},
 	{ ACTION_KEYBOARD_RESET, keyboard_set_key},
 	{ ACTION_KEYBOARD_NUMLOCK, keyboard_set_key},
+	{ ACTION_KEYBOARD_BACKSLASH, keyboard_set_key},
 	{ ACTION_NONE },
 };
 
@@ -302,6 +303,8 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 			offset = 15; mask = 0x08; break;
 		case ACTION_KEYBOARD_PAUSE:
 			offset = 10; mask = 0x10; break;
+		case ACTION_KEYBOARD_BACKSLASH:
+			offset = 9; mask = 0x08; break;
 		case ACTION_KEYBOARD_TAB:
 		case ACTION_KEYBOARD_TILDE:
 		case ACTION_KEYBOARD_BREAK:

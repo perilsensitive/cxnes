@@ -967,7 +967,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard i", .value = "KEYBOARD_i" },
 	{ .name = "[KBD] Keyboard o", .value = "KEYBOARD_o" },
 	{ .name = "[KBD] Keyboard p", .value = "KEYBOARD_p" },
-	{ .name = "[KBD] Keyboard Backslash", .value = "KEYBOARD_at" },
+	{ .name = "[KBD] Keyboard Backslash", .value = "KEYBOARD_BACKSLASH" },
 	{ .name = "[KBD] Keyboard [", .value = "KEYBOARD_leftbracket" },
 	{ .name = "[KBD] Keyboard Return", .value = "KEYBOARD_enter" },
 	{ .name = "[KBD] Keyboard Left Ctrl", .value = "KEYBOARD_ctrl" },
