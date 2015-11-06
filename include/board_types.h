@@ -276,6 +276,8 @@
 #define BOARD_TYPE_MAGICSERIES             INES_TO_BOARD_TYPE(107,  0, 0, 0)
 #define BOARD_TYPE_150_IN_1                INES_TO_BOARD_TYPE(202,  0, 0, 0)
 #define BOARD_TYPE_76_IN_1                 INES_TO_BOARD_TYPE(226,  0, 0, 0)
+#define BOARD_TYPE_SUBOR_B                 INES_TO_BOARD_TYPE(166,  0, 0, 0)
+#define BOARD_TYPE_SUBOR_A                 INES_TO_BOARD_TYPE(167,  0, 0, 0)
 
 #define BOARD_TYPE_CNE_SHLZ                INES_TO_BOARD_TYPE(240,  0, 0, 0)
 #define BOARD_TYPE_TXC_TW                  INES_TO_BOARD_TYPE(189,  0, 0, 0)

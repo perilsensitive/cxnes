@@ -25,7 +25,8 @@
 #define KEYBOARD_COLUMN 0x02
 #define KEYBOARD_RESET  0x01
 
-#define KEYBOARD_ROWS   20
+#define SUBOR_KEYBOARD_ROWS   26
+#define FAMILY_BASIC_KEYBOARD_ROWS   20
 
 static int keyboard_connect(struct io_device *);
 static void keyboard_disconnect(struct io_device *);
@@ -36,7 +37,7 @@ static void keyboard_write(struct io_device *, uint8_t value, int mode,
 static int keyboard_set_key(void *, uint32_t pressed, uint32_t key);
 
 struct keyboard_state {
-	uint8_t key_state[KEYBOARD_ROWS];
+	uint8_t key_state[SUBOR_KEYBOARD_ROWS];
 	int enabled;
 	int index;
 	uint8_t prev_write;
@@ -201,17 +202,23 @@ static void keyboard_write(struct io_device *dev, uint8_t data, int mode,
 {
 	struct keyboard_state *state;
 	uint8_t prev, changed;
+	int rows;
 
 	state = dev->private;
 
 	if (!(data & KEYBOARD_ENABLE))
 		return;
 
+	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD)
+		rows = SUBOR_KEYBOARD_ROWS;
+	else
+		rows = FAMILY_BASIC_KEYBOARD_ROWS;
+
 	prev = state->prev_write;
 	changed = prev ^ data;
 
 	if (changed & KEYBOARD_COLUMN)
-		state->index = (state->index + 1) % KEYBOARD_ROWS;
+		state->index = (state->index + 1) % rows;
 
 	if (data & KEYBOARD_RESET)
 		state->index = 0;
@@ -249,7 +256,13 @@ static int keyboard_connect(struct io_device *dev)
 	memset(state, 0, sizeof(*state));
 	dev->private = state;
 
-	memset(state->key_state, 0x1e, KEYBOARD_ROWS);
+	memset(state->key_state, 0x1e, sizeof(state->key_state));
+
+	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) {
+		state->key_state[18] = 0x00;
+		state->key_state[19] = 0x00;
+	}
+
 	state->prev_write = 0;
 	state->enabled = 1;
 	state->index = 0;
@@ -306,6 +319,7 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 		case ACTION_KEYBOARD_BACKSLASH:
 			offset = 9; mask = 0x08; break;
 		case ACTION_KEYBOARD_TAB:
+			offset = 24; mask = 0x02; break;
 		case ACTION_KEYBOARD_TILDE:
 		case ACTION_KEYBOARD_BREAK:
 		case ACTION_KEYBOARD_RESET:
