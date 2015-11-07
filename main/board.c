@@ -1261,7 +1261,6 @@ static int board_init_ram(struct board *board, size_t size)
 		return -1;
 
 	board->ram_size = size;
-	memset(board->ram_data, 0x00, board->ram_size);
 
 	return 0;
 }
@@ -1708,7 +1707,6 @@ int board_init(struct emu *emu, struct rom *rom)
 		return 1;
 
 	board->ciram.type = CHIP_TYPE_CIRAM;
-	memset(board->ciram.data, 0xff, board->ciram.size);
 
 	board_init_ram_chips(board);
 	emu_load_cheat(board->emu);
@@ -1806,6 +1804,13 @@ void board_reset(struct board *board, int hard)
 		       sizeof(board->chr_banks1));
 		memcpy(board->chr_banks1,
 		       info->init_chr1, count * sizeof(struct bank));
+	}
+
+	if (hard) {
+		if (board->ram_size)
+			memset(board->ram_data, 0x00, board->ram_size);
+
+		memset(board->ciram.data, 0xff, board->ciram.size);
 	}
 
 	if (hard) {
