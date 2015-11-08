@@ -789,7 +789,7 @@ static struct config_parameter config_parameters[] = {
 };
 
 struct binding_item default_modifiers[] = {
-	{ .name = "Keyboard Home", .value = "KBD" },
+	{ .name = "Keyboard ScrollLock", .value = "KBD" },
 	{ .name = NULL },
 };
 
@@ -1010,6 +1010,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard PageUp", .value = "KEYBOARD_PGUP" },
 	{ .name = "[KBD] Keyboard PageDown", .value = "KEYBOARD_PGDN" },
 	{ .name = "[KBD] Keyboard CapsLock", .value = "KEYBOARD_CAPS" },
+	{ .name = "[KBD] Keyboard Home", .value = "KEYBOARD_HOME" },
 	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_END" },
 	{ .name = "[KBD] Keyboard F9", .value = "KEYBOARD_F9" },
 	{ .name = "[KBD] Keyboard F10", .value = "KEYBOARD_F10" },
@@ -1019,8 +1020,6 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard `", .value = "KEYBOARD_TILDE" },
 	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
 	{ .name = "[KBD] Keyboard Pause", .value = "KEYBOARD_PAUSE" },
-	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
-	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
 
 /* Mat (Power Pad, Family Trainer) Input Bindings */
 	{ .name = "Keyboard u", .value = "MAT_2_1" },

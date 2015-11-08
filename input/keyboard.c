@@ -72,7 +72,7 @@ static uint16_t subor_keyboard_translation[72] = {
 	F(0x03,0x10), F(0x0a,0x08), F(0x01,0x04), F(0x03,0x08),
 	F(0x03,0x02), F(0x0b,0x02), F(0x0a,0x02), F(0x0b,0x10),
 	F(0x0f,0x10), F(0xff,0xff), F(0x0b,0x08), F(0x02,0x02),
-	F(0xff,0xff), F(0x08,0x08), F(0x04,0x10), F(0x08,0x10),
+	F(0x05,0x10), F(0x08,0x08), F(0x04,0x10), F(0x08,0x10),
 	F(0x09,0x10), F(0x10,0x10), F(0x05,0x08), F(0x04,0x02),
 };
 
@@ -145,7 +145,6 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_RSHIFT, keyboard_set_key},
 	{ ACTION_KEYBOARD_GRPH, keyboard_set_key},
 	{ ACTION_KEYBOARD_SPACE, keyboard_set_key},
-	{ ACTION_KEYBOARD_CLR, keyboard_set_key},
 	{ ACTION_KEYBOARD_INS, keyboard_set_key},
 	{ ACTION_KEYBOARD_DEL, keyboard_set_key},
 	{ ACTION_KEYBOARD_UP, keyboard_set_key},
@@ -352,10 +351,13 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 		}
 
 	} else {
+		switch (key) {
+		default:
 		key &= 0xffff;
 
 		offset = key >> 8;
 		mask = (key & 0x1e);
+		}
 	}
 
 
