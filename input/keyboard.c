@@ -44,15 +44,6 @@ struct keyboard_state {
 	int connected;
 };
 
-/* KANA */
-/* @ */
-/* CLR */
-/* : */
-/* GRPH */
-/* DEL */
-/* STOP */
-/* ^ */
-
 #define F(x,y) (((x) << 8)| (y))
 
 static uint16_t subor_keyboard_translation[72] = {
@@ -116,7 +107,8 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_AT, keyboard_set_key},
 	{ ACTION_KEYBOARD_LEFTBRACKET, keyboard_set_key},
 	{ ACTION_KEYBOARD_ENTER, keyboard_set_key},
-	{ ACTION_KEYBOARD_CTRL, keyboard_set_key},
+	{ ACTION_KEYBOARD_LCTRL, keyboard_set_key},
+	{ ACTION_KEYBOARD_RCTRL, keyboard_set_key},
 	{ ACTION_KEYBOARD_a, keyboard_set_key},
 	{ ACTION_KEYBOARD_s, keyboard_set_key},
 	{ ACTION_KEYBOARD_d, keyboard_set_key},
@@ -143,7 +135,7 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_SLASH, keyboard_set_key},
 	{ ACTION_KEYBOARD_UNDERSCORE, keyboard_set_key},
 	{ ACTION_KEYBOARD_RSHIFT, keyboard_set_key},
-	{ ACTION_KEYBOARD_GRPH, keyboard_set_key},
+	{ ACTION_KEYBOARD_GRAPH, keyboard_set_key},
 	{ ACTION_KEYBOARD_SPACE, keyboard_set_key},
 	{ ACTION_KEYBOARD_INS, keyboard_set_key},
 	{ ACTION_KEYBOARD_DEL, keyboard_set_key},
@@ -158,8 +150,9 @@ static struct input_event_handler keyboard_handlers[] = {
 	{ ACTION_KEYBOARD_PGDN, keyboard_set_key},
 	{ ACTION_KEYBOARD_HOME, keyboard_set_key},
 	{ ACTION_KEYBOARD_END, keyboard_set_key},
-	{ ACTION_KEYBOARD_ALT, keyboard_set_key},
-	{ ACTION_KEYBOARD_TILDE, keyboard_set_key},
+	{ ACTION_KEYBOARD_LALT, keyboard_set_key},
+	{ ACTION_KEYBOARD_RALT, keyboard_set_key},
+	{ ACTION_KEYBOARD_BACKQUOTE, keyboard_set_key},
 	{ ACTION_KEYBOARD_APOSTROPHE, keyboard_set_key},
 	{ ACTION_KEYBOARD_EQUALS, keyboard_set_key},
 	{ ACTION_KEYBOARD_PAUSE, keyboard_set_key},
@@ -281,6 +274,7 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 	struct io_device *dev;
 	struct keyboard_state *state;
 	int offset, mask;
+	int rows;
 
 	dev = data;
 	state = dev->private;
@@ -296,34 +290,39 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) {
 		uint16_t map;
 
-		printf("key: %x\n", key);
+		rows = SUBOR_KEYBOARD_ROWS;
+
+		//printf("key: %x\n", key);
 
 		switch (key) {
+		case ACTION_KEYBOARD_RCTRL:
+			key = ACTION_KEYBOARD_LCTRL; break;
 		case ACTION_KEYBOARD_BS:
-			offset = 4; mask = 0x04; break;
+			key = F(4,0x04); break;
 		case ACTION_KEYBOARD_CAPS:
-			offset = 10; mask = 0x04; break;
+			key = F(10,0x04); break;
 		case ACTION_KEYBOARD_PGUP:
-			offset = 5; mask = 0x04; break;
+			key = F(5,0x04); break;
 		case ACTION_KEYBOARD_PGDN:
-			offset = 4; mask = 0x08; break;
+			key = F(4,0x08); break;
 		case ACTION_KEYBOARD_END:
-			offset = 2; mask = 0x10; break;
+			key = F(2,0x10); break;
 		case ACTION_KEYBOARD_APOSTROPHE:
-			offset = 14; mask = 0x08; break;
+			key = F(14,0x08); break;
 		case ACTION_KEYBOARD_EQUALS:
-			offset = 15; mask = 0x08; break;
+			key = F(15,0x08); break;
 		case ACTION_KEYBOARD_PAUSE:
-			offset = 10; mask = 0x10; break;
+			key = F(10,0x10); break;
 		case ACTION_KEYBOARD_BACKSLASH:
-			offset = 9; mask = 0x08; break;
+			key = F(9,0x08); break;
 		case ACTION_KEYBOARD_TAB:
-			offset = 24; mask = 0x02; break;
-		case ACTION_KEYBOARD_TILDE:
+			key = F(24,0x02); break;
+		case ACTION_KEYBOARD_BACKQUOTE:
 		case ACTION_KEYBOARD_BREAK:
 		case ACTION_KEYBOARD_RESET:
 		case ACTION_KEYBOARD_NUMLOCK:
-		case ACTION_KEYBOARD_ALT:
+		case ACTION_KEYBOARD_LALT:
+		case ACTION_KEYBOARD_RALT:
 		case ACTION_KEYBOARD_F9:
 		case ACTION_KEYBOARD_F10:
 		case ACTION_KEYBOARD_F11:
@@ -351,15 +350,26 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 		}
 
 	} else {
+		rows = FAMILY_BASIC_KEYBOARD_ROWS;
+
 		switch (key) {
-		default:
+		case ACTION_KEYBOARD_RCTRL:
+			key = ACTION_KEYBOARD_LCTRL;
+			break;
+		case ACTION_KEYBOARD_BS:
+			key = ACTION_KEYBOARD_DEL;
+			break;
+		}
+
 		key &= 0xffff;
 
 		offset = key >> 8;
 		mask = (key & 0x1e);
-		}
 	}
 
+
+	if (offset >= rows)
+		return 0;
 
 	if (pressed)
 		state->key_state[offset] &= ~mask;

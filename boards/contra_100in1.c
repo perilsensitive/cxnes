@@ -23,10 +23,10 @@ static CPU_WRITE_HANDLER(contra_100in1_write_handler);
 
 static struct bank contra_100in1_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
-	{0, 0, SIZE_16K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{0, 0, 0, 0xa000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{1, 0, SIZE_16K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{0, 0, 0, 0xe000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{0, 0, SIZE_8K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{1, 0, SIZE_8K, 0xa000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{2, 0, SIZE_8K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{3, 0, SIZE_8K, 0xe000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END}
 };
 
@@ -51,29 +51,40 @@ static CPU_WRITE_HANDLER(contra_100in1_write_handler)
 {
 	struct board *board = emu->board;
 
-	board->prg_mode = addr & 3;
+	int bank = (value & 0x3f) << 1;
+	int half = value >> 7;
 
-	if (board->prg_mode != 2) {
-		board->prg_banks[1].bank = value & 0x3f;
-		board->prg_banks[1].size = SIZE_16K;
-		board->prg_banks[2].size = 0;
-		board->prg_banks[3].bank = value & 0x3f;
-		board->prg_banks[3].size = SIZE_16K;
-		board->prg_banks[4].size = 0;
-
-		if (board->prg_mode == 0)
-			board->prg_banks[3].bank |= 1;
-		else if (board->prg_mode == 1)
-			board->prg_banks[3].bank = -1;
-	} else {
-		int i;
-
-		for (i = 1; i < 5; i++) {
-			board->prg_banks[i].bank =
-			    ((value & 0x3f) << 1) | (value >> 7);
-			board->prg_banks[i].size = SIZE_8K;
-		}
+	switch (addr & 0xfff) {
+	case 0:
+		board->prg_banks[1].bank = bank ^ half;
+		board->prg_banks[2].bank = (bank + 1) ^ half;
+		board->prg_banks[3].bank = (bank + 2) ^ half;
+		board->prg_banks[4].bank = (bank + 3) ^ half;
+		break;
+	case 1:
+		bank |= half;
+		board->prg_banks[1].bank = bank;
+		board->prg_banks[2].bank = bank + 1;
+		board->prg_banks[3].bank = 0xfe;
+		board->prg_banks[4].bank = 0xff;
+		break;
+	case 2:
+		bank |= half;
+		board->prg_banks[1].bank = bank;
+		board->prg_banks[2].bank = bank;
+		board->prg_banks[3].bank = bank;
+		board->prg_banks[4].bank = bank;
+		break;
+	case 3:
+		bank |= half;
+		board->prg_banks[1].bank = bank;
+		board->prg_banks[2].bank = bank + 1;
+		board->prg_banks[3].bank = bank;
+		board->prg_banks[4].bank = bank + 1;
+		break;
 	}
+
+	printf("mode: %x value: %x\n", addr & 0x03, value);
 
 	board_prg_sync(board);
 
