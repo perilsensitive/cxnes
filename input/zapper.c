@@ -25,9 +25,9 @@
 #define TRIGGER_FRAMES 2
 #define SENSOR_DELAY 25
 
-#define UPDATE_LOCATION 0
-#define TRIGGER         1
-#define TRIGGER_OFFSCREEN 2
+#define UPDATE_LOCATION 1
+#define TRIGGER         2
+#define TRIGGER_OFFSCREEN 4
 
 static int zapper_connect(struct io_device *);
 static void zapper_disconnect(struct io_device *);

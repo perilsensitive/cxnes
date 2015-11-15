@@ -21,9 +21,9 @@
 #include "actions.h"
 #include "input.h"
 
-#define ACTION_UPDATELOCATION 0
-#define ACTION_LEFTBUTTON 1
-#define ACTION_RIGHTBUTTON 2
+#define ACTION_UPDATELOCATION 1
+#define ACTION_LEFTBUTTON 2
+#define ACTION_RIGHTBUTTON 4
 
 static int snes_mouse_connect(struct io_device *dev);
 static void snes_mouse_disconnect(struct io_device *dev);

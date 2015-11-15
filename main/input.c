@@ -83,6 +83,7 @@ const char *category_names[] = {
 extern int input_native_init(struct emu *emu);
 extern int input_native_shutdown(void);
 extern int save_screenshot(void);
+struct emu_action *input_insert_emu_action(uint32_t emu_action);
 
 #define EMU_ACTION_ID_MAP(emu_action_name, cat, nice) { \
 		.name = #emu_action_name, \
@@ -818,7 +819,7 @@ int input_bind(const char *binding, const char *emu_actions)
 			log_err("invalid emu_action '%s' for binding %s\n",
 				token, binding);
 		} else {
-			e = input_insert_emu_action(emu_action);
+			e = input_lookup_emu_action(emu_action);
 			input_insert_event(&event, mod, e);
 		}
 		
@@ -840,7 +841,23 @@ int input_connect_handlers(const struct input_event_handler *handlers, void *dat
 
 	for (i = 0; handlers[i].id != ACTION_NONE; i++) {
 		uint32_t emu_action = handlers[i].id;
-		e = input_insert_emu_action(emu_action);
+
+		if ((handlers[i].id & ACTION_PREFIX_MASK) ==
+		    handlers[i].id) {
+			for (e = emu_action_list; e; e = e->next) {
+				if (((e->id & ACTION_PREFIX_MASK) !=
+				     handlers[i].id) || e->handler) {
+					continue;
+				}
+
+				e->handler = handlers[i].handler;
+				e->data = data;
+			}
+
+			return 0;
+		}
+
+		e = input_lookup_emu_action(emu_action);
 		if (!e)
 			continue;
 
@@ -1432,7 +1449,7 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 
 	for (i = 0; handlers[i].id != ACTION_NONE; i++) {
 		uint32_t emu_action = handlers[i].id;
-		e = input_insert_emu_action(emu_action);
+		e = input_lookup_emu_action(emu_action);
 		if (!e)
 			continue;
 
@@ -1807,6 +1824,10 @@ int input_init(struct emu *emu)
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++)
 		event_hash[i] = NULL;
+
+	for (i = 0; emu_action_id_map[i].emu_action_id != ACTION_NONE; i++) {
+		input_insert_emu_action(emu_action_id_map[i].emu_action_id);
+	}
 
 	input_connect_handlers(misc_handlers, emu);
 

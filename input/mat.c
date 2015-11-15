@@ -283,6 +283,7 @@ int mat_set_button(void *data, uint32_t pressed, uint32_t button)
 	dev = data;
 	state = dev->private;
 	button &= 0xffff;
+	button -= 1;
 
 	button ^= state->xor;
 	button = state->lookup[button];

@@ -29,9 +29,9 @@
 #define TYPE_OLD_NES 1
 #define TYPE_NEW_FC 2
 
-#define ACTION_DIAL 0x00
-#define ACTION_DIAL_MOUSE 0x01
-#define ACTION_BUTTON 0x02
+#define ACTION_DIAL 0x01
+#define ACTION_DIAL_MOUSE 0x02
+#define ACTION_BUTTON 0x04
 
 static int arkanoid_apply_config(struct io_device *dev);
 static int arkanoid_nes_connect(struct io_device *dev);
