@@ -57,32 +57,24 @@ struct arkanoid_state {
 };
 
 static struct input_event_handler arkanoid1_handlers[] = {
-	{ ACTION_ARKANOID_1_DIAL_MOUSE,
+	{ ACTION_ARKANOID_1_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_1_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_1, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler arkanoid2_handlers[] = {
-	{ ACTION_ARKANOID_2_DIAL_MOUSE,
+	{ ACTION_ARKANOID_2_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_2_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_2, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler arkanoid_fc_handlers[] = {
-	{ ACTION_ARKANOID_2_DIAL_MOUSE,
+	{ ACTION_ARKANOID_2_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_2_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_2, arkanoid_set_button},
 
 	/* The "Port 1" handlers are used for the second paddle. */
-	{ ACTION_ARKANOID_1_DIAL_MOUSE,
+	{ ACTION_ARKANOID_1_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_1_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_1, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 

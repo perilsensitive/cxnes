@@ -43,30 +43,22 @@ struct snes_mouse_state {
 };
 
 static struct input_event_handler snes_mouse1_handlers[] = {
-	{ ACTION_MOUSE_1_LEFTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_1_RIGHTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_1_UPDATE_LOCATION, snes_mouse_set_button},
+	{ ACTION_MOUSE_1_LEFTBUTTON & ACTION_PREFIX_MASK, snes_mouse_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler snes_mouse2_handlers[] = {
-	{ ACTION_MOUSE_2_LEFTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_2_RIGHTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_2_UPDATE_LOCATION, snes_mouse_set_button},
+	{ ACTION_MOUSE_2_LEFTBUTTON & ACTION_PREFIX_MASK, snes_mouse_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler snes_mouse3_handlers[] = {
-	{ ACTION_MOUSE_3_LEFTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_3_RIGHTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_3_UPDATE_LOCATION, snes_mouse_set_button},
+	{ ACTION_MOUSE_3_LEFTBUTTON & ACTION_PREFIX_MASK, snes_mouse_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler snes_mouse4_handlers[] = {
-	{ ACTION_MOUSE_4_LEFTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_4_RIGHTBUTTON, snes_mouse_set_button},
-	{ ACTION_MOUSE_4_UPDATE_LOCATION, snes_mouse_set_button},
+	{ ACTION_MOUSE_4_LEFTBUTTON & ACTION_PREFIX_MASK, snes_mouse_set_button},
 	{ ACTION_NONE },
 };
 
