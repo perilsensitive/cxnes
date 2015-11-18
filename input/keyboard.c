@@ -159,10 +159,10 @@ static int keyboard_connect(struct io_device *dev)
 
 	memset(state->key_state, 0x1e, sizeof(state->key_state));
 
-	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) {
-		state->key_state[18] = 0x00;
-		state->key_state[19] = 0x00;
-	}
+	/* if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) { */
+		/* state->key_state[18] = 0x00; */
+		/* state->key_state[19] = 0x1a; */
+	/* } */
 
 	state->prev_write = 0;
 	state->enabled = 1;
@@ -197,15 +197,12 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 	}
 
 	if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) {
-		uint16_t map;
-
 		rows = SUBOR_KEYBOARD_ROWS;
 
-		//printf("key: %x\n", key);
+		if (key == ACTION_KEYBOARD_RCTRL)
+			key = ACTION_KEYBOARD_LCTRL;
 
 		switch (key) {
-		case ACTION_KEYBOARD_RCTRL:
-			key = ACTION_KEYBOARD_LCTRL; break;
 		case ACTION_KEYBOARD_BS:
 			key = F(4,0x04); break;
 		case ACTION_KEYBOARD_CAPS:
@@ -239,11 +236,8 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 			break;
 		default:
 			key &= 0xffff;
-
 			offset = key >> 8;
 			mask = (key & 0x1e);
-
-			printf("old offset = %d, mask = %d\n", offset, mask);
 
 			switch (mask) {
 			case 0x02: mask = 0; break;
@@ -252,11 +246,12 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 			case 0x10: mask = 3; break;
 			}
 
-			map = subor_keyboard_translation[(offset << 2) + mask];
-			offset = map >> 8;
-			mask = map & 0x1e;
-			printf("new offset = %d, mask = %d\n", offset, mask);
+			key = subor_keyboard_translation[(offset << 2) + mask];
 		}
+
+		key &= 0xffff;
+		offset = key >> 8;
+		mask = (key & 0x1e);
 
 	} else {
 		rows = FAMILY_BASIC_KEYBOARD_ROWS;
