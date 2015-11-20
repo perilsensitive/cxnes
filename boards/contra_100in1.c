@@ -45,6 +45,8 @@ struct board_info board_contra_100in1 = {
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_shift = 6,
+	.mirroring_values = std_mirroring_vh,
 };
 
 static CPU_WRITE_HANDLER(contra_100in1_write_handler)
@@ -84,9 +86,7 @@ static CPU_WRITE_HANDLER(contra_100in1_write_handler)
 		break;
 	}
 
-	printf("mode: %x value: %x\n", addr & 0x03, value);
-
 	board_prg_sync(board);
 
-	board_set_ppu_mirroring(board, value & 0x40 ? MIRROR_H : MIRROR_V);
+	standard_mirroring_handler(emu, addr, value, cycles);
 }
