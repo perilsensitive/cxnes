@@ -697,6 +697,8 @@ int input_parse_binding(const char *string, union input_new_event *event,
 	char buf[80];
 	int len;
 
+	memset(event, 0, sizeof(*event));
+
 	modifier_start = modifier_end = binding_start = 0;
 	sscanf(string, " [ %n%*[^]]%n ] %n%*s", &modifier_start, &modifier_end,
 	       &binding_start);

@@ -82,6 +82,56 @@ static void load_default_bindings(GtkTreeStore *store,
 				  struct binding_item *bindings,
 				  int modifiers);
 
+static void setup_tree_actions(GtkTreeStore *store)
+{
+	GtkTreeIter action_iter;
+	int i;
+
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &action_iter);
+
+	for (i = 0; emu_action_id_map[i].emu_action_id != ACTION_NONE; i++) {
+		enum action_category category_id;
+
+		category_id = emu_action_id_map[i].category;
+
+		gtk_tree_store_append(store, &action_iter, NULL);
+		gtk_tree_store_set(store, &action_iter,
+				   COLUMN_CATEGORY,
+				   category_names[category_id],
+				   COLUMN_ACTION,
+				   emu_action_id_map[i].description,
+				   COLUMN_ACTION_ID,
+				   emu_action_id_map[i].emu_action_id,
+				   -1);
+	}
+
+	gtk_tree_store_append(store, &action_iter, NULL);
+	gtk_tree_store_set(store, &action_iter,
+			   COLUMN_CATEGORY, "Modifiers",
+			   COLUMN_ACTION, "Mod1",
+			   COLUMN_ACTION_ID, INPUT_MOD_MOD1,
+			   -1);
+	gtk_tree_store_append(store, &action_iter, NULL);
+	gtk_tree_store_set(store, &action_iter,
+			   COLUMN_CATEGORY, "Modifiers",
+			   COLUMN_ACTION, "Mod2",
+			   COLUMN_ACTION_ID, INPUT_MOD_MOD2,
+			   -1);
+	gtk_tree_store_append(store, &action_iter, NULL);
+	gtk_tree_store_set(store, &action_iter,
+			   COLUMN_CATEGORY, "Modifiers",
+			   COLUMN_ACTION, "Mod3",
+			   COLUMN_ACTION_ID, INPUT_MOD_MOD3,
+			   -1);
+	gtk_tree_store_append(store, &action_iter, NULL);
+	gtk_tree_store_set(store, &action_iter,
+			   COLUMN_CATEGORY, "Modifiers",
+			   COLUMN_ACTION, "Kbd",
+			   COLUMN_ACTION_ID, INPUT_MOD_KBD,
+			   -1);
+
+}
+
 static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
 		       GtkTreeSelection **selectionptr)
 {
@@ -89,7 +139,6 @@ static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
 	GtkTreeStore *store;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
-	GtkTreeIter event_iter;
 	GtkTreeSelection *selection;
 	int i;
 
@@ -128,48 +177,7 @@ static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
 		gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
 	}
 
-	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &event_iter);
-
-	for (i = 0; emu_action_id_map[i].emu_action_id != ACTION_NONE; i++) {
-		enum action_category category_id;
-
-		category_id = emu_action_id_map[i].category;
-
-		gtk_tree_store_append(store, &event_iter, NULL);
-		gtk_tree_store_set(store, &event_iter,
-				   COLUMN_CATEGORY,
-				   category_names[category_id],
-				   COLUMN_ACTION,
-				   emu_action_id_map[i].description,
-				   COLUMN_ACTION_ID,
-				   emu_action_id_map[i].emu_action_id,
-				   -1);
-	}
-
-	gtk_tree_store_append(store, &event_iter, NULL);
-	gtk_tree_store_set(store, &event_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod1",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD1,
-			   -1);
-	gtk_tree_store_append(store, &event_iter, NULL);
-	gtk_tree_store_set(store, &event_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod2",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD2,
-			   -1);
-	gtk_tree_store_append(store, &event_iter, NULL);
-	gtk_tree_store_set(store, &event_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod3",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD3,
-			   -1);
-	gtk_tree_store_append(store, &event_iter, NULL);
-	gtk_tree_store_set(store, &event_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Kbd",
-			   COLUMN_ACTION_ID, INPUT_MOD_KBD,
-			   -1);
+	setup_tree_actions(store);
 
 	load_bindings(store);
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(tree));
@@ -183,10 +191,10 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 				 uint32_t device, uint32_t index, uint32_t misc)
 {
 	GtkTreeModel *model;
-	GtkTreeIter event_iter, binding_iter;
+	GtkTreeIter action_iter, binding_iter;
 	uint32_t data;
 	char buffer[80];
-	gchar *event_name;
+	gchar *action_name;
 	struct input_event input_event;
 
 	if (mod > INPUT_MOD_KBD)
@@ -194,15 +202,15 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 
 	model = GTK_TREE_MODEL(store);
 
-	gtk_tree_model_iter_children(model, &event_iter, NULL);
+	gtk_tree_model_iter_children(model, &action_iter, NULL);
 	do {
-		gtk_tree_model_get(model, &event_iter,
-				   COLUMN_ACTION, &event_name,
+		gtk_tree_model_get(model, &action_iter,
+				   COLUMN_ACTION, &action_name,
 				   COLUMN_ACTION_ID, &data, -1);
 
 		if (mod == data)
 			break;
-	} while (gtk_tree_model_iter_next(model, &event_iter));
+	} while (gtk_tree_model_iter_next(model, &action_iter));
 
 	input_event.event.common.type = type;
 	input_event.event.common.device = device;
@@ -211,11 +219,11 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 	if (get_binding_name(buffer, sizeof(buffer), &input_event) <0)
 		return;
 
-	gtk_tree_store_append(store, &binding_iter, &event_iter);
+	gtk_tree_store_append(store, &binding_iter, &action_iter);
 	gtk_tree_store_set(store, &binding_iter,
 			   COLUMN_BINDING, buffer,
 			   COLUMN_CATEGORY, "Modifiers",
-			   /* COLUMN_ACTION, event_name, */
+			   /* COLUMN_ACTION, action_name, */
 			   COLUMN_ACTION_ID, data,
 			   COLUMN_TYPE, type,
 			   COLUMN_DEVICE, device,
@@ -223,41 +231,41 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 			   COLUMN_MISC, misc,
 			   -1);
 
-	g_free(event_name);
+	g_free(action_name);
 }
 
 static int add_binding_to_view(GtkTreeStore *store, const char *category,
 			       const char *binding_name, const char *modstring,
-			       const char *event_name,	uint32_t event,	uint32_t type,
+			       const char *action_name,	uint32_t action,	uint32_t type,
 			       uint32_t device, uint32_t index,
 			       uint32_t misc, uint32_t modmask, int select_new_row)
 {
 	GtkTreeModel *model;
-	GtkTreeIter event_iter, binding_iter;
-	int event_id;
+	GtkTreeIter action_iter, binding_iter;
+	int action_id;
 	int t, d, i, m, mod;
 	int found;
 
 	model = GTK_TREE_MODEL(store);
 
-	// find event
-	gtk_tree_model_iter_children(model, &event_iter, NULL);
+	// find action
+	gtk_tree_model_iter_children(model, &action_iter, NULL);
 
-	event_id = ACTION_NONE;
+	action_id = ACTION_NONE;
 	do {
-		gtk_tree_model_get(model, &event_iter, COLUMN_ACTION_ID,
-				   &event_id, -1);
+		gtk_tree_model_get(model, &action_iter, COLUMN_ACTION_ID,
+				   &action_id, -1);
 
-		if (event == event_id)
+		if (action == action_id)
 			break;
-	} while (gtk_tree_model_iter_next(model, &event_iter));
+	} while (gtk_tree_model_iter_next(model, &action_iter));
 
-	if (event_id == ACTION_NONE)
+	if (action_id == ACTION_NONE)
 		return 1;
 
 	found = 0;
 	// check for binding
-	if (gtk_tree_model_iter_children(model, &binding_iter, &event_iter)) {
+	if (gtk_tree_model_iter_children(model, &binding_iter, &action_iter)) {
 		do {
 			gtk_tree_model_get(model, &binding_iter,
 					   COLUMN_TYPE, &t,
@@ -272,20 +280,21 @@ static int add_binding_to_view(GtkTreeStore *store, const char *category,
 			    (mod == modmask)) {
 				found = 1;
 				break;
+			} else {
+				/* printf("type: %x t: %x device: %x d: %x index: %x i: %x misc: %x m: %x mod: %x modmask: %x\n", type, t, device, d, index, i, misc, m, mod, modmask); */
 			}
 		} while (gtk_tree_model_iter_next(model, &binding_iter));
 	}
-	
 
 	if (!found) {
-		gtk_tree_store_append(store, &binding_iter, &event_iter);
+		gtk_tree_store_append(store, &binding_iter, &action_iter);
 
 		gtk_tree_store_set(store, &binding_iter,
 				   COLUMN_CATEGORY, category,
-				   /* COLUMN_ACTION, event_name, */
+				   /* COLUMN_ACTION, action_name, */
 				   COLUMN_BINDING, binding_name,
 				   COLUMN_MODSTRING, modstring,
-				   COLUMN_ACTION_ID, event,
+				   COLUMN_ACTION_ID, action,
 				   COLUMN_TYPE, type,
 				   COLUMN_DEVICE, device,
 				   COLUMN_INDEX, index,
@@ -775,7 +784,7 @@ void gui_binding_configuration_dialog(GtkWidget *widget, gpointer user_data)
 		if (response == RESET_TO_DEFAULT) {
 			clear_store(store);
 			load_default_bindings(store, default_bindings, 0);
-			load_default_bindings(store, default_modifiers, 1);
+			/* load_default_bindings(store, default_modifiers, 1); */
 			gtk_tree_view_expand_all(GTK_TREE_VIEW(tree));
 			continue;
 		}
@@ -866,6 +875,8 @@ static void load_default_bindings(GtkTreeStore *store,
 				get_modifier_string(modifier_string,
 						    sizeof(modifier_string),
 						    mod);
+
+				printf("Binding name: %s\n", binding_name);
 
 				add_binding_to_view(store, category, binding_name,
 						    modifier_string, name,
@@ -1098,21 +1109,21 @@ static void load_bindings(GtkTreeStore *store)
 static void apply_input_bindings(GtkTreeStore *store)
 {
 	GtkTreeModel *model;
-	GtkTreeIter event_iter, binding_iter;
+	GtkTreeIter action_iter, binding_iter;
 
 	model = GTK_TREE_MODEL(store);
 
-	if (!gtk_tree_model_iter_children(model, &event_iter, NULL))
+	if (!gtk_tree_model_iter_children(model, &action_iter, NULL))
 		return;
 
 	do {
 		gchar *category;
 
-		gtk_tree_model_get(model, &event_iter, COLUMN_CATEGORY,
+		gtk_tree_model_get(model, &action_iter, COLUMN_CATEGORY,
 				   &category, -1);
 		
 		if (!gtk_tree_model_iter_children(model, &binding_iter,
-						  &event_iter)) {
+						  &action_iter)) {
 			continue;
 		}
 
@@ -1154,28 +1165,28 @@ static void apply_input_bindings(GtkTreeStore *store)
 			}
 		} while (gtk_tree_model_iter_next(model, &binding_iter));
 		g_free(category);
-	} while (gtk_tree_model_iter_next(model, &event_iter));
+	} while (gtk_tree_model_iter_next(model, &action_iter));
 }
 
 static void clear_store(GtkTreeStore *store)
 {
 	GtkTreeModel *model;
-	GtkTreeIter event_iter, binding_iter;
+	GtkTreeIter action_iter, binding_iter;
 
 	model = GTK_TREE_MODEL(store);
 
-	if (!gtk_tree_model_iter_children(model, &event_iter, NULL))
+	if (!gtk_tree_model_iter_children(model, &action_iter, NULL))
 		return;
 
 	do {
 		if (!gtk_tree_model_iter_children(model, &binding_iter,
-						  &event_iter)) {
+						  &action_iter)) {
 			continue;
 		}
 
 		while (gtk_tree_store_remove(store, &binding_iter)) {};
 
-	} while (gtk_tree_model_iter_next(model, &event_iter));
+	} while (gtk_tree_model_iter_next(model, &action_iter));
 }
 
 static void set_all_callback(GtkButton *button, gpointer data)
