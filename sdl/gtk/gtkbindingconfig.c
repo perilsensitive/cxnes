@@ -280,8 +280,6 @@ static int add_binding_to_view(GtkTreeStore *store, const char *category,
 			    (mod == modmask)) {
 				found = 1;
 				break;
-			} else {
-				/* printf("type: %x t: %x device: %x d: %x index: %x i: %x misc: %x m: %x mod: %x modmask: %x\n", type, t, device, d, index, i, misc, m, mod, modmask); */
 			}
 		} while (gtk_tree_model_iter_next(model, &binding_iter));
 	}
@@ -784,7 +782,7 @@ void gui_binding_configuration_dialog(GtkWidget *widget, gpointer user_data)
 		if (response == RESET_TO_DEFAULT) {
 			clear_store(store);
 			load_default_bindings(store, default_bindings, 0);
-			/* load_default_bindings(store, default_modifiers, 1); */
+			load_default_bindings(store, default_modifiers, 1);
 			gtk_tree_view_expand_all(GTK_TREE_VIEW(tree));
 			continue;
 		}
@@ -848,8 +846,6 @@ static void load_default_bindings(GtkTreeStore *store,
 				end--;
 			}
 
-			get_event_name_and_category(emu_action, &name, &category);
-
 			if (modifiers) {
 				int j;
 
@@ -872,11 +868,11 @@ static void load_default_bindings(GtkTreeStore *store,
 				if (emu_action_lookup_by_name(token, &emu_action) < 0)
 					goto loop_end;
 
+				get_event_name_and_category(emu_action, &name, &category);
+
 				get_modifier_string(modifier_string,
 						    sizeof(modifier_string),
 						    mod);
-
-				printf("Binding name: %s\n", binding_name);
 
 				add_binding_to_view(store, category, binding_name,
 						    modifier_string, name,
