@@ -954,7 +954,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard 9", .value = "KEYBOARD_9" },
 	{ .name = "[KBD] Keyboard 0", .value = "KEYBOARD_0" },
 	{ .name = "[KBD] Keyboard -", .value = "KEYBOARD_minus" },
-	{ .name = "[KBD] Keyboard Equals", .value = "KEYBOARD_equals, KEYBOARD_CARAT" },
+	{ .name = "[KBD] Keyboard Equals", .value = "KEYBOARD_equals, KEYBOARD_CARET" },
 	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_stop" },
 	{ .name = "[KBD] Keyboard Escape", .value = "KEYBOARD_ESCAPE" },
 	{ .name = "[KBD] Keyboard q", .value = "KEYBOARD_q" },

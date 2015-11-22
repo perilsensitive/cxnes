@@ -159,11 +159,6 @@ static int keyboard_connect(struct io_device *dev)
 
 	memset(state->key_state, 0x1e, sizeof(state->key_state));
 
-	/* if (dev->id == IO_DEVICE_SUBOR_KEYBOARD) { */
-		/* state->key_state[18] = 0x00; */
-		/* state->key_state[19] = 0x1a; */
-	/* } */
-
 	state->prev_write = 0;
 	state->enabled = 1;
 	state->index = 0;
@@ -224,6 +219,7 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 		case ACTION_KEYBOARD_TAB:
 			key = F(24,0x02); break;
 		case ACTION_KEYBOARD_BACKQUOTE:
+			key = F(18,0x02); break;
 		case ACTION_KEYBOARD_BREAK:
 		case ACTION_KEYBOARD_RESET:
 		case ACTION_KEYBOARD_NUMLOCK:
