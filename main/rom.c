@@ -922,8 +922,9 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 			continue;
 		}
 
-		if (prefix_length && strncmp(filename, rom->compressed_filename,
-					     prefix_length)) {
+		if (strncmp(filename, rom->compressed_filename,
+			     prefix_length) ||
+		     strchr(filename + prefix_length, '/')) {
 			err = unzGoToNextFile(zip);
 			if (err != UNZ_OK) {
 				unzClose(zip);
