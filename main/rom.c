@@ -115,7 +115,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 {
 	size_t file_size;
 	uint8_t *buffer;
-	char filename_inzip[512];
+	char *filename_inzip;
+	int filename_inzip_size;
 #if ZIP_ENABLED
 	unzFile zip;
 	unz_file_info file_info;
@@ -134,6 +135,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		return -1;
 
 #if ZIP_ENABLED
+	filename_inzip = NULL;
+	filename_inzip_size = 0;
 	zip = unzOpen(filename);
 	if (zip != NULL) {
 		int err, i;
@@ -149,9 +152,29 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 
 		for (i = 0; i < global_info.number_entry; i++) {
 			err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
-						    sizeof(filename_inzip) - 1, NULL, 0, NULL, 0);
+						    filename_inzip_size,
+						    NULL, 0, NULL, 0);
 			if (err != UNZ_OK)
 				break;
+
+			if (file_info.size_filename >= filename_inzip_size) {
+				char *tmp;
+				filename_inzip_size = file_info.size_filename + 1;
+				tmp = realloc(filename_inzip, filename_inzip_size);
+				if (!tmp)
+					break;
+
+				filename_inzip = tmp;
+
+				err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
+							    filename_inzip_size,
+							    NULL, 0, NULL, 0);
+				if (err != UNZ_OK)
+					break;
+			
+			}
+
+			printf("filename_inzip: %s\n", filename_inzip);
 
 			ext = strrchr(filename_inzip, '.');
 			if (!ext || (strcasecmp(ext, ".nes") &&
@@ -206,8 +229,12 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		}
 
 		if (rc < 0) {
+
 			unzCloseCurrentFile(zip);
 		}
+
+		if (filename_inzip)
+			free(filename_inzip);
 
 		unzClose(zip);
 

@@ -213,13 +213,12 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 		case ACTION_KEYBOARD_EQUALS:
 			key = KEY(15,0x08); break;
 		case ACTION_KEYBOARD_PAUSE:
+			printf("here: pressed=%d\n", pressed);
 			key = KEY(10,0x10); break;
 		case ACTION_KEYBOARD_BACKSLASH:
 			key = KEY(9,0x08); break;
 		case ACTION_KEYBOARD_TAB:
-			key = KEY(24,0x02); break;
 		case ACTION_KEYBOARD_BACKQUOTE:
-			key = KEY(18,0x02); break;
 		case ACTION_KEYBOARD_BREAK:
 		case ACTION_KEYBOARD_RESET:
 		case ACTION_KEYBOARD_NUMLOCK:
