@@ -58,6 +58,7 @@ struct rom_info {
 struct rom {
 	struct rom_info info;
 	char *filename;
+	char *compressed_filename;
 	uint8_t *buffer;
 	size_t buffer_size;
 	struct board_info *board_info;

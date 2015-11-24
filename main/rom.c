@@ -214,6 +214,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 					break;
 
 				rc = 0;
+				(*romptr)->compressed_filename = filename_inzip;
+				filename_inzip = NULL;
 				break;
 			}
 
@@ -813,6 +815,7 @@ struct rom *rom_alloc(const char *filename, uint8_t *buffer, size_t size)
 	rom->info.auto_device_id[3] = IO_DEVICE_CONTROLLER_4;
 	rom->info.auto_device_id[4] = IO_DEVICE_NONE;
 	rom->filename = strdup(filename);
+	rom->compressed_filename = NULL;
 	if (!rom->filename) {
 		rom_free(rom);
 		return NULL;
@@ -828,6 +831,9 @@ void rom_free(struct rom *rom)
 
 	if (rom->filename)
 		free(rom->filename);
+
+	if (rom->compressed_filename)
+		free(rom->compressed_filename);
 
 	if (rom->buffer)
 		free(rom->buffer);
@@ -848,15 +854,25 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	unzFile zip;
 	unz_file_info file_info;
 	unz_global_info global_info;
-	char filename[512];
+	char *filename;
+	int filename_size;
 	size_t buffer_size;
 	int err;
 	int count;
 	int i;
+	int prefix_length;
+
+	buffer = strrchr(rom->compressed_filename, '/');
+	if (buffer)
+		prefix_length = buffer - rom->compressed_filename + 1;
+	else
+		prefix_length = 0;
 
 	patch_list = NULL;
 	buffer = NULL;
+	filename = NULL;
 	buffer_size = 0;
+	filename_size = 0;
 
 	zip = unzOpen(rom->filename);
 	if (!zip)
@@ -872,19 +888,51 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	for (i = 0; i < global_info.number_entry; i++) {
 		char *ext;
 		err = unzGetCurrentFileInfo(zip, &file_info,
-					    filename, sizeof(filename) - 1,
+					    filename, filename_size,
 					    NULL, 0, NULL, 0);
 		if (err != UNZ_OK) {
 			unzClose(zip);
 			break;
 		}
 
-		if (file_info.uncompressed_size == 0)
+		if (file_info.size_filename >= filename_size) {
+			char *tmp;
+
+			filename_size = file_info.size_filename + 1;
+			tmp = realloc(filename, filename_size);
+			if (!tmp)
+				break;
+
+			filename = tmp;
+			err = unzGetCurrentFileInfo(zip, &file_info,
+						    filename, filename_size,
+						    NULL, 0, NULL, 0);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
+		}
+
+		if (file_info.uncompressed_size == 0) {
+			err = unzGoToNextFile(zip);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
 			continue;
+		}
+
+		if (prefix_length && strncmp(filename, rom->compressed_filename,
+					     prefix_length)) {
+			err = unzGoToNextFile(zip);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
+			continue;
+		}
 
 		ext = strrchr(filename, '.');
-
-		/* FIXME skip if no ext */
 
 		if (ext && (!strcasecmp(ext, ".ips") ||
 			    !strcasecmp(ext, ".ups") ||
@@ -892,12 +940,6 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 			char *tmp;
 			int offset;
 			int length;
-
-			/* Patches must be placed in the root
-			   directory of the zip file.
-			*/
-			if (strchr(filename, '/'))
-				continue;
 
 			offset = buffer_size;
 			length = strlen(filename) + 1;
@@ -921,6 +963,9 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 			break;
 		}
 	}
+
+	if (filename)
+		free(filename);
 
 	if (buffer) {
 		int offset = sizeof(char *) * (count + 1);
