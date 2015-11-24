@@ -174,8 +174,6 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 			
 			}
 
-			printf("filename_inzip: %s\n", filename_inzip);
-
 			ext = strrchr(filename_inzip, '.');
 			if (!ext || (strcasecmp(ext, ".nes") &&
 				     strcasecmp(ext, ".unf") && 
