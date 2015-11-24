@@ -28,6 +28,7 @@ struct vrc7_audio_state {
 	uint32_t timestamp;
 	int last_amplitude;
 	int cpu_clock_divider;
+	int muted;
 	struct emu *emu;
 };
 
@@ -95,7 +96,7 @@ static struct state_item vrc7_audio_state_items[] = {
 	STATE_ITEM_END(),
 };
 
-static CPU_WRITE_HANDLER(vrc7_audio_write_handler);
+CPU_WRITE_HANDLER(vrc7_audio_write_handler);
 void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles);
 
 int vrc7_audio_init(struct emu *emu);
@@ -164,10 +165,13 @@ static int update_amplitude(struct vrc7_audio_state *audio)
 	delta = amplitude - audio->last_amplitude;
 	audio->last_amplitude = amplitude;
 
-	return delta;
+	if (audio->muted)
+		return 0;
+	else
+		return delta;
 }
 
-static CPU_WRITE_HANDLER(vrc7_audio_write_handler)
+CPU_WRITE_HANDLER(vrc7_audio_write_handler)
 {
 	struct vrc7_audio_state *audio;
 
@@ -179,6 +183,21 @@ static CPU_WRITE_HANDLER(vrc7_audio_write_handler)
 		OPLL_writeIO(audio->opll, 0, value);
 	} else if (addr == 0x9030) {
 		OPLL_writeIO(audio->opll, 1, value);
+	} else if (addr == 0xe000) {
+		int muted;
+		int delta;
+
+		muted = value & 0x40;
+
+		if (!audio->muted && muted) {
+			delta = -audio->last_amplitude;
+			audio_add_delta(cycles, delta);
+		} else if (audio->muted && !muted) {
+			delta = audio->last_amplitude;
+			audio_add_delta(cycles, delta);
+		}
+
+		audio->muted = muted;
 	}
 }
 

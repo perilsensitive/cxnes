@@ -30,5 +30,6 @@ extern void vrc7_audio_install_handlers(struct emu *emu, int multi_chip_nsf);
 extern int vrc7_audio_load_state(struct emu *emu, struct save_state *state);
 extern int vrc7_audio_save_state(struct emu *emu, struct save_state *state);
 extern void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles);
+extern CPU_WRITE_HANDLER(vrc7_audio_write_handler);
 
 #endif /* __VRC7_AUDIO_H__ */

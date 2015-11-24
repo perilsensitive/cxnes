@@ -58,7 +58,7 @@ struct board_write_handler vrc7_compat_write_handlers[] = {
 	{vrc7_write_handler, 0xd000, SIZE_4K, 0xf018},
 	{vrc7_write_handler, 0xd008, SIZE_4K, 0xf018},
 	{vrc7_write_handler, 0xd010, SIZE_4K, 0xf018},
-	{standard_mirroring_handler, 0xe000, SIZE_4K, 0xf018},
+	{vrc7_write_handler, 0xe000, SIZE_4K, 0xf018},
 	{vrc7_write_handler, 0xe008, SIZE_4K, 0xf018},
 	{vrc7_write_handler, 0xe010, SIZE_4K, 0xf018},
 	{vrc7_write_handler, 0xf000, SIZE_4K, 0xf018},
@@ -79,7 +79,7 @@ struct board_write_handler vrc7a_write_handlers[] = {
 	{vrc7_write_handler, 0xc010, SIZE_4K, 0xf010},
 	{vrc7_write_handler, 0xd000, SIZE_4K, 0xf010},
 	{vrc7_write_handler, 0xd010, SIZE_4K, 0xf010},
-	{standard_mirroring_handler, 0xe000, SIZE_4K, 0xf010},
+	{vrc7_write_handler, 0xe000, SIZE_4K, 0xf010},
 	{vrc7_write_handler, 0xe010, SIZE_4K, 0xf010},
 	{vrc7_write_handler, 0xf000, SIZE_4K, 0xf010},
 	{vrc7_write_handler, 0xf010, SIZE_4K, 0xf010},
@@ -98,7 +98,7 @@ struct board_write_handler vrc7b_write_handlers[] = {
 	{vrc7_write_handler, 0xc008, SIZE_4K, 0xf008},
 	{vrc7_write_handler, 0xd000, SIZE_4K, 0xf008},
 	{vrc7_write_handler, 0xd008, SIZE_4K, 0xf008},
-	{standard_mirroring_handler, 0xe000, SIZE_4K, 0xf008},
+	{vrc7_write_handler, 0xe000, SIZE_4K, 0xf008},
 	{vrc7_write_handler, 0xe008, SIZE_4K, 0xf008},
 	{vrc7_write_handler, 0xf000, SIZE_4K, 0xf008},
 	{vrc7_write_handler, 0xf008, SIZE_4K, 0xf008},
@@ -189,6 +189,7 @@ static void vrc7_reset(struct board *board, int hard)
 		m2_timer_set_prescaler_decrement(board->emu->m2_timer, 3, 0);
 		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
 		m2_timer_set_size(board->emu->m2_timer, 8, 0);
+		board->prg_banks[0].perms = MAP_PERM_NONE;
 	}
 
 	board->prg_mode = 0;
@@ -237,6 +238,16 @@ static CPU_WRITE_HANDLER(vrc7_write_handler)
 		board->chr_banks0[((addr & 0x10) >> 4) | 0x06].
 		    bank = value;
 		board_chr_sync(board, 0);
+		break;
+	case 0xe000:
+		standard_mirroring_handler(emu, addr, value, cycles);
+		vrc7_audio_write_handler(emu, addr, value, cycles);
+		if (value & 0x80) {
+			board->prg_banks[0].perms = MAP_PERM_READWRITE;
+		} else {
+			board->prg_banks[0].perms = MAP_PERM_NONE;
+		}
+		board_prg_sync(board);
 		break;
 	case 0xe010:
 		m2_timer_set_reload(emu->m2_timer, value, cycles);
