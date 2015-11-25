@@ -862,6 +862,9 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	int i;
 	int prefix_length;
 
+	if (!rom->compressed_filename)
+		return NULL;
+
 	buffer = strrchr(rom->compressed_filename, '/');
 	if (buffer)
 		prefix_length = buffer - rom->compressed_filename + 1;
@@ -1011,17 +1014,6 @@ char **rom_find_autopatches(struct config *config, struct rom *rom)
 	char *rom_base;
 	char *rom_ext;
 	char **patch_list;
-	int i;
-
-	patch_list = rom_find_zip_autopatches(config, rom);
-	i = 0;
-	while (patch_list && patch_list[i]) {
-		printf("patch %d: %s\n", i, patch_list[i]);
-		i++;
-	}
-
-	if (patch_list)
-		free(patch_list);
 
 	patch_list = NULL;
 
