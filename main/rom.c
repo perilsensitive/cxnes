@@ -322,6 +322,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	   Copy metadata from the old rom struct that (probably)
 	   still applies, such as default input settings.
 	*/
+	patched_rom->info.system_type = rom->info.system_type;
 	patched_rom->info.auto_device_id[0] = rom->info.auto_device_id[0];
 	patched_rom->info.auto_device_id[1] = rom->info.auto_device_id[1];
 	patched_rom->info.auto_device_id[2] = rom->info.auto_device_id[2];
@@ -334,6 +335,17 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	patched_rom->filename = rom->filename;
 	memcpy(rom, patched_rom, sizeof(*rom));
 	free(patched_rom);
+
+	/* Generate iNES 2 header from current rom metadata.
+	   Needed for applying patches for iNES files to roms
+	   not loaded from iNES formats, since they may change
+	   the iNES header.
+	*/
+	if ((rom->info.board_type != BOARD_TYPE_FDS) &&
+	    (rom->info.board_type != BOARD_TYPE_NSF)) {
+		ines_generate_header(rom, 2);
+
+	}
 
 	print_rom_info(rom);
 

@@ -380,6 +380,7 @@ int ines_generate_header(struct rom *rom, int version)
 	    (header.chr_rom_banks > 0xff) ||
 	    (header.mapper > 0xff) ||
 	    (header.vs_protection > 0x00) ||
+	    (header.tv_system) ||
 	    (header.vs_system) ||
 	    (header.submapper > 0x00)) {
 		version = 2;
@@ -403,7 +404,7 @@ int ines_generate_header(struct rom *rom, int version)
 	data[6] |= header.trainer;
 	data[6] |= header.battery;
 	data[7]  = header.mapper & 0x0f0;
-	data[7] |= 0;//header.version;
+	data[7] |= header.version;
 	data[7] |= header.playchoice;
 	data[7] |= header.vs_system;
 	if (version == 2) {
