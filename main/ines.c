@@ -215,6 +215,16 @@ static int parse_ines_header(struct config *config,
 	header->vs_ppu_version = 0;
 	header->tv_system = 0;
 
+	/* If this appears to be an NES 2.0 ROM and the battery flag
+	   is set but no non-volatile WRAM or VRAM is specified,
+	   revert to standard iNES.
+	*/
+	if ((header->version == 2) && (header->battery) &&
+	    !(data[10] & 0xf0) && !(data[11] & 0xf0))
+	{
+		header->version = 1;
+	}
+
 	/* NES 2.0 format */
 	if (header->version == 2) {
 		header->prg_rom_banks |= (data[9] & 0x0f) << 8;
