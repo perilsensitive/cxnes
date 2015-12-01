@@ -194,6 +194,7 @@ static struct system_type_mapping system_type_mappings[] = {
 	{ "VS-RC2C05-03", EMU_SYSTEM_TYPE_VS_RC2C05_03 },
 	{ "VS-RC2C05-04", EMU_SYSTEM_TYPE_VS_RC2C05_04 },
 	{ "VS-RC2C05-05", EMU_SYSTEM_TYPE_VS_RC2C05_05 },
+	{ "PlayChoice", EMU_SYSTEM_TYPE_PLAYCHOICE },
 	{ NULL },
 };
 
@@ -352,7 +353,12 @@ static void process_field(struct db_parser_state *state)
 			state->current->flags |= ROM_FLAG_VRAM1_NV;
 	} else if (!strcasecmp(key, "mapper-battery")) {
 		parse_boolean_list(value, boolean_list, 1);
-		state->current->flags |= ROM_FLAG_MAPPER_NV;
+		if (boolean_list[0])
+			state->current->flags |= ROM_FLAG_MAPPER_NV;
+	} else if (!strcasecmp(key, "playchoice")) {
+		parse_boolean_list(value, boolean_list, 1);
+		if (boolean_list[0])
+			state->current->flags |= ROM_FLAG_PLAYCHOICE;
 	} else if (!strcasecmp(key, "system")) {
 		state->current->system_type = parse_system_type(value);
 	} else if (!strcasecmp(key, "board")) {
@@ -507,6 +513,8 @@ void db_cleanup(void)
 
 struct rom_info *db_lookup(struct rom *rom, struct rom_info *start)
 {
+	int old_system_type;
+
 	if (start)
 		start = start->next;
 	else
@@ -536,7 +544,14 @@ struct rom_info *db_lookup(struct rom *rom, struct rom_info *start)
 	if (!start || (start->board_type == BOARD_TYPE_UNKNOWN))
 		return NULL;
 
+	old_system_type = rom->info.system_type;
 	memcpy(&rom->info, start, sizeof(*start));
+
+	if ((old_system_type == EMU_SYSTEM_TYPE_PLAYCHOICE) &&
+	    (rom->info.flags & ROM_FLAG_PLAYCHOICE)) {
+		rom->info.system_type = EMU_SYSTEM_TYPE_PLAYCHOICE;
+	}
+
 
 	return start;
 }
@@ -571,6 +586,15 @@ int db_rom_load(struct emu *emu, struct rom *rom)
 
 	if (!db_entry && slack) {
 		rom->offset = slack;
+		rom_calculate_checksum(rom);
+		db_entry = db_lookup(rom, NULL);
+	}
+
+	/* Handle unheadered PlayChoice ROMs here; don't
+	   include instruction ROM as part of checksum.
+	*/
+	if (!db_entry && (rom->info.total_prg_size > SIZE_8K)) {
+		rom->info.total_prg_size -= SIZE_8K;
 		rom_calculate_checksum(rom);
 		db_entry = db_lookup(rom, NULL);
 	}

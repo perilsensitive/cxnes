@@ -27,12 +27,13 @@ struct emu;
 struct config;
 struct board_info;
 
-#define ROM_FLAG_WRAM0_NV  1
-#define ROM_FLAG_WRAM1_NV  2
-#define ROM_FLAG_VRAM0_NV  4
-#define ROM_FLAG_VRAM1_NV  8
-#define ROM_FLAG_MAPPER_NV 16
-#define ROM_FLAG_IN_DB     32
+#define ROM_FLAG_WRAM0_NV    1
+#define ROM_FLAG_WRAM1_NV    2
+#define ROM_FLAG_VRAM0_NV    4
+#define ROM_FLAG_VRAM1_NV    8
+#define ROM_FLAG_MAPPER_NV  16
+#define ROM_FLAG_IN_DB      32
+#define ROM_FLAG_PLAYCHOICE 64
 #define ROM_FLAGS_NV (ROM_FLAG_WRAM0_NV|ROM_FLAG_WRAM1_NV|ROM_FLAG_VRAM0_NV|\
 		      ROM_FLAG_VRAM1_NV|ROM_FLAG_MAPPER_NV)
 

@@ -753,8 +753,12 @@ int ines_load(struct emu *emu, struct rom *rom)
 	}
 
 	rom->offset = 16;
+	if (!rom->info.total_prg_size)
+		rom->info.total_prg_size = rom->buffer_size - rom->offset;
 	rom_calculate_checksum(rom);
 	db_lookup(rom, NULL);
+	if (!rom->info.total_prg_size)
+		return -1;
 
 	return 0;
 }

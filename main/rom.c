@@ -60,15 +60,15 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 		return -1;
 	}
 
-	rc = db_rom_load(emu, rom);
-	if (rc < 0)
-		rc = ines_load(emu, rom);
+	rc = ines_load(emu, rom);
 	if (rc < 0)
 		rc = unif_load(emu, rom);
 	if (rc < 0)
 		rc = fds_load(emu, rom);
 	if (rc < 0)
 		rc = nsf_load(emu, rom);
+	if (rc < 0)
+		rc = db_rom_load(emu, rom);
 
 	if (rom->info.board_type == BOARD_TYPE_UNKNOWN)
 		rc = -1;
