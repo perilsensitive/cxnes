@@ -72,7 +72,6 @@ static struct board_write_handler namco108_write_handlers[] = {
 
 static struct board_write_handler ines112_write_handlers[] = {
 	{ines112_write_handler, 0x8000, SIZE_32K, 0},
-	{standard_mirroring_handler, 0xe000, SIZE_8K, 0},
 	{NULL}
 };
 
@@ -275,8 +274,11 @@ static CPU_WRITE_HANDLER(namco108_write_handler)
 static CPU_WRITE_HANDLER(ines112_write_handler)
 {
 	struct board *board;
+	int update_chr;
+	int i;
 
 	board = emu->board;
+	update_chr = 0;
 
 	switch (addr & 0xe000) {
 	case 0x8000:
@@ -286,9 +288,33 @@ static CPU_WRITE_HANDLER(ines112_write_handler)
 		if (_bank_select < 2) {
 			update_prg_bank(board, _bank_select + 1, value);
 		} else {
-			update_chr0_bank(board, _bank_select - 2, value);
+			i = _bank_select - 2;
+
+			board->chr_banks0[i].bank &= 0x100;
+			board->chr_banks0[i].bank |= value;
+			update_chr = 1;
 		}
 		break;
+	case 0xc000:
+		for (i = 0; i < 6; i++) {
+			board->chr_banks0[i].bank &= 0xff;
+			board->chr_banks0[i].bank |= (value << (6 - i)) & 0x100;
+		}
+		break;
+	case 0xe000:
+		if (value & 0x02)
+			board->chr_and = 0x1ff;
+		else
+			board->chr_and = 0xff;
+
+		update_chr = 1;
+			
+		standard_mirroring_handler(emu, addr, value, cycles);
+		break;
+	}
+
+	if (update_chr) {
+		board_chr_sync(board, 0);
 	}
 }
 
