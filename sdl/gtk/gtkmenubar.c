@@ -848,6 +848,7 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 		g_signal_connect(G_OBJECT(item), "activate",
 				 G_CALLBACK(activate_callback), userdata);
 	}
+
 	g_signal_connect(G_OBJECT(item), "unmap",
 			 G_CALLBACK(generic_menu_unmap_callback), userdata);
 
@@ -1307,24 +1308,36 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
+					     G_CALLBACK(generic_menu_unmap_callback),
+					     NULL);
 
 	submenu = gui_build_emulator_menu();
 	item = gui_add_menu_item(menubar, "_Emulator",
 				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
+					     G_CALLBACK(generic_menu_unmap_callback),
+					     NULL);
 
 	submenu = gui_build_options_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Options",
 				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
+					     G_CALLBACK(generic_menu_unmap_callback),
+					     NULL);
 
 	submenu = gui_build_help_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Help",
 				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
+					     G_CALLBACK(generic_menu_unmap_callback),
+					     NULL);
 
 	return GTK_WIDGET(menubar);
 }
