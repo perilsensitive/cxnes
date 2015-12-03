@@ -584,19 +584,52 @@ int db_rom_load(struct emu *emu, struct rom *rom)
 		db_entry = db_lookup(rom, NULL);
 	}
 
-	if (!db_entry && slack) {
+	if (!db_entry && slack != INES_HEADER_SIZE) {
 		rom->offset = slack;
 		rom_calculate_checksum(rom);
 		db_entry = db_lookup(rom, NULL);
 	}
 
-	/* Handle unheadered PlayChoice ROMs here; don't
-	   include instruction ROM as part of checksum.
-	*/
+	/* Handle a few corner cases here:
+	   - PC10 roms without iNES header
+	   - PC10 roms with instruction screen rom in CHR area
+	   - Roms with PRG size 8K, 24K or 40K
+	 */
 	if (!db_entry && (rom->info.total_prg_size > SIZE_8K)) {
 		rom->info.total_prg_size -= SIZE_8K;
+		rom->offset = 0;
 		rom_calculate_checksum(rom);
 		db_entry = db_lookup(rom, NULL);
+
+		if (!db_entry && slack >= INES_HEADER_SIZE) {
+			rom->offset = INES_HEADER_SIZE;
+			rom_calculate_checksum(rom);
+			db_entry = db_lookup(rom, NULL);
+		}
+
+		if (!db_entry && slack != INES_HEADER_SIZE) {
+			rom->offset = slack;
+			rom_calculate_checksum(rom);
+			db_entry = db_lookup(rom, NULL);
+		}
+
+		if (!db_entry) {
+			rom->offset = SIZE_8K;
+			rom_calculate_checksum(rom);
+			db_entry = db_lookup(rom, NULL);
+		}
+
+		if (!db_entry && slack >= INES_HEADER_SIZE) {
+			rom->offset = SIZE_8K + INES_HEADER_SIZE;
+			rom_calculate_checksum(rom);
+			db_entry = db_lookup(rom, NULL);
+		}
+
+		if (!db_entry && slack != INES_HEADER_SIZE) {
+			rom->offset = SIZE_8K + slack;
+			rom_calculate_checksum(rom);
+			db_entry = db_lookup(rom, NULL);
+		}
 	}
 
 	if (!db_entry)

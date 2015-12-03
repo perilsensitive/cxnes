@@ -701,15 +701,26 @@ int ines_load(struct emu *emu, struct rom *rom)
 		vram_size[1] = 0;
 	}
 
-	rom->info.board_type = board_type;
+	/* Set everything but ROM sizes here,
+	   as db_rom_load will mess with those.
+	*/
 	rom->info.system_type = system_type;
+	rom->info.board_type = board_type;
 	rom->info.mirroring = mirroring;
-	rom->info.total_prg_size = prg_size;
-	rom->info.total_chr_size = chr_size;
 	rom->info.wram_size[0] = wram_size[0];
 	rom->info.wram_size[1] = wram_size[1];
 	rom->info.vram_size[0] = vram_size[0];
 	rom->info.vram_size[1] = vram_size[1];
+
+	/* Try loading based on a database match first.  This way
+	   even if the header data is invalid (unknown mapper, incorrect
+	   size, etc.) the rom may still load.
+	*/
+	if (!db_rom_load(emu, rom))
+		return 0;
+
+	rom->info.total_prg_size = prg_size;
+	rom->info.total_chr_size = chr_size;
 
 	if (wram_nv[0])
 		rom->info.flags |= ROM_FLAG_WRAM0_NV;
@@ -753,12 +764,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 	}
 
 	rom->offset = 16;
-	if (!rom->info.total_prg_size)
-		rom->info.total_prg_size = rom->buffer_size - rom->offset;
-	rom_calculate_checksum(rom);
-	db_lookup(rom, NULL);
-	if (!rom->info.total_prg_size)
-		return -1;
 
 	return 0;
 }
