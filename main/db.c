@@ -21,8 +21,8 @@
 #include "emu.h"
 #include "file_io.h"
 #include "db.h"
-
-#define INES_HEADER_SIZE 16
+#include "crc32.h"
+#include "sha1.h"
 
 static struct rom_info *head;
 
@@ -126,12 +126,14 @@ static char **tokenize_list(char *list) {
 	return tokens;
 }
 
-static void parse_int_list(char *value, uint32_t *list, int limit, int base)
+static int parse_int_list(char *value, uint32_t *list, int limit, int base)
 {
 	char **tokens;
+	int count;
 	int i;
 
 	tokens = tokenize_list(value);
+	count = 0;
 
 	for (i = 0; tokens[i] && i < limit; i++) {
 		long v;
@@ -144,10 +146,16 @@ static void parse_int_list(char *value, uint32_t *list, int limit, int base)
 
 		if (!*end) {
 			list[i] = (uint32_t)v;
+			count++;
+		} else {
+			count = -1;
+			break;
 		}
 	}
 
 	free(tokens);
+
+	return count;
 }
 
 static void parse_boolean_list(char *value, int *list, int limit)
@@ -167,6 +175,44 @@ static void parse_boolean_list(char *value, int *list, int limit)
 	}
 
 	free(tokens);
+}
+
+static int parse_sha1_list(char *value, uint8_t (*list)[20], int limit)
+{
+	char **tokens;
+	int i;
+	int hash_count;
+
+	tokens = tokenize_list(value);
+
+	hash_count = 0;
+
+	for (i = 0; tokens[i] && i < limit; i++) {
+		int j;
+		int count;
+		char *value;
+
+		value = tokens[i];
+		count = 0;
+		if (strlen(value) == 40) {
+			for (j = 0; j < 20; j++) {
+				count += sscanf(&value[j * 2], "%2hhx",
+						&list[i][j]);
+			}
+
+			if (count == 20) {
+				hash_count++;
+			} else {
+				hash_count = -1;
+				break;
+			}
+		}
+
+	}
+
+	free(tokens);
+
+	return hash_count;
 }
 
 struct system_type_mapping {
@@ -213,7 +259,8 @@ static int parse_system_type(char *value)
 	}
 
 	if (system_type == EMU_SYSTEM_TYPE_UNDEFINED) {
-		err_message("Unknown system type %s\n", value);
+		system_type = EMU_SYSTEM_TYPE_NES;
+		/* err_message("Unknown system type %s\n", value); */
 	}
 
 	return system_type;
@@ -291,6 +338,81 @@ static void set_auto_device(struct rom_info *node, int port, const char *dev_str
 	node->auto_device_id[port] = device;
 }
 
+static void fixup_entry(struct rom_info *info)
+{
+	int i;
+
+	info->total_prg_size = 0;
+	info->total_chr_size = 0;
+
+	for (i = 0; i < MAX_PRG_ROMS; i++)
+		info->total_prg_size +=	info->prg_size[i];
+
+	for (i = 0; i < MAX_CHR_ROMS; i++)
+		info->total_chr_size +=	info->chr_size[i];
+
+	/* Handle roms that only have prg data on a single
+	   chip with no chr data and therefore may have no prg
+	   crc list.
+	*/
+	if ((info->prg_size_count == 1) &&
+	    !info->chr_size_count) {
+		if (!info->prg_crc_count &&
+		    (info->flags & ROM_FLAG_HAS_CRC)) {
+			info->prg_crc_count = 1;
+			info->prg_crc[0] = info->combined_crc;
+		}
+
+		if (!info->prg_sha1_count &&
+		    (info->flags & ROM_FLAG_HAS_SHA1)) {
+			info->prg_sha1_count = 1;
+			memcpy(&info->prg_sha1[0], info->combined_sha1, 20);
+		}
+	}
+
+	/* If the checksum counts don't match the size
+	   counts, set the checksum counts to 0.  Only
+	   the combined checksums (if present) may be
+	   used.
+	*/
+
+	if (info->prg_crc_count != info->prg_size_count)
+		info->prg_crc_count = 0;
+
+	if (info->prg_sha1_count != info->prg_size_count)
+		info->prg_sha1_count = 0;
+
+	if (info->chr_crc_count != info->chr_size_count)
+		info->chr_crc_count = 0;
+
+	if (info->chr_sha1_count != info->chr_size_count)
+		info->chr_sha1_count = 0;
+
+	/* Split rom checksums must be present for both
+	   prg and chr (if chr is present), otherwise
+	   split rom checksums aren't useful.
+	*/
+	if (info->chr_size_count &&
+	    (info->prg_sha1_count || info->prg_crc_count) &&
+	    !(info->chr_sha1_count || info->chr_crc_count)) {
+		info->prg_sha1_count = 0;
+		info->prg_crc_count = 0;
+	}
+
+	if ((info->chr_sha1_count || info->chr_crc_count) &&
+	    !(info->prg_sha1_count || info->prg_crc_count)) {
+		info->chr_sha1_count = 0;
+		info->chr_crc_count = 0;
+	}
+
+	if (!info->prg_crc_count && !info->prg_sha1_count &&
+	    !(info->flags & (ROM_FLAG_HAS_CRC|ROM_FLAG_HAS_SHA1))) {
+		free(info);
+	} else {
+		insert_rom(info);
+	}
+}
+
 static void process_field(struct db_parser_state *state)
 {
 	char *key, *value;
@@ -300,8 +422,14 @@ static void process_field(struct db_parser_state *state)
 		return;
 
 	if (!strcmp(state->buffer, "%%")) {
-		insert_rom(state->current);
+		/* If no valid split sizes and checksums present,
+		   and no valid combined checksums present, drop
+		   this entry and move on.
+		*/
+		fixup_entry(state->current);
+		
 		state->current = NULL;
+
 		goto done;
 	}
 
@@ -313,7 +441,7 @@ static void process_field(struct db_parser_state *state)
 		boolean_list[1] = 0;
 		state->current = malloc(sizeof(*state->current));
 		memset(state->current, 0, sizeof(*state->current));
-		state->current->mirroring = MIRROR_M;
+		state->current->mirroring = MIRROR_UNDEF;
 		state->current->four_player_mode = FOUR_PLAYER_MODE_NONE;
 		state->current->vs_controller_mode = VS_CONTROLLER_MODE_STANDARD;
 		state->current->auto_device_id[0] = IO_DEVICE_CONTROLLER_1;
@@ -323,10 +451,46 @@ static void process_field(struct db_parser_state *state)
 		state->current->auto_device_id[4] = IO_DEVICE_NONE;
 	}
 
-	if (!strcasecmp(key, "prg")) {
-		parse_int_list(value, &state->current->total_prg_size, 1, 10);
+	if (!strcasecmp(key, "prg crc")) {
+		int count = parse_int_list(value,
+					   state->current->prg_crc, MAX_PRG_ROMS, 16);
+		if (count > 0)
+			state->current->prg_crc_count = count;
+		else
+			state->current->prg_crc_count = 0;
+	} else if (!strcasecmp(key, "prg")) {
+		int count = parse_int_list(value,
+					   state->current->prg_size, MAX_PRG_ROMS, 10);
+		if (count > 0)
+			state->current->prg_size_count = count;
+		else
+			state->current->prg_size_count = 0;
+	} else if (!strcasecmp(key, "chr crc")) {
+		int count = parse_int_list(value,
+					   state->current->chr_crc, MAX_CHR_ROMS, 16);
+		if (count > 0)
+			state->current->chr_crc_count = count;
+		else
+			state->current->chr_crc_count = 0;
+	} else if (!strcasecmp(key, "prg sha1")) {
+		int count = parse_sha1_list(value, &state->current->prg_sha1[0], MAX_PRG_ROMS);
+		if (count > 0)
+			state->current->prg_sha1_count = count;
+		else
+			state->current->prg_sha1_count = 0;
+	} else if (!strcasecmp(key, "chr sha1")) {
+		int count = parse_sha1_list(value, &state->current->chr_sha1[0], MAX_CHR_ROMS);
+		if (count > 0)
+			state->current->chr_sha1_count = count;
+		else
+			state->current->chr_sha1_count = 0;
 	} else if (!strcasecmp(key, "chr")) {
-		parse_int_list(value, &state->current->total_chr_size, 1, 10);
+		int count = parse_int_list(value,
+					   state->current->chr_size, MAX_CHR_ROMS, 10);
+		if (count > 0)
+			state->current->chr_size_count = count;
+		else
+			state->current->chr_size_count = 0;
 	} else if (!strcasecmp(key, "wram0")) {
 		parse_int_list(value, &state->current->wram_size[0], 1, 10);
 	} else if (!strcasecmp(key, "wram1")) {
@@ -366,23 +530,15 @@ static void process_field(struct db_parser_state *state)
 	} else if (!strcasecmp(key, "mirroring")) {
 		state->current->mirroring = parse_mirroring(value);
 	} else if (!strcasecmp(key, "crc")) {
-		parse_int_list(value, &state->current->combined_crc, 1, 16);
+		int count = parse_int_list(value, &state->current->combined_crc, 1, 16);
+		if (count == 1)
+			state->current->flags |= ROM_FLAG_HAS_CRC;
 	} else if (!strcasecmp(key, "sha1")) {
-		int i;
-		int count;
-
-		if (strlen(value) == 40) {
-			count = 0;
-			for (i = 0; i < 20; i++) {
-				count += sscanf(&value[i * 2], "%2hhx",
-						&state->current->combined_sha1[i]);
-			}
-
-			/* FIXME make sure the string was a valid SHA-1 hash */
-		}
-
-	/* } else if (!strcasecmp(key, "title")) { */
-	/* 	state->current->title = strdup(value); */
+		int count = parse_sha1_list(value, &state->current->combined_sha1, 1);
+		if (count == 1)
+			state->current->flags |= ROM_FLAG_HAS_SHA1;
+	} else if (!strcasecmp(key, "name")) {
+		/* printf("title: %s\n", value); */
 	} else if (!strcasecmp(key, "port-1")) {
 		set_auto_device(state->current, 0, value);
 	} else if (!strcasecmp(key, "port-2")) {
@@ -511,49 +667,275 @@ void db_cleanup(void)
 
 }
 
-struct rom_info *db_lookup(struct rom *rom, struct rom_info *start)
+struct rom_info *db_lookup_split_rom(struct archive_file_list *list, int *chip_list,
+				     struct rom_info *start)
 {
-	int old_system_type;
-
 	if (start)
 		start = start->next;
 	else
 		start = head;
 
 	while (start) {
-		size_t total_size;
-		size_t total_rom_size;
+		int i;
+		int remaining;
+	
+		remaining = start->prg_size_count + start->chr_size_count;
 
-		total_size  = start->total_prg_size;
+		if (!remaining) {
+			start = start->next;
+			continue;
+		}
+
+		for (i = 0; i < MAX_ROMS; i++)
+			chip_list[i] = -1;
+
+		if ((start->prg_size_count &&
+		     !(start->prg_crc_count || start->prg_sha1_count)) ||
+		    (start->chr_size_count &&
+		     !(start->chr_crc_count || start->chr_sha1_count))) {
+			start = start->next;
+			continue;
+		}
+
+		for (i = 0; i < list->count; i++) {
+			int j;
+
+			if (!remaining)
+				break;
+
+			for (j = 0; j < start->prg_size_count; j++) {
+				if (start->prg_crc_count &&
+				    (list->entries[i].crc != start->prg_crc[j])) {
+					continue;
+				}
+
+				if (start->prg_sha1_count &&
+				    memcmp(list->entries[i].sha1, start->prg_sha1[j],
+					   20)) {
+					continue;
+				}
+
+				if (chip_list[j] < 0) {
+					chip_list[j] = i;
+					remaining--;
+					break;
+				}
+			}
+
+			/* Found a match; don't test chr */
+			if (j < start->prg_size_count) {
+				continue;
+			}
+
+			for (j = 0; j < start->chr_size_count; j++) {
+				if (start->chr_crc_count &&
+				    (list->entries[i].crc != start->chr_crc[j])) {
+					continue;
+				}
+
+				if (start->chr_sha1_count &&
+				    memcmp(list->entries[i].sha1, start->chr_sha1[j],
+					   20)) {
+					continue;
+				}
+
+				if (chip_list[j + start->prg_size_count] < 0) {
+					chip_list[j + start->prg_size_count] = i;
+					remaining--;
+					break;
+				}
+			}
+
+		}
+
+		if (!remaining)
+			break;
+
+		start = start->next;
+	}
+
+	return start;
+}
+
+static struct rom_info *db_find_entry(uint32_t crc32, uint8_t *sha1, size_t size, int combined)
+{
+
+	struct rom_info *start;
+
+	start = head;
+
+	while (start) {
+		size_t total_size;
+		int match = 0;
+
+		total_size = start->total_prg_size;
 		total_size += start->total_chr_size;
 
-		total_rom_size  = rom->info.total_prg_size;
-		total_rom_size += rom->info.total_chr_size;
+		if (combined) {
+			if (start->flags & (ROM_FLAG_HAS_CRC|ROM_FLAG_HAS_SHA1)) {
+				if (size == total_size)
+					match = 1;
 
-		if ((start->combined_crc == rom->info.combined_crc) &&
-		    (total_size == total_rom_size)) {
-			if (memcmp(start->combined_sha1,
-				   rom->info.combined_sha1, 20) == 0) {
-				break;
+				if (match && (start->flags & ROM_FLAG_HAS_CRC) &&
+				    (start->combined_crc != crc32)) {
+					match = 0;
+				}
+
+				if (match && (start->flags & ROM_FLAG_HAS_SHA1) &&
+				    (memcmp(start->combined_sha1, sha1, 20))) {
+					match = 0;
+				}
 			}
+		} else {
+			if (start->prg_crc_count || start->prg_sha1_count) {
+				if (start->prg_size[0] == size) {
+					match = 1;
+				}
+
+				if (match && start->prg_crc_count &&
+				    (start->prg_crc[0] != crc32)) {
+					match = 0;
+				}
+
+				if (match && start->prg_sha1_count &&
+				    memcmp(start->prg_sha1[0], sha1, 20)) {
+					match = 0;
+				}
+			}
+		}
+
+		if (match) {
+			if (start->board_type != BOARD_TYPE_UNKNOWN)
+				break;
 		}
 
 		start = start->next;
 	}
 
-	if (!start || (start->board_type == BOARD_TYPE_UNKNOWN))
-		return NULL;
+	return start;
+}
 
-	old_system_type = rom->info.system_type;
-	memcpy(&rom->info, start, sizeof(*start));
+static uint32_t calculate_checksum_new(uint8_t *data, size_t size,
+				       uint8_t *sha1)
+{
+	sha1nfo sha1nfo;
+	uint8_t *result;
+	uint32_t crc;
 
-	if ((old_system_type == EMU_SYSTEM_TYPE_PLAYCHOICE) &&
-	    (rom->info.flags & ROM_FLAG_PLAYCHOICE)) {
-		rom->info.system_type = EMU_SYSTEM_TYPE_PLAYCHOICE;
+	sha1_init(&sha1nfo);
+	crc = crc32buf(data, size, NULL);
+	sha1_write(&sha1nfo, (char *)data, size);
+	result = sha1_result(&sha1nfo);
+	memcpy(sha1, result, 20);
+
+	return crc;
+}
+
+int validate_checksums(struct rom *rom, struct rom_info *info)
+{
+	uint32_t crc32;
+	uint8_t sha1[20];
+	int i;
+	off_t offset;
+
+	offset = rom->offset;
+
+	/* Validate PRG chunks */
+	for (i = 0; i < info->prg_size_count; i++) {
+		crc32 = calculate_checksum_new(rom->buffer + offset,
+					       info->prg_size[i], sha1);
+
+		if (info->prg_crc_count && (crc32 != info->prg_crc[i]))
+			break;
+
+		if (info->prg_sha1_count &&
+		    memcmp(sha1, info->prg_sha1[i], 20)) {
+			break;
+		}
+
+		offset += info->prg_size[i];
 	}
 
+	if (i < info->prg_crc_count)
+		return 0;
 
-	return start;
+	/* Validate CHR chunks */
+	for (i = 0; i < info->chr_crc_count; i++) {
+		crc32 = calculate_checksum_new(rom->buffer + offset,
+					       info->chr_size[i], sha1);
+
+		if (info->chr_crc_count && (crc32 != info->chr_crc[i]))
+			break;
+
+		if (info->chr_sha1_count &&
+		    memcmp(sha1, info->chr_sha1[i], 20)) {
+			break;
+		}
+
+		offset += info->chr_size[i];
+	}
+
+	if (i < info->chr_crc_count)
+		return 0;
+
+	return 1;
+}
+
+struct rom_info *db_lookup(struct rom *rom, struct rom_info *junk)
+{
+	struct rom_info *info;
+	uint32_t crc32;
+	uint8_t sha1[20];
+	size_t size;
+	int mode;
+	int old_system_type;
+
+	mode = 1;
+	size = (rom->buffer_size - rom->offset) / SIZE_8K * SIZE_8K;
+	info = NULL;
+	while (size >= SIZE_8K) {
+		crc32 = calculate_checksum_new(rom->buffer + rom->offset,
+					       size, sha1);
+
+		info = db_find_entry(crc32, sha1, size, mode);
+
+		if (info) {
+			if (mode || validate_checksums(rom, info))
+				break;
+			else
+				info = NULL;
+		}
+
+		if (mode) {
+			int count = 0;
+
+			while (size) {
+				size >>= 1;
+				count++;
+			}
+
+			if (count)
+				size = 1 << (count - 1);
+
+			mode = 0;
+		} else {
+			size /= 2;
+		}
+	}
+
+	old_system_type = rom->info.system_type;
+
+	if (info) {
+		memcpy(&rom->info, info, sizeof(*info));
+		if ((old_system_type == EMU_SYSTEM_TYPE_PLAYCHOICE) &&
+		    (rom->info.flags & ROM_FLAG_PLAYCHOICE)) {
+			rom->info.system_type = EMU_SYSTEM_TYPE_PLAYCHOICE;
+		}
+	}
+
+	rom_calculate_checksum(rom);
+
+	return info;
 }
 
 /* DB-based ROM loader for simple formats like iNES: header of zero or
@@ -571,8 +953,8 @@ int db_rom_load(struct emu *emu, struct rom *rom)
 		return -1;
 
 	rom->offset = 0;
-	rom->info.total_prg_size = rom->buffer_size & ~(SIZE_8K - 1);
-	rom->info.total_chr_size = 0;
+	rom->info.prg_size[0] = rom->buffer_size & ~(SIZE_8K - 1);
+	rom->info.chr_size[0] = 0;
 	slack = rom->buffer_size & (SIZE_8K - 1);
 
 	rom_calculate_checksum(rom);
@@ -595,8 +977,8 @@ int db_rom_load(struct emu *emu, struct rom *rom)
 	   - PC10 roms with instruction screen rom in CHR area
 	   - Roms with PRG size 8K, 24K or 40K
 	 */
-	if (!db_entry && (rom->info.total_prg_size > SIZE_8K)) {
-		rom->info.total_prg_size -= SIZE_8K;
+	if (!db_entry && (rom->info.prg_size[0] > SIZE_8K)) {
+		rom->info.prg_size[0] -= SIZE_8K;
 		rom->offset = 0;
 		rom_calculate_checksum(rom);
 		db_entry = db_lookup(rom, NULL);

@@ -297,6 +297,7 @@ int ines_generate_header(struct rom *rom, int version)
 	prg_size  = rom->info.total_prg_size;
 	chr_size  = rom->info.total_chr_size;
 
+	prg_size += rom->offset - INES_HEADER_SIZE;
 	/* PRG data must be a multiple of 16K */
 	if (prg_size % SIZE_16K)
 		return -1;
@@ -312,16 +313,15 @@ int ines_generate_header(struct rom *rom, int version)
 	case MIRROR_V:
 		header.mirroring = 0x01;
 		break;
+	case MIRROR_4:
+		header.four_screen = 0x08;
+		break;
 	case MIRROR_1A:
 	case MIRROR_1B:
 	case MIRROR_M:
 	case MIRROR_H:
+	case MIRROR_UNDEF:
 		break;
-	case MIRROR_4:
-		header.four_screen = 0x08;
-		break;
-	default:
-		return -1;
 	}
 
 	wram_size = 0;
@@ -716,8 +716,9 @@ int ines_load(struct emu *emu, struct rom *rom)
 	   even if the header data is invalid (unknown mapper, incorrect
 	   size, etc.) the rom may still load.
 	*/
-	if (!db_rom_load(emu, rom))
+	if (!db_rom_load(emu, rom)) {
 		return 0;
+	}
 
 	rom->info.total_prg_size = prg_size;
 	rom->info.total_chr_size = chr_size;
@@ -764,6 +765,7 @@ int ines_load(struct emu *emu, struct rom *rom)
 	}
 
 	rom->offset = 16;
+	rom_calculate_checksum(rom);
 
 	return 0;
 }

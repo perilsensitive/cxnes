@@ -451,7 +451,7 @@ struct board_info board_waixing_type_h = {
 
 struct board_info board_txc_tw = {
 	.board_type = BOARD_TYPE_TXC_TW,
-	.name = "YOKOSOFT / TXC",
+	.name = "TXC-TW",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,

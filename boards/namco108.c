@@ -34,7 +34,7 @@ static uint8_t vs_tko_boxing_security_data[32] = {
 };
 
 static CPU_WRITE_HANDLER(namco108_write_handler);
-static CPU_WRITE_HANDLER(ines112_write_handler);
+static CPU_WRITE_HANDLER(ntdec112_write_handler);
 static CPU_READ_HANDLER(vs_super_xevious_security);
 static CPU_READ_HANDLER(vs_rbi_baseball_security);
 static CPU_READ_HANDLER(vs_tko_boxing_security);
@@ -70,8 +70,8 @@ static struct board_write_handler namco108_write_handlers[] = {
 	{NULL}
 };
 
-static struct board_write_handler ines112_write_handlers[] = {
-	{ines112_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler ntdec112_write_handlers[] = {
+	{ntdec112_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL}
 };
 
@@ -162,13 +162,13 @@ struct board_info board_namco3425 = {
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
 };
 
-struct board_info board_ines112 = {
-	.board_type = BOARD_TYPE_INES112,
-	.name = "iNES mapper 112",
+struct board_info board_ntdec_112 = {
+	.board_type = BOARD_TYPE_NTDEC_112,
+	.name = "NTDEC-112",
 	.funcs = &namco108_funcs,
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_2k_1k,
-	.write_handlers = ines112_write_handlers,
+	.write_handlers = ntdec112_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
@@ -271,7 +271,7 @@ static CPU_WRITE_HANDLER(namco108_write_handler)
 	}
 }
 
-static CPU_WRITE_HANDLER(ines112_write_handler)
+static CPU_WRITE_HANDLER(ntdec112_write_handler)
 {
 	struct board *board;
 	int update_chr;

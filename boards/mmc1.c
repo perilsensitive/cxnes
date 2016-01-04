@@ -317,11 +317,35 @@ static void mmc1_write_control(struct board *board, uint8_t value,
 {
 	/* Change PRG mode */
 	board->prg_mode = value & 0x0c;
-	mmc1_write_prg(board, board->prg_banks[1].bank, cycles);
+	switch (board->prg_mode) {
+	case 0x00:
+	case 0x04:
+		board->prg_banks[1].size = SIZE_32K;
+		board->prg_banks[1].shift = 1;
+		board->prg_banks[1].address = 0x8000;
+		board->prg_banks[2].size = 0;
+		break;
+	case 0x08:
+		board->prg_banks[1].size = SIZE_16K;
+		board->prg_banks[1].shift = 0;
+		board->prg_banks[1].address = 0xc000;
+		board->prg_banks[2].size = SIZE_16K;
+		board->prg_banks[2].bank = 0;
+		board->prg_banks[2].address = 0x8000;
+		break;
+	case 0x0c:
+		board->prg_banks[1].size = SIZE_16K;
+		board->prg_banks[1].shift = 0;
+		board->prg_banks[1].address = 0x8000;
+		board->prg_banks[2].size = SIZE_16K;
+		board->prg_banks[2].bank = 0xf;
+		board->prg_banks[2].address = 0xc000;
+		break;
+	}
 
 	/* Change CHR mode */
 	board->chr_mode = value & 0x10;
-	if (value & 0x10) {
+	if (board->chr_mode) {
 		board->chr_banks0[0].size = SIZE_4K;
 		board->chr_banks0[0].shift = 0;
 		board->chr_banks0[1].size = SIZE_4K;
@@ -334,77 +358,34 @@ static void mmc1_write_control(struct board *board, uint8_t value,
 		board->chr_banks0[1].size = 0;
 		board->chr_banks0[1].address = 0x1000;
 	}
-	mmc1_write_chr(board, 0, board->chr_banks0[0].bank, cycles);
-	mmc1_write_chr(board, 1, board->chr_banks0[1].bank, cycles);
+
+	board_prg_sync(board);
+	board_chr_sync(board, 0);
+
 	standard_mirroring_handler(board->emu, 0, value, cycles);
 }
 
 void mmc1_write_prg(struct board *board, uint8_t data, uint32_t cycles)
 {
-	int do_prg_sync = 0;
-
-	if ((data & 0x0f) != board->prg_banks[1].bank) {
-		board->prg_banks[1].bank = data & 0x0f;
-		do_prg_sync = 1;
-	}
-
-	switch (board->prg_mode >> 2) {
-	case 0x0:
-	case 0x1:
-		board->prg_banks[1].size = SIZE_32K;
-		board->prg_banks[1].shift = 1;
-		board->prg_banks[2].size = 0;
-		break;
-	case 0x2:
-		board->prg_banks[1].size = SIZE_16K;
-		board->prg_banks[1].shift = 0;
-		board->prg_banks[1].address = 0xc000;
-		board->prg_banks[1].bank = data;
-		board->prg_banks[2].size = SIZE_16K;
-		board->prg_banks[2].bank = 0;
-		board->prg_banks[2].address = 0x8000;
-		break;
-	case 0x3:
-		board->prg_banks[1].size = SIZE_16K;
-		board->prg_banks[1].shift = 0;
-		board->prg_banks[1].address = 0x8000;
-		board->prg_banks[1].bank = data;
-		board->prg_banks[2].size = SIZE_16K;
-		board->prg_banks[2].bank = 0xf;
-		board->prg_banks[2].address = 0xc000;
-		break;
-	}
+	board->prg_banks[1].bank = data;
 
 	if (!_wram_always_enabled) {
-		int old_wram_disable = _wram_disable;
 		_wram_disable =
 		    (_wram_disable & 0x02) | ((data & 0x10) >> 4);
-
-		if (_wram_disable != old_wram_disable)
-			do_prg_sync = 1;
 
 		board->prg_banks[0].perms =
 		    (_wram_disable) ? MAP_PERM_NONE : MAP_PERM_READWRITE;
 	}
 
-	if (do_prg_sync)
-		board_prg_sync(board);
+	board_prg_sync(board);
 }
 
 void mmc1_write_chr(struct board *board, int bank, uint8_t data,
 		    uint32_t cycles)
 {
 	board->chr_banks0[bank].bank = data;
-	if (board->chr_mode) {
-		board->chr_banks0[0].size = SIZE_4K;
-		board->chr_banks0[0].shift = 0;
-		board->chr_banks0[1].size = SIZE_4K;
-	} else if (bank == 0) {
+	if (!board->chr_mode && (bank == 0)) {
 		int do_prg_sync = 0;
-
-		board->chr_banks0[0].size = SIZE_8K;
-		board->chr_banks0[0].shift = 1;
-		board->chr_banks0[1].size = 0;
 
 		/* PRG RAM bank */
 		if (((data >> 2) & 0x03) != board->prg_banks[0].bank) {
@@ -504,14 +485,19 @@ static CPU_WRITE_HANDLER(mmc1_write_handler)
 	_load_count = 0;
 	board->timestamps[0] = 0;
 
-	if (addr >= 0x8000 && addr <= 0x9fff) {
+	switch (addr & 0xe000) {
+	case 0x8000:
 		mmc1_write_control(board, _load_data, cycles);
-	} else if (addr >= 0xa000 && addr <= 0xbfff) {
+		break;
+	case 0xa000:
 		mmc1_write_chr(board, 0, _load_data, cycles);
-	} else if (addr >= 0xc000 && addr <= 0xdfff) {
+		break;
+	case 0xc000:
 		mmc1_write_chr(board, 1, _load_data, cycles);
-	} else if (addr >= 0xe000 && addr <= 0xffff) {
+		break;
+	case 0xe000:
 		mmc1_write_prg(board, _load_data, cycles);
+		break;
 	}
 
 	_load_data = 0;

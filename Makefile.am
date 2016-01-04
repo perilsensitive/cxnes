@@ -60,6 +60,7 @@ cxnes_SOURCES = \
 	main/patch.c \
 	main/unif.c \
 	main/ines.c \
+	main/split_rom.c \
 	main/input.c \
 	main/palette.c \
 	main/config.c \
@@ -138,7 +139,7 @@ cxnes_SOURCES = \
 	boards/sunsoft1.c \
 	boards/sunsoft5b.c \
 	boards/sunsoft3.c \
-	boards/ntdec_tc112.c \
+	boards/ntdec_193.c \
 	boards/gxrom.c \
 	boards/nina001.c \
 	boards/taito_tc0190fmc.c \

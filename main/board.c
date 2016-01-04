@@ -129,7 +129,7 @@ extern struct board_info board_vs_super_xevious;
 extern struct board_info board_vs_rbi_baseball;
 extern struct board_info board_vs_tko_boxing;
 extern struct board_info board_namco108;
-extern struct board_info board_ines112;
+extern struct board_info board_ntdec_112;
 extern struct board_info board_vrc1;
 extern struct board_info board_vrc6a;
 extern struct board_info board_vrc6b;
@@ -170,7 +170,7 @@ extern struct board_info board_camerica_aladdin;
 extern struct board_info board_nina03_06;
 extern struct board_info board_vs_unisystem;
 extern struct board_info board_jaleco_jf16;
-extern struct board_info board_ntdec_tc112;
+extern struct board_info board_ntdec_193;
 extern struct board_info board_74x139_74;
 extern struct board_info board_sunsoft1;
 extern struct board_info board_pci556;
@@ -295,7 +295,7 @@ static struct board_info *board_info_list[] = {
 	&board_vs_rbi_baseball,
 	&board_vs_tko_boxing,
 	&board_namco108,
-	&board_ines112,
+	&board_ntdec_112,
 	&board_vrc1,
 	&board_vrc6a,
 	&board_vrc6b,
@@ -339,7 +339,7 @@ static struct board_info *board_info_list[] = {
 	&board_irem_74x161_161_21_138,
 	&board_jaleco_jf16,
 	&board_irem_holy_diver,
-	&board_ntdec_tc112,
+	&board_ntdec_193,
 	&board_74x139_74,
 	&board_sunsoft1,
 	&board_pci556,
@@ -381,22 +381,29 @@ static struct board_info *board_info_list[] = {
 
 /* FIXME WAIXING / BMC CONTRA 100-IN-1 -> 15 */
 static struct board_name_mapping mapping_list[] =  {
+	{ "AGCI-47516", BOARD_TYPE_COLORDREAMS },
 	{ "ACCLAIM-AOROM", BOARD_TYPE_AxROM },
 	{ "ACCLAIM-TLROM", BOARD_TYPE_TxROM },
 	{ "AVE-74*161", BOARD_TYPE_CNROM },
+	{ "AVE-MB-91", BOARD_TYPE_NINA_03_06 },
 	{ "AVE-NINA-03", BOARD_TYPE_NINA_03_06 },
 	{ "AVE-NINA-06", BOARD_TYPE_NINA_03_06 },
+	{ "AVE-NINA-07", BOARD_TYPE_COLORDREAMS },
 	{ "BANDAI-74*161/32", BOARD_TYPE_CNROM },
 	{ "BANDAI-74*161/161/32", BOARD_TYPE_74x161_161_32 },
+	{ "BANDAI-74*161/02/74", BOARD_TYPE_BANDAI_OEKAKIDS },
 	{ "BANDAI-CNROM", BOARD_TYPE_CNROM },
 	{ "BANDAI-FCG-1", BOARD_TYPE_BANDAI_FCG },
 	{ "BANDAI-FCG-2", BOARD_TYPE_BANDAI_FCG },
+	{ "BANDAI-GNROM", BOARD_TYPE_GxROM },
 	{ "BANDAI-NROM-128", BOARD_TYPE_NROM },
 	{ "BANDAI-NROM-256", BOARD_TYPE_NROM },
 	{ "BANDAI-PT-554", BOARD_TYPE_CNROM },
 	{ "BMC 76-IN-1", BOARD_TYPE_76_IN_1 },
 	{ "BMC SUPER 42-IN-1", BOARD_TYPE_76_IN_1 },
+	{ "CAMERICA-ALGN", BOARD_TYPE_CAMERICA_BF9093 },
 	{ "CAMERICA-GAMEGENIE", BOARD_TYPE_NROM },
+	{ "CODEMASTERS-NR8N", BOARD_TYPE_CAMERICA_BF9093 },
 	{ "HVC-AMROM", BOARD_TYPE_AxROM },
 	{ "HVC-AOROM", BOARD_TYPE_AxROM },
 	{ "HVC-CNROM", BOARD_TYPE_CNROM },
@@ -414,6 +421,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "HVC-PEEOROM", BOARD_TYPE_PxROM },
 	{ "HVC-RROM", BOARD_TYPE_NROM },
 	{ "HVC-RTROM", BOARD_TYPE_NROM },
+	{ "HVC-SAROM", BOARD_TYPE_SxROM },
 	{ "HVC-SEROM", BOARD_TYPE_SEROM_SHROM },
 	{ "HVC-SFROM", BOARD_TYPE_SxROM },
 	{ "HVC-SGROM", BOARD_TYPE_SxROM },
@@ -445,6 +453,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "HVC-UNROM", BOARD_TYPE_UxROM },
 	{ "HVC-UOROM", BOARD_TYPE_UxROM },
 	{ "IREM-BNROM", BOARD_TYPE_BNROM },
+	{ "IREM-FCG-1", BOARD_TYPE_BANDAI_LZ93D50 },
 	{ "IREM-NROM-128", BOARD_TYPE_NROM },
 	{ "IREM-NROM-256", BOARD_TYPE_NROM },
 	{ "IREM-UNROM", BOARD_TYPE_UxROM },
@@ -463,6 +472,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "JALECO-JF-15", BOARD_TYPE_UxROM },
 	{ "JALECO-JF-18", BOARD_TYPE_UxROM },
 	{ "JALECO-JF-20", BOARD_TYPE_VRC1 },
+	{ "JALECO-JF-21", BOARD_TYPE_JALECO_JF19 },
 	{ "JALECO-JF-22", BOARD_TYPE_VRC1 },
 	{ "JALECO-JF-23", BOARD_TYPE_JALECO_SS88006 },
 	{ "JALECO-JF-24", BOARD_TYPE_JALECO_SS88006 },
@@ -470,6 +480,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "JALECO-JF-27", BOARD_TYPE_JALECO_SS88006 },
 	{ "JALECO-JF-29", BOARD_TYPE_JALECO_SS88006 },
 	{ "JALECO-JF-37", BOARD_TYPE_JALECO_SS88006 },
+	{ "JALECO-JF-38", BOARD_TYPE_JALECO_SS88006 },
 	{ "JALECO-JF-40", BOARD_TYPE_JALECO_SS88006 },
 	{ "KONAMI-74*139/74", BOARD_TYPE_74x139_74 },
 	{ "KONAMI-CNROM", BOARD_TYPE_CNROM },
@@ -494,6 +505,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "NAMCOT-3415", BOARD_TYPE_NAMCO_108 },
 	{ "NAMCOT-3416", BOARD_TYPE_NAMCO_108 },
 	{ "NAMCOT-3417", BOARD_TYPE_NAMCO_108 },
+	{ "NAMCOT-3443", BOARD_TYPE_NAMCO_3433 },
 	{ "NAMCOT-3451", BOARD_TYPE_NAMCO_108 },
 	{ "NAMCOT-CNROM+WRAM", BOARD_TYPE_NAMCO_CNROM_WRAM },
 	{ "NES-AMROM", BOARD_TYPE_AxROM },
@@ -529,6 +541,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "NES-SGROM", BOARD_TYPE_SxROM },
 	{ "NES-SH1ROM", BOARD_TYPE_SEROM_SHROM },
 	{ "NES-SHROM", BOARD_TYPE_SEROM_SHROM },
+	{ "NES-SIEPROM", BOARD_TYPE_SxROM },
 	{ "NES-SJROM", BOARD_TYPE_SxROM_WRAM },
 	{ "NES-SKEPROM", BOARD_TYPE_SxROM_WRAM },
 	{ "NES-SKROM", BOARD_TYPE_SxROM_WRAM },
@@ -557,9 +570,12 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "NES-UNEPROM", BOARD_TYPE_UxROM },
 	{ "NES-UNROM", BOARD_TYPE_UxROM },
 	{ "NES-UOROM", BOARD_TYPE_UxROM },
+	{ "NR8NV1-1", BOARD_TYPE_CAMERICA_BF9093 },
 	{ "NTDEC-N715061", BOARD_TYPE_CNROM },
 	{ "NTDEC-N715062", BOARD_TYPE_CNROM },
+	{ "NTDEC-TC-112", BOARD_TYPE_NTDEC_193 },
 	{ "SACHEN-CNROM", BOARD_TYPE_CNROM_NO_CONFLICT },
+	{ "SACHEN-NROM", BOARD_TYPE_NROM },
 	{ "SETA-NROM-128", BOARD_TYPE_NROM },
 	{ "STUDY & GAME 32-IN-1", BOARD_TYPE_BNROM },
 	{ "SUNSOFT-2", BOARD_TYPE_SUNSOFT2 },
@@ -580,6 +596,11 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "TENGEN-800004", BOARD_TYPE_TENGEN_800004 },
 	{ "TENGEN-800008", BOARD_TYPE_CNROM },
 	{ "TENGEN-800030", BOARD_TYPE_NAMCO_108 },
+	{ "TENGEN-800042", BOARD_TYPE_SUNSOFT4 },
+	{ "TQROM", BOARD_TYPE_TQROM },
+	{ "TVROM", BOARD_TYPE_TVROM },
+	{ "TXC-PT8154", BOARD_TYPE_TXC_TW },
+	{ "TXC-74*138/175", BOARD_TYPE_NINA_03_06 },
 	{ "UNL-SACHEN-8259A", BOARD_TYPE_SACHEN_8259A },
 	{ "UNL-SACHEN-8259B", BOARD_TYPE_SACHEN_8259B },
 	{ "UNL-SACHEN-8259C", BOARD_TYPE_SACHEN_8259C },
@@ -1663,9 +1684,23 @@ int board_init(struct emu *emu, struct rom *rom)
 	prg_size  = rom->info.total_prg_size;
 	chr_size  = rom->info.total_chr_size;
 
-	board_set_rom_data(board, rom->buffer, 16, prg_size,
-			   16 + prg_size, chr_size);
+	board_set_rom_data(board, rom->buffer, rom->offset, prg_size,
+			   rom->offset + prg_size, chr_size);
 	board_set_type(board, rom->info.board_type);
+
+	/* If mirroring wasn't defined by the ROM header (or database),
+	   define it here as mapper-controlled if possible, vertical
+	   otherwise.
+	*/
+   
+	if (rom->info.mirroring == MIRROR_UNDEF) {
+		if (board->info->flags & BOARD_INFO_FLAG_MIRROR_M) {
+			rom->info.mirroring = MIRROR_M;
+		} else {
+			rom->info.mirroring = MIRROR_V;
+		}
+	}
+
 	board_set_mirroring(board, rom->info.mirroring);
 	board_init_mapper_ram(board, rom->info.flags & ROM_FLAG_MAPPER_NV);
 

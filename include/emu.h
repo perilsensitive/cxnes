@@ -51,6 +51,8 @@ struct m2_timer;
 #include "sizes.h"
 #include "log.h"
 
+#define INES_HEADER_SIZE 16
+
 enum {
 	EMU_SYSTEM_TYPE_FAMICOM,
 	EMU_SYSTEM_TYPE_FAMICOM_RGB,

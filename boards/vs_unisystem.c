@@ -34,10 +34,24 @@ static int vs_unisystem_init(struct board *board)
 static void vs_unisystem_reset(struct board *board, int hard)
 {
 	if (hard) {
-		board->prg_banks[1].bank = 0;
-		board->prg_banks[2].bank = 1;
-		board->prg_banks[3].bank = 2;
-		board->prg_banks[4].bank = 3;
+		int banks = board->prg_rom.size / SIZE_8K;
+		int i;
+
+		board->prg_banks[1].perms = MAP_PERM_NONE;
+		board->prg_banks[2].perms = MAP_PERM_NONE;
+		board->prg_banks[3].perms = MAP_PERM_NONE;
+		board->prg_banks[4].perms = MAP_PERM_NONE;
+
+		if (banks > 4)
+			banks = 4;
+
+		for (i = 4; i >= 1; i--) {
+			if (banks > 0) {
+				board->prg_banks[i].bank = banks - 1;
+				board->prg_banks[i].perms = MAP_PERM_READ;
+				banks--;
+			}
+		}
 	}
 }
 

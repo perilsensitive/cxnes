@@ -41,6 +41,7 @@
 #include "fds.h"
 #include "nsf.h"
 #include "unif.h"
+#include "split_rom.h"
 #include "crc32.h"
 #include "sha1.h"
 
@@ -76,13 +77,17 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 	if (rc >= 0) {
 		uint8_t *buffer = rom->buffer;
 		size_t size = rom->buffer_size;
+		size_t prg_size = rom->info.total_prg_size;
+		size_t remainder;
 		size_t orig_size;
 		uint8_t *tmp;
 
 		orig_size = size;
 
-		if (rom->offset < INES_HEADER_SIZE) {
-			size += INES_HEADER_SIZE - rom->offset;
+		remainder = prg_size % SIZE_16K;
+
+		if (rom->offset < INES_HEADER_SIZE + remainder) {
+			size += (INES_HEADER_SIZE + remainder) - rom->offset;
 			tmp = realloc(buffer, size);
 			if (!tmp) {
 				rom_free(rom);
@@ -94,14 +99,14 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 			buffer = tmp;
 		}
 
-		if (rom->offset != INES_HEADER_SIZE) {
-			memmove(buffer + INES_HEADER_SIZE, buffer + rom->offset,
+		if (rom->offset != INES_HEADER_SIZE + remainder) {
+			memmove(buffer + INES_HEADER_SIZE + remainder, buffer + rom->offset,
 				orig_size - rom->offset);
 				
 		}
 
-		memset(buffer, 0, INES_HEADER_SIZE);
-		rom->offset = INES_HEADER_SIZE;
+		memset(buffer, 0, INES_HEADER_SIZE + remainder);
+		rom->offset = INES_HEADER_SIZE + remainder;
 
 		*romptr = rom;
 	} else {
@@ -268,10 +273,13 @@ struct rom *rom_load_file(struct emu *emu, const char *filename)
 {
 	struct rom *rom;
 
-	rom_load_single_file(emu, filename, &rom);
+	split_rom_load(emu, filename, &rom);
 	if (!rom) {
-		err_message("Unrecognized ROM format\n");
-		return NULL;
+		rom_load_single_file(emu, filename, &rom);
+		if (!rom) {
+			err_message("Unrecognized ROM format\n");
+			return NULL;
+		}
 	}
 
 	if (rom) {
@@ -311,7 +319,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	}
 
 	rc = ines_load(emu, patched_rom);
-	if (rc < -1) {
+	if (rc <= -1) {
 		free(patched_rom->filename);
 		free(patched_rom);
 		rom_free(rom);
@@ -347,7 +355,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 
 	}
 
-	print_rom_info(rom);
+	/* print_rom_info(rom); */
 
 	return rom;
 }

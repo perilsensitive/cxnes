@@ -1355,8 +1355,9 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 		      update the rom structure's metadata.
 		   */
 		rom = rom_reload_file(emu, rom);
-		if (!rom)
+		if (!rom) {
 			return 1;
+		}
 	}
 
 	if (rom->info.board_type == BOARD_TYPE_FDS) {

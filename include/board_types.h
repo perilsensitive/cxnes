@@ -75,6 +75,7 @@
 #define BOARD_TYPE_BANDAI_FCG              INES_TO_BOARD_TYPE( 16,  0, 0, 0)
 #define BOARD_TYPE_BANDAI_LZ93D50          INES_TO_BOARD_TYPE(159,  0, 0, 0)
 #define BOARD_TYPE_BANDAI_JUMP2            INES_TO_BOARD_TYPE(153,  0, 0, 0)
+#define BOARD_TYPE_BANDAI_OEKAKIDS         INES_TO_BOARD_TYPE( 96,  0, 0, 0)
 
 /* Camerica */
 #define BOARD_TYPE_CAMERICA_BF9093         INES_TO_BOARD_TYPE( 71,  0, 0, 0)
@@ -105,6 +106,8 @@
 #define BOARD_TYPE_JALECO_JF14             INES_TO_BOARD_TYPE(140,  0, 0, 0)
 #define BOARD_TYPE_JALECO_SS88006          INES_TO_BOARD_TYPE( 18,  0, 0, 0)
 #define BOARD_TYPE_JALECO_JF16             INES_TO_BOARD_TYPE( 78,  1, 0, 0)
+#define BOARD_TYPE_JALECO_JF17             INES_TO_BOARD_TYPE( 72,  1, 0, 0)
+#define BOARD_TYPE_JALECO_JF19             INES_TO_BOARD_TYPE( 92,  1, 0, 0)
 
 /* Konami */
 #define BOARD_TYPE_VRC1                    INES_TO_BOARD_TYPE( 75,  0, 0, 0)
@@ -229,9 +232,9 @@
 #define BOARD_TYPE_WAIXING_SGZLZ           INES_TO_BOARD_TYPE(178,  0, 0, 0)
 
 /* JY Company */
-#define BOARD_TYPE_JYCOMPANY_TYPE_A        INES_TO_BOARD_TYPE( 90,  0, 0, 0)
-#define BOARD_TYPE_JYCOMPANY_TYPE_B        INES_TO_BOARD_TYPE(209,  0, 0, 0)
-#define BOARD_TYPE_JYCOMPANY_TYPE_C        INES_TO_BOARD_TYPE(211,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_A             INES_TO_BOARD_TYPE( 90,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_B             INES_TO_BOARD_TYPE(209,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_C             INES_TO_BOARD_TYPE(211,  0, 0, 0)
 
 /* Kasing */
 #define BOARD_TYPE_KASING                  INES_TO_BOARD_TYPE(115,  0, 0, 0)
@@ -247,7 +250,7 @@
 
 #define BOARD_TYPE_CONTRA_100_IN_1         INES_TO_BOARD_TYPE( 15,  0, 0, 0)
 #define BOARD_TYPE_CALTRON_6_IN_1          INES_TO_BOARD_TYPE( 41,  0, 0, 0)
-#define BOARD_TYPE_NTDEC_TC_112            INES_TO_BOARD_TYPE(193,  0, 0, 0)
+#define BOARD_TYPE_NTDEC_193               INES_TO_BOARD_TYPE(193,  0, 0, 0)
 #define BOARD_TYPE_COLORDREAMS             INES_TO_BOARD_TYPE( 11,  0, 0, 0)
 #define BOARD_TYPE_74x161_161_32           INES_TO_BOARD_TYPE( 70,  0, 0, 0)
 #define BOARD_TYPE_74x139_74               INES_TO_BOARD_TYPE( 87,  0, 0, 0)
@@ -258,7 +261,7 @@
    just identify by the iNES mapper number.
 */
 
-#define BOARD_TYPE_INES112	    	   INES_TO_BOARD_TYPE(112,  0, 0, 0)
+#define BOARD_TYPE_NTDEC_112	    	   INES_TO_BOARD_TYPE(112,  0, 0, 0)
 #define BOARD_TYPE_INES201                 INES_TO_BOARD_TYPE(201,  0, 0, 0)
 #define BOARD_TYPE_INES225                 INES_TO_BOARD_TYPE(225,  0, 0, 0)
 #define BOARD_TYPE_INES36                  INES_TO_BOARD_TYPE( 36,  0, 0, 0)
