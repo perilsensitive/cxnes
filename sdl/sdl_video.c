@@ -880,8 +880,11 @@ static void video_reset_autohide_timer(void)
 
 void video_show_cursor(int show)
 {
-	if (mouse_grabbed || (crosshairs_enabled && !show))
+	if ((crosshairs_enabled && !show))
 		return;
+
+	if (mouse_grabbed)
+		show = 0;
 
 	if (show)
 		video_reset_autohide_timer();

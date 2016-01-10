@@ -387,7 +387,10 @@ static int main_loop(struct emu *emu)
 				input_process_queue(1);
 		}
 
-		if (autohide_timer && !mouse_grabbed &&
+		if (mouse_grabbed) {
+			autohide_timer = 0;
+			video_show_cursor(0);
+		} else if (autohide_timer && !mouse_grabbed &&
 		    emu->config->autohide_cursor) {
 			autohide_timer--;
 			if (!autohide_timer)
