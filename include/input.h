@@ -122,11 +122,11 @@ struct input_mouse_motion_event {
 	uint32_t padding;
 	uint32_t padding2;
 	uint32_t button_state;
+	int processed;
 	int16_t x;
 	int16_t y;
 	int16_t xrel;
 	int16_t yrel;
-	int processed;
 };
 
 struct input_mouse_button_event {
@@ -135,9 +135,9 @@ struct input_mouse_button_event {
 	uint32_t button;
 	uint32_t padding;
 	uint32_t state;
+	int processed;
 	int16_t x;
 	int16_t y;
-	int processed;
 };
 
 struct input_joystick_axis_event {
@@ -146,8 +146,8 @@ struct input_joystick_axis_event {
 	uint32_t axis;
 	uint32_t padding;
 	uint32_t padding2;
-	int16_t value;
 	int processed;
+	int16_t value;
 };
 
 struct input_joystick_button_event {
