@@ -93,7 +93,6 @@ uint16_t nes_pixel_screen[NES_WIDTH*NES_HEIGHT];
 static int integer_scaling_factor;
 static nes_ntsc_t ntsc;
 static nes_ntsc_setup_t ntsc_setup;
-static int background_color_index;
 
 static SDL_Rect scaled_rect;
 
@@ -408,7 +407,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		const uint8_t *pal;
 		const char *do_merge_fields;
 		uint8_t *tmp_pal;
-		int is_rgb;
+		int is_rgb, is_custom;
 		int i;
 
 		ppu_type = ppu_get_type(emu->ppu);
@@ -423,19 +422,33 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		case PPU_TYPE_RP2C04_0004:
 			is_rgb = 1;
 			pal = palette_rp2c04_master;
-			background_color_index = 0x0f;
 			break;
 		case PPU_TYPE_RP2C02:
 		case PPU_TYPE_RP2C07:
 		case PPU_TYPE_DENDY:
-			background_color_index = 0x0f;
 			is_rgb = 0;
-			pal = palette_rp2c03;
+			pal = NULL;
 			break;
 		default:
-			background_color_index = 0x0f;
 			pal = palette_rp2c03;
 			is_rgb = 1;
+		}
+
+		is_custom = 0;
+
+		if (strcasecmp(emu->config->palette, "rp2c03") == 0) {
+			pal = palette_rp2c03;
+		} else if (strcasecmp(emu->config->palette, "rp2c03b") == 0) {
+			pal = palette_rp2c03b;
+		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
+
+			pal = palette_rp2c04_master;
+		} else if (strcasecmp(emu->config->palette, "custom") == 0) {
+			if (emu->config->palette_path) {
+				is_custom = 1;
+			}
+		} else if (strcasecmp(emu->config->palette, "yiq") == 0) {
+			pal = NULL;
 		}
 
 		if (emu->config->ntsc_filter_auto_tune) {
@@ -480,54 +493,33 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		}
 
 		tmp_pal = malloc(512 * 3);
-		if (tmp_pal) {
-			memcpy(tmp_pal, pal, 64 * 3);
-			if (is_rgb) {
-				palette_rgb_emphasis(tmp_pal);
+
+		if (pal || is_custom) {
+			int size = -1;
+
+			if (is_custom) {
+				size = load_external_palette(tmp_pal,
+							     emu->config->palette_path);
+				if (size < 0)
+					pal = palette_rp2c03;
+				else
+					pal = NULL;
 			}
+
+			if (pal)
+				memcpy(tmp_pal, pal, 64 * 3);
+			pal = tmp_pal;
+
+			if (is_rgb && size == 64)
+				palette_rgb_emphasis(tmp_pal);
 		}
 
-		if ((strcasecmp(emu->config->palette, "custom") == 0) &&
-		    emu->config->palette_path) {
-			int size;
-
+		if (is_rgb) {
 			ntsc_setup.base_palette = NULL;
+			ntsc_setup.palette = pal;
+		} else {
+			ntsc_setup.base_palette = pal;
 			ntsc_setup.palette = NULL;
-
-			size = load_external_palette(tmp_pal,
-						     emu->config->palette_path);
-			
-
-			if (size == 64) {
-				if (is_rgb) {
-					palette_rgb_emphasis(tmp_pal);
-					ntsc_setup.palette = tmp_pal;
-				} else {
-					ntsc_setup.base_palette = tmp_pal;
-				}
-			} else {
-				ntsc_setup.palette = tmp_pal;
-			}
-			
-		} else if (strcasecmp(emu->config->palette, "yiq") == 0) {
-			ntsc_setup.palette = NULL;
-			ntsc_setup.base_palette = NULL;
-		} else if (strcasecmp(emu->config->palette, "rgb") == 0) {
-			if (is_rgb) {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = pal;
-			} else {
-				ntsc_setup.base_palette = pal;
-				ntsc_setup.palette = NULL;
-			}
-		} else if (strcasecmp(emu->config->palette, "auto") == 0) {
-			if (is_rgb) {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = pal;
-			} else {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = NULL;;
-			}
 		}
 
 		ntsc_setup.use_bisqwit_palette = 1;
