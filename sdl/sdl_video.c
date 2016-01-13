@@ -430,14 +430,14 @@ static void video_apply_palette_and_filter(struct emu *emu)
 			pal = NULL;
 			break;
 		default:
-			pal = palette_rp2c03;
+			pal = palette_rp2c03b;
 			is_rgb = 1;
 		}
 
 		is_custom = 0;
 
-		if (strcasecmp(emu->config->palette, "rp2c03") == 0) {
-			pal = palette_rp2c03;
+		if (strcasecmp(emu->config->palette, "rc2c03b") == 0) {
+			pal = palette_rc2c03b;
 		} else if (strcasecmp(emu->config->palette, "rp2c03b") == 0) {
 			pal = palette_rp2c03b;
 		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
@@ -501,7 +501,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 				size = load_external_palette(tmp_pal,
 							     emu->config->palette_path);
 				if (size < 0)
-					pal = palette_rp2c03;
+					pal = palette_rp2c03b;
 				else
 					pal = NULL;
 			}

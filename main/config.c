@@ -183,7 +183,7 @@ static const char *valid_video_filter_names[] = {
 };
 
 static const char *valid_palette_names[] = {
-	"Auto", "YIQ", "RP2C03", "RP2C03B", "RP2C04",
+	"Auto", "YIQ", "RP2C03B", "RC2C03B", "RP2C04",
 	"Custom"
 };
 
@@ -196,7 +196,7 @@ static const char *valid_ntsc_filter_merge_fields_names[] = {
 };
 
 static const char *valid_palettes[] = {
-	"auto", "yiq", "rp2c03","rp2c03b", "rp2c04", "custom"
+	"auto", "yiq", "rp2c03b","rc2c03b", "rp2c04", "custom"
 };
 
 static const char *valid_aspect_ratio_names[] = {

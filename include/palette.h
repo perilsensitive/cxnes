@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 const uint8_t rp2c04_yuv_lookup[64];
-extern const uint8_t palette_rp2c03[64 * 3];
+extern const uint8_t palette_rc2c03b[64 * 3];
 extern const uint8_t palette_rp2c03b[64 * 3];
 extern const uint8_t palette_rp2c04_master[64 * 3];
 
