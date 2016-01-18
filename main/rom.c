@@ -84,7 +84,10 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 
 		orig_size = size;
 
-		remainder = prg_size % SIZE_16K;
+		if (rom->info.board_type == BOARD_TYPE_FDS)
+			remainder = 0;
+		else
+			remainder = prg_size % SIZE_16K;
 
 		if (rom->offset < INES_HEADER_SIZE + remainder) {
 			size += (INES_HEADER_SIZE + remainder) - rom->offset;
