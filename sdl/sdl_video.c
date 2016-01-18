@@ -524,10 +524,8 @@ static void video_apply_palette_and_filter(struct emu *emu)
 
 		ntsc_setup.use_bisqwit_palette = 1;
 		if ((!ntsc_setup.base_palette && !ntsc_setup.palette) ||
-		    !is_rgb) {
-			/* Only apply these to generated_palettes and
-			   to a custom external palette.
-			*/
+		    (!is_rgb && !is_custom)) {
+			/* Only apply these to generated_palettes */
 			ntsc_setup.saturation = emu->config->ntsc_palette_saturation - 1;
 			ntsc_setup.hue = emu->config->ntsc_palette_hue / 180;
 		} else {

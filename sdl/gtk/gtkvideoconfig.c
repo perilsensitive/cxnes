@@ -480,11 +480,11 @@ static GtkWidget *create_ntsc_palette_config_frame(GtkWidget *dialog, struct con
 	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_hue, 1, 1, 1, 1);
 	tmp = gtk_label_new_with_mnemonic("_Contrast:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 1, 1, 1);
 	spin_ntsc_contrast = config_double_spinbutton(dialog, config, 0.01,
 						      "ntsc_palette_contrast");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_contrast);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_contrast, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_contrast, 3, 1, 1, 1);
 	tmp = gtk_label_new_with_mnemonic("_Brightness:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 0, 1, 1);
@@ -494,20 +494,20 @@ static GtkWidget *create_ntsc_palette_config_frame(GtkWidget *dialog, struct con
 	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_brightness, 3, 0, 1, 1);
 	tmp = gtk_label_new_with_mnemonic("_Gamma:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 2, 1, 1);
 	spin_ntsc_gamma = config_double_spinbutton(dialog, config, 0.01,
 						   "ntsc_palette_gamma");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_gamma);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_gamma, 3, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_gamma, 3, 2, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("_RGB Decoder:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 2, 1, 1);
 	combo_ntsc_rgb_decoder = config_combo_box(dialog, config,
 						  "ntsc_rgb_decoder");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_ntsc_rgb_decoder);
 	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), combo_ntsc_rgb_decoder,
-			3, 2, 1, 1);
+			1, 2, 1, 1);
 
 #if 0
 	tmp = gtk_label_new("Sharpness:");
