@@ -512,7 +512,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_FLOAT(ntsc_palette_hue, 0, -180, 180),
 	CONFIG_FLOAT(ntsc_palette_contrast, 1.0, 0.5, 1.5),
 	CONFIG_FLOAT(ntsc_palette_brightness, 1.0, 0.5, 1.5),
-	CONFIG_FLOAT(ntsc_palette_gamma, 0.2, -1, 1),
+	CONFIG_FLOAT(ntsc_palette_gamma, 0.0, -1, 1),
 	CONFIG_STRING_LIST(ntsc_rgb_decoder, "consumer",
 			   valid_rgb_decoder_values,
 			   valid_rgb_decoder_names),
