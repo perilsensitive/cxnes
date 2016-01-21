@@ -807,3 +807,15 @@ int input_joystick_is_gamecontroller(int index)
 
 	return 0;
 }
+
+void input_poll_events(void)
+{
+	SDL_Event event;
+
+	SDL_PumpEvents();
+
+	while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN,
+			      SDL_MULTIGESTURE) > 0) {
+		input_process_event(&event);
+	}
+}

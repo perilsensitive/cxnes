@@ -169,6 +169,8 @@ extern struct board_info board_camerica_bf9097;
 extern struct board_info board_camerica_aladdin;
 extern struct board_info board_nina03_06;
 extern struct board_info board_vs_unisystem;
+extern struct board_info board_vs_pinball;
+extern struct board_info board_vs_pinballj;
 extern struct board_info board_jaleco_jf16;
 extern struct board_info board_ntdec_193;
 extern struct board_info board_74x139_74;
@@ -336,6 +338,8 @@ static struct board_info *board_info_list[] = {
 	&board_camerica_aladdin,
 	&board_nina03_06,
 	&board_vs_unisystem,
+	&board_vs_pinball,
+	&board_vs_pinballj,
 	&board_irem_74x161_161_21_138,
 	&board_jaleco_jf16,
 	&board_irem_holy_diver,

@@ -211,6 +211,7 @@ static SDL_Keycode keysym_map_media[] = {
 	SDLK_UNKNOWN, SDLK_PASTE, SDLK_UNKNOWN, SDLK_UNKNOWN,
 };
 
+extern void input_poll_events();
 extern void process_events(void);
 extern GtkWidget *gui_build_menubar(GtkWidget *gtkwindow);
 
@@ -964,6 +965,7 @@ static gboolean gui_process_sdl_events(gpointer user_data)
 
 	emu = user_data;
 	process_events();
+	input_poll_events();
 	input_process_queue(1);
 	if (emu_loaded(emu) && !emu_paused(emu)) {
 		return FALSE;

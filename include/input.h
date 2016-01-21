@@ -256,6 +256,7 @@ struct input_event *input_insert_event(union input_new_event *event,
 				       struct emu_action *emu_action);
 int input_queue_event(union input_new_event *event);
 int input_process_queue(int force);
+void input_poll_events(void);
 int input_get_num_joysticks(void);
 const char *input_get_joystick_name(int index);
 int input_get_joystick_guid(int index, char *buffer, size_t size);

@@ -184,7 +184,8 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	if (four_player_mode == FOUR_PLAYER_MODE_AUTO)
 		four_player_mode = emu->io->auto_four_player_mode;
 
-	if (!io->queue_processed && (cycles >= 242 * 341 * emu->ppu_clock_divider)) {
+	if (!io->queue_processed) {
+		input_poll_events();
 		input_process_queue(0);
 		io->queue_processed = 1;
 	}
@@ -230,7 +231,8 @@ static CPU_READ_HANDLER(io_read_handler)
 
 	port = addr - 0x4016;
 
-	if (!io->queue_processed && (cycles >= 242 * 341 * emu->ppu_clock_divider)) {
+	if (!io->queue_processed) {
+		input_poll_events();
 		input_process_queue(0);
 		io->queue_processed = 1;
 	}

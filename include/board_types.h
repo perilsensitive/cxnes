@@ -241,6 +241,8 @@
 
 /* VS. Unisystem games */
 #define BOARD_TYPE_VS_UNISYSTEM            INES_TO_BOARD_TYPE( 99,  0, 0, 0)
+#define BOARD_TYPE_VS_PINBALL              INES_TO_BOARD_TYPE( 99,  0, 0, 1)
+#define BOARD_TYPE_VS_PINBALLJ             INES_TO_BOARD_TYPE( 99,  0, 0, 2)
 #define BOARD_TYPE_VS_RBI_BASEBALL         INES_TO_BOARD_TYPE(206,  0, 1, 0)
 #define BOARD_TYPE_VS_TKO_BOXING           INES_TO_BOARD_TYPE(206,  0, 2, 0)
 #define BOARD_TYPE_VS_SUPER_XEVIOUS        INES_TO_BOARD_TYPE(206,  0, 3, 0)
