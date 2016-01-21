@@ -35,29 +35,6 @@
 /* Implementation of standard NES/Famicom controllers,
    FourScore and Famicom-style 4-player adapters. */
 
-/* Compatibility notes:
-
-   - All Famicom accessories are designed to work with the standard
-     controllers still connected since the original FC had hardwired
-     controllers.
-
-   - FourScore mode should be OK for every game and accessory (unless
-     the game doesn't like getting something other than all 0s or 1s
-     after the first 8 reads or the accessory uses P1,D0).  The
-     FourScore only uses D0 on both ports, leaving D1-D4 of both ports
-     wide open.
-
-   - All three American accessories (Zapper, Power Pad, and Arkanoid
-     controller) use D3 and D4 for output, so they should work even
-     with a controller also connected to the same port (in theory).
-     They should also work in Famicom 4-player mode since the 3rd and
-     4th controllers use P0,D1 and P1,D1.
-
-   - Famicom 4-player mode isn't compatible with most FC accessories,
-     as they tend to use P0,D1 and/or P1,D1 for output.  The Light Gun
-     is an exception, since it uses P1,D3 and P1,D4.
-*/
-
 static int controller_connect(struct io_device *dev);
 static void controller_disconnect(struct io_device *dev);
 static uint8_t controller_read(struct io_device *, int port, int mode,
