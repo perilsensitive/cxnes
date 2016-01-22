@@ -674,6 +674,67 @@ struct io_device *io_find_auto_device(struct io_state *io, int port)
 	return device;
 }
 
+void io_set_remember_input_devices(struct io_state *io, int enabled)
+{
+	struct io_device *device;
+
+	if (enabled == io->emu->config->remember_input_devices)
+		return;
+
+	io->emu->config->remember_input_devices = enabled;
+
+	if (enabled) {
+		const char *config_names[] = { "default_port1_device", "default_port2_device",
+					       "default_port3_device", "default_port4_device",
+					       "default_exp_device", };
+
+		const char *four_player_string;
+		int i;
+
+		for (i = PORT_1; i <= PORT_EXP; i++) {
+			int id = io->device_id[i];
+			const char *device_string;
+			device = io->selected_device[i];
+
+			if (id == IO_DEVICE_AUTO) {
+				device_string = "auto";
+			} else {
+				device_string = device->config_id;
+			}
+
+			rom_config_set(io->emu->config, config_names[i],
+				       device_string);
+		}
+
+		four_player_string = "auto";
+		switch (io->four_player_mode) {
+		case FOUR_PLAYER_MODE_AUTO:
+			four_player_string = "auto";
+			break;
+		case FOUR_PLAYER_MODE_NONE:
+			four_player_string = "none";
+			break;
+		case FOUR_PLAYER_MODE_FC:
+			four_player_string = "famicom";
+			break;
+		case FOUR_PLAYER_MODE_NES:
+			four_player_string = "nes";
+			break;
+		}
+
+		rom_config_set(io->emu->config, "four_player_mode", four_player_string);
+	} else {
+		rom_config_set(io->emu->config, "default_port1_device", "auto");
+		rom_config_set(io->emu->config, "default_port2_device", "auto");
+		rom_config_set(io->emu->config, "default_port3_device", "auto");
+		rom_config_set(io->emu->config, "default_port4_device", "auto");
+		rom_config_set(io->emu->config, "default_exp_device", "auto");
+		rom_config_set(io->emu->config, "four_player_mode", "auto");
+	}
+
+	emu_save_rom_config(io->emu);
+}
+
 void io_device_select(struct io_state *io, int port, int id)
 {
 	struct io_device *device;
@@ -705,8 +766,13 @@ void io_device_select(struct io_state *io, int port, int id)
 	device = io_find_device(io, port, id);
 
 	if (io->initialized && device && config_param) {
-		rom_config_set(io->emu->config, config_param,
-			(id == IO_DEVICE_AUTO) ? "auto" : device->config_id);
+		const char *config_id;
+		if ((id == IO_DEVICE_AUTO) || !io->emu->config->remember_input_devices)
+			config_id = "auto";
+		else
+			config_id = device->config_id;
+		
+		rom_config_set(io->emu->config, config_param, config_id);
 		emu_save_rom_config(io->emu);
 	}
 
@@ -865,6 +931,9 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 	default:
 		mode_str = "";
 	}
+
+	if (!io->emu->config->remember_input_devices)
+		mode_str = "auto";
 
 	rom_config_set(io->emu->config, "four_player_mode", mode_str);
 	emu_save_rom_config(io->emu);

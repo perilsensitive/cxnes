@@ -57,6 +57,8 @@ extern struct binding_item default_modifiers[];
 struct config {
 	/* PPU/Video options */
 	const char *sprite_limit_mode;
+	int remember_system_type;
+	int remember_input_devices;
 
 	int fps_display_enabled;
 	int scanline_renderer_enabled;

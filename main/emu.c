@@ -58,74 +58,117 @@
 #define PAL_FRAMERATE (PAL_PPU_CLOCK_RATE / PAL_PPU_CLOCKS_PER_FRAME)
 #define DENDY_FRAMERATE (DENDY_PPU_CLOCK_RATE / DENDY_PPU_CLOCKS_PER_FRAME)
 
-const char *system_type_console_strings[] = {
-	"Auto",
-	"Famicom (RP2C02 PPU)",
-	"Famicom RGB (RP2C03B PPU)",
-	"NTSC NES (RP2C02 PPU)",
-	"NTSC NES RGB (RP2C03B PPU)",
-	"PAL NES (RP2C07 PPU)",
-	"Dendy",
-	NULL,
-};
-
-const char *system_type_vs_strings[] = {
-	"Auto",
-	"VS. (RP2C03B PPU)",
-	"VS. (RP2C03G PPU)",
-	"VS. (RP2C04-0001 PPU)",
-	"VS. (RP2C04-0002 PPU)",
-	"VS. (RP2C04-0003 PPU)",
-	"VS. (RP2C04-0004 PPU)",
-	"VS. (RC2C03B PPU)",
-	"VS. (RC2C03C PPU)",
-	"VS. (RC2C05-01 PPU)",
-	"VS. (RC2C05-02 PPU)",
-	"VS. (RC2C05-03 PPU)",
-	"VS. (RC2C05-04 PPU)",
-	"VS. (RC2C05-05 PPU)",
-	NULL,
-};
-
-const char *system_type_playchoice_strings[] = {
-	"Auto",
-	"PlayChoice (RP2C03B PPU)",
-	NULL,
-};
-
-const int system_type_console_values[] = {
-	EMU_SYSTEM_TYPE_AUTO,
-	EMU_SYSTEM_TYPE_FAMICOM,
-	EMU_SYSTEM_TYPE_FAMICOM_RGB,
-	EMU_SYSTEM_TYPE_NES,
-	EMU_SYSTEM_TYPE_NES_RGB,
-	EMU_SYSTEM_TYPE_PAL_NES,
-	EMU_SYSTEM_TYPE_DENDY,
-	EMU_SYSTEM_TYPE_UNDEFINED,
-};
-
-const int system_type_vs_values[] = {
-	EMU_SYSTEM_TYPE_AUTO,
-	EMU_SYSTEM_TYPE_VS_RP2C03B,
-	EMU_SYSTEM_TYPE_VS_RP2C03G,
-	EMU_SYSTEM_TYPE_VS_RP2C04_0001,
-	EMU_SYSTEM_TYPE_VS_RP2C04_0002,
-	EMU_SYSTEM_TYPE_VS_RP2C04_0003,
-	EMU_SYSTEM_TYPE_VS_RP2C04_0004,
-	EMU_SYSTEM_TYPE_VS_RC2C03B,
-	EMU_SYSTEM_TYPE_VS_RC2C03C,
-	EMU_SYSTEM_TYPE_VS_RC2C05_01,
-	EMU_SYSTEM_TYPE_VS_RC2C05_02,
-	EMU_SYSTEM_TYPE_VS_RC2C05_03,
-	EMU_SYSTEM_TYPE_VS_RC2C05_04,
-	EMU_SYSTEM_TYPE_VS_RC2C05_05,
-	EMU_SYSTEM_TYPE_UNDEFINED,
-};
-
-const int system_type_playchoice_values[] = {
-	EMU_SYSTEM_TYPE_AUTO,
-	EMU_SYSTEM_TYPE_PLAYCHOICE,
-	EMU_SYSTEM_TYPE_UNDEFINED,
+const struct system_type_info system_type_info[] = {
+	{
+		.type = EMU_SYSTEM_TYPE_AUTO,
+		.value = "auto",
+		.description = "Auto",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_FAMICOM,
+		.value = "famicom",
+		.description = "Famicom (RP2C02 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_FAMICOM_RGB,
+		.value = "famicom_rgb",
+		.description = "Famicom RGB (RP2C03B PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_NES,
+		.value = "nes",
+		.description = "NTSC NES (RP2C02 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_NES_RGB,
+		.value = "nes_rgb",
+		.description = "NTSC NES RGB (RP2C03B PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_PAL_NES,
+		.value = "pal_nes",
+		.description = "PAL NES (RP2C07 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_DENDY,
+		.value = "dendy",
+		.description = "Dendy",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C03B,
+		.value = "rp2c03b",
+		.description = "VS. (RP2C03B PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C03G,
+		.value = "rp2c03g",
+		.description = "VS. (RP2C03G PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C04_0001,
+		.value = "rp2c04-0001",
+		.description = "VS. (RP2C04-0001 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C04_0002,
+		.value = "rp2c04-0002",
+		.description = "VS. (RP2C04-0002 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C04_0003,
+		.value = "rp2c04-0003",
+		.description = "VS. (RP2C04-0003 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RP2C04_0004,
+		.value = "rp2c04-0004",
+		.description = "VS. (RP2C04-0004 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C03B,
+		.value = "rc2c03b",
+		.description = "VS. (RC2C03B PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C03C,
+		.value = "rc2c03c",
+		.description = "VS. (RC2C03C PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C05_01,
+		.value = "rc2c05-01",
+		.description = "VS. (RC2C05-01 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C05_02,
+		.value = "rc2c05-02",
+		.description = "VS. (RC2C05-02 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C05_03,
+		.value = "rc2c05-03",
+		.description = "VS. (RC2C05-03 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C05_04,
+		.value = "rc2c05-04",
+		.description = "VS. (RC2C05-04 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RC2C05_05,
+		.value = "rc2c05-05",
+		.description = "VS. (RC2C05-05 PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_PLAYCHOICE,
+		.value = "playchoice",
+		.description = "PlayChoice (RP2C03B PPU)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_UNDEFINED,
+		.value = NULL,
+		.description = NULL,
+	}
 };
 
 #if GUI_ENABLED
@@ -185,34 +228,44 @@ int emu_init(struct emu *emu)
 	return 0;
 }
 
-const char *emu_get_system_type_name(int type)
+static enum system_type find_system_type_by_config_value(const char *value)
 {
-	const int *list;
-	const char **name_list;
+	int i;
+
+	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED;
+	     i++) {
+		if (value && system_type_info[i].value &&
+		    strcasecmp(value, system_type_info[i].value) == 0) {
+			break;
+		}
+	}
+
+	return system_type_info[i].type;
+}
+
+static const char *find_config_value_by_system_type(enum system_type type)
+{
+	int i;
+
+	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED;
+	     i++) {
+		if (type == system_type_info[i].type)
+			break;
+	}
+
+	return system_type_info[i].value;
+}
+
+const char *emu_get_system_type_name(enum system_type type)
+{
 	int name_index;
 	int i;
 
 //	auto_index = 0;
 	name_index = -1;
 
-	if ((type >= EMU_SYSTEM_TYPE_VS_RP2C03B) &&
-	    (type <= EMU_SYSTEM_TYPE_VS_RC2C05_05)) {
-		list = system_type_vs_values;
-		name_list = system_type_vs_strings;
-	} else if ((type >= EMU_SYSTEM_TYPE_FAMICOM) &&
-		   (type <= EMU_SYSTEM_TYPE_DENDY)) {
-		list = system_type_console_values;
-		name_list = system_type_console_strings;
-	} else if ((type >= EMU_SYSTEM_TYPE_PLAYCHOICE) &&
-		   (type <= EMU_SYSTEM_TYPE_PLAYCHOICE)) {
-		list = system_type_playchoice_values;
-		name_list = system_type_playchoice_strings;
-	} else {
-		return NULL;
-	}
-
-	for (i = 0; list[i] != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
-		if (type == list[i]) {
+	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
+		if (type == system_type_info[i].type) {
 			name_index = i;
 			break;
 		}
@@ -221,47 +274,34 @@ const char *emu_get_system_type_name(int type)
 	if (name_index < 0)
 		return NULL;
 
-	return name_list[name_index];
+	return system_type_info[name_index].description;
 }
 
 int emu_select_next_system_type(struct emu *emu)
 {
 	int type;
-	const int *list;
-	const char **name_list;
 	int index;
 	int auto_index;
 	int i;
+	int is_vs;
 
 	type = emu->system_type;
 	auto_index = 0;
 
+	if ((type == EMU_SYSTEM_TYPE_AUTO) && (emu->guessed_system_type == EMU_SYSTEM_TYPE_PLAYCHOICE))
+		return 0;
+	else if (emu->system_type == EMU_SYSTEM_TYPE_PLAYCHOICE)
+		return 0;
+
 	if (type == EMU_SYSTEM_TYPE_AUTO)
-		type = emu->guessed_system_type;
-
-	if ((type >= EMU_SYSTEM_TYPE_VS_RP2C03B) &&
-	    (type <= EMU_SYSTEM_TYPE_VS_RC2C05_05)) {
-		list = system_type_vs_values;
-		name_list = system_type_vs_strings;
-	} else if ((type >= EMU_SYSTEM_TYPE_FAMICOM) &&
-		   (type <= EMU_SYSTEM_TYPE_DENDY)) {
-		list = system_type_console_values;
-		name_list = system_type_console_strings;
-	} else if ((type >= EMU_SYSTEM_TYPE_PLAYCHOICE) &&
-		   (type <= EMU_SYSTEM_TYPE_PLAYCHOICE)) {
-		list = system_type_playchoice_values;
-		name_list = system_type_playchoice_strings;
-	} else {
-		return -1;
-	}
-
-	/* Reset type again now that we know which list to use. */
-	type = emu->system_type;
+		is_vs = system_type_is_vs(emu->guessed_system_type);
+	else
+		is_vs = system_type_is_vs(type);
 
 	index = -1;
 
-	for (i = 0; list[i] != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
-		if (list[i] == type)
+	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
+		if (system_type_info[i].type == type)
 			index = i;
 	}
 
@@ -269,14 +309,24 @@ int emu_select_next_system_type(struct emu *emu)
 		return -1;
 
 	index++;
-	if (list[index] == EMU_SYSTEM_TYPE_UNDEFINED)
+	for (i = index; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
+		if (system_type_is_vs(system_type_info[i].type) == is_vs) {
+			break;
+		}
+	}
+	index = i;
+
+	if (system_type_info[index].type == EMU_SYSTEM_TYPE_UNDEFINED)
 		index = 0;
 
-	if (list[index] == EMU_SYSTEM_TYPE_AUTO) {
+	if (system_type_info[index].type == EMU_SYSTEM_TYPE_AUTO) {
 		auto_index = -1;
-		for (i = 0; list[i] != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
-			if (list[i] == emu->guessed_system_type)
+		for (i = 0; system_type_info[i].type !=
+			     EMU_SYSTEM_TYPE_UNDEFINED; i++) {
+			if (system_type_info[i].type ==
+			    emu->guessed_system_type) {
 				auto_index = i;
+			}
 		}
 
 		if (auto_index == -1)
@@ -284,11 +334,14 @@ int emu_select_next_system_type(struct emu *emu)
 	}
 
 
-	emu_set_system_type(emu, list[index]);
-	if (list[index] == EMU_SYSTEM_TYPE_AUTO) {
-		osdprintf("System type: Auto [%s]\n", name_list[auto_index]);
+	emu_set_system_type(emu, system_type_info[index].type);
+	if (system_type_info[index].type == EMU_SYSTEM_TYPE_AUTO) {
+		osdprintf("System type: Auto [%s]\n",
+			  system_type_info[auto_index].description);
+
 	} else {
-		osdprintf("System type: %s\n", name_list[index]);
+		osdprintf("System type: %s\n",
+			  system_type_info[index].description);
 	}
 
 	return 0;
@@ -338,14 +391,60 @@ int emu_set_framerate(struct emu *emu, int framerate)
 	return 0;
 }
 
-int emu_set_system_type(struct emu *emu, int system_type)
+void emu_set_remember_system_type(struct emu *emu, int enabled)
+{
+	struct config *config;
+	const char *rom_type;
+	const char *rom_type_name;
+	enum system_type system_type;
+
+	rom_type = NULL;
+	rom_type_name = NULL;
+
+	if (enabled)
+		system_type = emu->system_type;
+	else
+		system_type = EMU_SYSTEM_TYPE_AUTO;
+
+	config = emu->config;
+
+	if (system_type_is_vs(emu->system_type)) {
+		rom_type_name = "rom_vs_ppu_type";
+		rom_type = find_config_value_by_system_type(system_type);
+	} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
+		rom_type_name = "rom_console_type";
+		rom_type = find_config_value_by_system_type(system_type);
+	}
+
+	if (emu->loaded && (enabled != config->remember_system_type)) {
+		char *path;
+
+		config->remember_system_type = enabled;
+
+		if (rom_type_name && rom_type) {
+			rom_config_set(emu->config, rom_type_name, rom_type);
+
+		}
+
+		path = emu_generate_rom_config_path(emu, 1);
+		if (path) {
+			config_save_rom_config(emu->config, path);
+			free(path);
+		}
+	}
+
+}
+
+int emu_set_system_type(struct emu *emu, enum system_type system_type)
 {
 	int old_system_type;
-	const char *type_name;
-	const char *type;
 	struct config *config;
 	const char *preferred_type;
 	const char *rom_type;
+	const char *rom_type_name;
+
+	rom_type = NULL;
+	rom_type_name = NULL;
 
 	if (system_type == EMU_SYSTEM_TYPE_UNDEFINED)
 		return -1;
@@ -361,151 +460,35 @@ int emu_set_system_type(struct emu *emu, int system_type)
 	   user preferences; if the user has not indicated
 	   a preference, use the type passed as an argument.
 	*/
-	   
-	if (old_system_type == EMU_SYSTEM_TYPE_UNDEFINED) {
 
+	if (old_system_type == EMU_SYSTEM_TYPE_UNDEFINED) {
 		emu->guessed_system_type = system_type;
 
 		if (system_type_is_vs(system_type)) {
-			type = config->rom_vs_ppu_type;
-			type_name = "rom_vs_ppu_type";
-
-			if (strcasecmp(type, "auto") == 0)
-				system_type = EMU_SYSTEM_TYPE_AUTO;
-			else if (strcasecmp(type, "rp2c03b") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C03B;
-			else if (strcasecmp(type, "rp2c03g") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C03G;
-			else if (strcasecmp(type, "rp2c04-0001") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C04_0001;
-			else if (strcasecmp(type, "rp2c04-0002") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C04_0002;
-			else if (strcasecmp(type, "rp2c04-0003") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C04_0003;
-			else if (strcasecmp(type, "rp2c04-0004") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RP2C04_0004;
-			else if (strcasecmp(type, "rc2c03b") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C03B;
-			else if (strcasecmp(type, "rc2c03c") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C03C;
-			else if (strcasecmp(type, "rc2c05-01") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C05_01;
-			else if (strcasecmp(type, "rc2c05-02") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C05_02;
-			else if (strcasecmp(type, "rc2c05-03") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C05_03;
-			else if (strcasecmp(type, "rc2c05-04") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C05_04;
-			else if (strcasecmp(type, "rc2c05-05") == 0)
-				system_type = EMU_SYSTEM_TYPE_VS_RC2C05_05;
-
+			rom_type = config->rom_vs_ppu_type;
+			rom_type_name = "rom_vs_ppu_type";
 		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
-			preferred_type = config->preferred_console_type;
 			rom_type = config->rom_console_type;
-			type_name = "rom_console_type";
+			rom_type_name = "rom_console_type";
+			preferred_type = config->preferred_console_type;
 
 			if (strcasecmp(rom_type, "preferred") == 0)
-				type = preferred_type;
-			else
-				type = rom_type;
-
-			if (strcasecmp(type, "auto") == 0)
-				system_type = EMU_SYSTEM_TYPE_AUTO;
-			else if (strcasecmp(type, "famicom") == 0)
-				system_type = EMU_SYSTEM_TYPE_FAMICOM;
-			else if (strcasecmp(type, "famicom_rgb") == 0)
-				system_type = EMU_SYSTEM_TYPE_FAMICOM_RGB;
-			else if (strcasecmp(type, "nes") == 0)
-				system_type = EMU_SYSTEM_TYPE_NES;
-			else if (strcasecmp(type, "nes_rgb") == 0)
-				system_type = EMU_SYSTEM_TYPE_NES_RGB;
-			else if (strcasecmp(type, "pal_nes") == 0)
-				system_type = EMU_SYSTEM_TYPE_PAL_NES;
-			else if (strcasecmp(type, "dendy") == 0)
-				system_type = EMU_SYSTEM_TYPE_DENDY;
+				rom_type = preferred_type;
 		}
-	} else {
-		if (system_type_is_vs(system_type)) {
-			type = config->rom_vs_ppu_type;
-			type_name = "rom_vs_ppu_type";
 
-			switch (system_type) {
-			case EMU_SYSTEM_TYPE_AUTO:
-				type = "auto";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C03B:
-				type = "rp2c03b";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C03G:
-				type = "rp2c03g";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C04_0001:
-				type = "rp2c04-0001";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C04_0002:
-				type = "rp2c04-0002";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C04_0003:
-				type = "rp2c04-0003";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RP2C04_0004:
-				type = "rp2c04-0004";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C03B:
-				type = "rc2c03b";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C03C:
-				type = "rc2c03c";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C05_01:
-				type = "rc2c05-01";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C05_02:
-				type = "rc2c05-02";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C05_03:
-				type = "rc2c05-03";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C05_04:
-				type = "rc2c05-04";
-				break;
-			case EMU_SYSTEM_TYPE_VS_RC2C05_05:
-				type = "rc2c05-05";
-				break;
-			}
+		if (rom_type)
+			system_type = find_system_type_by_config_value(rom_type);
+	} else {
+		if (system_type_is_vs(system_type) || system_type_is_vs(emu->system_type)) {
+			rom_type_name = "rom_vs_ppu_type";
+			rom_type = find_config_value_by_system_type(system_type);
 		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
 			preferred_type = config->preferred_console_type;
-			rom_type = config->rom_console_type;
-			type_name = "rom_console_type";
+			rom_type_name = "rom_console_type";
+			rom_type = find_config_value_by_system_type(system_type);
 
 			if (strcasecmp(rom_type, "preferred") == 0)
-				type = preferred_type;
-			else
-				type = rom_type;
-
-			switch (system_type) {
-			case EMU_SYSTEM_TYPE_AUTO:
-				type = "auto";
-				break;
-			case EMU_SYSTEM_TYPE_FAMICOM:
-				type = "famicom";
-				break;
-			case EMU_SYSTEM_TYPE_FAMICOM_RGB:
-				type = "famicom_rgb";
-				break;
-			case EMU_SYSTEM_TYPE_NES:
-				type = "nes";
-				break;
-			case EMU_SYSTEM_TYPE_NES_RGB:
-				type = "nes_rgb";
-				break;
-			case EMU_SYSTEM_TYPE_PAL_NES:
-				type = "pal_nes";
-				break;
-			case EMU_SYSTEM_TYPE_DENDY:
-				type = "dendy";
-				break;
-			}
+				rom_type = preferred_type;
 		}
 	}
 
@@ -593,16 +576,21 @@ int emu_set_system_type(struct emu *emu, int system_type)
 		audio_apply_config(emu);
 		emu_apply_config(emu);
 
-		rom_config_set(emu->config, type_name, type);
+		if (!emu->config->remember_system_type)
+			rom_type = "auto";
 
-		emu->loaded = 1;
+		if (rom_type_name && rom_type) {
+			rom_config_set(emu->config, rom_type_name, rom_type);
 
-		emu_reset(emu, 1);
+			emu->loaded = 1;
 
-		path = emu_generate_rom_config_path(emu, 1);
-		if (path) {
-			config_save_rom_config(emu->config, path);
-			free(path);
+			emu_reset(emu, 1);
+
+			path = emu_generate_rom_config_path(emu, 1);
+			if (path) {
+				config_save_rom_config(emu->config, path);
+				free(path);
+			}
 		}
 	}
 

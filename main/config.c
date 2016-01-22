@@ -389,6 +389,8 @@ static const char *valid_scaling_modes[] = {
 #define CONFIG_END() { .name = NULL, .type = CONFIG_NONE }
 
 static struct config_parameter rom_config_parameters[] = {
+	CONFIG_BOOLEAN(remember_input_devices, 0),
+	CONFIG_BOOLEAN(remember_system_type, 0),
 	CONFIG_STRING_LIST(rom_console_type, "preferred",
 			   valid_rom_console_type_values,
 			   valid_rom_console_type_names),
