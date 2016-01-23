@@ -23,12 +23,7 @@ static struct io_device vs_unisystem_bankswitch;
 
 static CPU_READ_HANDLER(vs_pinball_read_handler)
 {
-	if (cpu_is_opcode_fetch(emu->cpu)) {
-		/* Unofficial NOP that uses absolute address mode */
-		value = 0x0c;
-	}
-
-	return value;
+	return 0xea; /* NOP */
 }
 
 static int vs_unisystem_init(struct board *board)
@@ -39,10 +34,10 @@ static int vs_unisystem_init(struct board *board)
 	device = io_register_device(board->emu->io, &vs_unisystem_bankswitch, -1);
 	io_connect_device(device);
 
-	/* Vs. Pinball (both known versions) have a bug that prevents
+	/* Vs. Pinball (both known versions) has a bug that prevents
 	   the player from entering his or her initials in some cases.
-	   Patch out a controller read routine call that occurs before
-	   NMI on the name entry screen to work around this.
+	   Patch out an extra controller read routine call that occurs
+	   before NMI on the name entry screen to work around this.
 
 	   Other emulators don't seem to have this problem because
 	   they emulate the PPU frame starting at VBlank (instead of
@@ -50,14 +45,14 @@ static int vs_unisystem_init(struct board *board)
 	   reset), so the controller read call during NMI is the first
 	   one to see the updated input state.
 
-	   This bug is harder to hit on real hardware since the
+	   This bug is harder to hit on real hardware since the extra
 	   pre-NMI read that causes the problem happens early in the
 	   frame, around scanline 6 or 7.  This leaves at least 254
 	   scanlines where the player's button press can happen and
 	   still be read correctly.
 
 	   It's an ugly hack, but other solutions either require a lot
-	   more code or add input latency.
+	   more code, add input latency or both.
 	*/
 
 	addr = 0;
@@ -67,7 +62,7 @@ static int vs_unisystem_init(struct board *board)
 		addr = 0x8e04;
 
 	if (addr) {
-		cpu_set_read_handler(board->emu->cpu, addr, 1, 0,
+		cpu_set_read_handler(board->emu->cpu, addr, 3, 0,
 				     vs_pinball_read_handler);
 	}
 
@@ -78,6 +73,7 @@ static void vs_unisystem_reset(struct board *board, int hard)
 {
 	if (hard) {
 		int banks = board->prg_rom.size / SIZE_8K;
+		struct rom *rom = board->emu->rom;
 		int i;
 
 		board->prg_banks[1].perms = MAP_PERM_NONE;
@@ -95,6 +91,13 @@ static void vs_unisystem_reset(struct board *board, int hard)
 				banks--;
 			}
 		}
+
+		if ((rom->info.board_type == BOARD_TYPE_VS_GUMSHOE) &&
+		    (rom->info.prg_size[0] == SIZE_16K)) {
+			board->prg_banks[2].bank++;
+			board->prg_banks[3].bank++;
+			board->prg_banks[4].bank++;
+		}
 	}
 }
 
@@ -105,10 +108,18 @@ static void vs_unisystem_bankswitch_write(struct io_device *dev, uint8_t value,
 
 	board->chr_banks0[0].bank = value >> 2;
 	board_chr_sync(board, 0);
-	if (board->prg_rom.size > SIZE_32K) {
+
+	if (board->info->board_type == BOARD_TYPE_VS_GUMSHOE) {
+		struct rom *rom = dev->emu->rom;
+
 		/* VS. Gumshoe has an extra 8K bank of PRG ROM it swaps at
 		   the same time as the CHR ROM. */
 		board->prg_banks[1].bank = value & 0x04;
+
+		/* Handle split-rom format; prg 0 is 16K, the rest are 8K. */
+		if (rom->info.prg_size[0] == SIZE_16K)
+			board->prg_banks[1].bank >>= 2;
+
 		board_prg_sync(board);
 	}
 }
@@ -130,6 +141,18 @@ static struct board_funcs vs_unisystem_funcs = {
 struct board_info board_vs_unisystem = {
 	.board_type = BOARD_TYPE_VS_UNISYSTEM,
 	.name = "VS-UNISYSTEM",
+	.funcs = &vs_unisystem_funcs,
+	.init_prg = std_prg_8k,
+	.init_chr0 = std_chr_8k,
+	.max_prg_rom_size = SIZE_32K,
+	.max_chr_rom_size = SIZE_16K,
+	.min_wram_size = {SIZE_2K, 0},
+	.max_wram_size = {SIZE_2K, 0},
+};
+
+struct board_info board_vs_gumshoe = {
+	.board_type = BOARD_TYPE_VS_GUMSHOE,
+	.name = "VS-UNISYSTEM-GUMSHOE",
 	.funcs = &vs_unisystem_funcs,
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_8k,

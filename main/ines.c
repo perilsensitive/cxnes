@@ -294,8 +294,8 @@ int ines_generate_header(struct rom *rom, int version)
 
 	memset(&header, 0, sizeof(header));
 
-	prg_size  = rom->info.total_prg_size;
-	chr_size  = rom->info.total_chr_size;
+	prg_size = rom->info.prg_size[0];
+	chr_size = rom->info.chr_size[0];
 
 	prg_size += rom->offset - INES_HEADER_SIZE;
 	/* PRG data must be a multiple of 16K */
@@ -539,6 +539,10 @@ int ines_load(struct emu *emu, struct rom *rom)
 		header.chr_rom_banks * SIZE_8K;
 
 	switch (board_type) {
+	case BOARD_TYPE_VS_UNISYSTEM:
+		if (header.prg_rom_banks > 2)
+			board_type = BOARD_TYPE_VS_GUMSHOE;
+		break;
 	case BOARD_TYPE_NROM:
 		if (header.prg_rom_banks == 3)
 			board_type = BOARD_TYPE_NROM368;
@@ -722,6 +726,12 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	rom->info.total_prg_size = prg_size;
 	rom->info.total_chr_size = chr_size;
+	rom->info.prg_size[0] = prg_size;
+	rom->info.chr_size[0] = chr_size;
+
+	rom->info.prg_size_count = 1;
+	if (chr_size)
+		rom->info.chr_size_count = 1;
 
 	if (wram_nv[0])
 		rom->info.flags |= ROM_FLAG_WRAM0_NV;

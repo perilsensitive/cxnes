@@ -315,21 +315,6 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 			}
 		}
 
-		/* Quick fixup for Vs. System (mapper 99) ROMs with PRG size > 32K */
-		if ((rom->info.board_type == BOARD_TYPE_VS_UNISYSTEM) &&
-		    (rom->info.total_prg_size >= 40 * 1024)) {
-			uint8_t *buf = malloc(8192);
-			if (!buf)
-				return 0;
-
-			memcpy(buf, rom->buffer + rom->offset + SIZE_8K, SIZE_8K);
-			memmove(rom->buffer + rom->offset + SIZE_8K,
-				rom->buffer + rom->offset + SIZE_16K,
-				rom->info.total_prg_size - SIZE_16K);
-			memcpy(rom->buffer + rom->offset + SIZE_32K, buf, SIZE_8K);
-			free(buf);
-		}
-
 		/* Validate individual chip CRCs or SHA1s if present, then
 		   the combined CRC and/or SHA1, if present.
 		*/

@@ -31142,7 +31142,7 @@ WRAM0-Battery: True
 %%
 Name: Vs. Gumshoe (set GM5)
 System: VS-RC2C05-03
-Board: VS-UNISYSTEM
+Board: VS-UNISYSTEM-GUMSHOE
 Mirroring: Four-Screen
 PRG: 16k, 8k, 8k, 8k
 PRG CRC: 063B342F, E1B7915E, 5B73AA3C, 70E606BC
