@@ -180,6 +180,7 @@
 #define BOARD_TYPE_TxSROM                  INES_TO_BOARD_TYPE(118,  0, 0, 0)
 #define BOARD_TYPE_TQROM                   INES_TO_BOARD_TYPE(119,  0, 0, 0)
 #define BOARD_TYPE_UxROM                   INES_TO_BOARD_TYPE(  2,  0, 0, 0)
+#define BOARD_TYPE_UxROM_PC_PROWRESTLING   INES_TO_BOARD_TYPE(  2,  0, 0, 1)
 #define BOARD_TYPE_UxROM_NO_CONFLICT       INES_TO_BOARD_TYPE(  2,  1, 0, 0)
 #define BOARD_TYPE_UN1ROM                  INES_TO_BOARD_TYPE( 94,  0, 0, 0)
 #define BOARD_TYPE_UNROM_74HC08            INES_TO_BOARD_TYPE(180,  0, 0, 0)

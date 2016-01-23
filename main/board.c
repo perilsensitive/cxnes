@@ -152,6 +152,7 @@ extern struct board_info board_vrc4bd;
 extern struct board_info board_nrom;
 extern struct board_info board_nrom368;
 extern struct board_info board_uxrom;
+extern struct board_info board_uxrom_pc_prowrestling;
 extern struct board_info board_uxrom_no_conflict;
 extern struct board_info board_un1rom;
 extern struct board_info board_unrom_74hc08;
@@ -322,6 +323,7 @@ static struct board_info *board_info_list[] = {
 	&board_nrom,
 	&board_nrom368,
 	&board_uxrom,
+	&board_uxrom_pc_prowrestling,
 	&board_uxrom_no_conflict,
 	&board_un1rom,
 	&board_unrom_74hc08,
@@ -2091,7 +2093,7 @@ void board_prg_sync(struct board *board)
 	for (i = 0; i < prg_entries; i++) {
 		unsigned and;
 		unsigned or;
-		unsigned bank;
+		int bank;
 		uint8_t *data;
 		size_t data_size;
 		int type, perms;
@@ -2117,7 +2119,6 @@ void board_prg_sync(struct board *board)
 		or &= (~and);
 
 		type = b->type;
-		bank = ((b->bank & and) | or) >> b->shift;
 		perms = b->perms;
 
 		if (type == MAP_TYPE_AUTO) {
@@ -2156,6 +2157,12 @@ void board_prg_sync(struct board *board)
 			break;
 		}
 
+		bank = b->bank;
+		while ((bank < 0) && b->size) {
+			bank = (data_size / b->size) + bank;
+		}
+		bank = ((bank & and) | or) >> b->shift;
+
 		if (data) {
 			int offset;
 
@@ -2170,6 +2177,7 @@ void board_prg_sync(struct board *board)
 		} else {
 			data_size = b->size;
 		}
+
 
              /* printf("%x: mapping %x to %x, bank=%x bankfu=%x, size=%x, perms=%x\n", type, */
              /*        data, b->address, b->bank, bank, b->size, perms); */

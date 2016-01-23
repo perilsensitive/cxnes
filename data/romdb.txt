@@ -31765,7 +31765,7 @@ WRAM0: 8k
 %%
 Name: Pro Wrestling (PlayChoice-10)
 System: PlayChoice
-Board: UxROM
+Board: UxROM-PLAYCHOICE-PROWRESTLING
 Mirroring: Vertical
 PRG: 32k, 64k
 PRG CRC: 6242C2CE, EF6AA17C

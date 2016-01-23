@@ -90,7 +90,7 @@ extern CPU_WRITE_HANDLER(simple_chr_no_conflict_write_handler);
 extern CPU_WRITE_HANDLER(standard_mirroring_handler);
 
 struct bank {
-	unsigned int bank;
+	int bank;
 	int shift;
 	size_t size;
 	uint16_t address;
