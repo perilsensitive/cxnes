@@ -49,7 +49,7 @@ struct input_event_handler {
 	int (*handler) (void *, uint32_t, uint32_t);
 };
 
-enum {
+enum input_event_type {
 	INPUT_EVENT_TYPE_NONE = 0,
 	INPUT_EVENT_TYPE_KEYBOARD = 1,
 	INPUT_EVENT_TYPE_MOUSEMOTION = 2,
@@ -60,7 +60,7 @@ enum {
 	INPUT_EVENT_TYPE_JOYHAT = 7,
 };
 
-enum {
+enum joystick_hat_state {
 	INPUT_JOYHAT_CENTERED = 0x00,
 	INPUT_JOYHAT_UP = 0x01,
 	INPUT_JOYHAT_RIGHT = 0x02,

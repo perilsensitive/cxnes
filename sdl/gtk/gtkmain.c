@@ -759,9 +759,6 @@ void *gui_init(int argc, char **argv)
 	icon = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.png",
 						128, 128, NULL);
 
-	blank_cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
-	crosshair_cursor = gdk_cursor_new(GDK_CROSSHAIR);
-
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	gtk_window_set_title(GTK_WINDOW(gtkwindow), "cxNES");
@@ -879,6 +876,9 @@ void *gui_init(int argc, char **argv)
 	gdk_display = gdk_display_get_default();
 	device_manager = gdk_display_get_device_manager(gdk_display);
 	mouse = gdk_device_manager_get_client_pointer(device_manager);
+
+	blank_cursor = gdk_cursor_new_for_display(gdk_display, GDK_BLANK_CURSOR);
+	crosshair_cursor = gdk_cursor_new_for_display(gdk_display, GDK_CROSSHAIR);
 
 	f10_accelerator_fix();
 
