@@ -34,6 +34,7 @@ Supported Image/ROM Formats
   + "Raw" format (includes gaps, start marks and checksums)
 * NSF
 * Any of the above in a ZIP container
+* Split ROMs inside a ZIP container (provided split ROM checksums exist in the database)
 
 Input Devices/Accessories
 -------------------------
