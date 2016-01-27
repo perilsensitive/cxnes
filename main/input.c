@@ -19,7 +19,6 @@
 
 #include <errno.h>
 #include <ctype.h>
-#include <SDL.h>
 
 #include "emu.h"
 #include "controller.h"
