@@ -45,6 +45,7 @@ Input Devices/Accessories
 * Power Pad
 * Family Trainer
 * Family BASIC Keyboard
+* SUBOR Keyboard
 * SNES Mouse
 * VS. Unisystem support
 
@@ -67,9 +68,9 @@ iNES Mapper Support
 *  85,  86,  87,  88,  89,  90,  91,  93,  94,  95,  97,  99
 * 105, 107, 112, 113, 115, 118, 119, 133, 137, 138, 139, 140
 * 141, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153
-* 154, 155, 158, 159, 178, 180, 182, 184, 185, 189, 192, 193
-* 200, 201, 202, 203, 205, 206, 207, 209, 210, 211, 218, 225
-* 226, 228, 230, 231, 232, 234, 240, 241, 245, 246
+* 154, 155, 158, 159, 166, 167, 178, 180, 182, 184, 185, 189,
+* 192, 193, 200, 201, 202, 203, 205, 206, 207, 209, 210, 211,
+* 218, 225, 226, 228, 230, 231, 232, 234, 240, 241, 245, 246
 
 Patching
 --------
@@ -78,6 +79,7 @@ Patching
 * Soft-patching
 * Patches may be applied via GUI or specified on
   the command line
+* Patches may be included with ROM inside ZIP archive
 
 Video
 -----
@@ -98,9 +100,12 @@ Input
     joystick mappings
   + User-defined 'modifiers' useful for button combos on gamepads
     with few buttons (such as standard NES controllers)
+* Joysticks are automatically configured when plugged in or unplugged;
+  no need to restart the emulator.
 * SDL GameController API
   + Allows supported joysticks (including XInput devices) to have
-    a common set of sane default mappings.
+    a common set of mappings; remapping is not required when
+    switching between multiple supported devices.
   + Additional gamepads may be added by editing a plain-text
     mapping database
   + SDL Joystick API also supported for devices not recognized by
