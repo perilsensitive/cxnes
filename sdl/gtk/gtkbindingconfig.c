@@ -44,7 +44,7 @@ int sdl_grab_event;
 static int run_timer;
 static int timer_count;
 static int event_grabbed;
-struct input_event grabbed_event;
+struct input_event_node grabbed_event;
 static int mod_bits;
 uint32_t binding_config_action_id;
 static double orig_x, orig_y;
@@ -195,7 +195,7 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 	uint32_t data;
 	char buffer[80];
 	gchar *action_name;
-	struct input_event input_event;
+	struct input_event_node input_event;
 
 	if (mod > INPUT_MOD_KBD)
 		return;
@@ -807,7 +807,7 @@ static void load_default_bindings(GtkTreeStore *store,
 				  struct binding_item *bindings,
 				  int modifiers)
 {
-	struct input_event event;
+	struct input_event_node event;
 	char binding_name[80];
 	char modifier_string[80];
 	uint32_t emu_action;
@@ -893,7 +893,7 @@ loop_end:
 	}
 }
 
-static void load_binding(GtkTreeStore *store, struct input_event *event)
+static void load_binding(GtkTreeStore *store, struct input_event_node *event)
 {
 	int i;
 	char *name, *category;
@@ -1092,7 +1092,7 @@ static void load_bindings(GtkTreeStore *store)
 	int i;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
-		struct input_event *e;
+		struct input_event_node *e;
 
 		e = event_hash[i];
 		while (e) {

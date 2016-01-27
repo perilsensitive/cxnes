@@ -202,7 +202,7 @@ struct input_event_mapping {
 	struct emu_action *emu_action;
 };
 
-struct input_event {
+struct input_event_node {
 	union input_new_event event;
 
 	int modifier;
@@ -211,7 +211,7 @@ struct input_event {
 	int mapping_max;
 	struct input_event_mapping *mappings;
 
-	struct input_event *next;
+	struct input_event_node *next;
 };
 
 struct emu_action_id_map {
@@ -223,7 +223,7 @@ struct emu_action_id_map {
 
 const char *modifier_names[INPUT_MOD_COUNT];
 
-extern struct input_event *event_hash[EVENT_HASH_SIZE];
+extern struct input_event_node *event_hash[EVENT_HASH_SIZE];
 extern struct emu_action_id_map emu_action_id_map[];
 extern const char *category_names[];
 
@@ -242,7 +242,7 @@ void input_get_binding_config(char **config_data, size_t *config_data_size);
 int input_shutdown(void);
 const char *input_lookup_keyname_from_code(uint32_t keycode);
 uint32_t input_lookup_keycode_from_name(const char *value);
-int get_binding_name(char *buffer, int size, struct input_event *e);
+int get_binding_name(char *buffer, int size, struct input_event_node *e);
 void get_modifier_string(char *buffer, int size, int modbits);
 void get_event_name_and_category(uint32_t event_id, char **name, char **category);
 void input_reset_bindings(void);
@@ -251,7 +251,7 @@ struct emu_action *input_insert_emu_action(uint32_t id);
 int input_bindings_loaded(void);
 void input_configure_keyboard_modifiers(void);
 int input_add_modifier(union input_new_event *event, int mod);
-struct input_event *input_insert_event(union input_new_event *event,
+struct input_event_node *input_insert_event(union input_new_event *event,
 				       int mod,
 				       struct emu_action *emu_action);
 int input_queue_event(union input_new_event *event);

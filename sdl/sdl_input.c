@@ -63,7 +63,7 @@ extern int mouse_grabbed;
 
 #if GUI_ENABLED
 extern int gui_enabled;
-extern struct input_event grabbed_event;
+extern struct input_event_node grabbed_event;
 extern int sdl_grab_event;
 extern uint32_t binding_config_action_id;
 #endif

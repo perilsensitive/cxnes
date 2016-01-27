@@ -400,7 +400,7 @@ const char *modifier_names[INPUT_MOD_COUNT] = {
 
 static int ignore_events;
 static int mod_bits;
-struct input_event *event_hash[EVENT_HASH_SIZE];
+struct input_event_node *event_hash[EVENT_HASH_SIZE];
 static struct emu_action *emu_action_list;
 static int modifier_count[INPUT_MOD_COUNT];
 extern int running;
@@ -410,8 +410,8 @@ extern int mouse_grabbed;
 
 extern struct emu *emu;
 
-static int get_effective_modifiers(struct input_event *event, int mod);
-static struct input_event *input_lookup_event(union input_new_event *input_new_event);
+static int get_effective_modifiers(struct input_event_node *event, int mod);
+static struct input_event_node *input_lookup_event(union input_new_event *input_new_event);
 int input_handle_event(union input_new_event *input_event, int force);
 
 static int parse_mouse_binding(const char *buffer, union input_new_event *event)
@@ -595,7 +595,7 @@ void input_print_hash_bucket_sizes(void)
 	int i;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
-		struct input_event *p;
+		struct input_event_node *p;
 		int count;
 
 		count = 0;
@@ -770,7 +770,7 @@ int input_bind(const char *binding, const char *emu_actions)
 {
 	union input_new_event event;
 	struct emu_action *e;
-	struct input_event *input_event;
+	struct input_event_node *input_event;
 	uint32_t emu_action;
 	char *tmp;
 	char *saveptr;
@@ -894,7 +894,7 @@ void input_ignore_events(int ignore)
 
 void input_release_all(void)
 {
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *event;
 	int effective_mods;
 	int i, j;
@@ -936,7 +936,7 @@ void input_release_all(void)
 static void input_update_mod_bits(int mod, int set)
 {
 	int new_mod_bits;
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *old, *new;
 	int effective_mods;
 	int i, j;
@@ -1068,7 +1068,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 {
 	int value;
 	int index;
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *e;
 	int old_count;
 	int mod, m;
@@ -1530,12 +1530,12 @@ static struct input_event_handler misc_handlers[] = {
 	{ ACTION_NONE },
 };
 
-struct input_event *input_insert_event(union input_new_event *event,
+struct input_event_node *input_insert_event(union input_new_event *event,
 				       int mod,
 				       struct emu_action *emu_action)
 {
-	struct input_event **e;
-	struct input_event *native_event;
+	struct input_event_node **e;
+	struct input_event_node *native_event;
 	uint32_t id;
 	uint32_t type;
 	uint32_t device;
@@ -1654,7 +1654,7 @@ struct input_event *input_insert_event(union input_new_event *event,
 
 int input_add_modifier(union input_new_event *event, int mod)
 {
-	struct input_event *native_event;
+	struct input_event_node *native_event;
 
 	if (mod >= INPUT_MOD_COUNT)
 		return -1;
@@ -1671,7 +1671,7 @@ int input_add_modifier(union input_new_event *event, int mod)
 	return 0;
 }
 
-static int get_effective_modifiers(struct input_event *event, int mod)
+static int get_effective_modifiers(struct input_event_node *event, int mod)
 {
 	int mod_tries[3] = { mod, mod & ~INPUT_MOD_BITS_KBD, 0 };
 	int i;
@@ -1700,9 +1700,9 @@ static int get_effective_modifiers(struct input_event *event, int mod)
 	return mod_tries[i];
 }
 
-static struct input_event *input_lookup_event(union input_new_event *event)
+static struct input_event_node *input_lookup_event(union input_new_event *event)
 {
-	struct input_event *native_event;
+	struct input_event_node *native_event;
 	uint32_t id;
 	uint32_t type;
 	uint32_t device;
@@ -1845,7 +1845,7 @@ int input_init(struct emu *emu)
 
 static void input_clear_bindings(void)
 {
-	struct input_event *e, *tmp;
+	struct input_event_node *e, *tmp;
 	int i;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
@@ -1894,7 +1894,7 @@ int input_validate_binding_name(const char *name)
 	return !input_parse_binding(name, &event, NULL);
 }
 
-int get_binding_name(char *buffer, int size, struct input_event *e)
+int get_binding_name(char *buffer, int size, struct input_event_node *e)
 {
 	const char *keyname;
 	int count;
@@ -2075,7 +2075,7 @@ int binding_compare(const void *a, const void *b)
 //void input_describe_bindings(void (*callback)(const char *, const char *, int))
 void input_get_binding_config(char **config_data, size_t *config_data_size)
 {
-	struct input_event *e;
+	struct input_event_node *e;
 	char buffer[80];
 	char modbuffer[80];
 	int i, j;
