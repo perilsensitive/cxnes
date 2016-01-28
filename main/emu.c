@@ -413,7 +413,10 @@ void emu_set_remember_system_type(struct emu *emu, int enabled)
 		rom_type = find_config_value_by_system_type(system_type);
 	} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
 		rom_type_name = "rom_console_type";
-		rom_type = find_config_value_by_system_type(system_type);
+		if (enabled)
+			rom_type = find_config_value_by_system_type(system_type);
+		else
+			rom_type = "preferred";
 	}
 
 	if (emu->loaded && (enabled != config->remember_system_type)) {
