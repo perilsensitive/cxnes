@@ -221,7 +221,7 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
 	data = rom->buffer + 16;
 	size = rom->buffer_size - 16;
 
-	side_count = size / 65500;
+	side_count = size / rom->disk_side_size;
 
 	/* printf("skipping crcs: %d\n", skip_crcs); */
 
@@ -234,7 +234,7 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
 		off_t side_max_offset;
 		sha1nfo sha1;
 
-		side_max_offset = (side + 1) * 65500;
+		side_max_offset = (side + 1) * rom->disk_side_size;
 
 		while (offset < side_max_offset) {
 			off_t gap_offset;
@@ -741,10 +741,10 @@ int fds_convert_to_raw(struct rom *rom)
 	uint8_t *data, *tmp_buffer;
 	int i;
 	int previous_side, current_side;
-	size_t total_size;
+	size_t current_size;
+	size_t largest_size;
 	size_t tmp_buffer_size;
 	int side_count;
-	int side_size;
 	int rc;
 
 	struct fds_block_list *list;
@@ -756,32 +756,33 @@ int fds_convert_to_raw(struct rom *rom)
 		return -1;
 
 	data = rom->buffer + 16;
-	side_size = rom->disk_side_size;
 
 	current_offset = 0;
 
-	total_size = 0;
+	largest_size = 0;
+	current_size = 0;
 	side_count = 0;
 	for (i = 0; i < list->total_entries; i++) {
 		if (list->entries[i].type == 1) {
-			total_size = 0;
-			total_size += FDS_PREGAP_LENGTH / 8;
-			total_size -= FDS_GAP_LENGTH / 8;
+			if (current_size > largest_size) {
+				largest_size = current_size;
+			}
+			current_size = 0;
+			current_size += FDS_PREGAP_LENGTH / 8;
+			current_size -= FDS_GAP_LENGTH / 8;
 			side_count++;
 		}
 
-		total_size += list->entries[i].size;
+		current_size += list->entries[i].size;
 
 		if (list->entries[i].type != 5) {
-			total_size += FDS_GAP_LENGTH / 8;
-			total_size += 3;
+			current_size += FDS_GAP_LENGTH / 8;
+			current_size += 3;
 		}
 	}
 
-	if (total_size < 65500)
-		side_size = 65500;
-	else
-		side_size = total_size;
+	if (largest_size < 65500)
+		largest_size = 65500;
 
 	previous_side = -1;
 	current_side = -1;
@@ -803,10 +804,13 @@ int fds_convert_to_raw(struct rom *rom)
 		}
 
 		if (previous_side != current_side)
-			current_offset = current_side * side_size;
+			current_offset = current_side * largest_size;
 
 		list->entries[i].new_offset = current_offset +
-			gap_length + 1;
+			gap_length;
+
+		if (list->entries[i].type != 5)
+			current_offset++;
 
 		current_offset = list->entries[i].new_offset +
 			list->entries[i].size;
@@ -819,8 +823,13 @@ int fds_convert_to_raw(struct rom *rom)
 		previous_side = current_side;
 	}
 
-	tmp_buffer_size = rom->buffer_size - (rom->disk_side_size * side_count) +
-		(side_size * side_count);
+	tmp_buffer_size = (largest_size * side_count);
+	if (tmp_buffer_size % 8192)
+		tmp_buffer_size += 8192;
+	tmp_buffer_size += 8192;
+	tmp_buffer_size /= 8192;
+	tmp_buffer_size *= 8192;
+	tmp_buffer_size += 16;
 
 	tmp_buffer = malloc(tmp_buffer_size);
 	if (!tmp_buffer)
@@ -847,14 +856,16 @@ int fds_convert_to_raw(struct rom *rom)
 	}
 
 	memcpy(tmp_buffer, rom->buffer, 16);
-	memcpy(tmp_buffer + (side_count * side_size + 16),
-	       data + (side_count * rom->disk_side_size),
-	       rom->buffer_size - (side_count * rom->disk_side_size + 16));
+	/* memcpy(tmp_buffer + (side_count * largest_size + 16), */
+	/*        data + (side_count * rom->disk_side_size), */
+	/*        rom->buffer_size - (side_count * rom->disk_side_size + 16)); */
+	memcpy(tmp_buffer + (tmp_buffer_size - 8192),
+	       rom->buffer + (rom->buffer_size - 8192), 8192);
 
 	free(rom->buffer);
 	rom->buffer = tmp_buffer;
 	rom->buffer_size = tmp_buffer_size;
-	rom->disk_side_size = side_size;
+	rom->disk_side_size = largest_size;
 	rom->info.total_prg_size = rom->buffer_size - 16;
 
 	rc = 0;
@@ -892,6 +903,7 @@ int fds_get_disk_info(struct rom *rom, struct text_buffer *buffer)
 	if (!list)
 		return -1;
 
+	//fds_block_list_print(list);
 	disk = 0;
 	side = 0;
 	file_list_header = 0;

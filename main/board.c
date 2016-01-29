@@ -2160,6 +2160,7 @@ void board_prg_sync(struct board *board)
 		bank = b->bank;
 		while ((bank < 0) && b->size) {
 			bank = (data_size / b->size) + bank;
+			/* printf("bank = %d (data_size %d, b->size %d)\n", bank, data_size, b->size); */
 		}
 		bank = ((bank & and) | or) >> b->shift;
 
@@ -2181,7 +2182,7 @@ void board_prg_sync(struct board *board)
 
              /* printf("%x: mapping %x to %x, bank=%x bankfu=%x, size=%x, perms=%x\n", type, */
              /*        data, b->address, b->bank, bank, b->size, perms); */
-
+ 
 		size = (b->size <= data_size) ? b->size : data_size;
 
 		for (addr = b->address;

@@ -784,12 +784,6 @@ static void fds_auto_disk_select(struct board *board)
 
 		header = tmp + i;
 
-		for (i = 0; i < sizeof(request); i++) {
-			if ((request[i] != header[15 + i]) && (request[i] != 0xff)) {
-				break;
-			}
-		}
-
 		if (!_auto_eject_counter_max) {
 			struct auto_eject_timer_setup *setup;
 			setup = &eject_timer_settings[0];
@@ -817,6 +811,13 @@ static void fds_auto_disk_select(struct board *board)
 			if (!eject_timer_settings[i].count)
 				_auto_eject_counter_max = 68;
 		}
+
+		for (i = 0; i < sizeof(request); i++) {
+			if ((request[i] != header[15 + i]) && (request[i] != 0xff)) {
+				break;
+			}
+		}
+
 
 		if (i == sizeof(request)) {
 			int file_matches;
@@ -1260,11 +1261,13 @@ static uint8_t fds_bios_load_cpu_data(struct emu *emu, uint8_t opcode, uint32_t 
 	/* Fall back to native code for loads that would touch $2000 -
 	   $5FFF
 	*/
-	if (!dummy && (dest_addr >= 0x2000) && (dest_addr < 0x6000))
+	if (!dummy && (dest_addr >= 0x2000) && (dest_addr < 0x6000)) {
 		return opcode;
+	}
 
-	if (!dummy && (dest_addr < 0x2000) && (dest_addr + count > 0x2000))
+	if (!dummy && (dest_addr < 0x2000) && (dest_addr + count > 0x2000)) {
 		return opcode;
+	}
 
 	for (i = 0; i < count; i++) {
 		if (fds_read_byte(board, 1, cycles) < 0)
