@@ -101,7 +101,7 @@ struct auto_eject_timer_setup {
 
 /* some games don't work well with the standard auto disk eject
    counter value; look them up by game id, manufacturer and revision
-   here and use the value provided.
+   here and use the alternative value provided.
 */
 static struct auto_eject_timer_setup eject_timer_settings[] = {
 	{{0x4c, 0x54, 0x44, 0x20}, 0xe7, 0x00, 60 }, /* Lutter */
