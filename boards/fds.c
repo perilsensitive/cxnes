@@ -44,6 +44,7 @@
 
 #define _auto_eject_state   board->data[10]
 #define _auto_eject_counter board->data[11]
+#define _auto_eject_counter_max board->data[12]
 //#define board->emu->config->fds_auto_disk_change_enabled   board->data[12]
 #define _diskio_enabled     board->data[13]
 #define _dirty_flag board->data[14]
@@ -90,6 +91,23 @@ static CPU_WRITE_HANDLER(fds_write_handler);
 static CPU_READ_HANDLER(fds_read_handler);
 static CPU_READ_HANDLER(fds_bios_misc);
 static CPU_READ_HANDLER(fds_bios_read_write_byte);
+
+struct auto_eject_timer_setup {
+	uint8_t game_id[4];
+	uint8_t manufacturer;
+	uint8_t revision;
+	int count;
+};
+
+/* some games don't work well with the standard auto disk eject
+   counter value; look them up by game id, manufacturer and revision
+   here and use the value provided.
+*/
+static struct auto_eject_timer_setup eject_timer_settings[] = {
+	{{0x4c, 0x54, 0x44, 0x20}, 0xe7, 0x00, 60 }, /* Lutter */
+	{{0x4e, 0x45, 0x55, 0x20}, 0xb3, 0x00, 85 }, /* 19 */
+	{{0, 0, 0, 0}, 0, 0, 0 },
+};
 
 static struct input_event_handler fds_handlers[] = {
 	{ ACTION_FDS_EJECT, fds_disk_eject},
@@ -594,7 +612,7 @@ static void fds_end_frame(struct board *board, uint32_t cycles)
 		if (_auto_eject_counter) {
 			_auto_eject_counter--;
 		} else {
-			_auto_eject_counter = 68;
+			_auto_eject_counter = _auto_eject_counter_max;
 			_auto_eject_state ^= 1;
 		}
 	}
@@ -770,6 +788,34 @@ static void fds_auto_disk_select(struct board *board)
 			if ((request[i] != header[15 + i]) && (request[i] != 0xff)) {
 				break;
 			}
+		}
+
+		if (!_auto_eject_counter_max) {
+			struct auto_eject_timer_setup *setup;
+			setup = &eject_timer_settings[0];
+
+			for (i = 0; setup->count; i++) {
+				/* printf("{{0x%02x, 0x%02x, 0x%02x, 0x%02x}, 0x%02x, 0x%02x, 0x%02x}\n", */
+				/*        header[16], */
+				/*        header[17], */
+				/*        header[18], */
+				/*        header[19], */
+				/*        header[15], */
+				/*        header[20], 0); */
+				if ((header[15] == setup->manufacturer) &&
+				    (header[16] == setup->game_id[0]) &&
+				    (header[17] == setup->game_id[1]) &&
+				    (header[18] == setup->game_id[2]) &&
+				    (header[19] == setup->game_id[3]) &&
+				    (header[20] == setup->revision)) {
+					_auto_eject_counter_max = setup->count;
+					break;
+				}
+				setup++;
+			}
+
+			if (!eject_timer_settings[i].count)
+				_auto_eject_counter_max = 68;
 		}
 
 		if (i == sizeof(request)) {
