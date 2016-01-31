@@ -1407,10 +1407,10 @@ static CPU_READ_HANDLER(fds_bios_misc)
 	struct board *board;
 	int i;
 
-	if (!cpu_is_opcode_fetch(emu->cpu))
-		return value;
-
 	board = emu->board;
+
+	if (!_bios_patch_enabled || !cpu_is_opcode_fetch(emu->cpu))
+		return value;
 
 	fds_run(board, cycles);
 
@@ -1492,7 +1492,8 @@ static CPU_READ_HANDLER(fds_bios_misc)
 			fds_read_byte(board, 1, cycles);
 
 		if (_next_clock != ~0) {
-			_next_clock = cycles + 200 * emu->cpu_clock_divider;
+			_next_clock = cycles + (8 * FDS_BYTE_READ_CYCLES) *
+				emu->cpu_clock_divider;
 			schedule_disk_interrupt(board, cycles);
 		}
 
