@@ -108,10 +108,13 @@ am__cxnes_SOURCES_DIST = sdl/main.c sdl/file_io.c sdl/log.c \
 	input/controller.c input/zapper.c input/mat.c \
 	input/snes_mouse.c input/microphone.c main/board.c \
 	main/crc32.c main/sha1.c main/db.c main/emu.c main/nsf.c \
-	main/patch.c main/unif.c main/ines.c main/input.c \
-	main/palette.c main/config.c main/cheat.c main/io.c main/apu.c \
-	main/rom.c main/cpu.c main/fds.c main/ppu.c main/blip_buf.c \
-	main/state.c main/nes_ntsc.c main/text_buffer.c \
+	main/patch.c main/unif.c main/ines.c main/split_rom.c \
+	main/input.c main/palette.c main/config.c main/cheat.c \
+	main/io.c main/apu.c main/rom.c main/cpu.c main/fds.c \
+	main/ppu.c main/blip_buf.c main/state.c main/nes_ntsc.c \
+	main/text_buffer.c boards/subor.c boards/76in1.c \
+	boards/cufrom.c boards/150in1.c boards/magicseries.c \
+	boards/mortalkombat2.c boards/super700in1.c boards/gamestar.c \
 	boards/cne_psb.c boards/jycompany.c boards/waixing_sgzlz.c \
 	boards/ines225.c boards/35in1.c boards/22in1.c \
 	boards/1200in1.c boards/20in1.c boards/sachen_tcu01.c \
@@ -127,11 +130,12 @@ am__cxnes_SOURCES_DIST = sdl/main.c sdl/file_io.c sdl/log.c \
 	boards/irem_tam_s1.c boards/jaleco_ss88006.c \
 	boards/irem_h3001.c boards/timer/a12_timer.c \
 	boards/timer/m2_timer.c boards/ines201.c boards/jaleco_jf13.c \
-	boards/namco108.c boards/cprom.c boards/audio/mmc5_audio.c \
-	boards/audio/fds_audio.c boards/audio/sunsoft5b_audio.c \
-	boards/audio/vrc6_audio.c boards/audio/namco163_audio.c \
+	boards/namco108.c boards/cprom.c boards/audio/emu2413.c \
+	boards/audio/mmc5_audio.c boards/audio/fds_audio.c \
+	boards/audio/sunsoft5b_audio.c boards/audio/vrc6_audio.c \
+	boards/audio/vrc7_audio.c boards/audio/namco163_audio.c \
 	boards/bnrom.c boards/sunsoft1.c boards/sunsoft5b.c \
-	boards/sunsoft3.c boards/ntdec_tc112.c boards/gxrom.c \
+	boards/sunsoft3.c boards/ntdec_193.c boards/gxrom.c \
 	boards/nina001.c boards/taito_tc0190fmc.c \
 	boards/streemerz_bundle.c boards/mmc3.c boards/mmc1.c \
 	boards/namco163.c boards/ines36.c boards/uxrom.c \
@@ -166,12 +170,17 @@ am_cxnes_OBJECTS = sdl/main.$(OBJEXT) sdl/file_io.$(OBJEXT) \
 	main/board.$(OBJEXT) main/crc32.$(OBJEXT) main/sha1.$(OBJEXT) \
 	main/db.$(OBJEXT) main/emu.$(OBJEXT) main/nsf.$(OBJEXT) \
 	main/patch.$(OBJEXT) main/unif.$(OBJEXT) main/ines.$(OBJEXT) \
-	main/input.$(OBJEXT) main/palette.$(OBJEXT) \
-	main/config.$(OBJEXT) main/cheat.$(OBJEXT) main/io.$(OBJEXT) \
-	main/apu.$(OBJEXT) main/rom.$(OBJEXT) main/cpu.$(OBJEXT) \
-	main/fds.$(OBJEXT) main/ppu.$(OBJEXT) main/blip_buf.$(OBJEXT) \
+	main/split_rom.$(OBJEXT) main/input.$(OBJEXT) \
+	main/palette.$(OBJEXT) main/config.$(OBJEXT) \
+	main/cheat.$(OBJEXT) main/io.$(OBJEXT) main/apu.$(OBJEXT) \
+	main/rom.$(OBJEXT) main/cpu.$(OBJEXT) main/fds.$(OBJEXT) \
+	main/ppu.$(OBJEXT) main/blip_buf.$(OBJEXT) \
 	main/state.$(OBJEXT) main/nes_ntsc.$(OBJEXT) \
-	main/text_buffer.$(OBJEXT) boards/cne_psb.$(OBJEXT) \
+	main/text_buffer.$(OBJEXT) boards/subor.$(OBJEXT) \
+	boards/76in1.$(OBJEXT) boards/cufrom.$(OBJEXT) \
+	boards/150in1.$(OBJEXT) boards/magicseries.$(OBJEXT) \
+	boards/mortalkombat2.$(OBJEXT) boards/super700in1.$(OBJEXT) \
+	boards/gamestar.$(OBJEXT) boards/cne_psb.$(OBJEXT) \
 	boards/jycompany.$(OBJEXT) boards/waixing_sgzlz.$(OBJEXT) \
 	boards/ines225.$(OBJEXT) boards/35in1.$(OBJEXT) \
 	boards/22in1.$(OBJEXT) boards/1200in1.$(OBJEXT) \
@@ -194,13 +203,15 @@ am_cxnes_OBJECTS = sdl/main.$(OBJEXT) sdl/file_io.$(OBJEXT) \
 	boards/timer/a12_timer.$(OBJEXT) \
 	boards/timer/m2_timer.$(OBJEXT) boards/ines201.$(OBJEXT) \
 	boards/jaleco_jf13.$(OBJEXT) boards/namco108.$(OBJEXT) \
-	boards/cprom.$(OBJEXT) boards/audio/mmc5_audio.$(OBJEXT) \
+	boards/cprom.$(OBJEXT) boards/audio/emu2413.$(OBJEXT) \
+	boards/audio/mmc5_audio.$(OBJEXT) \
 	boards/audio/fds_audio.$(OBJEXT) \
 	boards/audio/sunsoft5b_audio.$(OBJEXT) \
 	boards/audio/vrc6_audio.$(OBJEXT) \
+	boards/audio/vrc7_audio.$(OBJEXT) \
 	boards/audio/namco163_audio.$(OBJEXT) boards/bnrom.$(OBJEXT) \
 	boards/sunsoft1.$(OBJEXT) boards/sunsoft5b.$(OBJEXT) \
-	boards/sunsoft3.$(OBJEXT) boards/ntdec_tc112.$(OBJEXT) \
+	boards/sunsoft3.$(OBJEXT) boards/ntdec_193.$(OBJEXT) \
 	boards/gxrom.$(OBJEXT) boards/nina001.$(OBJEXT) \
 	boards/taito_tc0190fmc.$(OBJEXT) \
 	boards/streemerz_bundle.$(OBJEXT) boards/mmc3.$(OBJEXT) \
@@ -468,10 +479,13 @@ cxnes_SOURCES = sdl/main.c sdl/file_io.c sdl/log.c sdl/sdl_audio.c \
 	input/zapper.c input/mat.c input/snes_mouse.c \
 	input/microphone.c main/board.c main/crc32.c main/sha1.c \
 	main/db.c main/emu.c main/nsf.c main/patch.c main/unif.c \
-	main/ines.c main/input.c main/palette.c main/config.c \
-	main/cheat.c main/io.c main/apu.c main/rom.c main/cpu.c \
-	main/fds.c main/ppu.c main/blip_buf.c main/state.c \
-	main/nes_ntsc.c main/text_buffer.c boards/cne_psb.c \
+	main/ines.c main/split_rom.c main/input.c main/palette.c \
+	main/config.c main/cheat.c main/io.c main/apu.c main/rom.c \
+	main/cpu.c main/fds.c main/ppu.c main/blip_buf.c main/state.c \
+	main/nes_ntsc.c main/text_buffer.c boards/subor.c \
+	boards/76in1.c boards/cufrom.c boards/150in1.c \
+	boards/magicseries.c boards/mortalkombat2.c \
+	boards/super700in1.c boards/gamestar.c boards/cne_psb.c \
 	boards/jycompany.c boards/waixing_sgzlz.c boards/ines225.c \
 	boards/35in1.c boards/22in1.c boards/1200in1.c boards/20in1.c \
 	boards/sachen_tcu01.c boards/sachen_72007.c \
@@ -487,11 +501,12 @@ cxnes_SOURCES = sdl/main.c sdl/file_io.c sdl/log.c sdl/sdl_audio.c \
 	boards/jaleco_ss88006.c boards/irem_h3001.c \
 	boards/timer/a12_timer.c boards/timer/m2_timer.c \
 	boards/ines201.c boards/jaleco_jf13.c boards/namco108.c \
-	boards/cprom.c boards/audio/mmc5_audio.c \
-	boards/audio/fds_audio.c boards/audio/sunsoft5b_audio.c \
-	boards/audio/vrc6_audio.c boards/audio/namco163_audio.c \
+	boards/cprom.c boards/audio/emu2413.c \
+	boards/audio/mmc5_audio.c boards/audio/fds_audio.c \
+	boards/audio/sunsoft5b_audio.c boards/audio/vrc6_audio.c \
+	boards/audio/vrc7_audio.c boards/audio/namco163_audio.c \
 	boards/bnrom.c boards/sunsoft1.c boards/sunsoft5b.c \
-	boards/sunsoft3.c boards/ntdec_tc112.c boards/gxrom.c \
+	boards/sunsoft3.c boards/ntdec_193.c boards/gxrom.c \
 	boards/nina001.c boards/taito_tc0190fmc.c \
 	boards/streemerz_bundle.c boards/mmc3.c boards/mmc1.c \
 	boards/namco163.c boards/ines36.c boards/uxrom.c \
@@ -642,6 +657,8 @@ main/unif.$(OBJEXT): main/$(am__dirstamp) \
 	main/$(DEPDIR)/$(am__dirstamp)
 main/ines.$(OBJEXT): main/$(am__dirstamp) \
 	main/$(DEPDIR)/$(am__dirstamp)
+main/split_rom.$(OBJEXT): main/$(am__dirstamp) \
+	main/$(DEPDIR)/$(am__dirstamp)
 main/input.$(OBJEXT): main/$(am__dirstamp) \
 	main/$(DEPDIR)/$(am__dirstamp)
 main/palette.$(OBJEXT): main/$(am__dirstamp) \
@@ -675,6 +692,22 @@ boards/$(am__dirstamp):
 boards/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) boards/$(DEPDIR)
 	@: > boards/$(DEPDIR)/$(am__dirstamp)
+boards/subor.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/76in1.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/cufrom.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/150in1.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/magicseries.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/mortalkombat2.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/super700in1.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
+boards/gamestar.$(OBJEXT): boards/$(am__dirstamp) \
+	boards/$(DEPDIR)/$(am__dirstamp)
 boards/cne_psb.$(OBJEXT): boards/$(am__dirstamp) \
 	boards/$(DEPDIR)/$(am__dirstamp)
 boards/jycompany.$(OBJEXT): boards/$(am__dirstamp) \
@@ -777,6 +810,8 @@ boards/audio/$(am__dirstamp):
 boards/audio/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) boards/audio/$(DEPDIR)
 	@: > boards/audio/$(DEPDIR)/$(am__dirstamp)
+boards/audio/emu2413.$(OBJEXT): boards/audio/$(am__dirstamp) \
+	boards/audio/$(DEPDIR)/$(am__dirstamp)
 boards/audio/mmc5_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
 	boards/audio/$(DEPDIR)/$(am__dirstamp)
 boards/audio/fds_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
@@ -784,6 +819,8 @@ boards/audio/fds_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
 boards/audio/sunsoft5b_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
 	boards/audio/$(DEPDIR)/$(am__dirstamp)
 boards/audio/vrc6_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
+	boards/audio/$(DEPDIR)/$(am__dirstamp)
+boards/audio/vrc7_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
 	boards/audio/$(DEPDIR)/$(am__dirstamp)
 boards/audio/namco163_audio.$(OBJEXT): boards/audio/$(am__dirstamp) \
 	boards/audio/$(DEPDIR)/$(am__dirstamp)
@@ -795,7 +832,7 @@ boards/sunsoft5b.$(OBJEXT): boards/$(am__dirstamp) \
 	boards/$(DEPDIR)/$(am__dirstamp)
 boards/sunsoft3.$(OBJEXT): boards/$(am__dirstamp) \
 	boards/$(DEPDIR)/$(am__dirstamp)
-boards/ntdec_tc112.$(OBJEXT): boards/$(am__dirstamp) \
+boards/ntdec_193.$(OBJEXT): boards/$(am__dirstamp) \
 	boards/$(DEPDIR)/$(am__dirstamp)
 boards/gxrom.$(OBJEXT): boards/$(am__dirstamp) \
 	boards/$(DEPDIR)/$(am__dirstamp)
@@ -888,11 +925,13 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/1200in1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/150in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/20in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/22in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/35in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/74x139_74.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/74x161_161_32.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/76in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/action52.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/agci_50282.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/axrom.Po@am__quote@
@@ -905,7 +944,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/colordreams.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/contra_100in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/cprom.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/cufrom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/fds.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/gamestar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/gxrom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/ines201.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/ines225.Po@am__quote@
@@ -920,18 +961,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/jaleco_jf16.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/jaleco_ss88006.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/jycompany.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/magicseries.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/maxi15.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/mmc1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/mmc3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/mmc4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/mmc5.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/mortalkombat2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/namco108.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/namco163.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/nina001.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/nina003-006.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/nrom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/nsf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/ntdec_tc112.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/ntdec_193.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/pci556.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sachen_72007.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sachen_72008.Po@am__quote@
@@ -941,11 +984,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sachen_tcu01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/singlechip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/streemerz_bundle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/subor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sunsoft1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sunsoft2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sunsoft3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sunsoft4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/sunsoft5b.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/super700in1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/taito_tc0190fmc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/taito_x1_005.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/taito_x1_017.Po@am__quote@
@@ -958,11 +1003,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/vrc7.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/vs_unisystem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/$(DEPDIR)/waixing_sgzlz.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/emu2413.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/fds_audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/mmc5_audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/namco163_audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/sunsoft5b_audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/vrc6_audio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@boards/audio/$(DEPDIR)/vrc7_audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/timer/$(DEPDIR)/a12_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@boards/timer/$(DEPDIR)/m2_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@input/$(DEPDIR)/arkanoid.Po@am__quote@
@@ -994,6 +1041,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/ppu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/rom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/sha1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/split_rom.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/state.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/text_buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/unif.Po@am__quote@

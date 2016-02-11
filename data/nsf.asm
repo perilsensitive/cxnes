@@ -401,6 +401,13 @@ _FDS	asl
 
 _VRC7   asl
 	bpl _VRC6
+	lda #$00
+	ldx #$00
+-	stx $9010
+	sta $9030
+	inx
+	cpx #$40
+	bcc -
 
 _VRC6	asl
 	bpl +

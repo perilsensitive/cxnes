@@ -26,7 +26,7 @@ struct range_list;
 struct board_info;
 struct board;
 
-enum {
+enum mirroring_types {
 	MIRROR_1A = 0x00,
 	MIRROR_1B = 0x55,
 	MIRROR_H  = 0x50,
@@ -37,7 +37,7 @@ enum {
 	MIRROR_UNDEF = 0x102,
 };
 
-enum {
+enum map_type {
 	MAP_TYPE_SHIFT = 13,
 	MAP_TYPE_NONE = 0,
 	MAP_TYPE_ROM,
@@ -51,7 +51,7 @@ enum {
 	MAP_TYPE_END = -1
 };
 
-enum {
+enum board_info_flag {
 	BOARD_INFO_FLAG_PRG_IPS = 0x01,
 	BOARD_INFO_FLAG_MIRROR_M = 0x02,
 	BOARD_INFO_FLAG_WRAM0_NV = 0x04,

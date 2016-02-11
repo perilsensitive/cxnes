@@ -19,6 +19,8 @@
 
 #include "board_private.h"
 
+static CPU_WRITE_HANDLER(uxrom_pc_prowrestling_write_handler);
+
 struct bank un1rom_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_RAM0},
 	{0, 2, SIZE_16K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
@@ -38,6 +40,11 @@ static struct board_write_handler uxrom_write_handlers[] = {
 	{NULL},
 };
 
+static struct board_write_handler uxrom_pc_prowrestling_write_handlers[] = {
+	{uxrom_pc_prowrestling_write_handler, 0x8000, SIZE_32K, 0},
+	{NULL},
+};
+
 static struct board_write_handler uxrom_no_conflict_write_handlers[] = {
 	{simple_prg_no_conflict_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
@@ -50,6 +57,17 @@ struct board_info board_uxrom = {
 	.init_chr0 = std_chr_8k,
 	.write_handlers = uxrom_write_handlers,
 	.max_prg_rom_size = SIZE_4096K,
+	.max_chr_rom_size = SIZE_8K,
+	.max_wram_size = {SIZE_8K, 0},
+};
+
+struct board_info board_uxrom_pc_prowrestling = {
+	.board_type = BOARD_TYPE_UxROM_PC_PROWRESTLING,
+	.name = "UxROM-PLAYCHOICE-PROWRESTLING",
+	.init_prg = std_prg_16k,
+	.init_chr0 = std_chr_8k,
+	.write_handlers = uxrom_pc_prowrestling_write_handlers,
+	.max_prg_rom_size = SIZE_32K + SIZE_64K,
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
 };
@@ -86,3 +104,15 @@ struct board_info board_unrom_74hc08 = {
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
 };
+
+static CPU_WRITE_HANDLER(uxrom_pc_prowrestling_write_handler)
+{
+	if ((value & 0x07) < 4)
+		value &= 0x01;
+	else
+		value -= 2;
+
+	emu->board->prg_banks[1].bank = value;
+	board_prg_sync(emu->board);
+}
+

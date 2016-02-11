@@ -19,7 +19,7 @@
 
 #include "board_private.h"
 
-struct bank ntdec_tc112_init_prg[] = {
+struct bank ntdec_193_init_prg[] = {
 	{0, 0, SIZE_8K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{-3, 0, SIZE_8K, 0xa000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{-2, 0, SIZE_8K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
@@ -27,14 +27,14 @@ struct bank ntdec_tc112_init_prg[] = {
 	{.type = MAP_TYPE_END},
 };
 
-struct bank ntdec_tc112_init_chr0[] = {
+struct bank ntdec_193_init_chr0[] = {
 	{0, 2, SIZE_4K, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 1, SIZE_2K, 0x1000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 1, SIZE_2K, 0x1800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{.type = MAP_TYPE_END},
 };
 
-static CPU_WRITE_HANDLER(ntdec_tc112_write_handler)
+static CPU_WRITE_HANDLER(ntdec_193_write_handler)
 {
 	switch (addr & 3) {
 	case 0:
@@ -48,17 +48,17 @@ static CPU_WRITE_HANDLER(ntdec_tc112_write_handler)
 	}
 }
 
-static struct board_write_handler ntdec_tc112_write_handlers[] = {
-	{ntdec_tc112_write_handler, 0x6000, SIZE_8K, 0},
+static struct board_write_handler ntdec_193_write_handlers[] = {
+	{ntdec_193_write_handler, 0x6000, SIZE_8K, 0},
 	{NULL},
 };
 
-struct board_info board_ntdec_tc112 = {
-	.board_type = BOARD_TYPE_NTDEC_TC_112,
-	.name = "NTDEC-TC-112",
-	.init_prg = ntdec_tc112_init_prg,
-	.init_chr0 = ntdec_tc112_init_chr0,
-	.write_handlers = ntdec_tc112_write_handlers,
+struct board_info board_ntdec_193 = {
+	.board_type = BOARD_TYPE_NTDEC_193,
+	.name = "NTDEC-193",
+	.init_prg = ntdec_193_init_prg,
+	.init_chr0 = ntdec_193_init_chr0,
+	.write_handlers = ntdec_193_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
 };

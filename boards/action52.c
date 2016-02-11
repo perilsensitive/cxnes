@@ -71,12 +71,12 @@ static CPU_WRITE_HANDLER(action52_write_handler)
 
 	board->prg_or = (addr & 0x1800) >> 6;
 
-	/* Hack for Action 52/Cheetamen II: bank 2 is open bus,
+	/* Hack for Action 52/Cheetahmen II: bank 2 is open bus,
 	   everything else works as expected.  Swap banks 2 and
 	   3 so that standard iNES roms work (bank 3 stored after
 	   bank 1 in the rom).
 
-	   Cheetamen II selects bank 1 right after boot, so this
+	   Cheetahmen II selects bank 1 right after boot, so this
 	   needs to be a mirror of bank 0.  This setup allows
 	   this to work.
 	*/

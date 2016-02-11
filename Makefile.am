@@ -60,6 +60,7 @@ cxnes_SOURCES = \
 	main/patch.c \
 	main/unif.c \
 	main/ines.c \
+	main/split_rom.c \
 	main/input.c \
 	main/palette.c \
 	main/config.c \
@@ -74,6 +75,14 @@ cxnes_SOURCES = \
 	main/state.c \
 	main/nes_ntsc.c \
 	main/text_buffer.c \
+	boards/subor.c \
+	boards/76in1.c \
+	boards/cufrom.c \
+	boards/150in1.c \
+	boards/magicseries.c \
+	boards/mortalkombat2.c \
+	boards/super700in1.c \
+	boards/gamestar.c \
 	boards/cne_psb.c \
 	boards/jycompany.c \
 	boards/waixing_sgzlz.c \
@@ -119,16 +128,18 @@ cxnes_SOURCES = \
 	boards/jaleco_jf13.c \
 	boards/namco108.c \
 	boards/cprom.c \
+	boards/audio/emu2413.c \
 	boards/audio/mmc5_audio.c \
 	boards/audio/fds_audio.c \
 	boards/audio/sunsoft5b_audio.c \
 	boards/audio/vrc6_audio.c \
+	boards/audio/vrc7_audio.c \
 	boards/audio/namco163_audio.c \
 	boards/bnrom.c \
 	boards/sunsoft1.c \
 	boards/sunsoft5b.c \
 	boards/sunsoft3.c \
-	boards/ntdec_tc112.c \
+	boards/ntdec_193.c \
 	boards/gxrom.c \
 	boards/nina001.c \
 	boards/taito_tc0190fmc.c \

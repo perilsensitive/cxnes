@@ -23,7 +23,7 @@
 #include "emu.h"
 #include "input.h"
 
-enum {
+enum device_port {
 	PORT_1,
 	PORT_2,
 	PORT_3,
@@ -31,14 +31,14 @@ enum {
 	PORT_EXP,
 };
 
-enum {
+enum four_player_mode {
 	FOUR_PLAYER_MODE_AUTO,
 	FOUR_PLAYER_MODE_NONE,
 	FOUR_PLAYER_MODE_NES,
 	FOUR_PLAYER_MODE_FC
 };
 
-enum {
+enum vs_controller_mode {
 	VS_CONTROLLER_MODE_AUTO,
 	VS_CONTROLLER_MODE_STANDARD,
 	VS_CONTROLLER_MODE_SWAPPED,
@@ -47,36 +47,37 @@ enum {
 	VS_CONTROLLER_MODE_BUNGELINGBAY,
 };
 
-enum {
-IO_DEVICE_NONE,
-IO_DEVICE_AUTO,
-IO_DEVICE_CONTROLLER_1,
-IO_DEVICE_CONTROLLER_2,
-IO_DEVICE_CONTROLLER_3,
-IO_DEVICE_CONTROLLER_4,
-IO_DEVICE_CONTROLLER_COMMON,
-IO_DEVICE_FOURSCORE,
-IO_DEVICE_ZAPPER_1,
-IO_DEVICE_ZAPPER_2,
-IO_DEVICE_POWERPAD_A1,
-IO_DEVICE_POWERPAD_B1,
-IO_DEVICE_POWERPAD_A2,
-IO_DEVICE_POWERPAD_B2,
-IO_DEVICE_ARKANOID_NES_1,
-IO_DEVICE_ARKANOID_NES_2,
-IO_DEVICE_SNES_MOUSE_1,
-IO_DEVICE_SNES_MOUSE_2,
-IO_DEVICE_SNES_MOUSE_3,
-IO_DEVICE_SNES_MOUSE_4,
-IO_DEVICE_ARKANOID_FC,
-IO_DEVICE_ARKANOID_II,
-IO_DEVICE_VS_ZAPPER,
-IO_DEVICE_KEYBOARD,
-IO_DEVICE_VS_UNISYSTEM,
-IO_DEVICE_VS_UNISYSTEM_BANKSWITCH,
-IO_DEVICE_FTRAINER_A,
-IO_DEVICE_FTRAINER_B,
-IO_DEVICE_FAMICOM_MICROPHONE,
+enum io_devices {
+	IO_DEVICE_NONE,
+	IO_DEVICE_AUTO,
+	IO_DEVICE_CONTROLLER_1,
+	IO_DEVICE_CONTROLLER_2,
+	IO_DEVICE_CONTROLLER_3,
+	IO_DEVICE_CONTROLLER_4,
+	IO_DEVICE_CONTROLLER_COMMON,
+	IO_DEVICE_FOURSCORE,
+	IO_DEVICE_ZAPPER_1,
+	IO_DEVICE_ZAPPER_2,
+	IO_DEVICE_POWERPAD_A1,
+	IO_DEVICE_POWERPAD_B1,
+	IO_DEVICE_POWERPAD_A2,
+	IO_DEVICE_POWERPAD_B2,
+	IO_DEVICE_ARKANOID_NES_1,
+	IO_DEVICE_ARKANOID_NES_2,
+	IO_DEVICE_SNES_MOUSE_1,
+	IO_DEVICE_SNES_MOUSE_2,
+	IO_DEVICE_SNES_MOUSE_3,
+	IO_DEVICE_SNES_MOUSE_4,
+	IO_DEVICE_ARKANOID_FC,
+	IO_DEVICE_ARKANOID_II,
+	IO_DEVICE_VS_ZAPPER,
+	IO_DEVICE_KEYBOARD,
+	IO_DEVICE_VS_UNISYSTEM,
+	IO_DEVICE_VS_UNISYSTEM_BANKSWITCH,
+	IO_DEVICE_FTRAINER_A,
+	IO_DEVICE_FTRAINER_B,
+	IO_DEVICE_FAMICOM_MICROPHONE,
+	IO_DEVICE_SUBOR_KEYBOARD,
 };
 
 
@@ -104,6 +105,8 @@ struct io_device {
 	void (*write) (struct io_device *, uint8_t value, int mode,
 		       uint32_t cycles);
 	int (*apply_config) (struct io_device *);
+	int (*save_state) (struct io_device *, int, struct save_state *);
+	int (*load_state) (struct io_device *, int, struct save_state *);
 	struct input_event_handler *handlers;
 	const char *name;
 	const char *config_id;
@@ -147,5 +150,9 @@ struct io_device *io_find_device_by_config_id(struct io_state *io, int port, con
 void io_device_connect(struct io_state *io, int port, int connected);
 void io_device_select(struct io_state *io, int port, int id);
 int io_device_connected(struct io_state *io, int port);
+void io_set_remember_input_devices(struct io_state *io, int enabled);
+
+int io_save_state(struct io_state *io, struct save_state *state);
+int io_load_state(struct io_state *io, struct save_state *state);
 
 #endif				/* __IO_H__ */

@@ -51,7 +51,9 @@ struct m2_timer;
 #include "sizes.h"
 #include "log.h"
 
-enum {
+#define INES_HEADER_SIZE 16
+
+enum system_type {
 	EMU_SYSTEM_TYPE_FAMICOM,
 	EMU_SYSTEM_TYPE_FAMICOM_RGB,
 	EMU_SYSTEM_TYPE_NES,
@@ -77,18 +79,20 @@ enum {
 	EMU_SYSTEM_TYPE_MASK = 0xf0
 };
 
+struct system_type_info {
+	enum system_type type;
+	const char *value;
+	const char *description;
+};
+
+extern const struct system_type_info system_type_info[];
+
 #define system_type_is_vs(x) (((x) & EMU_SYSTEM_TYPE_MASK) == 0x10)
 #define vs_system_type_to_ppu_type(x) ((x) & 0x0f)
 #define vs_ppu_type_to_system_type(x) ((x) | 0x10)
 
-extern const char *system_type_console_strings[];
-extern const char *system_type_vs_strings[];
-extern const char *system_type_playchoice_strings[];
-extern const int system_type_console_values[];
-extern const int system_type_vs_values[];
-extern const int system_type_playchoice_values[];
-
 struct vrc6_audio_state;
+struct vrc7_audio_state;
 struct fds_audio_state;
 struct namcot163_audio_state;
 struct mmc5_audio_state;
@@ -104,6 +108,7 @@ struct emu {
 	struct cheat_state *cheats;
 
 	struct vrc6_audio_state *vrc6_audio;
+	struct vrc7_audio_state *vrc7_audio;
 	struct fds_audio_state *fds_audio;
 	struct namco163_audio_state *namco163_audio;
 	struct mmc5_audio_state *mmc5_audio;
@@ -137,8 +142,8 @@ struct emu {
 	int loaded;
 	int paused;
 	uint8_t *ram;
-	int system_type;
-	int guessed_system_type;
+	enum system_type system_type;
+	enum system_type guessed_system_type;
 
 	int quick_save_slot;
 
@@ -176,8 +181,8 @@ void emu_set_quick_save_slot(struct emu *emu, int slot, int display);
 int emu_get_quick_save_slot(struct emu *emu);
 int emu_quick_load_state(struct emu *emu, int quick_save_index, int display);
 int emu_quick_save_state(struct emu *emu, int quick_save_index, int display);
-int emu_set_system_type(struct emu *emu, int system_type);
-const char *emu_get_system_type_name(int type);
+int emu_set_system_type(struct emu *emu, enum system_type system_type);
+const char *emu_get_system_type_name(enum system_type type);
 int emu_select_next_system_type(struct emu *emu);
 int emu_system_is_vs(struct emu *emu);
 
@@ -187,6 +192,8 @@ void emu_load_cheat(struct emu *emu);
 void emu_save_rom_config(struct emu *emu);
 
 int emu_set_framerate(struct emu *emu, int framerate);
+
+void emu_set_remember_system_type(struct emu *emu, int enabled);
 
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);

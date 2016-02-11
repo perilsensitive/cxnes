@@ -578,6 +578,12 @@ static void configuration_setup_volume(GtkWidget *dialog, struct config *config)
 	GtkWidget *scale_vrc6_pulse0_volume;
 	GtkWidget *scale_vrc6_pulse1_volume;
 	GtkWidget *scale_vrc6_sawtooth_volume;
+	GtkWidget *scale_vrc7_channel0_volume;
+	GtkWidget *scale_vrc7_channel1_volume;
+	GtkWidget *scale_vrc7_channel2_volume;
+	GtkWidget *scale_vrc7_channel3_volume;
+	GtkWidget *scale_vrc7_channel4_volume;
+	GtkWidget *scale_vrc7_channel5_volume;
 	GtkWidget *scale_mmc5_pulse0_volume;
 	GtkWidget *scale_mmc5_pulse1_volume;
 	GtkWidget *scale_mmc5_pcm_volume;
@@ -640,6 +646,30 @@ static void configuration_setup_volume(GtkWidget *dialog, struct config *config)
 	scale_vrc6_sawtooth_volume = config_int_scale(0, 200, 0, 100, dialog,
 						config,
 						"vrc6_sawtooth_volume");
+
+	scale_vrc7_channel0_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel0_volume");
+
+	scale_vrc7_channel1_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel1_volume");
+
+	scale_vrc7_channel2_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel2_volume");
+
+	scale_vrc7_channel3_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel3_volume");
+
+	scale_vrc7_channel4_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel4_volume");
+
+	scale_vrc7_channel5_volume = config_int_scale(0, 200, 0, 100, dialog,
+						      config,
+						      "vrc7_channel5_volume");
 
 	scale_mmc5_pulse0_volume = config_int_scale(0, 200, 0, 100, dialog,
 						    config,
@@ -728,28 +758,40 @@ static void configuration_setup_volume(GtkWidget *dialog, struct config *config)
 			3, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc6_sawtooth_volume,
 			3, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel0_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel0_volume,
 			3, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel1_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel1_volume,
 			3, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel2_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel2_volume,
 			3, 5, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel0_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel3_volume,
 			3, 6, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel1_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel4_volume,
 			3, 7, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel2_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_vrc7_channel5_volume,
 			3, 8, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel3_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel0_volume,
 			3, 9, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel4_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel1_volume,
 			5, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel5_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_sunsoft5b_channel2_volume,
 			5, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel6_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel0_volume,
 			5, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel7_volume,
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel1_volume,
 			5, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel2_volume,
+			5, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel3_volume,
+			5, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel4_volume,
+			5, 6, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel5_volume,
+			5, 7, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel6_volume,
+			5, 8, 1, 1);
+	gtk_grid_attach(GTK_GRID(volume_control_grid), scale_namco163_channel7_volume,
+			5, 9, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("Master");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 0, 0, 1, 1);
@@ -778,28 +820,40 @@ static void configuration_setup_volume(GtkWidget *dialog, struct config *config)
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 1, 1, 1);
 	tmp = gtk_label_new_with_mnemonic("VRC6 Sawtooth");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 2, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 0");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 0");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 3, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 1");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 1");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 4, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 2");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 2");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 5, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 0");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 3");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 6, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 1");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 4");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 7, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 2");
+	tmp = gtk_label_new_with_mnemonic("VRC7 Channel 5");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 8, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 3");
+	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 0");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 2, 9, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 4");
+	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 1");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 0, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 5");
+	tmp = gtk_label_new_with_mnemonic("Sunsoft 5B Channel 2");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 1, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 6");
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 0");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 2, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 7");
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 1");
 	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 3, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 2");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 4, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 3");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 5, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 4");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 6, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 5");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 7, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 6");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 8, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("Namco 163 Channel 7");
+	gtk_grid_attach(GTK_GRID(volume_control_grid), tmp, 4, 9, 1, 1);
 
 	gtk_box_pack_start(GTK_BOX(box), volume_control_grid, TRUE, TRUE, 8);
 }

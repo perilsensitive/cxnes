@@ -1,3 +1,10 @@
+cxnes (0.3.0-1) unstable; urgency=low
+
+  * Fix bugs in FDS emulation
+  * Add support for split roms in zip files
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Thurs, 11 Feb 2016 05:26:03 -0700
+
 cxnes (0.2.0-1) unstable; urgency=low
 
   * Fixes some bugs in configuration dialogs

@@ -1,4 +1,4 @@
-AC_INIT([cxnes], [0.2.0])
+AC_INIT([cxnes], [0.3.0])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CANONICAL_HOST

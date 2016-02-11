@@ -17,20 +17,30 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __DB_H__
-#define __DB_H__
+#include "board_private.h"
 
-#include "emu.h"
+static CPU_WRITE_HANDLER(magicseries_write_handler);
 
-struct rom_info *db_lookup(struct rom *rom, struct rom_info *start);
-struct rom_info *db_lookup_split_rom(struct archive_file_list *list, int *chip_list,
-				     struct rom_info *start);
+static struct board_write_handler magicseries_write_handlers[] = {
+	{magicseries_write_handler, 0x8000, SIZE_32K, 0},
+	{NULL},
+};
 
-void print_rom(struct rom *rom);
-int db_load_file(struct emu *emu, const char *filename);
-void db_cleanup(void);
-void free_rom(struct rom *rom);
-int db_rom_load(struct emu *emu, struct rom *rom);
-int validate_checksums(struct rom *rom, struct rom_info *info);
+struct board_info board_magicseries = {
+	.board_type = BOARD_TYPE_MAGICSERIES,
+	.name = "MAGICSERIES",
+	.init_prg = std_prg_32k,
+	.init_chr0 = std_chr_8k,
+	.write_handlers = magicseries_write_handlers,
+	.max_prg_rom_size = SIZE_4096K,
+	.max_chr_rom_size = SIZE_2048K,
+	.max_wram_size = {SIZE_8K, 0},
+};
 
-#endif /* __DB_H__ */
+static CPU_WRITE_HANDLER(magicseries_write_handler)
+{
+	struct board *board = emu->board;
+
+	update_prg_bank(board, 1, (value >> 1));
+	update_chr0_bank(board, 0, value);
+}

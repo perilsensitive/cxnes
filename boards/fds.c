@@ -44,6 +44,7 @@
 
 #define _auto_eject_state   board->data[10]
 #define _auto_eject_counter board->data[11]
+#define _auto_eject_counter_max board->data[12]
 //#define board->emu->config->fds_auto_disk_change_enabled   board->data[12]
 #define _diskio_enabled     board->data[13]
 #define _dirty_flag board->data[14]
@@ -90,6 +91,24 @@ static CPU_WRITE_HANDLER(fds_write_handler);
 static CPU_READ_HANDLER(fds_read_handler);
 static CPU_READ_HANDLER(fds_bios_misc);
 static CPU_READ_HANDLER(fds_bios_read_write_byte);
+
+struct auto_eject_timer_setup {
+	uint8_t game_id[4];
+	uint8_t manufacturer;
+	uint8_t revision;
+	int count;
+};
+
+/* some games don't work well with the standard auto disk eject
+   counter value; look them up by game id, manufacturer and revision
+   here and use the alternative value provided.
+*/
+static struct auto_eject_timer_setup eject_timer_settings[] = {
+	{{0x4c, 0x54, 0x44, 0x20}, 0xe7, 0x00, 60 }, /* Lutter */
+	{{0x4e, 0x45, 0x55, 0x20}, 0xb3, 0x00, 85 }, /* 19 */
+	{{0x46, 0x59, 0x54, 0x20}, 0xb3, 0x00, 50 }, /* Fairytale */
+	{{0, 0, 0, 0}, 0, 0, 0 },
+};
 
 static struct input_event_handler fds_handlers[] = {
 	{ ACTION_FDS_EJECT, fds_disk_eject},
@@ -353,7 +372,7 @@ static int fds_init(struct board *board)
 			     fds_bios_misc);
 	cpu_set_read_handler(emu->cpu, 0xefaf, 1, 0,
 			     fds_bios_misc);
-	cpu_set_read_handler(emu->cpu, 0xeeb8, 1, 0,
+	cpu_set_read_handler(emu->cpu, 0xeedf, 1, 0,
 			     fds_bios_misc);
 	cpu_set_read_handler(emu->cpu, 0xe682, 1, 0,
 			     fds_bios_misc);
@@ -594,7 +613,7 @@ static void fds_end_frame(struct board *board, uint32_t cycles)
 		if (_auto_eject_counter) {
 			_auto_eject_counter--;
 		} else {
-			_auto_eject_counter = 68;
+			_auto_eject_counter = _auto_eject_counter_max;
 			_auto_eject_state ^= 1;
 		}
 	}
@@ -766,11 +785,40 @@ static void fds_auto_disk_select(struct board *board)
 
 		header = tmp + i;
 
+		if (!_auto_eject_counter_max) {
+			struct auto_eject_timer_setup *setup;
+			setup = &eject_timer_settings[0];
+
+			for (i = 0; setup->count; i++) {
+				/* printf("{{0x%02x, 0x%02x, 0x%02x, 0x%02x}, 0x%02x, 0x%02x, 0x%02x}\n", */
+				/*        header[16], */
+				/*        header[17], */
+				/*        header[18], */
+				/*        header[19], */
+				/*        header[15], */
+				/*        header[20], 0); */
+				if ((header[15] == setup->manufacturer) &&
+				    (header[16] == setup->game_id[0]) &&
+				    (header[17] == setup->game_id[1]) &&
+				    (header[18] == setup->game_id[2]) &&
+				    (header[19] == setup->game_id[3]) &&
+				    (header[20] == setup->revision)) {
+					_auto_eject_counter_max = setup->count;
+					break;
+				}
+				setup++;
+			}
+
+			if (!eject_timer_settings[i].count)
+				_auto_eject_counter_max = 68;
+		}
+
 		for (i = 0; i < sizeof(request); i++) {
 			if ((request[i] != header[15 + i]) && (request[i] != 0xff)) {
 				break;
 			}
 		}
+
 
 		if (i == sizeof(request)) {
 			int file_matches;
@@ -1214,11 +1262,13 @@ static uint8_t fds_bios_load_cpu_data(struct emu *emu, uint8_t opcode, uint32_t 
 	/* Fall back to native code for loads that would touch $2000 -
 	   $5FFF
 	*/
-	if (!dummy && (dest_addr >= 0x2000) && (dest_addr < 0x6000))
+	if (!dummy && (dest_addr >= 0x2000) && (dest_addr < 0x6000)) {
 		return opcode;
+	}
 
-	if (!dummy && (dest_addr < 0x2000) && (dest_addr + count > 0x2000))
+	if (!dummy && (dest_addr < 0x2000) && (dest_addr + count > 0x2000)) {
 		return opcode;
+	}
 
 	for (i = 0; i < count; i++) {
 		if (fds_read_byte(board, 1, cycles) < 0)
@@ -1357,10 +1407,10 @@ static CPU_READ_HANDLER(fds_bios_misc)
 	struct board *board;
 	int i;
 
-	if (!cpu_is_opcode_fetch(emu->cpu))
-		return value;
-
 	board = emu->board;
+
+	if (!_bios_patch_enabled || !cpu_is_opcode_fetch(emu->cpu))
+		return value;
 
 	fds_run(board, cycles);
 
@@ -1386,11 +1436,10 @@ static CPU_READ_HANDLER(fds_bios_misc)
 			value = cpu_peek(emu->cpu, 0xefcd);
 		}
 		break;
-	case 0xeeb8:
-		/* Disable the self-test check, initial title screen
-		   and check for disk presence (will automatically
-		   insert disk at reset (hard or soft) and select disk
-		   1, side A))
+	case 0xeedf:
+		/* Disable the initial title screen check for disk
+		   presence (will automatically insert disk at reset
+		   (hard or soft) and select disk 1, side A).
 		*/
 		if (emu->config->fds_hide_bios_title_screen) {
 			cpu_set_pc(emu->cpu, 0xef46);
@@ -1442,7 +1491,8 @@ static CPU_READ_HANDLER(fds_bios_misc)
 			fds_read_byte(board, 1, cycles);
 
 		if (_next_clock != ~0) {
-			_next_clock = cycles + 200 * emu->cpu_clock_divider;
+			_next_clock = cycles + (8 * FDS_BYTE_READ_CYCLES) *
+				emu->cpu_clock_divider;
 			schedule_disk_interrupt(board, cycles);
 		}
 

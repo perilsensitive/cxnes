@@ -63,20 +63,36 @@ extern int mouse_grabbed;
 
 #if GUI_ENABLED
 extern int gui_enabled;
-extern struct input_event grabbed_event;
+extern struct input_event_node grabbed_event;
 extern int sdl_grab_event;
 extern uint32_t binding_config_action_id;
 #endif
+
+struct axis_status {
+	int value;
+	int mapped;
+};
+
+struct hat_status {
+	uint8_t value;
+	int mapped;
+};
+
+struct button_status {
+	int mapped;
+};
 
 struct joystick_list_node {
 	SDL_Joystick *joystick;
 	SDL_GameController *controller;
 	SDL_JoystickID instance_id;
+	struct axis_status *axis_status;
+	struct hat_status *hat_status;
+	struct button_status *button_status;
 	int index;
 	int axis_count;
 	int hat_count;
-	int *axis_status;
-	uint8_t *hat_status;
+	int button_count;
 };
 
 static struct joystick_list_node **joystick_list;
@@ -85,8 +101,19 @@ static int joystick_list_size;
 const char *input_lookup_keyname_from_code(uint32_t keycode)
 {
 	const char *keyname;
+	int i;
 
-	keyname = SDL_GetKeyName(keycode);
+	for (i = 0; keyname_to_keycode[i].keyname; i++) {
+		if (keyname_to_keycode[i].keycode == keycode)
+			break;
+	}
+
+	if (keyname_to_keycode[i].keyname) {
+		keyname = keyname_to_keycode[i].keyname;
+	} else {
+		keyname = SDL_GetKeyName(keycode);
+	}
+
 	if (!keyname || !keyname[0])
 		return NULL;
 
@@ -152,6 +179,56 @@ static struct joystick_list_node *find_joystick(int instance_id)
 	return NULL;
 }
 
+static void check_controller_mappings(struct joystick_list_node *joystick)
+{
+	SDL_GameControllerButtonBind bind;
+	int i;
+
+	if (!joystick->controller)
+		return;
+
+	for (i = SDL_CONTROLLER_AXIS_INVALID + 1;
+	     i < SDL_CONTROLLER_AXIS_MAX; i++) {
+
+		bind = SDL_GameControllerGetBindForAxis(joystick->controller,
+							i);
+
+		switch (bind.bindType) {
+		case SDL_CONTROLLER_BINDTYPE_AXIS:
+			joystick->axis_status[bind.value.axis].mapped = 1;
+			break;
+		case SDL_CONTROLLER_BINDTYPE_BUTTON:
+			joystick->button_status[bind.value.button].mapped = 1;
+			break;
+		case SDL_CONTROLLER_BINDTYPE_HAT:
+			joystick->hat_status[bind.value.hat.hat].mapped = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	for (i = SDL_CONTROLLER_BUTTON_INVALID + 1;
+	     i < SDL_CONTROLLER_BUTTON_MAX; i++) {
+		bind = SDL_GameControllerGetBindForButton(joystick->controller,
+							  i);
+
+		switch (bind.bindType) {
+		case SDL_CONTROLLER_BINDTYPE_AXIS:
+			joystick->axis_status[bind.value.axis].mapped = 1;
+			break;
+		case SDL_CONTROLLER_BINDTYPE_BUTTON:
+			joystick->button_status[bind.value.button].mapped = 1;
+			break;
+		case SDL_CONTROLLER_BINDTYPE_HAT:
+			joystick->hat_status[bind.value.hat.hat].mapped = 1;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 static void add_joystick(int index)
 {
 	struct joystick_list_node *node;
@@ -159,10 +236,12 @@ static void add_joystick(int index)
 	SDL_GameController *controller;
 	SDL_JoystickGUID guid;
 	char guid_string[33];
-	int *axis_status;
-	uint8_t *hat_status;
+	struct axis_status *axis_status;
+	struct hat_status *hat_status;
+	struct button_status *button_status;
 	int axis_count;
 	int hat_count;
+	int button_count;
 	int instance_id;
 
 	if (SDL_IsGameController(index)) {
@@ -191,9 +270,12 @@ static void add_joystick(int index)
 
 	axis_count = SDL_JoystickNumAxes(joystick);
 	hat_count = SDL_JoystickNumHats(joystick);
+	button_count = SDL_JoystickNumButtons(joystick);
 
-	if (controller)
+	if (controller) {
 		axis_count += SDL_CONTROLLER_AXIS_MAX;
+		button_count += SDL_CONTROLLER_BUTTON_MAX;
+	}
 
 	axis_status = NULL;
 	if (axis_count) {
@@ -213,6 +295,24 @@ static void add_joystick(int index)
 	if (controller)
 		axis_count -= SDL_CONTROLLER_AXIS_MAX;
 
+	button_status = NULL;
+	if (button_count) {
+		button_status = malloc(button_count * sizeof(*button_status));
+		if (!button_status) {
+			log_err("add_joystick: malloc() failed\n");
+			if (controller)
+				SDL_GameControllerClose(controller);
+			else
+				SDL_JoystickClose(joystick);
+			return;
+		}
+
+		memset(button_status, 0, button_count * sizeof(*button_status));
+	}
+
+	if (controller)
+		button_count -= SDL_CONTROLLER_BUTTON_MAX;
+
 	hat_status = NULL;
 	if (hat_count) {
 		hat_status = malloc(hat_count * sizeof(*hat_status));
@@ -231,6 +331,8 @@ static void add_joystick(int index)
 	node = malloc(sizeof(*node));
 	if (!node) {
 		free(axis_status);
+		free(hat_status);
+		free(button_status);
 		if (controller)
 			SDL_GameControllerClose(controller);
 		else
@@ -243,6 +345,8 @@ static void add_joystick(int index)
 
 	node->axis_count = axis_count;
 	node->axis_status = axis_status;
+	node->button_count = button_count;
+	node->button_status = button_status;
 	node->hat_count = hat_count;
 	node->hat_status = hat_status;
 	node->joystick = joystick;
@@ -251,6 +355,8 @@ static void add_joystick(int index)
 	node->instance_id = instance_id;
 
 	joystick_list[index] = node;
+
+	check_controller_mappings(node);
 
 	guid = SDL_JoystickGetGUID(joystick);
 	SDL_JoystickGetGUIDString(guid, guid_string, 33);
@@ -279,6 +385,13 @@ static void remove_joystick(SDL_JoystickID instance_id)
 
 	if (tmp->axis_status)
 		free(tmp->axis_status);
+
+	if (tmp->hat_status)
+		free(tmp->hat_status);
+
+	if (tmp->button_status)
+		free(tmp->button_status);
+
 	free(tmp);
 }
 
@@ -385,15 +498,20 @@ void handle_joy_hat_event(struct joystick_list_node *joystick,
 	int up_released, down_released, left_released, right_released;
 	int up_pressed, down_pressed, left_pressed, right_pressed;
 	struct config *config;
+	int queue_event;
 
 	config = emu->config;
 	hat = new_event->common.index;
-	old_state = joystick->hat_status[hat];
+	old_state = joystick->hat_status[hat].value;
 	new_state = new_event->jhat.value;
-	joystick->hat_status[hat] = new_state;
+	joystick->hat_status[hat].value = new_state;
 
 	if (old_state == new_state)
 		return;
+
+	queue_event = 1;
+	if (joystick->hat_status[hat].mapped && config->gamecontroller)
+		queue_event = 0;
 
 	left_released = right_released = up_released = down_released = 0;
 	left_pressed = right_pressed = up_pressed = down_pressed = 0;
@@ -434,25 +552,25 @@ void handle_joy_hat_event(struct joystick_list_node *joystick,
 
 	if (left_released) {
 		new_event->jhat.value = INPUT_JOYHAT_LEFT;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
 	if (right_released) {
 		new_event->jhat.value = INPUT_JOYHAT_RIGHT;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
 	if (up_released) {
 		new_event->jhat.value = INPUT_JOYHAT_UP;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
 	if (down_released) {
 		new_event->jhat.value = INPUT_JOYHAT_DOWN;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
@@ -462,26 +580,25 @@ void handle_joy_hat_event(struct joystick_list_node *joystick,
 
 	if (left_pressed) {
 		new_event->jhat.value = INPUT_JOYHAT_LEFT;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
 	if (right_pressed) {
 		new_event->jhat.value = INPUT_JOYHAT_RIGHT;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
 	if (up_pressed) {
 		new_event->jhat.value = INPUT_JOYHAT_UP;
-		if (!joystick->controller || !config->gamecontroller) {
+		if (queue_event)
 			input_queue_event(new_event);
-		}
 	}
 
 	if (down_pressed) {
 		new_event->jhat.value = INPUT_JOYHAT_DOWN;
-		if (!joystick->controller || !config->gamecontroller)
+		if (queue_event)
 			input_queue_event(new_event);
 	}
 
@@ -498,11 +615,18 @@ void handle_joy_axis_event(struct joystick_list_node *joystick,
 
 	axis = new_event->common.index;
 
+	if (axis >= 0x100)
+		axis_index = joystick->axis_count + axis - 0x100;
+	else
+		axis_index = axis;
+
 	if (joystick->controller && emu->config->gamecontroller &&
-	    (axis >= 0x100)) {
+	    (axis_index >= joystick->axis_count)) {
 		queue_event = 1;
 	} else if (!joystick->controller ||
-		   (!emu->config->gamecontroller && (axis < 0x100))) {
+		   (!joystick->axis_status[axis_index].mapped) ||
+		   (!emu->config->gamecontroller &&
+		    (axis < joystick->axis_count))) {
 		queue_event = 1;
 	} else {
 		queue_event = 0;
@@ -514,12 +638,8 @@ void handle_joy_axis_event(struct joystick_list_node *joystick,
 
 	new_event->type = INPUT_EVENT_TYPE_JOYAXISBUTTON;
 
-	if (axis >= 0x100)
-		axis_index = joystick->axis_count + axis - 0x100;
-	else
-		axis_index = axis;
 
-	old_direction = joystick->axis_status[axis_index];
+	old_direction = joystick->axis_status[axis_index].value;
 
 	/* FIXME should threshold for simulating "button-style"
 	   events be configurable? */
@@ -549,13 +669,14 @@ void handle_joy_axis_event(struct joystick_list_node *joystick,
 			input_queue_event(new_event);
 	}
 
-	joystick->axis_status[axis_index] =
+	joystick->axis_status[axis_index].value =
 		new_direction;
 }
 
 int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 {
 	struct joystick_list_node *joystick_node;
+	int button_index;
 	int rc;
 
 	new_event->common.device = 0;
@@ -604,8 +725,12 @@ int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 		break;
 	case SDL_JOYBUTTONDOWN:
 	case SDL_JOYBUTTONUP:
+		button_index = event->jbutton.button;
 		joystick_node = find_joystick(event->jbutton.which);
-		if (joystick_node->controller && emu->config->gamecontroller) {
+		if (button_index >= 0x100)
+			button_index = button_index - 0x100 + joystick_node->button_count;
+		if (joystick_node->controller && emu->config->gamecontroller &&
+		    joystick_node->button_status[button_index].mapped) {
 			rc = 0;
 			break;
 		}
@@ -795,4 +920,16 @@ int input_joystick_is_gamecontroller(int index)
 		return 1;
 
 	return 0;
+}
+
+void input_poll_events(void)
+{
+	SDL_Event event;
+
+	SDL_PumpEvents();
+
+	while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN,
+			      SDL_MULTIGESTURE) > 0) {
+		input_process_event(&event);
+	}
 }

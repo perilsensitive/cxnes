@@ -76,6 +76,7 @@ extern int total_frame_time;
 extern int frame_times[60];
 extern int time_base;
 extern int frame_count;
+extern int running;
 extern int autohide_timer;
 int fullscreen = -1;
 int cursor_visible;
@@ -92,7 +93,6 @@ uint16_t nes_pixel_screen[NES_WIDTH*NES_HEIGHT];
 static int integer_scaling_factor;
 static nes_ntsc_t ntsc;
 static nes_ntsc_setup_t ntsc_setup;
-static int background_color_index;
 
 static SDL_Rect scaled_rect;
 
@@ -105,7 +105,7 @@ static SDL_Surface *text_surface;
 static SDL_Texture *text_texture;
 static SDL_Surface *fps_text_surface;
 static SDL_Texture *fps_text_texture;
-static SDL_Rect bg_dest_rect;
+static SDL_Rect osd_bg_dest_rect;
 static SDL_Rect text_dest_rect;
 static SDL_Rect text_clip_rect;
 static SDL_Rect fps_bg_dest_rect;
@@ -212,18 +212,18 @@ static void calc_osd_rects(void)
 	bg_margin = 8 * current_scaling_factor;
 	text_margin = floor(current_scaling_factor) * 2;
 
-	bg_dest_rect.x = dest_rect.x + bg_margin;
-	bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
-	if (text_w + 2 * text_margin < bg_dest_rect.w)
-		bg_dest_rect.w = text_w + 2 * text_margin;
+	osd_bg_dest_rect.x = dest_rect.x + bg_margin;
+	osd_bg_dest_rect.w = dest_rect.w - 2 * bg_margin;
+	if (text_w + 2 * text_margin < osd_bg_dest_rect.w)
+		osd_bg_dest_rect.w = text_w + 2 * text_margin;
 
-	bg_dest_rect.h = text_line_skip + 2 * text_margin;
-	bg_dest_rect.y = dest_rect.h - bg_dest_rect.h - bg_margin;
+	osd_bg_dest_rect.h = text_line_skip + 2 * text_margin;
+	osd_bg_dest_rect.y = dest_rect.y + dest_rect.h - osd_bg_dest_rect.h - bg_margin;
 
-	text_dest_rect.x = bg_dest_rect.x + text_margin;
-	text_dest_rect.w = bg_dest_rect.w - 2 * text_margin;
+	text_dest_rect.x = osd_bg_dest_rect.x + text_margin;
+	text_dest_rect.w = osd_bg_dest_rect.w - 2 * text_margin;
 	text_dest_rect.h = text_line_skip;
-	text_dest_rect.y = bg_dest_rect.y + text_margin;
+	text_dest_rect.y = osd_bg_dest_rect.y + text_margin;
 
 	text_clip_rect.x = 0;
 	text_clip_rect.y = 0;
@@ -407,7 +407,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		const uint8_t *pal;
 		const char *do_merge_fields;
 		uint8_t *tmp_pal;
-		int is_rgb;
+		int is_rgb, is_custom;
 		int i;
 
 		ppu_type = ppu_get_type(emu->ppu);
@@ -422,19 +422,33 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		case PPU_TYPE_RP2C04_0004:
 			is_rgb = 1;
 			pal = palette_rp2c04_master;
-			background_color_index = 0x0f;
 			break;
 		case PPU_TYPE_RP2C02:
 		case PPU_TYPE_RP2C07:
 		case PPU_TYPE_DENDY:
-			background_color_index = 0x0f;
 			is_rgb = 0;
-			pal = palette_rp2c03;
+			pal = NULL;
 			break;
 		default:
-			background_color_index = 0x0f;
-			pal = palette_rp2c03;
+			pal = palette_rp2c03b;
 			is_rgb = 1;
+		}
+
+		is_custom = 0;
+
+		if (strcasecmp(emu->config->palette, "rc2c03b") == 0) {
+			pal = palette_rc2c03b;
+		} else if (strcasecmp(emu->config->palette, "rp2c03b") == 0) {
+			pal = palette_rp2c03b;
+		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
+
+			pal = palette_rp2c04_master;
+		} else if (strcasecmp(emu->config->palette, "custom") == 0) {
+			if (emu->config->palette_path) {
+				is_custom = 1;
+			}
+		} else if (strcasecmp(emu->config->palette, "yiq") == 0) {
+			pal = NULL;
 		}
 
 		if (emu->config->ntsc_filter_auto_tune) {
@@ -479,62 +493,39 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		}
 
 		tmp_pal = malloc(512 * 3);
-		if (tmp_pal) {
-			memcpy(tmp_pal, pal, 64 * 3);
-			if (is_rgb) {
-				palette_rgb_emphasis(tmp_pal);
+
+		if (pal || is_custom) {
+			int size = -1;
+
+			if (is_custom) {
+				size = load_external_palette(tmp_pal,
+							     emu->config->palette_path);
+				if (size < 0)
+					pal = palette_rp2c03b;
+				else
+					pal = NULL;
 			}
+
+			if (pal)
+				memcpy(tmp_pal, pal, 64 * 3);
+			pal = tmp_pal;
+
+			if (is_rgb && size == 64)
+				palette_rgb_emphasis(tmp_pal);
 		}
 
-		if ((strcasecmp(emu->config->palette, "custom") == 0) &&
-		    emu->config->palette_path) {
-			int size;
-
+		if (is_rgb) {
 			ntsc_setup.base_palette = NULL;
+			ntsc_setup.palette = pal;
+		} else {
+			ntsc_setup.base_palette = pal;
 			ntsc_setup.palette = NULL;
-
-			size = load_external_palette(tmp_pal,
-						     emu->config->palette_path);
-			
-
-			if (size == 64) {
-				if (is_rgb) {
-					palette_rgb_emphasis(tmp_pal);
-					ntsc_setup.palette = tmp_pal;
-				} else {
-					ntsc_setup.base_palette = tmp_pal;
-				}
-			} else {
-				ntsc_setup.palette = tmp_pal;
-			}
-			
-		} else if (strcasecmp(emu->config->palette, "yiq") == 0) {
-			ntsc_setup.palette = NULL;
-			ntsc_setup.base_palette = NULL;
-		} else if (strcasecmp(emu->config->palette, "rgb") == 0) {
-			if (is_rgb) {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = pal;
-			} else {
-				ntsc_setup.base_palette = pal;
-				ntsc_setup.palette = NULL;
-			}
-		} else if (strcasecmp(emu->config->palette, "auto") == 0) {
-			if (is_rgb) {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = pal;
-			} else {
-				ntsc_setup.base_palette = NULL;
-				ntsc_setup.palette = NULL;;
-			}
 		}
 
 		ntsc_setup.use_bisqwit_palette = 1;
 		if ((!ntsc_setup.base_palette && !ntsc_setup.palette) ||
-		    !is_rgb) {
-			/* Only apply these to generated_palettes and
-			   to a custom external palette.
-			*/
+		    (!is_rgb && !is_custom)) {
+			/* Only apply these to generated_palettes */
 			ntsc_setup.saturation = emu->config->ntsc_palette_saturation - 1;
 			ntsc_setup.hue = emu->config->ntsc_palette_hue / 180;
 		} else {
@@ -879,8 +870,11 @@ static void video_reset_autohide_timer(void)
 
 void video_show_cursor(int show)
 {
-	if (mouse_grabbed || (crosshairs_enabled && !show))
+	if ((crosshairs_enabled && !show))
 		return;
+
+	if (mouse_grabbed)
+		show = 0;
 
 	if (show)
 		video_reset_autohide_timer();
@@ -1144,7 +1138,7 @@ int video_draw_buffer(void)
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(renderer, osd_bg_color.r, osd_bg_color.g,
 				       osd_bg_color.b, osd_bg_color.a);
-		SDL_RenderFillRect(renderer, &bg_dest_rect);
+		SDL_RenderFillRect(renderer, &osd_bg_dest_rect);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderCopy(renderer, text_texture, &text_clip_rect,
 			       &text_dest_rect);
@@ -1491,6 +1485,9 @@ int video_process_event(SDL_Event *event)
 			video_update_texture();
 			video_draw_buffer();
 		}
+		break;
+	case SDL_WINDOWEVENT_CLOSE:
+		running = 0;
 		break;
 	}
 

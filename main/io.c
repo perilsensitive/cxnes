@@ -44,6 +44,7 @@ extern struct io_device arkanoid_fc_device;
 extern struct io_device arkanoidII_device;
 extern struct io_device vs_zapper_device;
 extern struct io_device keyboard_device;
+extern struct io_device subor_keyboard_device;
 extern struct io_device vs_unisystem_device;
 extern struct io_device ftrainer_a_device;
 extern struct io_device ftrainer_b_device;
@@ -77,70 +78,7 @@ struct fourscore_state {
 };
 
 static struct input_event_handler controller_common_handlers[] = {
-	{ ACTION_CONTROLLER_1_A, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_B, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_SELECT, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_START, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_UP, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_DOWN, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_LEFT, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_RIGHT, controller_common_set_button},
-	{ ACTION_CONTROLLER_1_A | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_1_B | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_1_A | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_1_B | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_2_A, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_B, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_SELECT, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_START, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_UP, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_DOWN, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_LEFT, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_RIGHT, controller_common_set_button},
-	{ ACTION_CONTROLLER_2_A | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_2_B | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_2_A | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_2_B | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_3_A, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_B, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_SELECT, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_START, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_UP, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_DOWN, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_LEFT, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_RIGHT, controller_common_set_button},
-	{ ACTION_CONTROLLER_3_A | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_3_B | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_3_A | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_3_B | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_4_A, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_B, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_SELECT, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_START, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_UP, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_DOWN, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_LEFT, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_RIGHT, controller_common_set_button},
-	{ ACTION_CONTROLLER_4_A | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_4_B | ACTION_CONTROLLER_TURBO_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_4_A | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
-	{ ACTION_CONTROLLER_4_B | ACTION_CONTROLLER_TURBO_TOGGLE_FLAG,
-	  controller_common_set_button},
+	{ ACTION_CONTROLLER_1_A & ACTION_PREFIX_MASK, controller_common_set_button},
 	{ ACTION_NONE },
 };
 
@@ -246,7 +184,8 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	if (four_player_mode == FOUR_PLAYER_MODE_AUTO)
 		four_player_mode = emu->io->auto_four_player_mode;
 
-	if (!io->queue_processed && (cycles >= 242 * 341 * emu->ppu_clock_divider)) {
+	if (!io->queue_processed) {
+		input_poll_events();
 		input_process_queue(0);
 		io->queue_processed = 1;
 	}
@@ -292,7 +231,8 @@ static CPU_READ_HANDLER(io_read_handler)
 
 	port = addr - 0x4016;
 
-	if (!io->queue_processed && (cycles >= 242 * 341 * emu->ppu_clock_divider)) {
+	if (!io->queue_processed) {
+		input_poll_events();
 		input_process_queue(0);
 		io->queue_processed = 1;
 	}
@@ -534,6 +474,7 @@ void io_reset(struct io_state *io, int hard)
 			io_register_device(io, &snes_mouse4_device, -1);
 
 			io_register_device(io, &keyboard_device, -1);
+			io_register_device(io, &subor_keyboard_device, -1);
 			io_register_device(io, &ftrainer_a_device, -1);
 			io_register_device(io, &ftrainer_b_device, -1);
 			io_register_device(io, &arkanoid_fc_device, -1);
@@ -733,6 +674,67 @@ struct io_device *io_find_auto_device(struct io_state *io, int port)
 	return device;
 }
 
+void io_set_remember_input_devices(struct io_state *io, int enabled)
+{
+	struct io_device *device;
+
+	if (enabled == io->emu->config->remember_input_devices)
+		return;
+
+	io->emu->config->remember_input_devices = enabled;
+
+	if (enabled) {
+		const char *config_names[] = { "default_port1_device", "default_port2_device",
+					       "default_port3_device", "default_port4_device",
+					       "default_exp_device", };
+
+		const char *four_player_string;
+		int i;
+
+		for (i = PORT_1; i <= PORT_EXP; i++) {
+			int id = io->device_id[i];
+			const char *device_string;
+			device = io->selected_device[i];
+
+			if (id == IO_DEVICE_AUTO) {
+				device_string = "auto";
+			} else {
+				device_string = device->config_id;
+			}
+
+			rom_config_set(io->emu->config, config_names[i],
+				       device_string);
+		}
+
+		four_player_string = "auto";
+		switch (io->four_player_mode) {
+		case FOUR_PLAYER_MODE_AUTO:
+			four_player_string = "auto";
+			break;
+		case FOUR_PLAYER_MODE_NONE:
+			four_player_string = "none";
+			break;
+		case FOUR_PLAYER_MODE_FC:
+			four_player_string = "famicom";
+			break;
+		case FOUR_PLAYER_MODE_NES:
+			four_player_string = "nes";
+			break;
+		}
+
+		rom_config_set(io->emu->config, "four_player_mode", four_player_string);
+	} else {
+		rom_config_set(io->emu->config, "default_port1_device", "auto");
+		rom_config_set(io->emu->config, "default_port2_device", "auto");
+		rom_config_set(io->emu->config, "default_port3_device", "auto");
+		rom_config_set(io->emu->config, "default_port4_device", "auto");
+		rom_config_set(io->emu->config, "default_exp_device", "auto");
+		rom_config_set(io->emu->config, "four_player_mode", "auto");
+	}
+
+	emu_save_rom_config(io->emu);
+}
+
 void io_device_select(struct io_state *io, int port, int id)
 {
 	struct io_device *device;
@@ -764,8 +766,13 @@ void io_device_select(struct io_state *io, int port, int id)
 	device = io_find_device(io, port, id);
 
 	if (io->initialized && device && config_param) {
-		rom_config_set(io->emu->config, config_param,
-			(id == IO_DEVICE_AUTO) ? "auto" : device->config_id);
+		const char *config_id;
+		if ((id == IO_DEVICE_AUTO) || !io->emu->config->remember_input_devices)
+			config_id = "auto";
+		else
+			config_id = device->config_id;
+		
+		rom_config_set(io->emu->config, config_param, config_id);
 		emu_save_rom_config(io->emu);
 	}
 
@@ -924,6 +931,9 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 	default:
 		mode_str = "";
 	}
+
+	if (!io->emu->config->remember_input_devices)
+		mode_str = "auto";
 
 	rom_config_set(io->emu->config, "four_player_mode", mode_str);
 	emu_save_rom_config(io->emu);
@@ -1093,7 +1103,6 @@ static void controller_update_button_state(struct io_device *dev, int controller
 	state->current_state[controller] |= tmp;
 	state->current_state[controller] |= state->turbo_buttons[controller] &
 		state->turbo_mask[controller];
-	state->current_state[controller] |= ~0xff;
 }
 
 static void controller_common_end_frame(struct io_device *dev, uint32_t cycles)
@@ -1218,4 +1227,46 @@ void io_set_auto_vs_controller_mode(struct io_state *io, int mode)
 int io_get_auto_vs_controller_mode(struct io_state *io)
 {
 	return io->auto_vs_controller_mode;
+}
+
+int io_save_state(struct io_state *io, struct save_state *state)
+{
+	struct io_device *device;
+	int port;
+	int rc;
+
+	for (port = 0; port < PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (!device->connected || !device->save_state)
+				continue;
+
+			rc = device->save_state(device, port, state);
+
+			if (rc)
+				return rc;
+		}
+	}
+
+	return 0;
+}
+
+int io_load_state(struct io_state *io, struct save_state *state)
+{
+	struct io_device *device;
+	int port;
+	int rc;
+
+	for (port = 0; port < PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (!device->connected || !device->load_state)
+				continue;
+
+			rc = device->load_state(device, port, state);
+
+			if (rc)
+				return rc;
+		}
+	}
+
+	return 0;
 }
