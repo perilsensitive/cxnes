@@ -636,9 +636,9 @@ static CPU_WRITE_HANDLER(jycompany_write_handler)
 			(board->chr_mode & (CHR_MODE_BLOCK|CHR_MODE_MIRROR));
 
 		_nmt_mode = value & (NMT_MODE_R|NMT_MODE_N);
-		if (board->info->board_type == BOARD_TYPE_JYCOMPANY_TYPE_A)
+		if (board->info->board_type == BOARD_TYPE_JYCOMPANY_A)
 			_nmt_mode &= ~NMT_MODE_N;
-		else if (board->info->board_type == BOARD_TYPE_JYCOMPANY_TYPE_C)
+		else if (board->info->board_type == BOARD_TYPE_JYCOMPANY_C)
 			_nmt_mode |= NMT_MODE_N;
 
 		jycompany_set_prg_mode(board, value & 0x87);
@@ -676,7 +676,7 @@ static void jycompany_reset(struct board *board, int hard)
 	_chr_latch[0] = 0;
 	_chr_latch[1] = 4;
 
-	if (board->info->board_type == BOARD_TYPE_JYCOMPANY_TYPE_C)
+	if (board->info->board_type == BOARD_TYPE_JYCOMPANY_C)
 		board_set_ppu_mirroring(board, MIRROR_1A);
 	else
 		board_set_ppu_mirroring(board, MIRROR_V);
@@ -729,8 +729,8 @@ static struct board_read_handler jycompany_read_handlers[] = {
 };
 
 struct board_info board_jycompany_a = {
-	.board_type = BOARD_TYPE_JYCOMPANY_TYPE_A,
-	.name = "J.Y.COMPANY (a)",
+	.board_type = BOARD_TYPE_JYCOMPANY_A,
+	.name = "JYCOMPANY-A",
 	.funcs = &jycompany_funcs,
 	.init_prg = jycompany_init_prg,
 	.init_chr0 = jycompany_init_chr,
@@ -743,8 +743,8 @@ struct board_info board_jycompany_a = {
 };
 
 struct board_info board_jycompany_b = {
-	.board_type = BOARD_TYPE_JYCOMPANY_TYPE_B,
-	.name = "J.Y.COMPANY (b)",
+	.board_type = BOARD_TYPE_JYCOMPANY_B,
+	.name = "JYCOMPANY-B",
 	.funcs = &jycompany_funcs,
 	.init_prg = jycompany_init_prg,
 	.init_chr0 = jycompany_init_chr,
@@ -757,8 +757,8 @@ struct board_info board_jycompany_b = {
 };
 
 struct board_info board_jycompany_c = {
-	.board_type = BOARD_TYPE_JYCOMPANY_TYPE_C,
-	.name = "J.Y.COMPANY (c)",
+	.board_type = BOARD_TYPE_JYCOMPANY_C,
+	.name = "JYCOMPANY-C",
 	.funcs = &jycompany_funcs,
 	.init_prg = jycompany_init_prg,
 	.init_chr0 = jycompany_init_chr,

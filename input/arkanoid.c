@@ -29,9 +29,9 @@
 #define TYPE_OLD_NES 1
 #define TYPE_NEW_FC 2
 
-#define ACTION_DIAL 0x00
-#define ACTION_DIAL_MOUSE 0x01
-#define ACTION_BUTTON 0x02
+#define ACTION_DIAL 0x01
+#define ACTION_DIAL_MOUSE 0x02
+#define ACTION_BUTTON 0x04
 
 static int arkanoid_apply_config(struct io_device *dev);
 static int arkanoid_nes_connect(struct io_device *dev);
@@ -57,32 +57,24 @@ struct arkanoid_state {
 };
 
 static struct input_event_handler arkanoid1_handlers[] = {
-	{ ACTION_ARKANOID_1_DIAL_MOUSE,
+	{ ACTION_ARKANOID_1_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_1_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_1, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler arkanoid2_handlers[] = {
-	{ ACTION_ARKANOID_2_DIAL_MOUSE,
+	{ ACTION_ARKANOID_2_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_2_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_2, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler arkanoid_fc_handlers[] = {
-	{ ACTION_ARKANOID_2_DIAL_MOUSE,
+	{ ACTION_ARKANOID_2_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_2_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_2, arkanoid_set_button},
 
 	/* The "Port 1" handlers are used for the second paddle. */
-	{ ACTION_ARKANOID_1_DIAL_MOUSE,
+	{ ACTION_ARKANOID_1_DIAL_MOUSE & ACTION_PREFIX_MASK,
 	 arkanoid_set_button},
-	{ ACTION_ARKANOID_1_DIAL, arkanoid_set_button},
-	{ ACTION_ARKANOID_1, arkanoid_set_button},
 	{ ACTION_NONE },
 };
 

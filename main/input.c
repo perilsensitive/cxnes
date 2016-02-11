@@ -19,7 +19,6 @@
 
 #include <errno.h>
 #include <ctype.h>
-#include <SDL.h>
 
 #include "emu.h"
 #include "controller.h"
@@ -83,6 +82,7 @@ const char *category_names[] = {
 extern int input_native_init(struct emu *emu);
 extern int input_native_shutdown(void);
 extern int save_screenshot(void);
+struct emu_action *input_insert_emu_action(uint32_t emu_action);
 
 #define EMU_ACTION_ID_MAP(emu_action_name, cat, nice) { \
 		.name = #emu_action_name, \
@@ -204,6 +204,7 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(ZAPPER_2_TRIGGER, ZAPPER2, "Trigger"),
 	EMU_ACTION_ID_MAP(ZAPPER_2_TRIGGER_OFFSCREEN, ZAPPER2, "Trigger (Offscreen)"),
 	EMU_ACTION_ID_MAP(ZAPPER_2_UPDATE_LOCATION, ZAPPER2, "Location"),
+	EMU_ACTION_ID_MAP(KEYBOARD_ESCAPE, KEYBOARD, "Escape"),
 	EMU_ACTION_ID_MAP(KEYBOARD_F1, KEYBOARD, "F1"),
 	EMU_ACTION_ID_MAP(KEYBOARD_F2, KEYBOARD, "F2"),
 	EMU_ACTION_ID_MAP(KEYBOARD_F3, KEYBOARD, "F3"),
@@ -212,6 +213,11 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(KEYBOARD_F6, KEYBOARD, "F6"),
 	EMU_ACTION_ID_MAP(KEYBOARD_F7, KEYBOARD, "F7"),
 	EMU_ACTION_ID_MAP(KEYBOARD_F8, KEYBOARD, "F8"),
+	EMU_ACTION_ID_MAP(KEYBOARD_F9, KEYBOARD, "F9"),
+	EMU_ACTION_ID_MAP(KEYBOARD_F10, KEYBOARD, "F10"),
+	EMU_ACTION_ID_MAP(KEYBOARD_F11, KEYBOARD, "F11"),
+	EMU_ACTION_ID_MAP(KEYBOARD_F12, KEYBOARD, "F12"),
+	EMU_ACTION_ID_MAP(KEYBOARD_BACKQUOTE, KEYBOARD, "`"),
 	EMU_ACTION_ID_MAP(KEYBOARD_1, KEYBOARD, "1"),
 	EMU_ACTION_ID_MAP(KEYBOARD_2, KEYBOARD, "2"),
 	EMU_ACTION_ID_MAP(KEYBOARD_3, KEYBOARD, "3"),
@@ -223,9 +229,9 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(KEYBOARD_9, KEYBOARD, "9"),
 	EMU_ACTION_ID_MAP(KEYBOARD_0, KEYBOARD, "0"),
 	EMU_ACTION_ID_MAP(KEYBOARD_MINUS, KEYBOARD, "-"),
-	EMU_ACTION_ID_MAP(KEYBOARD_YEN, KEYBOARD, "Yen"),
-	EMU_ACTION_ID_MAP(KEYBOARD_STOP, KEYBOARD, "Stop"),
-	EMU_ACTION_ID_MAP(KEYBOARD_ESCAPE, KEYBOARD, "Escape"),
+	EMU_ACTION_ID_MAP(KEYBOARD_EQUALS, KEYBOARD, "="),
+	EMU_ACTION_ID_MAP(KEYBOARD_BS, KEYBOARD, "Backspace"),
+	EMU_ACTION_ID_MAP(KEYBOARD_TAB, KEYBOARD, "Tab"),
 	EMU_ACTION_ID_MAP(KEYBOARD_q, KEYBOARD, "Q"),
 	EMU_ACTION_ID_MAP(KEYBOARD_w, KEYBOARD, "W"),
 	EMU_ACTION_ID_MAP(KEYBOARD_e, KEYBOARD, "E"),
@@ -236,10 +242,10 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(KEYBOARD_i, KEYBOARD, "I"),
 	EMU_ACTION_ID_MAP(KEYBOARD_o, KEYBOARD, "O"),
 	EMU_ACTION_ID_MAP(KEYBOARD_p, KEYBOARD, "P"),
-	EMU_ACTION_ID_MAP(KEYBOARD_AT, KEYBOARD, "@"),
 	EMU_ACTION_ID_MAP(KEYBOARD_LEFTBRACKET, KEYBOARD, "["),
-	EMU_ACTION_ID_MAP(KEYBOARD_ENTER, KEYBOARD, "Enter"),
-	EMU_ACTION_ID_MAP(KEYBOARD_CTRL, KEYBOARD, "Ctrl"),
+	EMU_ACTION_ID_MAP(KEYBOARD_RIGHTBRACKET, KEYBOARD, "]"),
+	EMU_ACTION_ID_MAP(KEYBOARD_BACKSLASH, KEYBOARD, "Backslash"),
+	EMU_ACTION_ID_MAP(KEYBOARD_CAPS, KEYBOARD, "Caps Lock"),
 	EMU_ACTION_ID_MAP(KEYBOARD_a, KEYBOARD, "A"),
 	EMU_ACTION_ID_MAP(KEYBOARD_s, KEYBOARD, "S"),
 	EMU_ACTION_ID_MAP(KEYBOARD_d, KEYBOARD, "D"),
@@ -250,9 +256,8 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(KEYBOARD_k, KEYBOARD, "K"),
 	EMU_ACTION_ID_MAP(KEYBOARD_l, KEYBOARD, "L"),
 	EMU_ACTION_ID_MAP(KEYBOARD_SEMICOLON, KEYBOARD, ";"),
-	EMU_ACTION_ID_MAP(KEYBOARD_COLON, KEYBOARD, ":"),
-	EMU_ACTION_ID_MAP(KEYBOARD_RIGHTBRACKET, KEYBOARD, "]"),
-	EMU_ACTION_ID_MAP(KEYBOARD_KANA, KEYBOARD, "Kana"),
+	EMU_ACTION_ID_MAP(KEYBOARD_APOSTROPHE, KEYBOARD, "'"),
+	EMU_ACTION_ID_MAP(KEYBOARD_ENTER, KEYBOARD, "Enter"),
 	EMU_ACTION_ID_MAP(KEYBOARD_LSHIFT, KEYBOARD, "Left Shift"),
 	EMU_ACTION_ID_MAP(KEYBOARD_z, KEYBOARD, "Z"),
 	EMU_ACTION_ID_MAP(KEYBOARD_x, KEYBOARD, "X"),
@@ -264,17 +269,37 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(KEYBOARD_COMMA, KEYBOARD, ","),
 	EMU_ACTION_ID_MAP(KEYBOARD_PERIOD, KEYBOARD, "."),
 	EMU_ACTION_ID_MAP(KEYBOARD_SLASH, KEYBOARD, "/"),
-	EMU_ACTION_ID_MAP(KEYBOARD_UNDERSCORE, KEYBOARD, "_"),
 	EMU_ACTION_ID_MAP(KEYBOARD_RSHIFT, KEYBOARD, "Right Shift"),
-	EMU_ACTION_ID_MAP(KEYBOARD_GRPH, KEYBOARD, "Grph"),
-	EMU_ACTION_ID_MAP(KEYBOARD_SPACE, KEYBOARD, "Spacebar"),
-	EMU_ACTION_ID_MAP(KEYBOARD_CLR, KEYBOARD, "CLR"),
-	EMU_ACTION_ID_MAP(KEYBOARD_INS, KEYBOARD, "INS"),
-	EMU_ACTION_ID_MAP(KEYBOARD_DEL, KEYBOARD, "DEL"),
+	EMU_ACTION_ID_MAP(KEYBOARD_LCTRL, KEYBOARD, "Left Ctrl"),
+	EMU_ACTION_ID_MAP(KEYBOARD_LALT, KEYBOARD, "Left Alt"),
+	EMU_ACTION_ID_MAP(KEYBOARD_SPACE, KEYBOARD, "Space"),
+	EMU_ACTION_ID_MAP(KEYBOARD_RALT, KEYBOARD, "Right Alt"),
+	EMU_ACTION_ID_MAP(KEYBOARD_RCTRL, KEYBOARD, "Right Ctrl"),
+
+	EMU_ACTION_ID_MAP(KEYBOARD_INS, KEYBOARD, "Insert"),
+	EMU_ACTION_ID_MAP(KEYBOARD_HOME, KEYBOARD, "Home"),
+	EMU_ACTION_ID_MAP(KEYBOARD_PGUP, KEYBOARD, "Page Up"),
+	EMU_ACTION_ID_MAP(KEYBOARD_DEL, KEYBOARD, "Delete"),
+	EMU_ACTION_ID_MAP(KEYBOARD_END, KEYBOARD, "End"),
+	EMU_ACTION_ID_MAP(KEYBOARD_PGDN, KEYBOARD, "Page Down"),
 	EMU_ACTION_ID_MAP(KEYBOARD_UP, KEYBOARD, "Up"),
-	EMU_ACTION_ID_MAP(KEYBOARD_DOWN, KEYBOARD, "Down"),
 	EMU_ACTION_ID_MAP(KEYBOARD_LEFT, KEYBOARD, "Left"),
+	EMU_ACTION_ID_MAP(KEYBOARD_DOWN, KEYBOARD, "Down"),
 	EMU_ACTION_ID_MAP(KEYBOARD_RIGHT, KEYBOARD, "Right"),
+
+	EMU_ACTION_ID_MAP(KEYBOARD_COLON, KEYBOARD, ":"),
+	EMU_ACTION_ID_MAP(KEYBOARD_KANA, KEYBOARD, "Kana"),
+	EMU_ACTION_ID_MAP(KEYBOARD_UNDERSCORE, KEYBOARD, "_"),
+	EMU_ACTION_ID_MAP(KEYBOARD_GRAPH, KEYBOARD, "Graph"),
+	EMU_ACTION_ID_MAP(KEYBOARD_PAUSE, KEYBOARD, "Pause"),
+	EMU_ACTION_ID_MAP(KEYBOARD_BREAK, KEYBOARD, "Break"),
+	EMU_ACTION_ID_MAP(KEYBOARD_RESET, KEYBOARD, "Reset"),
+	EMU_ACTION_ID_MAP(KEYBOARD_NUMLOCK, KEYBOARD, "Numlock"),
+	EMU_ACTION_ID_MAP(KEYBOARD_YEN, KEYBOARD, "Yen"),
+	EMU_ACTION_ID_MAP(KEYBOARD_STOP, KEYBOARD, "Stop"),
+	EMU_ACTION_ID_MAP(KEYBOARD_AT, KEYBOARD, "@"),
+	EMU_ACTION_ID_MAP(KEYBOARD_CARET, KEYBOARD, "^"),
+
 	EMU_ACTION_ID_MAP(MOUSE_1_LEFTBUTTON, MOUSE1, "Left Button"),
 	EMU_ACTION_ID_MAP(MOUSE_1_RIGHTBUTTON, MOUSE1, "Right Button"),
 	EMU_ACTION_ID_MAP(MOUSE_1_UPDATE_LOCATION, MOUSE1, "X/Y"),
@@ -374,7 +399,7 @@ const char *modifier_names[INPUT_MOD_COUNT] = {
 
 static int ignore_events;
 static int mod_bits;
-struct input_event *event_hash[EVENT_HASH_SIZE];
+struct input_event_node *event_hash[EVENT_HASH_SIZE];
 static struct emu_action *emu_action_list;
 static int modifier_count[INPUT_MOD_COUNT];
 extern int running;
@@ -384,8 +409,8 @@ extern int mouse_grabbed;
 
 extern struct emu *emu;
 
-static int get_effective_modifiers(struct input_event *event, int mod);
-static struct input_event *input_lookup_event(union input_new_event *input_new_event);
+static int get_effective_modifiers(struct input_event_node *event, int mod);
+static struct input_event_node *input_lookup_event(union input_new_event *input_new_event);
 int input_handle_event(union input_new_event *input_event, int force);
 
 static int parse_mouse_binding(const char *buffer, union input_new_event *event)
@@ -569,7 +594,7 @@ void input_print_hash_bucket_sizes(void)
 	int i;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
-		struct input_event *p;
+		struct input_event_node *p;
 		int count;
 
 		count = 0;
@@ -672,6 +697,8 @@ int input_parse_binding(const char *string, union input_new_event *event,
 	char buf[80];
 	int len;
 
+	memset(event, 0, sizeof(*event));
+
 	modifier_start = modifier_end = binding_start = 0;
 	sscanf(string, " [ %n%*[^]]%n ] %n%*s", &modifier_start, &modifier_end,
 	       &binding_start);
@@ -742,7 +769,7 @@ int input_bind(const char *binding, const char *emu_actions)
 {
 	union input_new_event event;
 	struct emu_action *e;
-	struct input_event *input_event;
+	struct input_event_node *input_event;
 	uint32_t emu_action;
 	char *tmp;
 	char *saveptr;
@@ -794,7 +821,7 @@ int input_bind(const char *binding, const char *emu_actions)
 			log_err("invalid emu_action '%s' for binding %s\n",
 				token, binding);
 		} else {
-			e = input_insert_emu_action(emu_action);
+			e = input_lookup_emu_action(emu_action);
 			input_insert_event(&event, mod, e);
 		}
 		
@@ -816,7 +843,23 @@ int input_connect_handlers(const struct input_event_handler *handlers, void *dat
 
 	for (i = 0; handlers[i].id != ACTION_NONE; i++) {
 		uint32_t emu_action = handlers[i].id;
-		e = input_insert_emu_action(emu_action);
+
+		if ((handlers[i].id & ACTION_PREFIX_MASK) ==
+		    handlers[i].id) {
+			for (e = emu_action_list; e; e = e->next) {
+				if (((e->id & ACTION_PREFIX_MASK) !=
+				     handlers[i].id) || e->handler) {
+					continue;
+				}
+
+				e->handler = handlers[i].handler;
+				e->data = data;
+			}
+
+			return 0;
+		}
+
+		e = input_lookup_emu_action(emu_action);
 		if (!e)
 			continue;
 
@@ -850,7 +893,7 @@ void input_ignore_events(int ignore)
 
 void input_release_all(void)
 {
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *event;
 	int effective_mods;
 	int i, j;
@@ -892,7 +935,7 @@ void input_release_all(void)
 static void input_update_mod_bits(int mod, int set)
 {
 	int new_mod_bits;
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *old, *new;
 	int effective_mods;
 	int i, j;
@@ -1024,7 +1067,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 {
 	int value;
 	int index;
-	struct input_event *p;
+	struct input_event_node *p;
 	struct emu_action *e;
 	int old_count;
 	int mod, m;
@@ -1109,7 +1152,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 				if ((mod_bits & INPUT_MOD_BITS_KBD) &&
 				    (m != INPUT_MOD_KBD)) {
 					mod = INPUT_MOD_BITS_KBD;
-					m = 0;
+					m = -1;
 				} else {
 					mod = 0;
 				}
@@ -1408,7 +1451,7 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 
 	for (i = 0; handlers[i].id != ACTION_NONE; i++) {
 		uint32_t emu_action = handlers[i].id;
-		e = input_insert_emu_action(emu_action);
+		e = input_lookup_emu_action(emu_action);
 		if (!e)
 			continue;
 
@@ -1486,12 +1529,12 @@ static struct input_event_handler misc_handlers[] = {
 	{ ACTION_NONE },
 };
 
-struct input_event *input_insert_event(union input_new_event *event,
+struct input_event_node *input_insert_event(union input_new_event *event,
 				       int mod,
 				       struct emu_action *emu_action)
 {
-	struct input_event **e;
-	struct input_event *native_event;
+	struct input_event_node **e;
+	struct input_event_node *native_event;
 	uint32_t id;
 	uint32_t type;
 	uint32_t device;
@@ -1610,7 +1653,7 @@ struct input_event *input_insert_event(union input_new_event *event,
 
 int input_add_modifier(union input_new_event *event, int mod)
 {
-	struct input_event *native_event;
+	struct input_event_node *native_event;
 
 	if (mod >= INPUT_MOD_COUNT)
 		return -1;
@@ -1627,7 +1670,7 @@ int input_add_modifier(union input_new_event *event, int mod)
 	return 0;
 }
 
-static int get_effective_modifiers(struct input_event *event, int mod)
+static int get_effective_modifiers(struct input_event_node *event, int mod)
 {
 	int mod_tries[3] = { mod, mod & ~INPUT_MOD_BITS_KBD, 0 };
 	int i;
@@ -1656,9 +1699,9 @@ static int get_effective_modifiers(struct input_event *event, int mod)
 	return mod_tries[i];
 }
 
-static struct input_event *input_lookup_event(union input_new_event *event)
+static struct input_event_node *input_lookup_event(union input_new_event *event)
 {
-	struct input_event *native_event;
+	struct input_event_node *native_event;
 	uint32_t id;
 	uint32_t type;
 	uint32_t device;
@@ -1784,6 +1827,10 @@ int input_init(struct emu *emu)
 	for (i = 0; i < EVENT_HASH_SIZE; i++)
 		event_hash[i] = NULL;
 
+	for (i = 0; emu_action_id_map[i].emu_action_id != ACTION_NONE; i++) {
+		input_insert_emu_action(emu_action_id_map[i].emu_action_id);
+	}
+
 	input_connect_handlers(misc_handlers, emu);
 
 	memset(modifier_count, 0, sizeof(modifier_count));
@@ -1797,7 +1844,7 @@ int input_init(struct emu *emu)
 
 static void input_clear_bindings(void)
 {
-	struct input_event *e, *tmp;
+	struct input_event_node *e, *tmp;
 	int i;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
@@ -1846,7 +1893,7 @@ int input_validate_binding_name(const char *name)
 	return !input_parse_binding(name, &event, NULL);
 }
 
-int get_binding_name(char *buffer, int size, struct input_event *e)
+int get_binding_name(char *buffer, int size, struct input_event_node *e)
 {
 	const char *keyname;
 	int count;
@@ -2027,7 +2074,7 @@ int binding_compare(const void *a, const void *b)
 //void input_describe_bindings(void (*callback)(const char *, const char *, int))
 void input_get_binding_config(char **config_data, size_t *config_data_size)
 {
-	struct input_event *e;
+	struct input_event_node *e;
 	char buffer[80];
 	char modbuffer[80];
 	int i, j;

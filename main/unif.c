@@ -203,6 +203,11 @@ int unif_load(struct emu *emu, struct rom *rom)
 
 	rom->info.total_prg_size = total_prg_size;
 	rom->info.total_chr_size = total_chr_size;
+	rom->info.prg_size[0] = total_prg_size;
+	rom->info.chr_size[0] = total_chr_size;
+	rom->info.prg_size_count = 1;
+	if (rom->info.total_chr_size)
+		rom->info.chr_size_count = 1;
 
 	rom->info.mirroring = mirroring;
 	if (unif_lookup_board_type(rom, mapr, battery))

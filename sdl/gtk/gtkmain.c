@@ -211,6 +211,7 @@ static SDL_Keycode keysym_map_media[] = {
 	SDLK_UNKNOWN, SDLK_PASTE, SDLK_UNKNOWN, SDLK_UNKNOWN,
 };
 
+extern void input_poll_events();
 extern void process_events(void);
 extern GtkWidget *gui_build_menubar(GtkWidget *gtkwindow);
 
@@ -448,6 +449,8 @@ int convert_key_event(GdkEventKey *event, SDL_Event *sdlevent)
 		return 0;
 
 	sdlkeycode = keycode_map_lookup(event->hardware_keycode);
+	if (sdlkeycode == SDLK_UNKNOWN)
+		return 0;
 
 	sdlevent->key.repeat = 0;
 	sdlevent->key.windowID = 0;
@@ -756,9 +759,6 @@ void *gui_init(int argc, char **argv)
 	icon = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.png",
 						128, 128, NULL);
 
-	blank_cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
-	crosshair_cursor = gdk_cursor_new(GDK_CROSSHAIR);
-
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	gtk_window_set_title(GTK_WINDOW(gtkwindow), "cxNES");
@@ -877,6 +877,9 @@ void *gui_init(int argc, char **argv)
 	device_manager = gdk_display_get_device_manager(gdk_display);
 	mouse = gdk_device_manager_get_client_pointer(device_manager);
 
+	blank_cursor = gdk_cursor_new_for_display(gdk_display, GDK_BLANK_CURSOR);
+	crosshair_cursor = gdk_cursor_new_for_display(gdk_display, GDK_CROSSHAIR);
+
 	f10_accelerator_fix();
 
 	return (void *)window_handle;
@@ -962,6 +965,7 @@ static gboolean gui_process_sdl_events(gpointer user_data)
 
 	emu = user_data;
 	process_events();
+	input_poll_events();
 	input_process_queue(1);
 	if (emu_loaded(emu) && !emu_paused(emu)) {
 		return FALSE;

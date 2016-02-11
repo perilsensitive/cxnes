@@ -56,34 +56,12 @@ static const uint16_t family_trainer_lookup[] = {
 };
 
 static struct input_event_handler powerpad_1_handlers[] = {
-	{ ACTION_MAT_1_1, mat_set_button},
-	{ ACTION_MAT_1_2, mat_set_button},
-	{ ACTION_MAT_1_3, mat_set_button},
-	{ ACTION_MAT_1_4, mat_set_button},
-	{ ACTION_MAT_1_5, mat_set_button},
-	{ ACTION_MAT_1_6, mat_set_button},
-	{ ACTION_MAT_1_7, mat_set_button},
-	{ ACTION_MAT_1_8, mat_set_button},
-	{ ACTION_MAT_1_9, mat_set_button},
-	{ ACTION_MAT_1_10, mat_set_button},
-	{ ACTION_MAT_1_11, mat_set_button},
-	{ ACTION_MAT_1_12, mat_set_button},
+	{ ACTION_MAT_1_1 & ACTION_PREFIX_MASK, mat_set_button},
 	{ ACTION_NONE },
 };
 
 static struct input_event_handler powerpad_2_handlers[] = {
-	{ ACTION_MAT_2_1, mat_set_button},
-	{ ACTION_MAT_2_2, mat_set_button},
-	{ ACTION_MAT_2_3, mat_set_button},
-	{ ACTION_MAT_2_4, mat_set_button},
-	{ ACTION_MAT_2_5, mat_set_button},
-	{ ACTION_MAT_2_6, mat_set_button},
-	{ ACTION_MAT_2_7, mat_set_button},
-	{ ACTION_MAT_2_8, mat_set_button},
-	{ ACTION_MAT_2_9, mat_set_button},
-	{ ACTION_MAT_2_10, mat_set_button},
-	{ ACTION_MAT_2_11, mat_set_button},
-	{ ACTION_MAT_2_12, mat_set_button},
+	{ ACTION_MAT_2_1 & ACTION_PREFIX_MASK, mat_set_button},
 	{ ACTION_NONE },
 };
 
@@ -283,6 +261,7 @@ int mat_set_button(void *data, uint32_t pressed, uint32_t button)
 	dev = data;
 	state = dev->private;
 	button &= 0xffff;
+	button -= 1;
 
 	button ^= state->xor;
 	button = state->lookup[button];

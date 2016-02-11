@@ -263,9 +263,22 @@ int misc_process_event(SDL_Event *event)
 void process_events(void)
 {
 	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		if (input_process_event(&event))
-			continue;
+
+	SDL_PumpEvents();
+
+	while (1) {
+		int rc;
+
+		rc = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT,
+				    SDL_KEYDOWN - 1);
+
+		if (!rc) {
+			rc = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_MULTIGESTURE + 1,
+					    SDL_LASTEVENT);
+		}
+
+		if (rc <= 0)
+			break;
 
 		if (video_process_event(&event))
 			continue;
@@ -273,7 +286,6 @@ void process_events(void)
 		if (misc_process_event(&event))
 			continue;
 	}
-
 }
 
 int save_screenshot(void)
@@ -376,6 +388,7 @@ static int main_loop(struct emu *emu)
 		if (!gui_enabled || (emu->loaded && !emu->paused))
 #endif
 		{
+			input_poll_events();
 			process_events();
 		}
 
@@ -387,7 +400,10 @@ static int main_loop(struct emu *emu)
 				input_process_queue(1);
 		}
 
-		if (autohide_timer && !mouse_grabbed &&
+		if (mouse_grabbed) {
+			autohide_timer = 0;
+			video_show_cursor(0);
+		} else if (autohide_timer && !mouse_grabbed &&
 		    emu->config->autohide_cursor) {
 			autohide_timer--;
 			if (!autohide_timer)
@@ -474,6 +490,8 @@ static int main_loop(struct emu *emu)
 			}
 		}
 
+		process_events();
+		input_poll_events();
 		input_process_queue(1);
 	}
 

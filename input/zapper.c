@@ -25,9 +25,9 @@
 #define TRIGGER_FRAMES 2
 #define SENSOR_DELAY 25
 
-#define UPDATE_LOCATION 0
-#define TRIGGER         1
-#define TRIGGER_OFFSCREEN 2
+#define UPDATE_LOCATION 1
+#define TRIGGER         2
+#define TRIGGER_OFFSCREEN 4
 
 static int zapper_connect(struct io_device *);
 static void zapper_disconnect(struct io_device *);
@@ -42,16 +42,12 @@ static void zapper_end_frame(struct io_device *, uint32_t cycles);
 static int zapper_set_trigger(void *, uint32_t, uint32_t);
 
 struct input_event_handler zapper1_handlers[] = {
-	{ ACTION_ZAPPER_1_TRIGGER, zapper_set_trigger},
-	{ ACTION_ZAPPER_1_TRIGGER_OFFSCREEN, zapper_set_trigger},
-	{ ACTION_ZAPPER_1_UPDATE_LOCATION, zapper_set_trigger},
+	{ ACTION_ZAPPER_1_TRIGGER & ACTION_PREFIX_MASK, zapper_set_trigger},
 	{ ACTION_NONE },
 };
 
 struct input_event_handler zapper2_handlers[] = {
-	{ ACTION_ZAPPER_2_TRIGGER, zapper_set_trigger},
-	{ ACTION_ZAPPER_2_TRIGGER_OFFSCREEN, zapper_set_trigger},
-	{ ACTION_ZAPPER_2_UPDATE_LOCATION, zapper_set_trigger},
+	{ ACTION_ZAPPER_1_TRIGGER & ACTION_PREFIX_MASK, zapper_set_trigger},
 	{ ACTION_NONE },
 };
 

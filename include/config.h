@@ -57,6 +57,8 @@ extern struct binding_item default_modifiers[];
 struct config {
 	/* PPU/Video options */
 	const char *sprite_limit_mode;
+	int remember_system_type;
+	int remember_input_devices;
 
 	int fps_display_enabled;
 	int scanline_renderer_enabled;
@@ -121,7 +123,7 @@ struct config {
 	int vrc6_pulse0_volume;
 	int vrc6_pulse1_volume;
 	int vrc6_sawtooth_volume;
-	int namco163_volume;
+	int vrc7_channel_volume[6];
 	int mmc5_pulse0_volume;
 	int mmc5_pulse1_volume;
 	int mmc5_pcm_volume;

@@ -49,7 +49,7 @@ struct input_event_handler {
 	int (*handler) (void *, uint32_t, uint32_t);
 };
 
-enum {
+enum input_event_type {
 	INPUT_EVENT_TYPE_NONE = 0,
 	INPUT_EVENT_TYPE_KEYBOARD = 1,
 	INPUT_EVENT_TYPE_MOUSEMOTION = 2,
@@ -60,7 +60,7 @@ enum {
 	INPUT_EVENT_TYPE_JOYHAT = 7,
 };
 
-enum {
+enum joystick_hat_state {
 	INPUT_JOYHAT_CENTERED = 0x00,
 	INPUT_JOYHAT_UP = 0x01,
 	INPUT_JOYHAT_RIGHT = 0x02,
@@ -122,11 +122,11 @@ struct input_mouse_motion_event {
 	uint32_t padding;
 	uint32_t padding2;
 	uint32_t button_state;
+	int processed;
 	int16_t x;
 	int16_t y;
 	int16_t xrel;
 	int16_t yrel;
-	int processed;
 };
 
 struct input_mouse_button_event {
@@ -135,9 +135,9 @@ struct input_mouse_button_event {
 	uint32_t button;
 	uint32_t padding;
 	uint32_t state;
+	int processed;
 	int16_t x;
 	int16_t y;
-	int processed;
 };
 
 struct input_joystick_axis_event {
@@ -146,8 +146,8 @@ struct input_joystick_axis_event {
 	uint32_t axis;
 	uint32_t padding;
 	uint32_t padding2;
-	int16_t value;
 	int processed;
+	int16_t value;
 };
 
 struct input_joystick_button_event {
@@ -202,7 +202,7 @@ struct input_event_mapping {
 	struct emu_action *emu_action;
 };
 
-struct input_event {
+struct input_event_node {
 	union input_new_event event;
 
 	int modifier;
@@ -211,7 +211,7 @@ struct input_event {
 	int mapping_max;
 	struct input_event_mapping *mappings;
 
-	struct input_event *next;
+	struct input_event_node *next;
 };
 
 struct emu_action_id_map {
@@ -223,7 +223,7 @@ struct emu_action_id_map {
 
 const char *modifier_names[INPUT_MOD_COUNT];
 
-extern struct input_event *event_hash[EVENT_HASH_SIZE];
+extern struct input_event_node *event_hash[EVENT_HASH_SIZE];
 extern struct emu_action_id_map emu_action_id_map[];
 extern const char *category_names[];
 
@@ -242,7 +242,7 @@ void input_get_binding_config(char **config_data, size_t *config_data_size);
 int input_shutdown(void);
 const char *input_lookup_keyname_from_code(uint32_t keycode);
 uint32_t input_lookup_keycode_from_name(const char *value);
-int get_binding_name(char *buffer, int size, struct input_event *e);
+int get_binding_name(char *buffer, int size, struct input_event_node *e);
 void get_modifier_string(char *buffer, int size, int modbits);
 void get_event_name_and_category(uint32_t event_id, char **name, char **category);
 void input_reset_bindings(void);
@@ -251,11 +251,12 @@ struct emu_action *input_insert_emu_action(uint32_t id);
 int input_bindings_loaded(void);
 void input_configure_keyboard_modifiers(void);
 int input_add_modifier(union input_new_event *event, int mod);
-struct input_event *input_insert_event(union input_new_event *event,
+struct input_event_node *input_insert_event(union input_new_event *event,
 				       int mod,
 				       struct emu_action *emu_action);
 int input_queue_event(union input_new_event *event);
 int input_process_queue(int force);
+void input_poll_events(void);
 int input_get_num_joysticks(void);
 const char *input_get_joystick_name(int index);
 int input_get_joystick_guid(int index, char *buffer, size_t size);

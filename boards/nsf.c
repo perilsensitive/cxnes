@@ -24,6 +24,7 @@
 #include "namco163_audio.h"
 #include "sunsoft5b_audio.h"
 #include "vrc6_audio.h"
+#include "vrc7_audio.h"
 #include "m2_timer.h"
 
 #define _expansion_sound_reg board->data[0]
@@ -113,6 +114,10 @@ static int nsf_init(struct board *board)
 		vrc6_audio_init(emu);
 		_multi_chip++;
 	}
+	if (expansion_chips & NSF_EXP_VRC7) {
+		vrc7_audio_init(emu);
+		_multi_chip++;
+	}
 	if (expansion_chips & NSF_EXP_FDS) {
 		int i;
 
@@ -172,6 +177,8 @@ static void nsf_cleanup(struct board *board)
 	expansion_chips = board->prg_rom.data[EXP_HW_OFFSET];
 	if (expansion_chips & NSF_EXP_VRC6)
 		vrc6_audio_cleanup(board->emu);
+	if (expansion_chips & NSF_EXP_VRC7)
+		vrc7_audio_cleanup(board->emu);
 	if (expansion_chips & NSF_EXP_FDS)
 		fds_audio_cleanup(board->emu);
 	if (expansion_chips & NSF_EXP_MMC5)
@@ -213,6 +220,8 @@ static void nsf_reset(struct board *board, int hard)
 	expansion_chips = board->prg_rom.data[EXP_HW_OFFSET];
 	if (expansion_chips & NSF_EXP_VRC6)
 		vrc6_audio_reset(emu->vrc6_audio, hard);
+	if (expansion_chips & NSF_EXP_VRC7)
+		vrc7_audio_reset(emu->vrc7_audio, hard);
 	if (expansion_chips & NSF_EXP_FDS)
 		fds_audio_reset(emu->fds_audio, hard);
 	if (expansion_chips & NSF_EXP_MMC5)
@@ -233,6 +242,8 @@ static void nsf_end_frame(struct board *board, uint32_t cycles)
 	expansion_chips = board->prg_rom.data[EXP_HW_OFFSET];
 	if (expansion_chips & NSF_EXP_VRC6)
 		vrc6_audio_end_frame(emu->vrc6_audio, cycles);
+	if (expansion_chips & NSF_EXP_VRC7)
+		vrc7_audio_end_frame(emu->vrc7_audio, cycles);
 	if (expansion_chips & NSF_EXP_FDS)
 		fds_audio_end_frame(emu->fds_audio, cycles);
 	if (expansion_chips & NSF_EXP_MMC5)
@@ -332,6 +343,8 @@ static CPU_WRITE_HANDLER(nsf_write_handler)
 		_expansion_sound_reg = value;
 		if (_expansion_sound_reg & NSF_EXP_VRC6)
 			vrc6_audio_install_handlers(emu, _multi_chip);
+		if (_expansion_sound_reg & NSF_EXP_VRC7)
+			vrc7_audio_install_handlers(emu, _multi_chip);
 		if (_expansion_sound_reg & NSF_EXP_FDS)
 			fds_audio_install_handlers(emu, _multi_chip);
 		if (_expansion_sound_reg & NSF_EXP_MMC5)
@@ -371,6 +384,8 @@ static void nsf_run(struct board *board, uint32_t cycles)
 
 	if (expansion_chips & NSF_EXP_VRC6)
 		vrc6_audio_run(emu->vrc6_audio, cycles);
+	if (expansion_chips & NSF_EXP_VRC7)
+		vrc7_audio_run(emu->vrc7_audio, cycles);
 	if (expansion_chips & NSF_EXP_FDS)
 		fds_audio_run(emu->fds_audio, cycles);
 	if (expansion_chips & NSF_EXP_MMC5)

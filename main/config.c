@@ -183,7 +183,7 @@ static const char *valid_video_filter_names[] = {
 };
 
 static const char *valid_palette_names[] = {
-	"Auto", "YIQ", "RGB",
+	"Auto", "YIQ", "RP2C03B", "RC2C03B", "RP2C04",
 	"Custom"
 };
 
@@ -196,7 +196,7 @@ static const char *valid_ntsc_filter_merge_fields_names[] = {
 };
 
 static const char *valid_palettes[] = {
-	"auto", "yiq", "rgb","custom"
+	"auto", "yiq", "rp2c03b","rc2c03b", "rp2c04", "custom"
 };
 
 static const char *valid_aspect_ratio_names[] = {
@@ -274,7 +274,7 @@ static const char *exp_device_names[] = {
 
 static const char *valid_exp_devices[] = {
 	"auto", "none", "arkanoid_fc", "arkanoid2", "vs_zapper",
-	"keyboard", "ftrainer_a", "ftrainer_b"
+	"familykeyboard", "suborkeyboard", "ftrainer_a", "ftrainer_b"
 };
 
 static const int valid_sample_rates[] = {
@@ -389,6 +389,8 @@ static const char *valid_scaling_modes[] = {
 #define CONFIG_END() { .name = NULL, .type = CONFIG_NONE }
 
 static struct config_parameter rom_config_parameters[] = {
+	CONFIG_BOOLEAN(remember_input_devices, 0),
+	CONFIG_BOOLEAN(remember_system_type, 0),
 	CONFIG_STRING_LIST(rom_console_type, "preferred",
 			   valid_rom_console_type_values,
 			   valid_rom_console_type_names),
@@ -508,11 +510,11 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_INTEGER(pal_first_pixel, 0, 0, 16),
 	CONFIG_INTEGER(pal_last_pixel, 255, 239, 255),
 
-	CONFIG_FLOAT(ntsc_palette_saturation, 1.0, 0, 2),
+	CONFIG_FLOAT(ntsc_palette_saturation, 1.5, 0, 2),
 	CONFIG_FLOAT(ntsc_palette_hue, 0, -180, 180),
 	CONFIG_FLOAT(ntsc_palette_contrast, 1.0, 0.5, 1.5),
 	CONFIG_FLOAT(ntsc_palette_brightness, 1.0, 0.5, 1.5),
-	CONFIG_FLOAT(ntsc_palette_gamma, 0, -1, 1),
+	CONFIG_FLOAT(ntsc_palette_gamma, 0.0, -1, 1),
 	CONFIG_STRING_LIST(ntsc_rgb_decoder, "consumer",
 			   valid_rgb_decoder_values,
 			   valid_rgb_decoder_names),
@@ -551,7 +553,60 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_INTEGER(mmc5_pulse0_volume, 100, 0, 100),
 	CONFIG_INTEGER(mmc5_pulse1_volume, 100, 0, 100),
 	CONFIG_INTEGER(mmc5_pcm_volume, 100, 0, 100),
-	CONFIG_INTEGER(namco163_volume, 25, 0, 100),
+	{
+		.name = "vrc7_channel0_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[0]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
+	{
+		.name = "vrc7_channel1_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[1]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
+	{
+		.name = "vrc7_channel2_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[2]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
+	{
+		.name = "vrc7_channel3_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[3]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
+	{
+		.name = "vrc7_channel4_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[4]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
+	{
+		.name = "vrc7_channel5_volume",
+		.type = CONFIG_TYPE_INTEGER,
+		.offset = offsetof(struct config, vrc7_channel_volume[5]),
+		.default_value.integer = 100,
+		.valid_value_count = 0,
+		.min.svalue = 0,
+		.max.svalue = 100,
+	},
 	{
 		.name = "sunsoft5b_channel0_volume",
 		.type = CONFIG_TYPE_INTEGER,
@@ -736,7 +791,7 @@ static struct config_parameter config_parameters[] = {
 };
 
 struct binding_item default_modifiers[] = {
-	{ .name = "Keyboard Home", .value = "KBD" },
+	{ .name = "Keyboard ScrollLock", .value = "KBD" },
 	{ .name = NULL },
 };
 
@@ -901,7 +956,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard 9", .value = "KEYBOARD_9" },
 	{ .name = "[KBD] Keyboard 0", .value = "KEYBOARD_0" },
 	{ .name = "[KBD] Keyboard -", .value = "KEYBOARD_minus" },
-	{ .name = "[KBD] Keyboard +", .value = "KEYBOARD_yen" },
+	{ .name = "[KBD] Keyboard Equals", .value = "KEYBOARD_equals, KEYBOARD_CARET" },
 	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_stop" },
 	{ .name = "[KBD] Keyboard Escape", .value = "KEYBOARD_ESCAPE" },
 	{ .name = "[KBD] Keyboard q", .value = "KEYBOARD_q" },
@@ -914,10 +969,11 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard i", .value = "KEYBOARD_i" },
 	{ .name = "[KBD] Keyboard o", .value = "KEYBOARD_o" },
 	{ .name = "[KBD] Keyboard p", .value = "KEYBOARD_p" },
-	{ .name = "[KBD] Keyboard Backslash", .value = "KEYBOARD_at" },
+	{ .name = "[KBD] Keyboard Backslash", .value = "KEYBOARD_BACKSLASH, KEYBOARD_YEN" },
 	{ .name = "[KBD] Keyboard [", .value = "KEYBOARD_leftbracket" },
 	{ .name = "[KBD] Keyboard Return", .value = "KEYBOARD_enter" },
-	{ .name = "[KBD] Keyboard Left Ctrl", .value = "KEYBOARD_ctrl" },
+	{ .name = "[KBD] Keyboard Left Ctrl", .value = "KEYBOARD_lctrl" },
+	{ .name = "[KBD] Keyboard Right Ctrl", .value = "KEYBOARD_rctrl" },
 	{ .name = "[KBD] Keyboard a", .value = "KEYBOARD_a" },
 	{ .name = "[KBD] Keyboard s", .value = "KEYBOARD_s" },
 	{ .name = "[KBD] Keyboard d", .value = "KEYBOARD_d" },
@@ -930,7 +986,7 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard ;", .value = "KEYBOARD_semicolon" },
 	{ .name = "[KBD] Keyboard '", .value = "KEYBOARD_colon" },
 	{ .name = "[KBD] Keyboard ]", .value = "KEYBOARD_rightbracket" },
-	{ .name = "[KBD] Keyboard Left Alt", .value = "KEYBOARD_kana" },
+	{ .name = "[KBD] Keyboard Left Alt", .value = "KEYBOARD_lalt, KEYBOARD_GRAPH" },
 	{ .name = "[KBD] Keyboard Left Shift", .value = "KEYBOARD_lshift" },
 	{ .name = "[KBD] Keyboard z", .value = "KEYBOARD_z" },
 	{ .name = "[KBD] Keyboard x", .value = "KEYBOARD_x" },
@@ -942,17 +998,30 @@ struct binding_item default_bindings[] = {
 	{ .name = "[KBD] Keyboard ,", .value = "KEYBOARD_comma" },
 	{ .name = "[KBD] Keyboard .", .value = "KEYBOARD_period" },
 	{ .name = "[KBD] Keyboard /", .value = "KEYBOARD_slash" },
-	{ .name = "[KBD] Keyboard _", .value = "KEYBOARD_underscore" },
 	{ .name = "[KBD] Keyboard Right Shift", .value = "KEYBOARD_rshift" },
-	{ .name = "[KBD] Keyboard Right Alt", .value = "KEYBOARD_grph" },
+	{ .name = "[KBD] Keyboard Right Alt", .value = "KEYBOARD_ralt, KEYBOARD_KANA" },
 	{ .name = "[KBD] Keyboard Space", .value = "KEYBOARD_space" },
-	{ .name = "[KBD] Keyboard Delete", .value = "KEYBOARD_clr" },
+	{ .name = "[KBD] Keyboard Delete", .value = "KEYBOARD_del" },
 	{ .name = "[KBD] Keyboard Insert", .value = "KEYBOARD_ins" },
-	{ .name = "[KBD] Keyboard Backspace", .value = "KEYBOARD_del" },
+	{ .name = "[KBD] Keyboard Backspace", .value = "KEYBOARD_bs" },
+	{ .name = "[KBD] Keyboard Tab", .value = "KEYBOARD_tab, KEYBOARD_UNDERSCORE" },
 	{ .name = "[KBD] Keyboard Up", .value = "KEYBOARD_up" },
 	{ .name = "[KBD] Keyboard Down", .value = "KEYBOARD_down" },
 	{ .name = "[KBD] Keyboard Left", .value = "KEYBOARD_left" },
 	{ .name = "[KBD] Keyboard Right", .value = "KEYBOARD_right" },
+	{ .name = "[KBD] Keyboard PageUp", .value = "KEYBOARD_PGUP" },
+	{ .name = "[KBD] Keyboard PageDown", .value = "KEYBOARD_PGDN" },
+	{ .name = "[KBD] Keyboard CapsLock", .value = "KEYBOARD_CAPS" },
+	{ .name = "[KBD] Keyboard Home", .value = "KEYBOARD_HOME" },
+	{ .name = "[KBD] Keyboard End", .value = "KEYBOARD_END" },
+	{ .name = "[KBD] Keyboard F9", .value = "KEYBOARD_F9" },
+	{ .name = "[KBD] Keyboard F10", .value = "KEYBOARD_F10" },
+	{ .name = "[KBD] Keyboard F11", .value = "KEYBOARD_F11" },
+	{ .name = "[KBD] Keyboard F12", .value = "KEYBOARD_F12" },
+	{ .name = "[KBD] Keyboard '", .value = "KEYBOARD_APOSTROPHE, KEYBOARD_COLON" },
+	{ .name = "[KBD] Keyboard `", .value = "KEYBOARD_BACKQUOTE, KEYBOARD_AT" },
+	{ .name = "[KBD] Keyboard Numlock", .value = "KEYBOARD_NUMLOCK" },
+	{ .name = "[KBD] Keyboard Pause", .value = "KEYBOARD_PAUSE" },
 
 /* Mat (Power Pad, Family Trainer) Input Bindings */
 	{ .name = "Keyboard u", .value = "MAT_2_1" },

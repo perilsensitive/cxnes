@@ -41,6 +41,7 @@
 #include "fds.h"
 #include "nsf.h"
 #include "unif.h"
+#include "split_rom.h"
 #include "crc32.h"
 #include "sha1.h"
 
@@ -60,15 +61,15 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 		return -1;
 	}
 
-	rc = db_rom_load(emu, rom);
-	if (rc < 0)
-		rc = ines_load(emu, rom);
+	rc = ines_load(emu, rom);
 	if (rc < 0)
 		rc = unif_load(emu, rom);
 	if (rc < 0)
 		rc = fds_load(emu, rom);
 	if (rc < 0)
 		rc = nsf_load(emu, rom);
+	if (rc < 0)
+		rc = db_rom_load(emu, rom);
 
 	if (rom->info.board_type == BOARD_TYPE_UNKNOWN)
 		rc = -1;
@@ -76,13 +77,22 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 	if (rc >= 0) {
 		uint8_t *buffer = rom->buffer;
 		size_t size = rom->buffer_size;
+		size_t prg_size = rom->info.total_prg_size;
+		size_t remainder;
 		size_t orig_size;
 		uint8_t *tmp;
 
 		orig_size = size;
 
-		if (rom->offset < INES_HEADER_SIZE) {
-			size += INES_HEADER_SIZE - rom->offset;
+		if ((rom->info.board_type == BOARD_TYPE_FDS) ||
+		    (rom->info.board_type == BOARD_TYPE_NSF)) {
+			remainder = 0;
+		} else {
+			remainder = prg_size % SIZE_16K;
+		}
+
+		if (rom->offset < INES_HEADER_SIZE + remainder) {
+			size += (INES_HEADER_SIZE + remainder) - rom->offset;
 			tmp = realloc(buffer, size);
 			if (!tmp) {
 				rom_free(rom);
@@ -94,14 +104,14 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 			buffer = tmp;
 		}
 
-		if (rom->offset != INES_HEADER_SIZE) {
-			memmove(buffer + INES_HEADER_SIZE, buffer + rom->offset,
+		if (rom->offset != INES_HEADER_SIZE + remainder) {
+			memmove(buffer + INES_HEADER_SIZE + remainder, buffer + rom->offset,
 				orig_size - rom->offset);
 				
 		}
 
-		memset(buffer, 0, INES_HEADER_SIZE);
-		rom->offset = INES_HEADER_SIZE;
+		memset(buffer, 0, INES_HEADER_SIZE + remainder);
+		rom->offset = INES_HEADER_SIZE + remainder;
 
 		*romptr = rom;
 	} else {
@@ -115,7 +125,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 {
 	size_t file_size;
 	uint8_t *buffer;
-	char filename_inzip[256];
+	char *filename_inzip;
+	int filename_inzip_size;
 #if ZIP_ENABLED
 	unzFile zip;
 	unz_file_info file_info;
@@ -134,6 +145,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		return -1;
 
 #if ZIP_ENABLED
+	filename_inzip = NULL;
+	filename_inzip_size = 0;
 	zip = unzOpen(filename);
 	if (zip != NULL) {
 		int err, i;
@@ -149,20 +162,26 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 
 		for (i = 0; i < global_info.number_entry; i++) {
 			err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
-						    sizeof(filename_inzip), NULL, 0, NULL, 0);
+						    filename_inzip_size,
+						    NULL, 0, NULL, 0);
 			if (err != UNZ_OK)
 				break;
 
-			/* Only try to load files in the root of the zip.
-			   This lets users stick other, potentially large
-			   data files in a subdirectory.
-			*/
-			if (strchr(filename_inzip, '/')) {
-				err = unzGoToNextFile(zip);
+			if (file_info.size_filename >= filename_inzip_size) {
+				char *tmp;
+				filename_inzip_size = file_info.size_filename + 1;
+				tmp = realloc(filename_inzip, filename_inzip_size);
+				if (!tmp)
+					break;
+
+				filename_inzip = tmp;
+
+				err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
+							    filename_inzip_size,
+							    NULL, 0, NULL, 0);
 				if (err != UNZ_OK)
 					break;
-				else
-					continue;
+			
 			}
 
 			ext = strrchr(filename_inzip, '.');
@@ -178,11 +197,14 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 					continue;
 			}
 
+			file_size = file_info.uncompressed_size;
+			if (file_size == 0)
+				continue;
+
 			err = unzOpenCurrentFile(zip);
 			if (err != UNZ_OK)
 				break;
 
-			file_size = file_info.uncompressed_size;
 			buffer = malloc(file_size + 16);
 			if (!buffer)
 				break;
@@ -202,6 +224,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 					break;
 
 				rc = 0;
+				(*romptr)->compressed_filename = filename_inzip;
+				filename_inzip = NULL;
 				break;
 			}
 
@@ -215,8 +239,12 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		}
 
 		if (rc < 0) {
+
 			unzCloseCurrentFile(zip);
 		}
+
+		if (filename_inzip)
+			free(filename_inzip);
 
 		unzClose(zip);
 
@@ -250,10 +278,13 @@ struct rom *rom_load_file(struct emu *emu, const char *filename)
 {
 	struct rom *rom;
 
-	rom_load_single_file(emu, filename, &rom);
+	split_rom_load(emu, filename, &rom);
 	if (!rom) {
-		err_message("Unrecognized ROM format\n");
-		return NULL;
+		rom_load_single_file(emu, filename, &rom);
+		if (!rom) {
+			err_message("Unrecognized ROM format\n");
+			return NULL;
+		}
 	}
 
 	if (rom) {
@@ -293,7 +324,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	}
 
 	rc = ines_load(emu, patched_rom);
-	if (rc < -1) {
+	if (rc <= -1) {
 		free(patched_rom->filename);
 		free(patched_rom);
 		rom_free(rom);
@@ -304,6 +335,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	   Copy metadata from the old rom struct that (probably)
 	   still applies, such as default input settings.
 	*/
+	patched_rom->info.system_type = rom->info.system_type;
 	patched_rom->info.auto_device_id[0] = rom->info.auto_device_id[0];
 	patched_rom->info.auto_device_id[1] = rom->info.auto_device_id[1];
 	patched_rom->info.auto_device_id[2] = rom->info.auto_device_id[2];
@@ -317,7 +349,18 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	memcpy(rom, patched_rom, sizeof(*rom));
 	free(patched_rom);
 
-	print_rom_info(rom);
+	/* Generate iNES 2 header from current rom metadata.
+	   Needed for applying patches for iNES files to roms
+	   not loaded from iNES formats, since they may change
+	   the iNES header.
+	*/
+	if ((rom->info.board_type != BOARD_TYPE_FDS) &&
+	    (rom->info.board_type != BOARD_TYPE_NSF)) {
+		ines_generate_header(rom, 2);
+
+	}
+
+	/* print_rom_info(rom); */
 
 	return rom;
 }
@@ -797,6 +840,7 @@ struct rom *rom_alloc(const char *filename, uint8_t *buffer, size_t size)
 	rom->info.auto_device_id[3] = IO_DEVICE_CONTROLLER_4;
 	rom->info.auto_device_id[4] = IO_DEVICE_NONE;
 	rom->filename = strdup(filename);
+	rom->compressed_filename = NULL;
 	if (!rom->filename) {
 		rom_free(rom);
 		return NULL;
@@ -812,6 +856,9 @@ void rom_free(struct rom *rom)
 
 	if (rom->filename)
 		free(rom->filename);
+
+	if (rom->compressed_filename)
+		free(rom->compressed_filename);
 
 	if (rom->buffer)
 		free(rom->buffer);
@@ -832,15 +879,28 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	unzFile zip;
 	unz_file_info file_info;
 	unz_global_info global_info;
-	char filename[256];
+	char *filename;
+	int filename_size;
 	size_t buffer_size;
 	int err;
 	int count;
 	int i;
+	int prefix_length;
+
+	if (!rom->compressed_filename)
+		return NULL;
+
+	buffer = strrchr(rom->compressed_filename, '/');
+	if (buffer)
+		prefix_length = buffer - rom->compressed_filename + 1;
+	else
+		prefix_length = 0;
 
 	patch_list = NULL;
 	buffer = NULL;
+	filename = NULL;
 	buffer_size = 0;
+	filename_size = 0;
 
 	zip = unzOpen(rom->filename);
 	if (!zip)
@@ -856,16 +916,52 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 	for (i = 0; i < global_info.number_entry; i++) {
 		char *ext;
 		err = unzGetCurrentFileInfo(zip, &file_info,
-					    filename, sizeof(filename),
+					    filename, filename_size,
 					    NULL, 0, NULL, 0);
 		if (err != UNZ_OK) {
 			unzClose(zip);
 			break;
 		}
 
-		ext = strrchr(filename, '.');
+		if (file_info.size_filename >= filename_size) {
+			char *tmp;
 
-		/* FIXME skip if no ext */
+			filename_size = file_info.size_filename + 1;
+			tmp = realloc(filename, filename_size);
+			if (!tmp)
+				break;
+
+			filename = tmp;
+			err = unzGetCurrentFileInfo(zip, &file_info,
+						    filename, filename_size,
+						    NULL, 0, NULL, 0);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
+		}
+
+		if (file_info.uncompressed_size == 0) {
+			err = unzGoToNextFile(zip);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
+			continue;
+		}
+
+		if (strncmp(filename, rom->compressed_filename,
+			     prefix_length) ||
+		     strchr(filename + prefix_length, '/')) {
+			err = unzGoToNextFile(zip);
+			if (err != UNZ_OK) {
+				unzClose(zip);
+				break;
+			}
+			continue;
+		}
+
+		ext = strrchr(filename, '.');
 
 		if (ext && (!strcasecmp(ext, ".ips") ||
 			    !strcasecmp(ext, ".ups") ||
@@ -873,12 +969,6 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 			char *tmp;
 			int offset;
 			int length;
-
-			/* Patches must be placed in the root
-			   directory of the zip file.
-			*/
-			if (strchr(filename, '/'))
-				continue;
 
 			offset = buffer_size;
 			length = strlen(filename) + 1;
@@ -902,6 +992,9 @@ char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
 			break;
 		}
 	}
+
+	if (filename)
+		free(filename);
 
 	if (buffer) {
 		int offset = sizeof(char *) * (count + 1);
@@ -946,17 +1039,6 @@ char **rom_find_autopatches(struct config *config, struct rom *rom)
 	char *rom_base;
 	char *rom_ext;
 	char **patch_list;
-	int i;
-
-	patch_list = rom_find_zip_autopatches(config, rom);
-	i = 0;
-	while (patch_list && patch_list[i]) {
-		printf("patch %d: %s\n", i, patch_list[i]);
-		i++;
-	}
-
-	if (patch_list)
-		free(patch_list);
 
 	patch_list = NULL;
 

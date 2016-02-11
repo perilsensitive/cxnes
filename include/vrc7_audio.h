@@ -17,20 +17,19 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef __DB_H__
-#define __DB_H__
+#ifndef __VRC7_AUDIO_H__
+#define __VRC7_AUDIO_H__
 
 #include "emu.h"
 
-struct rom_info *db_lookup(struct rom *rom, struct rom_info *start);
-struct rom_info *db_lookup_split_rom(struct archive_file_list *list, int *chip_list,
-				     struct rom_info *start);
+extern int vrc7_audio_init(struct emu *emu);
+extern void vrc7_audio_cleanup(struct emu *emu);
+extern void vrc7_audio_reset(struct vrc7_audio_state *audio, int);
+extern void vrc7_audio_end_frame(struct vrc7_audio_state *audio, uint32_t);
+extern void vrc7_audio_install_handlers(struct emu *emu, int multi_chip_nsf);
+extern int vrc7_audio_load_state(struct emu *emu, struct save_state *state);
+extern int vrc7_audio_save_state(struct emu *emu, struct save_state *state);
+extern void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles);
+extern CPU_WRITE_HANDLER(vrc7_audio_write_handler);
 
-void print_rom(struct rom *rom);
-int db_load_file(struct emu *emu, const char *filename);
-void db_cleanup(void);
-void free_rom(struct rom *rom);
-int db_rom_load(struct emu *emu, struct rom *rom);
-int validate_checksums(struct rom *rom, struct rom_info *info);
-
-#endif /* __DB_H__ */
+#endif /* __VRC7_AUDIO_H__ */

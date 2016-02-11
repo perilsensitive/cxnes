@@ -215,6 +215,16 @@ static int parse_ines_header(struct config *config,
 	header->vs_ppu_version = 0;
 	header->tv_system = 0;
 
+	/* If this appears to be an NES 2.0 ROM and the battery flag
+	   is set but no non-volatile WRAM or VRAM is specified,
+	   revert to standard iNES.
+	*/
+	if ((header->version == 2) && (header->battery) &&
+	    !(data[10] & 0xf0) && !(data[11] & 0xf0))
+	{
+		header->version = 1;
+	}
+
 	/* NES 2.0 format */
 	if (header->version == 2) {
 		header->prg_rom_banks |= (data[9] & 0x0f) << 8;
@@ -284,9 +294,10 @@ int ines_generate_header(struct rom *rom, int version)
 
 	memset(&header, 0, sizeof(header));
 
-	prg_size  = rom->info.total_prg_size;
-	chr_size  = rom->info.total_chr_size;
+	prg_size = rom->info.prg_size[0];
+	chr_size = rom->info.chr_size[0];
 
+	prg_size += rom->offset - INES_HEADER_SIZE;
 	/* PRG data must be a multiple of 16K */
 	if (prg_size % SIZE_16K)
 		return -1;
@@ -302,16 +313,15 @@ int ines_generate_header(struct rom *rom, int version)
 	case MIRROR_V:
 		header.mirroring = 0x01;
 		break;
+	case MIRROR_4:
+		header.four_screen = 0x08;
+		break;
 	case MIRROR_1A:
 	case MIRROR_1B:
 	case MIRROR_M:
 	case MIRROR_H:
+	case MIRROR_UNDEF:
 		break;
-	case MIRROR_4:
-		header.four_screen = 0x08;
-		break;
-	default:
-		return -1;
 	}
 
 	wram_size = 0;
@@ -380,6 +390,7 @@ int ines_generate_header(struct rom *rom, int version)
 	    (header.chr_rom_banks > 0xff) ||
 	    (header.mapper > 0xff) ||
 	    (header.vs_protection > 0x00) ||
+	    (header.tv_system) ||
 	    (header.vs_system) ||
 	    (header.submapper > 0x00)) {
 		version = 2;
@@ -403,7 +414,7 @@ int ines_generate_header(struct rom *rom, int version)
 	data[6] |= header.trainer;
 	data[6] |= header.battery;
 	data[7]  = header.mapper & 0x0f0;
-	data[7] |= 0;//header.version;
+	data[7] |= header.version;
 	data[7] |= header.playchoice;
 	data[7] |= header.vs_system;
 	if (version == 2) {
@@ -478,6 +489,11 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return 1;
 
 	switch (header.mapper) {
+	case 39:
+		/* Subor Study & Game 32-in-1 is oversized BNROM */
+		header.mapper = 34;
+		header.submapper = 2;
+		break;
 	case 241:
 		header.mapper = 34;
 		header.submapper = 0;
@@ -523,6 +539,10 @@ int ines_load(struct emu *emu, struct rom *rom)
 		header.chr_rom_banks * SIZE_8K;
 
 	switch (board_type) {
+	case BOARD_TYPE_VS_UNISYSTEM:
+		if (header.prg_rom_banks > 2)
+			board_type = BOARD_TYPE_VS_GUMSHOE;
+		break;
 	case BOARD_TYPE_NROM:
 		if (header.prg_rom_banks == 3)
 			board_type = BOARD_TYPE_NROM368;
@@ -685,15 +705,33 @@ int ines_load(struct emu *emu, struct rom *rom)
 		vram_size[1] = 0;
 	}
 
-	rom->info.board_type = board_type;
+	/* Set everything but ROM sizes here,
+	   as db_rom_load will mess with those.
+	*/
 	rom->info.system_type = system_type;
+	rom->info.board_type = board_type;
 	rom->info.mirroring = mirroring;
-	rom->info.total_prg_size = prg_size;
-	rom->info.total_chr_size = chr_size;
 	rom->info.wram_size[0] = wram_size[0];
 	rom->info.wram_size[1] = wram_size[1];
 	rom->info.vram_size[0] = vram_size[0];
 	rom->info.vram_size[1] = vram_size[1];
+
+	/* Try loading based on a database match first.  This way
+	   even if the header data is invalid (unknown mapper, incorrect
+	   size, etc.) the rom may still load.
+	*/
+	if (!db_rom_load(emu, rom)) {
+		return 0;
+	}
+
+	rom->info.total_prg_size = prg_size;
+	rom->info.total_chr_size = chr_size;
+	rom->info.prg_size[0] = prg_size;
+	rom->info.chr_size[0] = chr_size;
+
+	rom->info.prg_size_count = 1;
+	if (chr_size)
+		rom->info.chr_size_count = 1;
 
 	if (wram_nv[0])
 		rom->info.flags |= ROM_FLAG_WRAM0_NV;
@@ -738,7 +776,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	rom->offset = 16;
 	rom_calculate_checksum(rom);
-	db_lookup(rom, NULL);
 
 	return 0;
 }

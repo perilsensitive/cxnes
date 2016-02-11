@@ -75,6 +75,7 @@
 #define BOARD_TYPE_BANDAI_FCG              INES_TO_BOARD_TYPE( 16,  0, 0, 0)
 #define BOARD_TYPE_BANDAI_LZ93D50          INES_TO_BOARD_TYPE(159,  0, 0, 0)
 #define BOARD_TYPE_BANDAI_JUMP2            INES_TO_BOARD_TYPE(153,  0, 0, 0)
+#define BOARD_TYPE_BANDAI_OEKAKIDS         INES_TO_BOARD_TYPE( 96,  0, 0, 0)
 
 /* Camerica */
 #define BOARD_TYPE_CAMERICA_BF9093         INES_TO_BOARD_TYPE( 71,  0, 0, 0)
@@ -105,6 +106,8 @@
 #define BOARD_TYPE_JALECO_JF14             INES_TO_BOARD_TYPE(140,  0, 0, 0)
 #define BOARD_TYPE_JALECO_SS88006          INES_TO_BOARD_TYPE( 18,  0, 0, 0)
 #define BOARD_TYPE_JALECO_JF16             INES_TO_BOARD_TYPE( 78,  1, 0, 0)
+#define BOARD_TYPE_JALECO_JF17             INES_TO_BOARD_TYPE( 72,  1, 0, 0)
+#define BOARD_TYPE_JALECO_JF19             INES_TO_BOARD_TYPE( 92,  1, 0, 0)
 
 /* Konami */
 #define BOARD_TYPE_VRC1                    INES_TO_BOARD_TYPE( 75,  0, 0, 0)
@@ -177,6 +180,7 @@
 #define BOARD_TYPE_TxSROM                  INES_TO_BOARD_TYPE(118,  0, 0, 0)
 #define BOARD_TYPE_TQROM                   INES_TO_BOARD_TYPE(119,  0, 0, 0)
 #define BOARD_TYPE_UxROM                   INES_TO_BOARD_TYPE(  2,  0, 0, 0)
+#define BOARD_TYPE_UxROM_PC_PROWRESTLING   INES_TO_BOARD_TYPE(  2,  0, 0, 1)
 #define BOARD_TYPE_UxROM_NO_CONFLICT       INES_TO_BOARD_TYPE(  2,  1, 0, 0)
 #define BOARD_TYPE_UN1ROM                  INES_TO_BOARD_TYPE( 94,  0, 0, 0)
 #define BOARD_TYPE_UNROM_74HC08            INES_TO_BOARD_TYPE(180,  0, 0, 0)
@@ -229,15 +233,18 @@
 #define BOARD_TYPE_WAIXING_SGZLZ           INES_TO_BOARD_TYPE(178,  0, 0, 0)
 
 /* JY Company */
-#define BOARD_TYPE_JYCOMPANY_TYPE_A        INES_TO_BOARD_TYPE( 90,  0, 0, 0)
-#define BOARD_TYPE_JYCOMPANY_TYPE_B        INES_TO_BOARD_TYPE(209,  0, 0, 0)
-#define BOARD_TYPE_JYCOMPANY_TYPE_C        INES_TO_BOARD_TYPE(211,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_A             INES_TO_BOARD_TYPE( 90,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_B             INES_TO_BOARD_TYPE(209,  0, 0, 0)
+#define BOARD_TYPE_JYCOMPANY_C             INES_TO_BOARD_TYPE(211,  0, 0, 0)
 
 /* Kasing */
 #define BOARD_TYPE_KASING                  INES_TO_BOARD_TYPE(115,  0, 0, 0)
 
 /* VS. Unisystem games */
 #define BOARD_TYPE_VS_UNISYSTEM            INES_TO_BOARD_TYPE( 99,  0, 0, 0)
+#define BOARD_TYPE_VS_PINBALL              INES_TO_BOARD_TYPE( 99,  0, 0, 1)
+#define BOARD_TYPE_VS_PINBALLJ             INES_TO_BOARD_TYPE( 99,  0, 0, 2)
+#define BOARD_TYPE_VS_GUMSHOE              INES_TO_BOARD_TYPE( 99,  0, 0, 3)
 #define BOARD_TYPE_VS_RBI_BASEBALL         INES_TO_BOARD_TYPE(206,  0, 1, 0)
 #define BOARD_TYPE_VS_TKO_BOXING           INES_TO_BOARD_TYPE(206,  0, 2, 0)
 #define BOARD_TYPE_VS_SUPER_XEVIOUS        INES_TO_BOARD_TYPE(206,  0, 3, 0)
@@ -247,7 +254,7 @@
 
 #define BOARD_TYPE_CONTRA_100_IN_1         INES_TO_BOARD_TYPE( 15,  0, 0, 0)
 #define BOARD_TYPE_CALTRON_6_IN_1          INES_TO_BOARD_TYPE( 41,  0, 0, 0)
-#define BOARD_TYPE_NTDEC_TC_112            INES_TO_BOARD_TYPE(193,  0, 0, 0)
+#define BOARD_TYPE_NTDEC_193               INES_TO_BOARD_TYPE(193,  0, 0, 0)
 #define BOARD_TYPE_COLORDREAMS             INES_TO_BOARD_TYPE( 11,  0, 0, 0)
 #define BOARD_TYPE_74x161_161_32           INES_TO_BOARD_TYPE( 70,  0, 0, 0)
 #define BOARD_TYPE_74x139_74               INES_TO_BOARD_TYPE( 87,  0, 0, 0)
@@ -258,7 +265,7 @@
    just identify by the iNES mapper number.
 */
 
-#define BOARD_TYPE_INES112	    	   INES_TO_BOARD_TYPE(112,  0, 0, 0)
+#define BOARD_TYPE_NTDEC_112	    	   INES_TO_BOARD_TYPE(112,  0, 0, 0)
 #define BOARD_TYPE_INES201                 INES_TO_BOARD_TYPE(201,  0, 0, 0)
 #define BOARD_TYPE_INES225                 INES_TO_BOARD_TYPE(225,  0, 0, 0)
 #define BOARD_TYPE_INES36                  INES_TO_BOARD_TYPE( 36,  0, 0, 0)
@@ -268,6 +275,16 @@
 #define BOARD_TYPE_15_IN_1                 INES_TO_BOARD_TYPE(205,  0, 0, 0)
 #define BOARD_TYPE_22_IN_1                 INES_TO_BOARD_TYPE(230,  0, 0, 0)
 #define BOARD_TYPE_35_IN_1                 INES_TO_BOARD_TYPE(203,  0, 0, 0)
+#define BOARD_TYPE_SUPERBIG_7_IN_1         INES_TO_BOARD_TYPE( 44,  0, 0, 0)
+#define BOARD_TYPE_SUPERHIK_4_IN_1         INES_TO_BOARD_TYPE( 49,  0, 0, 0)
+#define BOARD_TYPE_GAMESTAR_B              INES_TO_BOARD_TYPE( 58,  0, 0, 0)
+#define BOARD_TYPE_SUPER700IN1             INES_TO_BOARD_TYPE( 62,  0, 0, 0)
+#define BOARD_TYPE_UNL_MORTALKOMBAT2       INES_TO_BOARD_TYPE( 91,  0, 0, 0)
+#define BOARD_TYPE_MAGICSERIES             INES_TO_BOARD_TYPE(107,  0, 0, 0)
+#define BOARD_TYPE_150_IN_1                INES_TO_BOARD_TYPE(202,  0, 0, 0)
+#define BOARD_TYPE_76_IN_1                 INES_TO_BOARD_TYPE(226,  0, 0, 0)
+#define BOARD_TYPE_SUBOR_B                 INES_TO_BOARD_TYPE(166,  0, 0, 0)
+#define BOARD_TYPE_SUBOR_A                 INES_TO_BOARD_TYPE(167,  0, 0, 0)
 
 #define BOARD_TYPE_CNE_SHLZ                INES_TO_BOARD_TYPE(240,  0, 0, 0)
 #define BOARD_TYPE_TXC_TW                  INES_TO_BOARD_TYPE(189,  0, 0, 0)
@@ -275,11 +292,14 @@
 #define BOARD_TYPE_HOSENKAN                INES_TO_BOARD_TYPE(182,  0, 0, 0)
 #define BOARD_TYPE_RESETBASED_4_IN_1       INES_TO_BOARD_TYPE( 60,  0, 0, 0)
 
+#define BOARD_TYPE_RETROUSB_CUFROM         INES_TO_BOARD_TYPE( 29,  0, 0, 0)
+
 /* These are handled internally to the iNES ROM loader because they're
    essentially duplicates or subsets of other mappers.  They're listed
    here so that I can automate extracting the list of supported mappers
    from this file and not need to account for these by hand.
 
+#define BOARD_TYPE_INES_39                 INES_TO_BOARD_TYPE( 39,  0, 0, 0)
 #define BOARD_TYPE_INES_79                 INES_TO_BOARD_TYPE( 79,  0, 0, 0)
 #define BOARD_TYPE_INES_146                INES_TO_BOARD_TYPE(146,  0, 0, 0)
 #define BOARD_TYPE_INES_151                INES_TO_BOARD_TYPE(151,  0, 0, 0)
