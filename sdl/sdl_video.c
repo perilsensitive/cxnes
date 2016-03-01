@@ -844,6 +844,11 @@ int video_apply_config(struct emu *emu)
 		video_resize_window();
 	}
 
+	if (emu_paused(emu)) {
+		video_update_texture();
+		video_draw_buffer();
+	}
+
 	return 0;
 }
 
@@ -1434,6 +1439,12 @@ int video_process_event(SDL_Event *event)
 		return 0;
 
 	switch (event->window.event) {
+	case SDL_WINDOWEVENT_EXPOSED:
+		if (emu_paused(emu)) {
+			video_update_texture();
+			video_draw_buffer();
+		}
+		break;
 	case SDL_WINDOWEVENT_SHOWN:
 		video_resize_window();
 		break;
