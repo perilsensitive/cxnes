@@ -1,7 +1,7 @@
 cxNES Documentation
 
-Version 0.3.0
-Updated 2016-02-11
+Version 0.3.1
+Updated 2016-03-02
 
 Website: http://perilsensitive.github.io/cxnes
 
@@ -183,8 +183,6 @@ Default Bindings
 | Controller 1 B      	      | D, Joystick 0 X 			        |
 | Controller 1 Select 	      | S, Joystick 0 Back 	        |
 | Controller 1 Start  	      | Enter, Joystick 0 Start 		        |
-| Controller 1 A Turbo Toggle | V, Joystick 0 B 	        |
-| Controller 1 B Turbo Toggle | C, Joystick 0 Y 	        |
 | Controller 2 Up     	      | Joystick 1 D-Pad Up / Left Y - 	        |
 | Controller 2 Down   	      | Joystick 1 D-Pad Down / Left Y + 	        |
 | Controller 2 Left   	      | Joystick 1 D-Pad Down / Left X - 	        |
@@ -209,10 +207,8 @@ Default Bindings
 | Controller 4 B      	      | Joystick 3 X			        |
 | Controller 4 Select 	      | Joystick 3 Back 			        |
 | Controller 4 Start  	      | Joystick 3 Start			        |
-| Arkanoid Dial               | Mouse, Joystick 0 Right X                 |
-| Arkanoid Button             | Mouse Button 1, Joystick 0 Right Shoulder |
-| Arkanoid Dial (Player 2)    | Joystick 1 Right X                        |
-| Arkanoid Button (Player 2)  | Joystick 1 Right Shoulder                 |
+| Arkanoid Dial               | Mouse                 |
+| Arkanoid Button             | Mouse Button 1 |
 | Power Pad (Port 2) Pad 1    | U 					        |
 | Power Pad (Port 2) Pad 2    | I 					        |
 | Power Pad (Port 2) Pad 3    | O 					        |

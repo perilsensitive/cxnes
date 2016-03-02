@@ -1,3 +1,11 @@
+cxnes (0.3.1-1) unstable; urgency=low
+
+  * Fix bug in sprite zero hit timing
+  * Clean up default keybindings
+  * Fix screen redraw on expose events
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Wed, 02 Mar 2016 02:30:03 -0700
+
 cxnes (0.3.0-1) unstable; urgency=low
 
   * Fix bugs in FDS emulation
