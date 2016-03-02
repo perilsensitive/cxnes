@@ -191,6 +191,8 @@ static float const sony_decoder [6] =
 
 void video_resize_window(void);
 void video_toggle_fullscreen(int fs);
+void video_update_texture(void);
+int video_draw_buffer(void);
 
 static void calc_osd_rects(void)
 {
