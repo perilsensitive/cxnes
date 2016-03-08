@@ -132,7 +132,7 @@ static inline void update_interrupt_status(struct cpu_state *cpu);
 
 #define clear_flag(x) { cpu->P &= ~(x); }
 #define set_flag(x) { cpu->P |= (x); }
-#define jam() { cpu->jammed = 1; printf("jammed (PC: %x opcode %hx)\n", \
+#define jam() { cpu->jammed = 1; printf("jammed (PC: %x opcode %02x)\n", \
 					cpu->PC - 1, opcode); }
 
 
@@ -1045,7 +1045,7 @@ static void decode_opcode(struct cpu_state *cpu, int addr)
 		else
 			printf(fmt, cpu->cycles, opcode_addr, mnemonic, addr);
 	} else {
-		printf("% 7d  $%04x:  unknown opcode %02hx", cpu->cycles,
+		printf("% 7d  $%04x:  unknown opcode %02x", cpu->cycles,
 		       opcode_addr, opcode);
 	}
 	printf("  A:$%02X  X:$%02X  Y:$%02X  S:$%02X  P:%c%c%c%c%c%c%c%c",

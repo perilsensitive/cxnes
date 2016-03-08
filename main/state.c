@@ -250,7 +250,8 @@ int save_state_add_chunk(struct save_state *state, const char *id,
 int save_state_read(struct save_state *state, const char *filename)
 {
 	uint8_t *buf;
-	size_t size, state_size;
+	ssize_t size;
+	size_t state_size;
 
 	size = get_file_size(filename);
 	if (size < 0)

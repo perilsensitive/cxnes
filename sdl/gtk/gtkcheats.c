@@ -489,12 +489,8 @@ static void validate_raw(void)
 		current_compare = c;
 		raw_to_game_genie(a, v, c, buffer);
 		gtk_entry_set_text(GTK_ENTRY(gg_entry), buffer);
-		if (c >= 0) {
-			raw_to_pro_action_rocky(a, v, c, buffer);
-			gtk_entry_set_text(GTK_ENTRY(rocky_entry), buffer);
-		} else {
-			gtk_entry_set_text(GTK_ENTRY(rocky_entry), "");
-		}
+		raw_to_pro_action_rocky(a, v, c, buffer);
+		gtk_entry_set_text(GTK_ENTRY(rocky_entry), buffer);
 	} else {
 			gtk_entry_set_text(GTK_ENTRY(gg_entry), "");
 			gtk_entry_set_text(GTK_ENTRY(rocky_entry), "");

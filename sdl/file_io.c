@@ -51,7 +51,7 @@ int check_file_exists(const char *name)
 	return 1;
 }
 
-size_t get_file_size(const char *name)
+ssize_t get_file_size(const char *name)
 {
 	SDL_RWops *file;
 	int size;

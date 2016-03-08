@@ -186,8 +186,8 @@ static float const consumer_decoder [6] =
 };
 
 /* Sony CXA2025AS US */
-static float const sony_decoder [6] =
-	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 };
+/* static float const sony_decoder [6] = */
+/* 	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 }; */
 
 void video_resize_window(void);
 void video_toggle_fullscreen(int fs);

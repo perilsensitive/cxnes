@@ -135,7 +135,7 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 	} else if (state->strobe && !(data & 0x01)) {
 		state->strobe = 0;
 
-		if (state->common_state->current_state)
+		if (state->common_state)
 			state->latch = state->common_state->current_state[controller];
 
 		swap_start_select = dev->emu->config->swap_start_select;

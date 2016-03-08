@@ -1279,9 +1279,6 @@ static int board_init_ram(struct board *board, size_t size)
 	board->ram_data = NULL;
 	board->ram_size = 0;
 
-	if (size < 0)
-		return -1;
-
 	if (!size)
 		return 0;
 
@@ -1583,7 +1580,7 @@ static int board_apply_ips_save(struct board *board)
 {
 	uint8_t *p;
 	uint8_t *data_to_patch;
-	size_t size;
+	ssize_t size;
 	size_t data_size;
 	off_t offset;
 	char *save_file;

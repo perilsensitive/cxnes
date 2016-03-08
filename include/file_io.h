@@ -28,7 +28,7 @@
 int check_file_exists(const char *name);
 int readfile(const char *name, uint8_t * buf, uint32_t size);
 int writefile(const char *name, uint8_t * buf, uint32_t size);
-int get_file_size(const char *name);
+ssize_t get_file_size(const char *name);
 int process_file(const char *filename, void *data,
                  void (*callback)(char *, int, void *), int, int);
 int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr);
