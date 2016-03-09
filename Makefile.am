@@ -140,6 +140,7 @@ cxnes_SOURCES = \
 	boards/sunsoft5b.c \
 	boards/sunsoft3.c \
 	boards/ntdec_193.c \
+	boards/ntdec_112.c \
 	boards/gxrom.c \
 	boards/nina001.c \
 	boards/taito_tc0190fmc.c \
