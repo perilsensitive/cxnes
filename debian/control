@@ -13,7 +13,7 @@ Package: cxnes
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: NES/Famicom Emulator
- RNES is a portable, cross-platform emulator for the Nintendo Entertainment
+ cxNES is a portable, cross-platform emulator for the Nintendo Entertainment
  System.
 
 
