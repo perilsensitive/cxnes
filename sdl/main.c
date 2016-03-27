@@ -698,12 +698,13 @@ int main(int argc, char **argv)
 
 	if (!testing)
 		audio_init(emu);
-	if ((optind == argc)
+
 #if GUI_ENABLED
-		&& !gui_enabled
+	if ((optind == argc) && !gui_enabled)
+#else
+	if (optind == argc)
 #endif
-		) {
-		
+	{
 		help(argv[0], 1);
 		return 1;
 	}

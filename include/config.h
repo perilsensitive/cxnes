@@ -38,7 +38,7 @@ enum {
 	CONFIG_DATA_FILE_ROM_DB,
 };
 
-#if defined __unix__
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__unix__) 
 #define DEFAULT_DATA_DIR_BASE ".cxnes"
 #define PATHSEP "/"
 #elif defined _WIN32

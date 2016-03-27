@@ -44,6 +44,14 @@ static struct keyname_map keyname_to_keycode[] = {
 	{"Left Windows", SDLK_LGUI},
 	{"Right Windows", SDLK_RGUI},
 
+	/* Same for the GUI and ALT keys on OS X */
+	{"Left Command", SDLK_LGUI},
+	{"Right command", SDLK_RGUI},
+	{"Left Alt", SDLK_LALT},
+	{"Right Alt", SDLK_RALT},
+	{"Left Option", SDLK_LALT},
+	{"Right Option", SDLK_RALT},
+
 	/* All of these names normally contain characters with special meaning
 	   for either the config parser or the binding parser, so they've been
 	   munged here to avoid those characters.  These values must be used

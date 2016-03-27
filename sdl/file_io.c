@@ -322,12 +322,21 @@ int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 	if (rc < 0)
 		return -1;
 
+#if (__APPLE__ && __MACH__)
+	if (secptr)
+		*secptr = stat.st_mtimespec.tv_sec;
+
+	if (nsecptr)
+		*nsecptr = stat.st_mtimespec.tv_nsec;
+
+#else
 	if (secptr)
 		*secptr = stat.st_mtim.tv_sec;
 
 	if (nsecptr)
 		*nsecptr = stat.st_mtim.tv_nsec;
 
+#endif
 	return 0;
 }
 #endif

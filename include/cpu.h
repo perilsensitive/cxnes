@@ -22,6 +22,8 @@
 
 #include "emu.h"
 
+struct save_state;
+
 #define CPU_TYPE_RP2A03 0
 #define CPU_TYPE_RP2A07 1
 #define CPU_TYPE_DENDY  2

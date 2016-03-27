@@ -23,6 +23,8 @@
 #include <stdint.h>
 #if __unix__
 #include <sys/types.h>
+#elif __APPLE__ && __MACH__
+#include <sys/types.h>
 #endif
 
 int check_file_exists(const char *name);

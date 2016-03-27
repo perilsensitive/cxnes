@@ -17,7 +17,7 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#if defined __unix__
+#if defined __unix__ || (__APPLE__ && __MACH__)
 #include <glob.h>
 #include <unistd.h>
 #include <libgen.h>
@@ -365,7 +365,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	return rom;
 }
 
-#if defined __unix__
+#if defined(__unix__) || (__APPLE__ && __MACH__)
 static char *escape_path(const char *path)
 {
 	char *buffer;
@@ -1071,7 +1071,7 @@ char **rom_find_autopatches(struct config *config, struct rom *rom)
 		rom_ext++;
 	}
 
-#if defined __unix__
+#if defined(__unix__) || (__APPLE__ && __MACH__)
 	patch_list = rom_posix_find_autopatches(rom_path, rom_base,
 						rom_ext, rom);
 	if (!patch_list) {
