@@ -5,6 +5,8 @@ AC_CANONICAL_HOST
 
 AM_CONDITIONAL(WINDOWS, [ test "$host_os" = mingw || test $host_os = cygwin ])
 
+AM_CONDITIONAL(OSX, [ test $(echo "$host_os" | head -c 6) = darwin ])
+
 CC_LIST="gcc cc"
 EXTRA_GUI_LIBS=""
 case $host_os in
@@ -28,12 +30,15 @@ case $host_os in
 				CC_LIST="i686-pc-mingw32-gcc"
 		fi
 		;;
+	darwin*)
+		;;
 	*)
 		EXTRA_GUI_LIBS="-lX11 -lGL"
 		;;
 esac
 
 AC_PROG_CC([$CC_LIST])
+AC_PROG_OBJC([])
 
 case $CC in
 	*i686-w64-mingw32-gcc*)
@@ -100,6 +105,7 @@ CFLAGS="$CFLAGS $SDL2_ttf_CFLAGS $SDL2_image_CFLAGS"
 LIBS="$LIBS $SDL2_ttf_LIBS $SDL2_image_LIBS"
 
 AM_COND_IF([GUI_ENABLED], [CFLAGS="$CFLAGS $GTK_CFLAGS -DGUI_ENABLED"])
+AM_COND_IF([GUI_ENABLED], [AM_COND_IF([OSX], [OBJCFLAGS="$GTK_CFLAGS"])])
 AM_COND_IF([GUI_ENABLED], [LIBS="$LIBS $GTK_LIBS $EXTRA_GUI_LIBS"])
 
 AM_COND_IF([ZIP_ENABLED], [CFLAGS="$CFLAGS -DZIP_ENABLED"])
