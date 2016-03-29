@@ -167,6 +167,11 @@ cxnes_SOURCES = \
 
 if GUI_ENABLED
 cxnes_SOURCES += sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c
+if WINDOWS
+cxnes_SOURCES += sdl/gtk/gtk_prep_win32_drawing_area.c
+else
+cxnes_SOURCES += sdl/gtk/gtk_prep_x11_drawing_area.c
+endif
 endif
 
 if ZIP_ENABLED
