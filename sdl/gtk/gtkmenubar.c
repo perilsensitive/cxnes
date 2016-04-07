@@ -18,6 +18,9 @@
 */
 
 #include <gtk/gtk.h>
+#if __APPLE__
+#include <gtkosxapplication.h>
+#endif
 
 #include "emu.h"
 #include "input.h"
@@ -54,10 +57,12 @@ extern void gui_joystick_dialog(GtkWidget *, gpointer);
 extern int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles);
 extern int close_rom(struct emu *emu);
 
+#if (!__APPLE__)
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
 {
 	quit_callback();
 }
+#endif
 
 static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 {
@@ -131,6 +136,9 @@ static void rom_info_callback(GtkWidget *widget, gpointer userdata)
 	struct text_buffer *tbuffer;
 	PangoFontDescription *pfd;
 	int paused;
+
+	if (!emu_loaded(emu))
+		return;
 
 	video_show_cursor(1);
 	gtkwindow = (GtkWidget *)userdata;
@@ -938,7 +946,9 @@ static GtkWidget *gui_build_file_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
+#if (__unix__ || _WIN32)
 	gui_add_menu_item(menu, "_Quit", file_quit_callback, NULL, NULL, NULL);
+#endif
 
 	return GTK_WIDGET(menu);
 }
@@ -1365,11 +1375,31 @@ static GtkWidget *gui_build_help_menu(GtkWidget *gtkwindow)
 	gui_add_menu_item(menu, "_ROM Info...", rom_info_callback,
 			  gtkwindow, NULL, is_sensitive_if_loaded);
 
+#if (__unix__ || _WIN32)
 	gui_add_menu_item(menu, "_About...", about_callback,
 			  gtkwindow, NULL, NULL);
+#endif
 
 	return GTK_WIDGET(menu);
 }
+
+
+#if (__APPLE__)
+void gui_setup_osx_application_menu(GtkWidget *gtkwindow)
+{
+	GtkWidget *about_item;
+	GtkosxApplication *theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
+
+	about_item = gtk_menu_item_new_with_mnemonic("_About");
+	g_signal_connect(G_OBJECT(about_item), "activate",
+	                 G_CALLBACK(about_callback), NULL);
+
+	g_signal_connect (theApp, "NSApplicationWillTerminate",
+	                  G_CALLBACK (quit_callback), NULL);
+ 
+ 	gtkosx_application_insert_app_menu_item(theApp, about_item, 0);
+}
+#endif
 
 GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 {
@@ -1378,6 +1408,8 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 	GtkWidget *submenu;
 
 	menubar = GTK_MENU_SHELL(gtk_menu_bar_new());
+	item = gtk_menu_item_new_with_mnemonic("_File");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
 
 	submenu = gui_build_file_menu();
 	item = gui_add_menu_item(menubar, "_File",

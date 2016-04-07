@@ -115,7 +115,7 @@ static SDL_Color osd_fg_color;
 static SDL_Color osd_bg_color;
 static int osd_timer = 0;
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 static int mouse_lastx;
 static int mouse_lasty;
 #endif
@@ -832,9 +832,9 @@ int video_apply_config(struct emu *emu)
 
 	video_apply_palette_and_filter(emu);
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
-		gui_resize(fullscreen, fullscreen ? 0 : 1);
+		gui_resize(fullscreen, fullscreen ? -1 : 1);
 		if (fullscreen)
 			video_resize_window();
 	}
@@ -893,7 +893,7 @@ void video_show_cursor(int show)
 
 	cursor_visible = show;
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
 		gui_show_cursor(show);
 		return;
@@ -905,14 +905,16 @@ void video_show_cursor(int show)
 static int video_create_window(void)
 {
 	int display_index;
+	uint32_t flags;
 	SDL_DisplayMode display_mode;
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	void *native_window;
 #endif
 
-#if GUI_ENABLED
+	flags = 0;
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
-		native_window = gui_init(0, NULL);
+		native_window = gui_init();
 		window = SDL_CreateWindowFrom((void *)native_window);
 #if __unix__
 		window->flags |= SDL_WINDOW_OPENGL;
@@ -923,10 +925,16 @@ static int video_create_window(void)
 	else
 #endif
 	{
+#if (GUI_ENABLED && __APPLE__)
+		flags = SDL_WINDOW_RESIZABLE;
+#endif
 		window = SDL_CreateWindow(PACKAGE_NAME,
 					  SDL_WINDOWPOS_UNDEFINED,
 					  SDL_WINDOWPOS_UNDEFINED,
-					  window_rect.w, window_rect.h, 0);
+					  window_rect.w, window_rect.h, flags);
+#if (GUI_ENABLED && __APPLE__)
+		gui_activate_window();
+#endif
 	}
 
 
@@ -1002,7 +1010,7 @@ int video_init(struct emu *emu)
 	video_create_window();
 
 	if (fullscreen
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	    && !gui_enabled
 #endif
 	   ) {
@@ -1023,7 +1031,7 @@ void video_enable_crosshairs(int enable)
 
 	crosshairs_enabled = enable;
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
 		gui_show_crosshairs(enable);
 		return;
@@ -1206,7 +1214,7 @@ int video_shutdown(void)
 	if (osd_font_name)
 		free(osd_font_name);
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled)
 		gui_cleanup();
 	else
@@ -1347,7 +1355,7 @@ void video_toggle_fullscreen(int fs)
 {
 	int flags;
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
 		gui_resize(fs, fs ? 0 : 1);
 		return;
@@ -1425,7 +1433,7 @@ void video_set_mouse_grab(int grab)
 
 	mouse_grabbed = grab;
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
 		gui_grab(grab);
 	}
@@ -1500,7 +1508,7 @@ int video_process_event(SDL_Event *event)
 		}
 		break;
 	case SDL_WINDOWEVENT_CLOSE:
-		running = 0;
+		//running = 0;
 		break;
 	}
 
@@ -1557,7 +1565,7 @@ void video_set_window_title(const char *title)
 
 	snprintf(tmp, length, format, PACKAGE_NAME, title);
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
 		gui_set_window_title(tmp);
 		free(tmp);
@@ -1568,7 +1576,7 @@ void video_set_window_title(const char *title)
 	free(tmp);
 }
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !(__APPLE__))
 void video_resize(int w, int h)
 {
 	if (window) {

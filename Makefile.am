@@ -169,7 +169,7 @@ if GUI_ENABLED
 cxnes_SOURCES += sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c
 
 if OSX
-cxnes_SOURCES += sdl/gtk/gtk_prep_quartz_drawing_area.m
+cxnes_SOURCES += sdl/gtk/gtk_cocoa_helpers.m
 else
 if WINDOWS
 cxnes_SOURCES += sdl/gtk/gtk_prep_win32_drawing_area.c

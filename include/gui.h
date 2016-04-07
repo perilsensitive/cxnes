@@ -23,10 +23,13 @@
 void gui_resize(int fs, int show_menubar);
 void gui_grab(int grab);
 void gui_toggle_menubar(void);
-extern void *gui_init(int argc, char **argv);
+extern void *gui_init(void);
 void gui_cleanup(void);
 extern void gui_show_cursor(int show);
 extern void gui_show_crosshairs(int show);
 extern void gui_set_window_title(const char *title);
+#if __APPLE__
+extern void gui_activate_window();
+#endif
 
 #endif /* __GUI_H__ */

@@ -96,6 +96,17 @@ then
   AM_PATH_GTK_3_0($GTK_VERSION,:,
 	AC_MSG_ERROR([*** GTK version $GTK_VERSION not found!])
 )
+
+	GTK_CHECK_BACKEND([quartz], [3.0], [os_osx=yes], [os_osx=no])
+	if test "$os_osx" = "yes"
+	then
+		PKG_CHECK_MODULES([GTK_MAC], [gtk-mac-integration-gtk3],:,
+		                  AC_MSG_ERROR([*** gtk-mac-integration not found!]))
+		AC_SUBST(GTK_MAC_LIBS)
+		AC_SUBST(GTK_MAC_CFLAGS)
+		GTK_CFLAGS="$GTK_MAC_CFLAGS"
+		GTK_LIBS="$GTK_MAC_LIBS -framework Cocoa"
+	fi
 fi
 
 PKG_CHECK_MODULES([SDL2_ttf], [SDL2_ttf])

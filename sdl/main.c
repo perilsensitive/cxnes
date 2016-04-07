@@ -52,6 +52,9 @@
 #include "emu.h"
 #include "video.h"
 #include "audio.h"
+#if GUI_ENABLED
+#include "gui.h"
+#endif
 
 #define NS_PER_SEC 1000000000L
 
@@ -655,6 +658,12 @@ int main(int argc, char **argv)
 	if (rc)
 		return rc;
 
+#if (GUI_ENABLED && __APPLE__)
+	gui_enabled = config->gui_enabled;
+
+	if (gui_enabled)
+		gui_init();
+#endif
 	if (!testing && SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK|
 		     SDL_INIT_GAMECONTROLLER)) {
 		log_err("SDL_Init() failed: %s\n",

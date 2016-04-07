@@ -19,6 +19,9 @@
 
 #include <SDL.h>
 #include <gtk/gtk.h>
+#if __APPLE__
+#include <gtkosxapplication.h>
+#endif
 #include <gdk/gdkkeysyms.h>
 
 #include "emu.h"
@@ -46,10 +49,12 @@ static int event_mask = (GDK_ALL_EVENTS_MASK & ~(GDK_POINTER_MOTION_HINT_MASK));
 static int ignore_focus_events = 2;
 #endif
 
+#if (!__APPLE__)
 extern int gui_prep_drawing_area(GtkWidget *drawingarea);
 extern void *gui_get_window_handle(GdkWindow *gdkwindow);
 
 static void *window_handle;
+#endif
 
 static GdkCursor *blank_cursor;
 static GdkCursor *crosshair_cursor;
@@ -191,6 +196,7 @@ static SDL_Keycode keysym_map_media[] = {
 extern void input_poll_events();
 extern void process_events(void);
 extern GtkWidget *gui_build_menubar(GtkWidget *gtkwindow);
+extern void gui_setup_osx_application_menu(GtkWidget *gtkwindow);
 
 extern void gui_volume_control_dialog(GtkWidget *, gpointer);
 extern void gui_cheat_dialog(GtkWidget *, gpointer);
@@ -468,6 +474,47 @@ static int keyevent_callback(GtkWidget *widget, GdkEventKey *event, gpointer use
 	return FALSE;
 }
 
+void fullscreen_callback(void)
+{
+	gui_resize(!fullscreen, (!fullscreen ? 0 : 1));
+	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
+}
+
+void quit_callback(void)
+{
+	SDL_Event event;
+
+	running = 0;
+
+	event.type = SDL_QUIT;
+	SDL_PushEvent(&event);
+}
+
+#if (!(__APPLE__))
+static gboolean f10_accel_hack(GtkAccelGroup *group, GObject *acceleratable,
+		    guint keyval, GdkModifierType modifier)
+{
+	return TRUE;
+}
+
+/* In GTK, F10 activates the menu.  Rather than make the user figure out
+   the workaround for this, just set up an accelerator for F10 here that
+   does nothing.  The F10 key press/release event is already caught and
+   handled like all other key events, so all we need to do is prevent
+   GTK from activating the menu.
+*/
+static void f10_accelerator_fix(void)
+{
+	GtkAccelGroup *group;
+	GClosure *f10_closure;
+
+	group = gtk_accel_group_new();
+	f10_closure = g_cclosure_new_swap(G_CALLBACK(f10_accel_hack), NULL,
+					  NULL);
+	gtk_accel_group_connect(group, GDK_KEY_F10, 0, 0, f10_closure);
+	gtk_window_add_accel_group(GTK_WINDOW(gtkwindow), group);
+}
+
 static int area_realize(GtkWidget *widget, void *data)
 {
 	GtkWidget *window = (GtkWidget *) data;
@@ -483,22 +530,6 @@ static int area_realize(GtkWidget *widget, void *data)
 	window_handle = gui_get_window_handle(gdkwindow);
 
 	return FALSE;
-}
-
-void fullscreen_callback(void)
-{
-	gui_resize(!fullscreen, (!fullscreen ? 0 : 1));
-	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
-}
-
-void quit_callback(void)
-{
-	SDL_Event event;
-
-	running = 0;
-
-	event.type = SDL_QUIT;
-	SDL_PushEvent(&event);
 }
 
 /* Glue GDK focus change event to SDL focus change event */
@@ -577,6 +608,7 @@ static gboolean configure_callback(GtkWidget *widget, GdkEventConfigure *event, 
 //	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
 	return FALSE;
 }
+#endif /* (!__APPLE__) */
 
 char *file_dialog(GtkWidget *parent,
 		  const char *title,
@@ -688,38 +720,42 @@ void gui_cleanup(void)
 		g_object_unref(G_OBJECT(crosshair_cursor));
 }
 
-static gboolean f10_accel_hack(GtkAccelGroup *group, GObject *acceleratable,
-		    guint keyval, GdkModifierType modifier)
+#if __APPLE__
+void *gui_init(void)
 {
-	return TRUE;
+	GtkWidget *vbox;
+
+	gtk_init(NULL, NULL);
+
+	GtkosxApplication *theApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	icon = gdk_pixbuf_new_from_file(PACKAGE_DATADIR "/icons/cxnes.png", NULL);
+	gtkosx_application_set_dock_icon_pixbuf(theApp, icon);
+
+	vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add (GTK_CONTAINER (gtkwindow), vbox);
+	menubar = gui_build_menubar(gtkwindow);
+	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, TRUE, 0);
+	gtk_widget_show_all(gtkwindow);
+	gtk_widget_hide(menubar);
+	gtk_widget_set_size_request(gtkwindow, 0, 0);
+	gtk_window_resize(GTK_WINDOW(gtkwindow), 0, 0);
+	gtkosx_application_set_menu_bar(theApp, GTK_MENU_SHELL(menubar));
+	gui_setup_osx_application_menu(gtkwindow);
+	gtkosx_application_ready(theApp);
+	gtk_widget_hide(gtkwindow);
+
+	return NULL;
 }
-
-/* In GTK, F10 activates the menu.  Rather than make the user figure out
-   the workaround for this, just set up an accelerator for F10 here that
-   does nothing.  The F10 key press/release event is already caught and
-   handled like all other key events, so all we need to do is prevent
-   GTK from activating the menu.
-*/
-static void f10_accelerator_fix(void)
-{
-	GtkAccelGroup *group;
-	GClosure *f10_closure;
-
-	group = gtk_accel_group_new();
-	f10_closure = g_cclosure_new_swap(G_CALLBACK(f10_accel_hack), NULL,
-					  NULL);
-	gtk_accel_group_connect(group, GDK_KEY_F10, 0, 0, f10_closure);
-	gtk_window_add_accel_group(GTK_WINDOW(gtkwindow), group);
-}
-
-void *gui_init(int argc, char **argv)
+#else
+void *gui_init(void)
 {
 	GdkDisplay *gdk_display;
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
 	int window_w, window_h;
 
-	gtk_init(&argc, &argv);
+	gtk_init(NULL, NULL);
 	keycode_map_init();
 
 	icon = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.png",
@@ -737,12 +773,14 @@ void *gui_init(int argc, char **argv)
 
 	/* File menu */
 	menubar = gui_build_menubar(gtkwindow);
+	gtk_container_add(GTK_CONTAINER(gtkwindow), menubar);
 	gtk_box_pack_start(GTK_BOX(box), menubar, FALSE, FALSE, 0);
 
 	/* Now the drawing area */
 	drawingarea = gtk_drawing_area_new();
 	video_get_windowed_size(&window_w, &window_h);
 	gtk_widget_set_size_request(drawingarea, window_w, window_h);
+	gtk_widget_hide(drawingarea);
 
 	if (gui_prep_drawing_area(drawingarea) < 0)
 		return NULL;
@@ -835,6 +873,7 @@ void *gui_init(int argc, char **argv)
 
 	return (void *)window_handle;
 }
+#endif
 
 void gui_set_window_title(const char *title)
 {

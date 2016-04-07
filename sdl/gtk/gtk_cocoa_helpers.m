@@ -20,15 +20,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkquartz.h>
 
-int gui_prep_drawing_area(GtkWidget *drawingarea)
+void gui_activate_window(void)
 {
-	if (drawingarea)
-		return 0;
-	else
-		return -1;
-}
-
-void *gui_get_window_handle(GdkWindow *gdkwindow)
-{
-	return (void *)gdk_quartz_window_get_nswindow(gdkwindow);
+	[[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 }
