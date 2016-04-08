@@ -189,7 +189,7 @@ static float const consumer_decoder [6] =
 /* static float const sony_decoder [6] = */
 /* 	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 }; */
 
-void video_resize_window(void);
+static void handle_resize_event(void);
 void video_toggle_fullscreen(int fs);
 void video_update_texture(void);
 int video_draw_buffer(void);
@@ -834,17 +834,16 @@ int video_apply_config(struct emu *emu)
 
 #if (GUI_ENABLED && !(__APPLE__))
 	if (gui_enabled) {
-		gui_resize(fullscreen, fullscreen ? -1 : 1);
+		/* The GUI widget containing the SDL window will
+		   call video_resize() once it has finished resizing.
+		*/
+		gui_resize(fullscreen, fullscreen ? 0 : 1);
 		if (fullscreen)
-			video_resize_window();
+			handle_resize_event();
 	}
 	else
 #endif
-	if (!fullscreen) {
-		SDL_SetWindowSize(window, window_rect.w, window_rect.h);
-	} else {
-		video_resize_window();
-	}
+	handle_resize_event();
 
 	if (emu_paused(emu)) {
 		video_update_texture();
@@ -859,7 +858,7 @@ void video_update_fps_display(void)
 	draw_fps_display();
 }
 
-static void video_reset_autohide_timer(void)
+static void reset_autohide_timer(void)
 {
 	int fps;
 	
@@ -884,7 +883,7 @@ void video_show_cursor(int show)
 		show = 0;
 
 	if (show)
-		video_reset_autohide_timer();
+		reset_autohide_timer();
 	else
 		autohide_timer = 0;
 
@@ -925,9 +924,7 @@ static int video_create_window(void)
 	else
 #endif
 	{
-#if (GUI_ENABLED && __APPLE__)
-		flags = SDL_WINDOW_RESIZABLE;
-#endif
+		flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS;
 		window = SDL_CreateWindow(PACKAGE_NAME,
 					  SDL_WINDOWPOS_UNDEFINED,
 					  SDL_WINDOWPOS_UNDEFINED,
@@ -989,7 +986,7 @@ int video_init(struct emu *emu)
 	cursor_visible = 1;
 	display_fps = -1;
 	fps_timer = 0;
-	video_reset_autohide_timer();
+	reset_autohide_timer();
 
 	osd_font_name = config_get_path(emu->config,
 					    CONFIG_DATA_FILE_OSD_FONT,
@@ -1027,7 +1024,7 @@ void video_enable_crosshairs(int enable)
 	SDL_Cursor *cursor, *current;
 
 	if (crosshairs_enabled && !enable)
-		video_reset_autohide_timer();
+		reset_autohide_timer();
 
 	crosshairs_enabled = enable;
 
@@ -1190,6 +1187,7 @@ int video_shutdown_testing(void)
 
 int video_shutdown(void)
 {
+	printf("in video shutdown\n");
 	if (nes_texture)
 		SDL_DestroyTexture(nes_texture);
 
@@ -1235,7 +1233,8 @@ void video_clear(void)
 	SDL_RenderPresent(renderer);
 }
 
-void video_resize_window(void)
+/* Update rects based on new window size */
+static void handle_resize_event(void)
 {
 	double scaling_factor;
 	double width_stretch;
@@ -1275,14 +1274,13 @@ void video_resize_window(void)
 		integer_scaling_factor = floor(scaling_factor);
 	}
 
-	if (stretch_to_fit) {
+	if (stretch_to_fit || !integer_scaling_factor) {
 		dest_rect.w = view_w * width_stretch * scaling_factor;
 		dest_rect.h = view_h * scaling_factor;
 	} else {
 		dest_rect.w = view_w * width_stretch * integer_scaling_factor;
 		dest_rect.h = view_h * integer_scaling_factor;
 	}
-
 
 	dest_rect.x = (winw - dest_rect.w) / 2;
 	dest_rect.y = (winh - dest_rect.h) / 2;
@@ -1455,9 +1453,6 @@ int video_process_event(SDL_Event *event)
 			video_draw_buffer();
 		}
 		break;
-	case SDL_WINDOWEVENT_SHOWN:
-		video_resize_window();
-		break;
 	case SDL_WINDOWEVENT_MINIMIZED:
 		window_minimized = 1;
 		break;
@@ -1499,9 +1494,11 @@ int video_process_event(SDL_Event *event)
 			}
 		}
 		break;
+	case SDL_WINDOWEVENT_SHOWN:
 	case SDL_WINDOWEVENT_SIZE_CHANGED:
 	case SDL_WINDOWEVENT_RESIZED:
-		video_resize_window();
+		handle_resize_event();
+		video_clear();
 		if (emu_paused(emu)) {
 			video_update_texture();
 			video_draw_buffer();
@@ -1579,9 +1576,8 @@ void video_set_window_title(const char *title)
 #if (GUI_ENABLED && !(__APPLE__))
 void video_resize(int w, int h)
 {
-	if (window) {
+	if (window)
 		SDL_SetWindowSize(window, w, h);
-	}
 }
 
 /* Force a redraw of the current buffer.  Useful if
