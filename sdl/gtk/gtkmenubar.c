@@ -30,6 +30,9 @@
 #include "license.h"
 #include "text_buffer.h"
 
+#if __APPLE__
+void apple_quit_callback(GtkosxApplication *app, gpointer data);
+#endif
 extern void quit_callback(void);
 extern void fullscreen_callback(void);
 extern int save_screenshot(void);
@@ -1395,7 +1398,10 @@ void gui_setup_osx_application_menu(GtkWidget *gtkwindow)
 	                 G_CALLBACK(about_callback), NULL);
 
 	g_signal_connect (theApp, "NSApplicationWillTerminate",
-	                  G_CALLBACK (quit_callback), NULL);
+	                  G_CALLBACK (apple_quit_callback), GINT_TO_POINTER(0));
+
+	g_signal_connect (theApp, "NSApplicationBlockTermination",
+	                  G_CALLBACK (apple_quit_callback), GINT_TO_POINTER(1));
  
  	gtkosx_application_insert_app_menu_item(theApp, about_item, 0);
 }

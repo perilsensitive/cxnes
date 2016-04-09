@@ -60,6 +60,7 @@ static GdkCursor *blank_cursor;
 static GdkCursor *crosshair_cursor;
 static GdkDevice *mouse;
 static GtkWidget *gtkwindow;
+static GtkWidget *hiddenwindow;
 static GtkWidget *drawingarea;
 static GtkWidget *menubar;
 static GdkPixbuf *icon;
@@ -480,6 +481,21 @@ void fullscreen_callback(void)
 	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
 }
 
+#if __APPLE__
+void apple_quit_callback(GtkosxApplication *app, gpointer data)
+{
+	SDL_Event event;
+
+	running = 0;
+
+	event.type = SDL_QUIT;
+	SDL_PushEvent(&event);
+	if (GPOINTER_TO_INT(data)) {
+		SDL_Quit();
+	}
+}
+#endif
+
 void quit_callback(void)
 {
 	SDL_Event event;
@@ -592,7 +608,7 @@ static void window_state_callback(GtkWidget *widget, GdkEventWindowState *event,
 	}
 }
 
-/* Glue the resize event for the drawing area to SDL_SetWindowSize() */
+/* Glue the resize event for the drawing area to video_resize() */
 static void size_allocate_cb(GtkWidget *widget, GdkRectangle *allocation, gpointer data)
 {
 	video_resize(allocation->width, allocation->height);
@@ -726,15 +742,17 @@ void *gui_init(void)
 	GtkWidget *vbox;
 
 	gtk_init(NULL, NULL);
+	keycode_map_init();
 
 	GtkosxApplication *theApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	hiddenwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	icon = gdk_pixbuf_new_from_file(PACKAGE_DATADIR "/icons/cxnes.png", NULL);
 	gtkosx_application_set_dock_icon_pixbuf(theApp, icon);
 
 	vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_add (GTK_CONTAINER (gtkwindow), vbox);
-	menubar = gui_build_menubar(gtkwindow);
+	menubar = gui_build_menubar(hiddenwindow);
 	gtk_box_pack_start (GTK_BOX (vbox), menubar, FALSE, TRUE, 0);
 	gtk_widget_show_all(gtkwindow);
 	gtk_widget_hide(menubar);

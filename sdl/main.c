@@ -121,7 +121,6 @@ void video_clear(void);
 int video_apply_config(struct emu *emu);
 void video_toggle_fullscreen(int);
 void video_show_cursor(int);
-void video_resize_window(void);
 
 /* FIXME put this in header */
 extern void input_load_queue(void);
@@ -387,7 +386,7 @@ static int main_loop(struct emu *emu)
 		}
 #endif
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !__APPLE__)
 		if (!gui_enabled || (emu->loaded && !emu->paused))
 #endif
 		{
@@ -395,7 +394,7 @@ static int main_loop(struct emu *emu)
 			process_events();
 		}
 
-#if GUI_ENABLED
+#if (GUI_ENABLED && !__APPLE__)
 		if (!gui_enabled)
 #endif
 		{
