@@ -758,6 +758,7 @@ void *gui_init(void)
 	gtk_widget_hide(menubar);
 	gtk_widget_set_size_request(gtkwindow, 0, 0);
 	gtk_window_resize(GTK_WINDOW(gtkwindow), 0, 0);
+	gtk_window_set_decorated(GTK_WINDOW(gtkwindow), FALSE);
 	gtkosx_application_set_menu_bar(theApp, GTK_MENU_SHELL(menubar));
 	gui_setup_osx_application_menu(gtkwindow);
 	gtkosx_application_ready(theApp);
