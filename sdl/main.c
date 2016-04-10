@@ -347,6 +347,48 @@ int save_screenshot(void)
 
 	return rc;
 }
+#if __APPLE__
+static inline void poll_for_events(void)
+{
+	input_poll_events();
+	process_events();
+
+#if GUI_ENABLED
+	while (gui_enabled && gtk_events_pending()) {
+		gtk_main_iteration_do(0);
+	}
+#endif
+
+	if (!emu->loaded || emu->paused)
+		input_process_queue(1);
+}
+#else
+static inline void poll_for_events(void)
+{
+#if GUI_ENABLED
+		while (gui_enabled && gtk_events_pending()) {
+			gtk_main_iteration_do(0);
+		}
+#endif
+
+#if GUI_ENABLED
+		if (!gui_enabled || (emu->loaded && !emu->paused))
+#endif
+		{
+			input_poll_events();
+			process_events();
+		}
+
+#if GUI_ENABLED
+		if (!gui_enabled)
+#endif
+		{
+			if (!emu->loaded || emu->paused)
+				input_process_queue(1);
+		}
+}
+
+#endif
 
 static int main_loop(struct emu *emu)
 {
@@ -380,27 +422,7 @@ static int main_loop(struct emu *emu)
 	while (running) {
 		int cycles;
 
-#if GUI_ENABLED
-		while (gui_enabled && gtk_events_pending()) {
-			gtk_main_iteration_do(0);
-		}
-#endif
-
-#if (GUI_ENABLED && !__APPLE__)
-		if (!gui_enabled || (emu->loaded && !emu->paused))
-#endif
-		{
-			input_poll_events();
-			process_events();
-		}
-
-#if (GUI_ENABLED && !__APPLE__)
-		if (!gui_enabled)
-#endif
-		{
-			if (!emu->loaded || emu->paused)
-				input_process_queue(1);
-		}
+		poll_for_events();
 
 		if (mouse_grabbed) {
 			autohide_timer = 0;
