@@ -884,6 +884,10 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 		free(path);
 	}
 
+#if GUI_ENABLED
+	gui_update_menu();
+#endif
+
 	return 0;
 }
 
@@ -908,6 +912,9 @@ int close_rom(struct emu *emu)
 	if (emu)
 		emu_deinit(emu);
 
+#if GUI_ENABLED
+	gui_update_menu();
+#endif
 #if GUI_ENABLED
 	if (gui_enabled)
 		gui_enable_event_timer();

@@ -20,6 +20,11 @@
 #include "emu.h"
 #include "input.h"
 #include "actions.h"
+#if GUI_ENABLED
+#include "gui.h"
+
+extern int gui_enabled;
+#endif
 
 /* These device connect to the controller ports */
 extern struct io_device controller1_device;
@@ -812,6 +817,11 @@ void io_device_select(struct io_state *io, int port, int id)
 	} else {
 		io->device_id[port] = IO_DEVICE_NONE;
 	}
+
+#if GUI_ENABLED
+	if (gui_enabled)
+		gui_update_input_port_menu(port);
+#endif
 }
 
 void io_device_connect(struct io_state *io, int port, int connected)
@@ -824,6 +834,11 @@ void io_device_connect(struct io_state *io, int port, int connected)
 	} else {
 		io_connect_device(io->selected_device[port]);
 	}
+
+#if GUI_ENABLED
+	if (gui_enabled)
+		gui_update_input_port_menu(port);
+#endif
 }
 
 int io_device_connected(struct io_state *io, int port)

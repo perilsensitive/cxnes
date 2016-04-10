@@ -763,6 +763,7 @@ void *gui_init(void)
 	gui_setup_osx_application_menu(gtkwindow);
 	gtkosx_application_ready(theApp);
 	gtk_widget_hide(gtkwindow);
+	gui_update_menu();
 
 	return NULL;
 }

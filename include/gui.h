@@ -28,6 +28,8 @@ void gui_cleanup(void);
 extern void gui_show_cursor(int show);
 extern void gui_show_crosshairs(int show);
 extern void gui_set_window_title(const char *title);
+extern void gui_update_menu(void);
+extern void gui_update_input_port_menu(int port);
 #if __APPLE__
 extern void gui_activate_window();
 #endif
