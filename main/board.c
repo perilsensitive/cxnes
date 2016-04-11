@@ -31,6 +31,10 @@
 #include "file_io.h"
 #include "patch.h"
 #include "m2_timer.h"
+#if GUI_ENABLED
+#include "gui.h"
+extern int gui_enabled;
+#endif
 
 struct board_name_mapping {
 	const char *name;
@@ -2051,6 +2055,11 @@ void board_set_dip_switch(struct board *board, int sw, int on)
 		board->dip_switches &= ~(1 << (sw - 1));
 
 	board->emu->config->dip_switch[sw - 1] = on;
+
+#if GUI_ENABLED
+	if (gui_enabled)
+		gui_update_dip_switch_menu();
+#endif
 
 	emu_save_rom_config(board->emu);
 }

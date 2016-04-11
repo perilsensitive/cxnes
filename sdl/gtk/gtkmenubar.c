@@ -57,7 +57,7 @@ extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_joystick_dialog(GtkWidget *, gpointer);
 
-static void update_dip_switch_menu(void);
+void gui_update_dip_switch_menu(void);
 static void update_system_type_menu(void);
 static void system_type_callback(GtkRadioMenuItem *widget,
 				      gpointer user_data);
@@ -439,7 +439,7 @@ void gui_update_menu(void)
 	}
 
 	update_system_type_menu();
-	update_dip_switch_menu();
+	gui_update_dip_switch_menu();
 }
 
 struct input_device {
@@ -1206,7 +1206,7 @@ static void dip_switch_toggle_callback(GtkWidget *widget, gpointer user_data)
 	board_set_dip_switch(emu->board, switch_num + 1, active);
 }
 
-static void update_dip_switch_menu(void)
+void gui_update_dip_switch_menu(void)
 {
 	int switch_total;
 	int i;
