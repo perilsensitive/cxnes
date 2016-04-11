@@ -843,7 +843,10 @@ int video_apply_config(struct emu *emu)
 	}
 	else
 #endif
-	handle_resize_event();
+	{
+		SDL_SetWindowSize(window, window_rect.w, window_rect.h);
+		handle_resize_event();
+	}
 
 	if (emu_paused(emu)) {
 		video_update_texture();

@@ -57,6 +57,7 @@ extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_joystick_dialog(GtkWidget *, gpointer);
 
+static void update_dip_switch_menu(void);
 static void update_system_type_menu(void);
 static void system_type_callback(GtkRadioMenuItem *widget,
 				      gpointer user_data);
@@ -65,19 +66,20 @@ extern int close_rom(struct emu *emu);
 
 static GSList *menu_list;
 static GtkWidget *port_menus[5];
+static GtkWidget *dip_switch_menu_item[8];
 static GtkWidget *fourplayer_menu;
 static GtkWidget *system_type_menu_item;
 
 #if (!__APPLE__)
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
 {
-quit_callback();
+	quit_callback();
 }
 #endif
 
 static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 {
-fullscreen_callback();
+	fullscreen_callback();
 }
 
 static void screenshot_callback(GtkWidget *widget, gpointer userdata)
@@ -87,329 +89,329 @@ save_screenshot();
 
 static void pause_resume_callback(GtkWidget *widget, gpointer userdata)
 {
-int paused = emu_paused(emu);
+	int paused = emu_paused(emu);
 
-emu_pause(emu, !paused);
+	emu_pause(emu, !paused);
 }
 
 static void insert_coin_callback(GtkWidget *widget, gpointer userdata)
 {
-struct emu_action *event;
+	struct emu_action *event;
 
-event = input_lookup_emu_action(ACTION_VS_COIN_SWITCH_1);
-if (event && event->handler) {
-	event->handler(event->data, 1, event->id);
-}
+	event = input_lookup_emu_action(ACTION_VS_COIN_SWITCH_1);
+	if (event && event->handler) {
+		event->handler(event->data, 1, event->id);
+	}
 }
 
 static void eject_disk_callback(GtkWidget *widget, gpointer userdata)
 {
-struct emu_action *event;
+	struct emu_action *event;
 
-event = input_lookup_emu_action(ACTION_FDS_EJECT);
-if (event && event->handler) {
-	event->handler(event->data, 1, event->id);
-}
+	event = input_lookup_emu_action(ACTION_FDS_EJECT);
+	if (event && event->handler) {
+		event->handler(event->data, 1, event->id);
+	}
 }
 
 static void switch_disk_callback(GtkWidget *widget, gpointer userdata)
 {
-struct emu_action *event;
+	struct emu_action *event;
 
-event = input_lookup_emu_action(ACTION_FDS_SELECT);
-if (event && event->handler) {
-	event->handler(event->data, 1, event->id);
-}
+	event = input_lookup_emu_action(ACTION_FDS_SELECT);
+	if (event && event->handler) {
+		event->handler(event->data, 1, event->id);
+	}
 }
 
 static void hard_reset_callback(GtkWidget *widget, gpointer userdata)
 {
-if (emu->loaded)
-	emu_reset(emu, 1);
+	if (emu->loaded)
+		emu_reset(emu, 1);
 }
 
 static void soft_reset_callback(GtkWidget *widget, gpointer userdata)
 {
-if (emu->loaded)
-	emu_reset(emu, 0);
+	if (emu->loaded)
+		emu_reset(emu, 0);
 }
 
 static void rom_info_callback(GtkWidget *widget, gpointer userdata)
 {
-GtkWidget *dialog;
-GtkWidget *gtkwindow;
-GtkDialogFlags flags;
-GtkWidget *view;
-GtkWidget *dialog_box;
-GtkWidget *scrolled_window;
-/* GtkWidget *label; */
-GtkTextBuffer *buffer;
-struct text_buffer *tbuffer;
-PangoFontDescription *pfd;
-int paused;
+	GtkWidget *dialog;
+	GtkWidget *gtkwindow;
+	GtkDialogFlags flags;
+	GtkWidget *view;
+	GtkWidget *dialog_box;
+	GtkWidget *scrolled_window;
+	/* GtkWidget *label; */
+	GtkTextBuffer *buffer;
+	struct text_buffer *tbuffer;
+	PangoFontDescription *pfd;
+	int paused;
 
-if (!emu_loaded(emu))
-	return;
+	if (!emu_loaded(emu))
+		return;
 
-video_show_cursor(1);
-gtkwindow = (GtkWidget *)userdata;
-scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolled_window), 800);
-gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolled_window), 300);
-flags = GTK_DIALOG_DESTROY_WITH_PARENT;
-dialog = gtk_dialog_new_with_buttons("ROM Info",
-				     GTK_WINDOW(gtkwindow), flags,
-				     "_OK", GTK_RESPONSE_ACCEPT,
-				     NULL);
+	video_show_cursor(1);
+	gtkwindow = (GtkWidget *)userdata;
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolled_window), 800);
+	gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolled_window), 300);
+	flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+	dialog = gtk_dialog_new_with_buttons("ROM Info",
+					     GTK_WINDOW(gtkwindow), flags,
+					     "_OK", GTK_RESPONSE_ACCEPT,
+					     NULL);
 
-dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-gtk_container_set_border_width(GTK_CONTAINER(dialog_box), 8);
-gtk_window_set_transient_for(GTK_WINDOW(dialog),
-			     GTK_WINDOW(gtkwindow));
+	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+	gtk_container_set_border_width(GTK_CONTAINER(dialog_box), 8);
+	gtk_window_set_transient_for(GTK_WINDOW(dialog),
+				     GTK_WINDOW(gtkwindow));
 
-/* label = gtk_label_new("ROM Info"); */
-/* gtk_widget_set_halign(label, GTK_ALIGN_START); */
-view = gtk_text_view_new();
-gtk_widget_set_size_request(view, 300, 200);
-gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
-gtk_text_view_set_left_margin(GTK_TEXT_VIEW(view), 8);
-gtk_text_view_set_right_margin(GTK_TEXT_VIEW(view), 8);
-pfd = pango_font_description_from_string("monospace");
-gtk_widget_override_font(GTK_WIDGET(view), pfd);
-buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-tbuffer = text_buffer_new();
-rom_get_info(emu->rom, tbuffer);
-gtk_text_buffer_set_text(buffer, text_buffer_get_text(tbuffer), -1);
-text_buffer_free(tbuffer);
-/* gtk_box_pack_start(GTK_BOX(dialog_box), label, FALSE, FALSE, 8); */
-gtk_box_pack_start(GTK_BOX(dialog_box), scrolled_window, FALSE, FALSE, 8);
-gtk_container_add(GTK_CONTAINER(scrolled_window), view);
+	/* label = gtk_label_new("ROM Info"); */
+	/* gtk_widget_set_halign(label, GTK_ALIGN_START); */
+	view = gtk_text_view_new();
+	gtk_widget_set_size_request(view, 300, 200);
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(view), 8);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(view), 8);
+	pfd = pango_font_description_from_string("monospace");
+	gtk_widget_override_font(GTK_WIDGET(view), pfd);
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+	tbuffer = text_buffer_new();
+	rom_get_info(emu->rom, tbuffer);
+	gtk_text_buffer_set_text(buffer, text_buffer_get_text(tbuffer), -1);
+	text_buffer_free(tbuffer);
+	/* gtk_box_pack_start(GTK_BOX(dialog_box), label, FALSE, FALSE, 8); */
+	gtk_box_pack_start(GTK_BOX(dialog_box), scrolled_window, FALSE, FALSE, 8);
+	gtk_container_add(GTK_CONTAINER(scrolled_window), view);
 
-paused = emu_paused(emu);
-emu_pause(emu, 1);
-gtk_widget_show_all(dialog);
+	paused = emu_paused(emu);
+	emu_pause(emu, 1);
+	gtk_widget_show_all(dialog);
 
-gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_dialog_run(GTK_DIALOG(dialog));
 
-if (!paused && emu_loaded(emu))
-	emu_pause(emu, 0);
+	if (!paused && emu_loaded(emu))
+		emu_pause(emu, 0);
 
-pango_font_description_free(pfd);
-gtk_widget_destroy(dialog);
-video_show_cursor(0);
+	pango_font_description_free(pfd);
+	gtk_widget_destroy(dialog);
+	video_show_cursor(0);
 }
 
 static void about_callback(GtkWidget *widget, gpointer userdata) {
-GtkWidget *aboutdialog;
-GdkPixbuf *logo;
-GtkWindow *gtkwindow;
+	GtkWidget *aboutdialog;
+	GdkPixbuf *logo;
+	GtkWindow *gtkwindow;
 
-logo = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.svg",
-					128, 128, NULL);
+	logo = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.svg",
+						128, 128, NULL);
 
-gtkwindow = userdata;
-aboutdialog = gtk_about_dialog_new();
+	gtkwindow = userdata;
+	aboutdialog = gtk_about_dialog_new();
 
-gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(aboutdialog), license);
-gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), "cxNES");
-gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_VERSION);
-gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(aboutdialog), "NES/Famicom Emulator");
-gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(aboutdialog), "https://perilsensitive.github.io/cxnes");
-gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(aboutdialog), "(c) 2015 Ryan Jackson");
-if (logo)
-	gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(aboutdialog), logo);
+	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(aboutdialog), license);
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), "cxNES");
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_VERSION);
+	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(aboutdialog), "NES/Famicom Emulator");
+	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(aboutdialog), "https://perilsensitive.github.io/cxnes");
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(aboutdialog), "(c) 2015 Ryan Jackson");
+	if (logo)
+		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(aboutdialog), logo);
 
-gtk_window_set_transient_for(GTK_WINDOW(aboutdialog),
-			     GTK_WINDOW(gtkwindow));
+	gtk_window_set_transient_for(GTK_WINDOW(aboutdialog),
+				     GTK_WINDOW(gtkwindow));
 
-gtk_dialog_run(GTK_DIALOG(aboutdialog));
-gtk_widget_destroy(aboutdialog);
+	gtk_dialog_run(GTK_DIALOG(aboutdialog));
+	gtk_widget_destroy(aboutdialog);
 }
 
 static void apply_patch_callback(GtkWidget *widget, gpointer user_data)
 {
-int paused;
-char *file;
-char *filter_patterns[] = { "*.[iubIUB][pP][sS]", NULL };
-char *shortcuts[] = { NULL, NULL };
-char *patch_path;
-GtkWidget *gtkwindow = user_data;
+	int paused;
+	char *file;
+	char *filter_patterns[] = { "*.[iubIUB][pP][sS]", NULL };
+	char *shortcuts[] = { NULL, NULL };
+	char *patch_path;
+	GtkWidget *gtkwindow = user_data;
 
-patch_path = config_get_path(emu->config, CONFIG_DATA_DIR_PATCH,
-				 NULL, 1);
-shortcuts[0] = patch_path;
+	patch_path = config_get_path(emu->config, CONFIG_DATA_DIR_PATCH,
+					 NULL, 1);
+	shortcuts[0] = patch_path;
 
-paused = emu_paused(emu);
+	paused = emu_paused(emu);
 
-if (!paused)
-	emu_pause(emu, 1);
+	if (!paused)
+		emu_pause(emu, 1);
 
-file = file_dialog(gtkwindow,
-		   "Select Patch File",
-		   GTK_FILE_CHOOSER_ACTION_OPEN,
-		   "_Apply",
-		   patch_path,
-		   NULL,
-		   "Patch files",
-		   filter_patterns,
-		   shortcuts);
+	file = file_dialog(gtkwindow,
+			   "Select Patch File",
+			   GTK_FILE_CHOOSER_ACTION_OPEN,
+			   "_Apply",
+			   patch_path,
+			   NULL,
+			   "Patch files",
+			   filter_patterns,
+			   shortcuts);
 
-if (patch_path)
-	free(patch_path);
+	if (patch_path)
+		free(patch_path);
 
-if (file) {
-	emu_patch_rom(emu, file);
-	g_free(file);
-}
+	if (file) {
+		emu_patch_rom(emu, file);
+		g_free(file);
+	}
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 }
 
 static void file_open(GtkWidget *widget, gpointer user_data)
 {
-char *file;
-int paused;
-char *filter_patterns[] = { "*.[nN][eE][sS]",
-			    "*.[uU][nN][iI][fF]",
-			    "*.[uU][nN][fF]",
-			    "*.[fF][dD][sS]",
-			    "*.[nN][sS][fF]",
-			    "*.[zZ][iI][pP]",
-			    NULL };
-char *shortcuts[] = { (char *)emu->config->rom_path, NULL };
-GtkWidget *gtkwindow = user_data;
+	char *file;
+	int paused;
+	char *filter_patterns[] = { "*.[nN][eE][sS]",
+				    "*.[uU][nN][iI][fF]",
+				    "*.[uU][nN][fF]",
+				    "*.[fF][dD][sS]",
+				    "*.[nN][sS][fF]",
+				    "*.[zZ][iI][pP]",
+				    NULL };
+	char *shortcuts[] = { (char *)emu->config->rom_path, NULL };
+	GtkWidget *gtkwindow = user_data;
 
-paused = emu_paused(emu);
+	paused = emu_paused(emu);
 
-if (!paused)
-	emu_pause(emu, 1);
+	if (!paused)
+		emu_pause(emu, 1);
 
-file = file_dialog(gtkwindow,
-		   "Select ROM",
-		   GTK_FILE_CHOOSER_ACTION_OPEN,
-		   "_Open",
-		   emu->config->default_to_rom_path ?
-		   emu->config->rom_path : NULL,
-		   NULL,
-		   "NES ROMs",
-		   filter_patterns,
-		   shortcuts);
+	file = file_dialog(gtkwindow,
+			   "Select ROM",
+			   GTK_FILE_CHOOSER_ACTION_OPEN,
+			   "_Open",
+			   emu->config->default_to_rom_path ?
+			   emu->config->rom_path : NULL,
+			   NULL,
+			   "NES ROMs",
+			   filter_patterns,
+			   shortcuts);
 
-if (file) {
-	open_rom(emu, file, 0, NULL);
-	g_free(file);
-}
-		   
+	if (file) {
+		open_rom(emu, file, 0, NULL);
+		g_free(file);
+	}
+			   
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 }
 
 static void load_state(GtkWidget *widget, gpointer user_data)
 {
-char *file;
-int paused;
-char *filter_patterns[] = { "*.[sS][tT][aA]",
-			    "*.[sS][tT][0-9]",
-			    NULL };
-char *shortcuts[] = { NULL, NULL };
-char *state_path;
-GtkWidget *gtkwindow = user_data;
+	char *file;
+	int paused;
+	char *filter_patterns[] = { "*.[sS][tT][aA]",
+				    "*.[sS][tT][0-9]",
+				    NULL };
+	char *shortcuts[] = { NULL, NULL };
+	char *state_path;
+	GtkWidget *gtkwindow = user_data;
 
-paused = emu_paused(emu);
+	paused = emu_paused(emu);
 
-if (!paused)
-	emu_pause(emu, 1);
+	if (!paused)
+		emu_pause(emu, 1);
 
-state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
-				 NULL, 1);
-shortcuts[0] = state_path;
+	state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
+					 NULL, 1);
+	shortcuts[0] = state_path;
 
-file = file_dialog(gtkwindow,
-		   "Select Savestate",
-		   GTK_FILE_CHOOSER_ACTION_OPEN,
-		   "_Load",
-		   state_path,
-		   NULL,
-		   "Savestates",
-		   filter_patterns,
-		   shortcuts);
+	file = file_dialog(gtkwindow,
+			   "Select Savestate",
+			   GTK_FILE_CHOOSER_ACTION_OPEN,
+			   "_Load",
+			   state_path,
+			   NULL,
+			   "Savestates",
+			   filter_patterns,
+			   shortcuts);
 
-free(state_path);
+	free(state_path);
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 
-if (file) {
-	emu_load_state(emu, file);
-	free(file);
-}
+	if (file) {
+		emu_load_state(emu, file);
+		free(file);
+	}
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 }
 
 static void save_state(GtkWidget *widget, gpointer user_data)
 {
-char *file;
-int paused;
-char *filter_patterns[] = { "*.[sS][tT][aA]",
-			    "*.[sS][tT][0-9]",
-			    NULL };
-char *shortcuts[] = { NULL, NULL };
-const char *default_state_file;
-char *state_path;
-GtkWidget *gtkwindow = user_data;
+	char *file;
+	int paused;
+	char *filter_patterns[] = { "*.[sS][tT][aA]",
+				    "*.[sS][tT][0-9]",
+				    NULL };
+	char *shortcuts[] = { NULL, NULL };
+	const char *default_state_file;
+	char *state_path;
+	GtkWidget *gtkwindow = user_data;
 
-paused = emu_paused(emu);
+	paused = emu_paused(emu);
 
-if (!paused)
-	emu_pause(emu, 1);
+	if (!paused)
+		emu_pause(emu, 1);
 
-default_state_file = emu->state_file;
-state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
-				 NULL, 1);
-shortcuts[0] = state_path;
+	default_state_file = emu->state_file;
+	state_path = config_get_path(emu->config, CONFIG_DATA_DIR_STATE,
+					 NULL, 1);
+	shortcuts[0] = state_path;
 
-file = file_dialog(gtkwindow,
-		   "Select Savestate",
-		   GTK_FILE_CHOOSER_ACTION_SAVE,
-		   "_Save",
-		   state_path,
-		   default_state_file,
-		   "Savestates",
-		   filter_patterns,
-		   shortcuts);
+	file = file_dialog(gtkwindow,
+			   "Select Savestate",
+			   GTK_FILE_CHOOSER_ACTION_SAVE,
+			   "_Save",
+			   state_path,
+			   default_state_file,
+			   "Savestates",
+			   filter_patterns,
+			   shortcuts);
 
-free(state_path);
+	free(state_path);
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 
-if (file) {
-	emu_save_state(emu, file);
-	free(file);
-}
+	if (file) {
+		emu_save_state(emu, file);
+		free(file);
+	}
 
-if (!paused)
-	emu_pause(emu, 0);
+	if (!paused)
+		emu_pause(emu, 0);
 }
 
 static void file_close(GtkWidget *widget, gpointer userdata)
 {
-close_rom(emu);
-video_clear();
+	close_rom(emu);
+	video_clear();
 }
 
 void gui_init_menu_list(void)
 {
-menu_list = NULL;
+	menu_list = NULL;
 }
 
 void gui_cleanup_menu_list(void)
 {
-g_slist_free(menu_list);
+	g_slist_free(menu_list);
 }
 
 void gui_update_menu(void)
@@ -437,6 +439,7 @@ void gui_update_menu(void)
 	}
 
 	update_system_type_menu();
+	update_dip_switch_menu();
 }
 
 struct input_device {
@@ -1150,58 +1153,6 @@ static void system_type_callback(GtkRadioMenuItem *widget,
 	emu_set_system_type(emu, system_type);
 }
 
-static void system_type_menu_show_callback(GtkWidget *menu, gpointer user_data)
-{
-	GtkRadioMenuItem *item;
-	GSList *group;
-	int system_type;
-	const gchar *label;
-	GtkRadioMenuItem *auto_item;
-	GtkWidget *remember;
-	char buffer[30];
-
-	group = user_data;
-	label = NULL;
-	auto_item = NULL;
-
-	remember = g_object_get_data(G_OBJECT(menu), "remember");
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(remember),
-				       emu->config->remember_system_type);
-
-	while (group) {
-		item = group->data;
-		group = group->next;
-
-		system_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item),
-								"system_type"));
-
-		if (system_type == emu->guessed_system_type) {
-			label = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
-		} else if (system_type == EMU_SYSTEM_TYPE_AUTO) {
-			auto_item = item;
-		}
-
-		if (emu->system_type != system_type)
-			continue;
-
-		g_signal_handlers_block_by_func(G_OBJECT(item),
-						G_CALLBACK(system_type_callback),
-						NULL);
-
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
-
-		g_signal_handlers_unblock_by_func(G_OBJECT(item),
-						  G_CALLBACK(system_type_callback),
-						  NULL);
-	}
-
-	if (auto_item && label) {
-		snprintf(buffer, sizeof(buffer), "Auto [%s]", label);
-		gtk_menu_item_set_label(GTK_MENU_ITEM(auto_item), buffer);
-	}
-}
-
 static GtkWidget *gui_build_system_type_menu(int value)
 {
 	GtkWidget *menu,*item;
@@ -1255,36 +1206,32 @@ static void dip_switch_toggle_callback(GtkWidget *widget, gpointer user_data)
 	board_set_dip_switch(emu->board, switch_num + 1, active);
 }
 
-static void dip_switch_menu_item_show_callback(GtkWidget *widget, gpointer user_data)
+static void update_dip_switch_menu(void)
 {
 	int switch_total;
-	int switch_num;
+	int i;
 
 	switch_total = board_get_num_dip_switches(emu->board);
-	switch_num = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "switch"));
 
-	g_signal_handlers_block_by_func(G_OBJECT(widget),
-					G_CALLBACK(dip_switch_toggle_callback),
-					NULL);
+	for (i = 0; i < switch_total; i++) {
+		GtkWidget *widget = dip_switch_menu_item[i];
+		g_signal_handlers_block_by_func(G_OBJECT(widget),
+						G_CALLBACK(dip_switch_toggle_callback),
+						NULL);
 
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
-				       board_get_dip_switches(emu->board) &
-				       (1 << switch_num));
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
+					       board_get_dip_switches(emu->board) &
+					       (1 << i));
 
-	g_signal_handlers_unblock_by_func(G_OBJECT(widget),
-					G_CALLBACK(dip_switch_toggle_callback),
-					NULL);
+		g_signal_handlers_unblock_by_func(G_OBJECT(widget),
+						G_CALLBACK(dip_switch_toggle_callback),
+						NULL);
 
-	if (switch_num >= switch_total)
-		gtk_widget_hide(widget);
-	else
-		gtk_widget_show(widget);
-}
-
-static void dip_switch_menu_show_callback(GtkWidget *widget, gpointer user_data)
-{
-	gtk_container_foreach(GTK_CONTAINER(widget),
-			      dip_switch_menu_item_show_callback, NULL);
+		if (i >= switch_total)
+			gtk_widget_hide(widget);
+		else
+			gtk_widget_show(widget);
+	}
 }
 
 static GtkWidget *gui_build_dip_switches_menu(void)
@@ -1309,13 +1256,15 @@ static GtkWidget *gui_build_dip_switches_menu(void)
 
 	config = emu->config;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < sizeof(config_names)/sizeof(config_names[0]); i++) {
 		int *data;
 
 		snprintf(buffer, sizeof(buffer), "DIP Switch _%d", i + 1);
 		item = gtk_check_menu_item_new_with_mnemonic(buffer);
 		if (!item)
 			continue;
+
+		dip_switch_menu_item[i] = item;
 
 		data = config_get_data_ptr(config, config_names[i]);
 
@@ -1329,10 +1278,6 @@ static GtkWidget *gui_build_dip_switches_menu(void)
 				 GINT_TO_POINTER(i));
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	}
-
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(dip_switch_menu_show_callback),
-			 NULL);
 
 	return menu;
 }
