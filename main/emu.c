@@ -29,6 +29,10 @@
 #include "file_io.h"
 #include "video.h"
 #include "fds.h"
+#if GUI_ENABLED
+#include "gui.h"
+extern int gui_enabled;
+#endif
 
 #define NS_PER_SEC 1000000000L
 
@@ -596,6 +600,11 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 			}
 		}
 	}
+
+#if GUI_ENABLED
+	if (gui_enabled)
+		gui_update_menu();
+#endif
 
 	return 0;
 }

@@ -977,6 +977,11 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 	rom_config_set(io->emu->config, "four_player_mode", mode_str);
 	emu_save_rom_config(io->emu);
 
+#if GUI_ENABLED
+	if (gui_enabled)
+		gui_update_fourplayer_menu();
+#endif
+
 	if (!display)
 		return;
 

@@ -57,11 +57,16 @@ extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_joystick_dialog(GtkWidget *, gpointer);
 
+static void update_system_type_menu(void);
+static void system_type_callback(GtkRadioMenuItem *widget,
+				      gpointer user_data);
 extern int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles);
 extern int close_rom(struct emu *emu);
 
 static GSList *menu_list;
 static GtkWidget *port_menus[5];
+static GtkWidget *fourplayer_menu;
+static GtkWidget *system_type_menu_item;
 
 #if (!__APPLE__)
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
@@ -430,6 +435,8 @@ void gui_update_menu(void)
 				gtk_widget_hide(item);
 		}
 	}
+
+	update_system_type_menu();
 }
 
 struct input_device {
@@ -681,7 +688,7 @@ static void input_menu_show_callback(GtkWidget *widget, gpointer user_data)
 
 }
 
-static void fourplayer_menu_show_callback(GtkWidget *widget, gpointer user_data)
+void gui_update_fourplayer_menu(void)
 {
 	GtkRadioMenuItem *item;
 	GSList *group;
@@ -690,7 +697,7 @@ static void fourplayer_menu_show_callback(GtkWidget *widget, gpointer user_data)
 	const gchar *label;
 	GtkRadioMenuItem *auto_item;
 
-	group = user_data;
+	group = g_object_get_data(G_OBJECT(fourplayer_menu), "group");
 
 	current_mode = io_get_four_player_mode(emu->io);
 	auto_mode = io_get_auto_four_player_mode(emu->io);
@@ -728,6 +735,11 @@ static void fourplayer_menu_show_callback(GtkWidget *widget, gpointer user_data)
 		snprintf(buffer, sizeof(buffer), "Auto [%s]", label);
 		gtk_menu_item_set_label(GTK_MENU_ITEM(auto_item), buffer);
 	}
+
+#if __APPLE__
+	GtkosxApplication *theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
+	gtkosx_application_sync_menubar(theApp);
+#endif
 }
 
 static void input_port_connect_callback(GtkWidget *widget, gpointer user_data)
@@ -817,6 +829,7 @@ static GtkWidget *gui_build_input_menu(void)
 	fourplayer_menu_item = gtk_menu_item_new_with_mnemonic("_Four-Player Mode");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), fourplayer_menu_item);
 	submenu = gtk_menu_new();
+	fourplayer_menu = submenu;
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(fourplayer_menu_item), submenu);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
@@ -861,9 +874,8 @@ static GtkWidget *gui_build_input_menu(void)
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(fourplayer_mode_callback), NULL);
 
-	g_signal_connect(G_OBJECT(menu), "show",
-	                 G_CALLBACK(fourplayer_menu_show_callback), group);
-
+	g_object_set_data(G_OBJECT(submenu), "group", group);
+	
 	return menu;
 }
 
@@ -1024,27 +1036,36 @@ static void fps_display_callback(GtkRadioMenuItem *widget,
 	}
 }
 
-static void emulator_menu_show_callback(GtkWidget *widget, gpointer user_data)
+static void update_system_type_menu(void)
 {
-	GtkWidget *system_type, *submenu;
-	GtkWidget *separator;
-	GtkWidget *fps;
+	GtkRadioMenuItem *item;
+	GtkWidget *submenu;
+	GtkWidget *remember;
+	GtkRadioMenuItem *auto_item;
+	const gchar *label;
+	GSList *group;
+	char buffer[30];
+//	GtkWidget *fps;
 	const char *id;
 	int loaded;
-	int is_fds;
 
-	system_type = g_object_get_data(G_OBJECT(widget), "system_type");
+	label = NULL;
+	auto_item = NULL;
+/*
 	fps = g_object_get_data(G_OBJECT(widget), "fps");
-	separator = g_object_get_data(G_OBJECT(widget), "separator");
 
 	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS) {
 		is_fds = 1;
 	} else {
 		is_fds = 0;
 	}
+*/
+
+	if (!system_type_menu_item)
+		return;
 
 	loaded = emu_loaded(emu);
-	gtk_widget_set_sensitive(system_type, loaded);
+	gtk_widget_set_sensitive(system_type_menu_item, loaded);
 
 	if (loaded) {
 		if (emu_system_is_vs(emu))
@@ -1057,23 +1078,63 @@ static void emulator_menu_show_callback(GtkWidget *widget, gpointer user_data)
 		id = NULL;
 	}
 
-	if (!is_fds && !emu_system_is_vs(emu) &&
-	    !board_get_num_dip_switches(emu->board)) {
-		gtk_widget_hide(separator);
-	} else {
-		gtk_widget_show(separator);
-	}
-
 	if (id) {
-		submenu = g_object_get_data(G_OBJECT(widget), id);
+		submenu = g_object_get_data(G_OBJECT(system_type_menu_item), id);
+		if (!submenu)
+			return;
 
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(system_type), submenu);
+		gtk_menu_item_set_submenu(GTK_MENU_ITEM(system_type_menu_item), submenu);
 		gtk_widget_show_all(submenu);
+	} else {
+		return;
 	}
 
+	remember = g_object_get_data(G_OBJECT(submenu), "remember");
 
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(fps),
-				       emu->config->fps_display_enabled);
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(remember),
+				       emu->config->remember_system_type);
+
+	group = g_object_get_data(G_OBJECT(submenu), "group");
+	while (group) {
+		item = group->data;
+		group = group->next;
+		int system_type;
+
+		system_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item),
+								"system_type"));
+
+		if (system_type == emu->guessed_system_type) {
+			label = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
+		} else if (system_type == EMU_SYSTEM_TYPE_AUTO) {
+			auto_item = item;
+		}
+
+		if (emu->system_type != system_type)
+			continue;
+
+		g_signal_handlers_block_by_func(G_OBJECT(item),
+						G_CALLBACK(system_type_callback),
+						NULL);
+
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
+
+		g_signal_handlers_unblock_by_func(G_OBJECT(item),
+						  G_CALLBACK(system_type_callback),
+						  NULL);
+	}
+
+	if (auto_item && label) {
+		snprintf(buffer, sizeof(buffer), "Auto [%s]", label);
+		gtk_menu_item_set_label(GTK_MENU_ITEM(auto_item), buffer);
+	}
+
+#if __APPLE__
+	GtkosxApplication *theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
+	gtkosx_application_sync_menubar(theApp);
+#endif
+
+//	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(fps),
+//				       emu->config->fps_display_enabled);
 }
 
 static void system_type_callback(GtkRadioMenuItem *widget,
@@ -1177,9 +1238,7 @@ static GtkWidget *gui_build_system_type_menu(int value)
 	g_signal_connect(G_OBJECT(item), "toggled",
 			 G_CALLBACK(remember_system_type_callback), NULL);
 
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(system_type_menu_show_callback),
-			 group);
+	g_object_set_data(G_OBJECT(menu), "group", group);
 
 	g_object_ref(G_OBJECT(menu));
 
@@ -1311,13 +1370,9 @@ static GtkWidget *gui_build_emulator_menu(void)
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
 			  NULL, is_visible_if_fds, NULL);
 
-	item = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "separator", item);
-
 	item = gtk_menu_item_new_with_mnemonic("System _Type");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "system_type", item);
+	system_type_menu_item = item;
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
@@ -1338,18 +1393,15 @@ static GtkWidget *gui_build_emulator_menu(void)
 
 	submenu = 
 		gui_build_system_type_menu(0x00);
-	g_object_set_data(G_OBJECT(menu), "console_menu", submenu);
+	g_object_set_data(G_OBJECT(system_type_menu_item), "console_menu", submenu);
 
 	submenu = 
 		gui_build_system_type_menu(0x10);
-	g_object_set_data(G_OBJECT(menu), "vs_menu", submenu);
+	g_object_set_data(G_OBJECT(system_type_menu_item), "vs_menu", submenu);
 
 	submenu = 
 		gui_build_system_type_menu(0x20);
-	g_object_set_data(G_OBJECT(menu), "playchoice_menu", submenu);
-
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(emulator_menu_show_callback), NULL);
+	g_object_set_data(G_OBJECT(system_type_menu_item), "playchoice_menu", submenu);
 
 	return GTK_WIDGET(menu);
 }
