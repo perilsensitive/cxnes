@@ -1652,8 +1652,6 @@ void video_mouse_motion(int x, int y, int button_state)
 	mouse_lastx = x;
 	mouse_lasty = y;
 
-	video_show_cursor(1);
-
 	SDL_PushEvent(&sdlevent);
 }
 

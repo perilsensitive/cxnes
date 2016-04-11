@@ -785,6 +785,7 @@ int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 		new_event->motion.button_state = event->motion.state;
 		new_event->motion.xrel = event->motion.xrel;
 		new_event->motion.yrel = event->motion.yrel;
+		video_show_cursor(1);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
