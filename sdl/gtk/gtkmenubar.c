@@ -69,6 +69,7 @@ static GtkWidget *port_menus[5];
 static GtkWidget *dip_switch_menu_item[8];
 static GtkWidget *fourplayer_menu;
 static GtkWidget *system_type_menu_item;
+static GtkWidget *fps_menu_item;
 
 #if (!__APPLE__)
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
@@ -440,6 +441,9 @@ void gui_update_menu(void)
 
 	update_system_type_menu();
 	gui_update_dip_switch_menu();
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(fps_menu_item),
+				       emu->config->fps_display_enabled);
 }
 
 struct input_device {
@@ -1034,6 +1038,7 @@ static void fps_display_callback(GtkRadioMenuItem *widget,
 
 	if (active != emu->config->fps_display_enabled) {
 		emu->config->fps_display_enabled = active;
+		video_toggle_fps(active);
 		video_apply_config(emu);
 		config_save_main_config(emu->config);
 	}
@@ -1048,7 +1053,6 @@ static void update_system_type_menu(void)
 	const gchar *label;
 	GSList *group;
 	char buffer[30];
-//	GtkWidget *fps;
 	const char *id;
 	int loaded;
 
@@ -1324,7 +1328,7 @@ static GtkWidget *gui_build_emulator_menu(void)
 
 	item = gtk_check_menu_item_new_with_mnemonic("FPS _Display");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "fps", item);
+	fps_menu_item = GTK_WIDGET(item);
 	g_signal_connect(G_OBJECT(item), "toggled",
 			 G_CALLBACK(fps_display_callback), NULL);
 

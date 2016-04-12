@@ -49,6 +49,7 @@ static int event_mask = (GDK_ALL_EVENTS_MASK & ~(GDK_POINTER_MOTION_HINT_MASK));
 static int ignore_focus_events = 2;
 #endif
 
+extern void gui_update_menu(void);
 #if (!__APPLE__)
 extern int gui_prep_drawing_area(GtkWidget *drawingarea);
 extern void *gui_get_window_handle(GdkWindow *gdkwindow);
@@ -73,7 +74,9 @@ static int menubar_visible;
 static int drawingarea_x, drawingarea_y;
 static int drawingarea_height, drawingarea_width;
 
+#if !__APPLE__
 static GdkRGBA bg = {0, 0, 0, 255};
+#endif
 
 static SDL_Keycode keysym_map_nonprinting[] = {
 	SDLK_UNKNOWN, SDLK_UNKNOWN, SDLK_UNKNOWN, SDLK_UNKNOWN,
@@ -477,8 +480,12 @@ static int keyevent_callback(GtkWidget *widget, GdkEventKey *event, gpointer use
 
 void fullscreen_callback(void)
 {
+#if __APPLE__
+	video_toggle_fullscreen(!fullscreen ? -1 : 1);
+#else
 	gui_resize(!fullscreen, (!fullscreen ? 0 : 1));
 	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
+#endif
 }
 
 #if __APPLE__
