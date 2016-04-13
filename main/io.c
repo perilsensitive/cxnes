@@ -26,6 +26,10 @@ extern struct io_device controller1_device;
 extern struct io_device controller2_device;
 extern struct io_device controller3_device;
 extern struct io_device controller4_device;
+extern struct io_device snes_controller1_device;
+extern struct io_device snes_controller2_device;
+extern struct io_device snes_controller3_device;
+extern struct io_device snes_controller4_device;
 extern struct io_device zapper1_device;
 extern struct io_device zapper2_device;
 extern struct io_device powerpad_a1_device;
@@ -69,6 +73,10 @@ static int controller_common_apply_config(struct io_device *dev);
 #define BUTTON_DN 32
 #define BUTTON_L  64
 #define BUTTON_R  128
+#define BUTTON_SNES_A  256
+#define BUTTON_SNES_X  512
+#define BUTTON_SNES_L  1024
+#define BUTTON_SNES_R  2048
 
 static uint8_t turbo_speeds[] = { 1, 10, 8, 6, 5, 4, 3, 2 };
 
@@ -460,6 +468,22 @@ void io_reset(struct io_state *io, int hard)
 			io_register_device(io, &controller4_device, PORT_2);
 			io_register_device(io, &controller4_device, PORT_3);
 			io_register_device(io, &controller4_device, PORT_4);
+			io_register_device(io, &snes_controller1_device, PORT_1);
+			io_register_device(io, &snes_controller1_device, PORT_2);
+			io_register_device(io, &snes_controller1_device, PORT_3);
+			io_register_device(io, &snes_controller1_device, PORT_4);
+			io_register_device(io, &snes_controller2_device, PORT_1);
+			io_register_device(io, &snes_controller2_device, PORT_2);
+			io_register_device(io, &snes_controller2_device, PORT_3);
+			io_register_device(io, &snes_controller2_device, PORT_4);
+			io_register_device(io, &snes_controller3_device, PORT_1);
+			io_register_device(io, &snes_controller3_device, PORT_2);
+			io_register_device(io, &snes_controller3_device, PORT_3);
+			io_register_device(io, &snes_controller3_device, PORT_4);
+			io_register_device(io, &snes_controller4_device, PORT_1);
+			io_register_device(io, &snes_controller4_device, PORT_2);
+			io_register_device(io, &snes_controller4_device, PORT_3);
+			io_register_device(io, &snes_controller4_device, PORT_4);
 			io_register_device(io, &zapper1_device, -1);
 			io_register_device(io, &zapper2_device, -1);
 			io_register_device(io, &powerpad_a1_device, -1);
@@ -1130,16 +1154,29 @@ static int controller_common_set_button(void *data, uint32_t pressed, uint32_t b
 	struct controller_common_state *state;
 	int controller;
 	int turbo, turbo_toggle;
+	int is_snes;
+	char name;
 
 	/* Find existing device */
 	dev = data;
 	state = dev->private;
 
 
-	controller = (button & 0x300) >> 8;
+	controller = (button & 0x3000) >> 8;
 	turbo = button & ACTION_CONTROLLER_TURBO_FLAG;
 	turbo_toggle = button & ACTION_CONTROLLER_TURBO_TOGGLE_FLAG;
-	button &= 0xff;
+	button &= 0xfff;
+
+	switch (dev->id) {
+		case IO_DEVICE_SNES_CONTROLLER_1:
+		case IO_DEVICE_SNES_CONTROLLER_2:
+		case IO_DEVICE_SNES_CONTROLLER_3:
+		case IO_DEVICE_SNES_CONTROLLER_4:
+			is_snes = 1;
+			break;
+		default:
+			is_snes = 0;
+	}
 
 	if (turbo) {
 		if (pressed)
@@ -1149,9 +1186,20 @@ static int controller_common_set_button(void *data, uint32_t pressed, uint32_t b
 	} else if (turbo_toggle) {
 		if (pressed)
 			state->turbo_toggles[controller] ^= button;
+		switch(button) {
+			case BUTTON_A: name = (is_snes ?
+			               'B' : 'A'); break;
+			case BUTTON_B: name = (is_snes ?
+			               'Y' : 'B'); break;
+			case BUTTON_SNES_A: name = 'A'; break;
+			case BUTTON_SNES_X: name = 'X'; break;
+			case BUTTON_SNES_L: name = 'L'; break;
+			case BUTTON_SNES_R: name = 'R'; break;
+			default: name = '?';
+		}
 		osdprintf("Controller %d Turbo %c %s",
-			  controller + 1, button == BUTTON_A ? 'A' : 'B',
-			  state->turbo_toggles[controller] & button ?
+			  controller + 1, name,
+		          state->turbo_toggles[controller] & button ?
 			  "on" : "off");
 	} else {
 		if (pressed)
