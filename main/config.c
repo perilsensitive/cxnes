@@ -227,14 +227,19 @@ static const char *port1_device_names[] = {
 	"Auto", "None",
 	"Controller 1", "Controller 2",
 	"Controller 3", "Controller 4",
+	"SNES Controller 1", "SNES Controller 2",
+	"SNES Controller 3", "SNES Controller 4",
 	"Zapper", "Power Pad (Side A)",
 	"Power Pad (Side B)", "NES Arkanoid Controller",
 	"SNES Mouse", "VS. Zapper",
 };
 
 static const char *valid_port1_devices[] = {
-	"auto", "none", "controller1", "controller2", "controller3",
-	"controller4", "zapper", "powerpad_a", "powerpad_b",
+	"auto", "none", "controller1", "controller2",
+	"controller3", "controller4",
+	"snes_controller1", "snes_controller2",
+	"snes_controller3", "snes_controller4",
+	"zapper", "powerpad_a", "powerpad_b",
 	"arkanoid_nes", "snes_mouse", "vs_zapper",
 };
 
@@ -242,6 +247,8 @@ static const char *port2_device_names[] = {
 	"Auto", "None",
 	"Controller 1", "Controller 2",
 	"Controller 3", "Controller 4",
+	"SNES Controller 1", "SNES Controller 2",
+	"SNES Controller 3", "SNES Controller 4",
 	"Zapper", "Power Pad (Side A)",
 	"Power Pad (Side B)", "NES Arkanoid Controller",
 	"SNES Mouse",
@@ -249,7 +256,10 @@ static const char *port2_device_names[] = {
 
 static const char *valid_port2_devices[] = {
 	"auto", "none", "controller1", "controller2", "controller3",
-	"controller4", "zapper", "powerpad_a", "powerpad_b",
+	"controller4",
+	"snes_controller1", "snes_controller2",
+	"snes_controller3", "snes_controller4",
+	"zapper", "powerpad_a", "powerpad_b",
 	"arkanoid_nes", "snes_mouse"
 };
 
@@ -257,12 +267,17 @@ static const char *port3_4_device_names[] = {
 	"Auto", "None",
 	"Controller 1", "Controller 2",
 	"Controller 3", "Controller 4",
+	"SNES Controller 1", "SNES Controller 2",
+	"SNES Controller 3", "SNES Controller 4",
 	"SNES Mouse",
 };
 
 static const char *valid_port3_4_devices[] = {
 	"auto", "none", "controller1", "controller2",
-	"controller3", "controller4", "snes_mouse"
+	"controller3", "controller4",
+	"snes_controller1", "snes_controller2",
+	"snes_controller3", "snes_controller4",
+	"snes_mouse"
 };
 
 static const char *exp_device_names[] = {
@@ -884,6 +899,10 @@ struct binding_item default_bindings[] = {
 	{ .name = "Joystick 0 Back", .value = "CONTROLLER_1_SELECT" },
 	{ .name = "Joystick 0 X", .value = "CONTROLLER_1_B" },
 	{ .name = "Joystick 0 A", .value = "CONTROLLER_1_A" },
+	{ .name = "Joystick 0 Y", .value = "CONTROLLER_1_SNES_X" },
+	{ .name = "Joystick 0 B", .value = "CONTROLLER_1_SNES_A" },
+	{ .name = "Joystick 0 Left Shoulder", .value = "CONTROLLER_1_SNES_L" },
+	{ .name = "Joystick 0 Right Shoulder", .value = "CONTROLLER_1_SNES_R" },
 	{ .name = "Joystick 0 Left Y -", .value = "CONTROLLER_1_UP" },
 	{ .name = "Joystick 0 Left Y +", .value = "CONTROLLER_1_DOWN" },
 	{ .name = "Joystick 0 Left X -", .value = "CONTROLLER_1_LEFT" },
@@ -896,6 +915,10 @@ struct binding_item default_bindings[] = {
 	{ .name = "Joystick 1 Back", .value = "CONTROLLER_2_SELECT" },
 	{ .name = "Joystick 1 X", .value = "CONTROLLER_2_B" },
 	{ .name = "Joystick 1 A", .value = "CONTROLLER_2_A" },
+	{ .name = "Joystick 1 Y", .value = "CONTROLLER_2_SNES_X" },
+	{ .name = "Joystick 1 B", .value = "CONTROLLER_2_SNES_A" },
+	{ .name = "Joystick 1 Left Shoulder", .value = "CONTROLLER_2_SNES_L" },
+	{ .name = "Joystick 1 Right Shoulder", .value = "CONTROLLER_2_SNES_R" },
 	{ .name = "Joystick 1 Left Y -", .value = "CONTROLLER_2_UP" },
 	{ .name = "Joystick 1 Left Y +", .value = "CONTROLLER_2_DOWN" },
 	{ .name = "Joystick 1 Left X -", .value = "CONTROLLER_2_LEFT" },
@@ -908,6 +931,10 @@ struct binding_item default_bindings[] = {
 	{ .name = "Joystick 2 Back", .value = "CONTROLLER_3_SELECT" },
 	{ .name = "Joystick 2 X", .value = "CONTROLLER_3_B" },
 	{ .name = "Joystick 2 A", .value = "CONTROLLER_3_A" },
+	{ .name = "Joystick 2 Y", .value = "CONTROLLER_3_SNES_X" },
+	{ .name = "Joystick 2 B", .value = "CONTROLLER_3_SNES_A" },
+	{ .name = "Joystick 2 Left Shoulder", .value = "CONTROLLER_3_SNES_L" },
+	{ .name = "Joystick 2 Right Shoulder", .value = "CONTROLLER_3_SNES_R" },
 	{ .name = "Joystick 2 Left Y -", .value = "CONTROLLER_3_UP" },
 	{ .name = "Joystick 2 Left Y +", .value = "CONTROLLER_3_DOWN" },
 	{ .name = "Joystick 2 Left X -", .value = "CONTROLLER_3_LEFT" },
@@ -920,6 +947,10 @@ struct binding_item default_bindings[] = {
 	{ .name = "Joystick 3 Back", .value = "CONTROLLER_4_SELECT" },
 	{ .name = "Joystick 3 X", .value = "CONTROLLER_4_B" },
 	{ .name = "Joystick 3 A", .value = "CONTROLLER_4_A" },
+	{ .name = "Joystick 3 Y", .value = "CONTROLLER_4_SNES_X" },
+	{ .name = "Joystick 3 B", .value = "CONTROLLER_4_SNES_A" },
+	{ .name = "Joystick 3 Left Shoulder", .value = "CONTROLLER_4_SNES_L" },
+	{ .name = "Joystick 3 Right Shoulder", .value = "CONTROLLER_4_SNES_R" },
 	{ .name = "Joystick 3 Left Y -", .value = "CONTROLLER_4_UP" },
 	{ .name = "Joystick 3 Left Y +", .value = "CONTROLLER_4_DOWN" },
 	{ .name = "Joystick 3 Left X -", .value = "CONTROLLER_4_LEFT" },
