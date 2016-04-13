@@ -80,11 +80,15 @@ static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 
 static void update_fullscreen_toggle(GtkWidget *widget)
 {
+	int is_fullscreen = fullscreen;
 	g_signal_handlers_block_by_func(G_OBJECT(widget),
 					G_CALLBACK(emulator_fullscreen_callback),
 					NULL);
 
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), fullscreen);
+	if (is_fullscreen < 0)
+		is_fullscreen = emu->config->fullscreen;
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), is_fullscreen);
 
 	g_signal_handlers_unblock_by_func(G_OBJECT(widget),
 					G_CALLBACK(emulator_fullscreen_callback),
@@ -691,6 +695,9 @@ static void update_fourplayer_menu(GtkWidget *fourplayer_menu)
 	const gchar *label;
 	GtkRadioMenuItem *auto_item;
 
+	if (!emu_loaded(emu))
+		return;
+
 	group = g_object_get_data(G_OBJECT(fourplayer_menu), "group");
 
 	current_mode = io_get_four_player_mode(emu->io);
@@ -862,6 +869,7 @@ static GtkWidget *gui_build_input_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), fourplayer_menu_item);
 	submenu = gtk_menu_new();
 	g_object_set_data(G_OBJECT(submenu), "do_update", update_fourplayer_menu);
+	menu_list = g_slist_append(menu_list, submenu);
 	g_object_set_data(G_OBJECT(fourplayer_menu_item), "is_sensitive", is_sensitive_if_console);
 	menu_list = g_slist_append(menu_list, fourplayer_menu_item);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(fourplayer_menu_item), submenu);
