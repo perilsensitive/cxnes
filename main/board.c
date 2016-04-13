@@ -33,7 +33,6 @@
 #include "m2_timer.h"
 #if GUI_ENABLED
 #include "gui.h"
-extern int gui_enabled;
 #endif
 
 struct board_name_mapping {
@@ -2057,8 +2056,7 @@ void board_set_dip_switch(struct board *board, int sw, int on)
 	board->emu->config->dip_switch[sw - 1] = on;
 
 #if GUI_ENABLED
-	if (gui_enabled)
-		gui_update_dip_switch_menu();
+	gui_update_menu();
 #endif
 
 	emu_save_rom_config(board->emu);

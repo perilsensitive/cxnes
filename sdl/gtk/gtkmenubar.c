@@ -37,6 +37,7 @@ extern void quit_callback(void);
 extern void fullscreen_callback(void);
 extern int save_screenshot(void);
 
+extern int gui_enabled;
 extern int running;
 extern int fullscreen;
 extern struct emu *emu;
@@ -57,19 +58,13 @@ extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_joystick_dialog(GtkWidget *, gpointer);
 
-void gui_update_dip_switch_menu(void);
-static void update_system_type_menu(void);
+static void update_system_type_menu(GtkWidget *);
 static void system_type_callback(GtkRadioMenuItem *widget,
 				      gpointer user_data);
 extern int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles);
 extern int close_rom(struct emu *emu);
 
 static GSList *menu_list;
-static GtkWidget *port_menus[5];
-static GtkWidget *dip_switch_menu_item[8];
-static GtkWidget *fourplayer_menu;
-static GtkWidget *system_type_menu_item;
-static GtkWidget *fps_menu_item;
 
 #if (!__APPLE__)
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
@@ -83,9 +78,22 @@ static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 	fullscreen_callback();
 }
 
+static void update_fullscreen_toggle(GtkWidget *widget)
+{
+	g_signal_handlers_block_by_func(G_OBJECT(widget),
+					G_CALLBACK(emulator_fullscreen_callback),
+					NULL);
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), fullscreen);
+
+	g_signal_handlers_unblock_by_func(G_OBJECT(widget),
+					G_CALLBACK(emulator_fullscreen_callback),
+					NULL);
+}
+
 static void screenshot_callback(GtkWidget *widget, gpointer userdata)
 {
-save_screenshot();
+	save_screenshot();
 }
 
 static void pause_resume_callback(GtkWidget *widget, gpointer userdata)
@@ -145,7 +153,6 @@ static void rom_info_callback(GtkWidget *widget, gpointer userdata)
 	GtkWidget *view;
 	GtkWidget *dialog_box;
 	GtkWidget *scrolled_window;
-	/* GtkWidget *label; */
 	GtkTextBuffer *buffer;
 	struct text_buffer *tbuffer;
 	PangoFontDescription *pfd;
@@ -421,29 +428,49 @@ void gui_update_menu(void)
 	GSList *node;
 	int (*is_visible)(void);
 	int (*is_sensitive)(void);
+	void (*do_update)(GtkWidget *);
+	gboolean visible;
+	gboolean sensitive;
+#if __APPLE__
+	GtkosxApplication *theApp;
+#endif
+
+	if (!gui_enabled)
+		return;
 
 	for (index = 0; (node = g_slist_nth(menu_list, index)); index++) {
+		visible = TRUE;
+		sensitive = TRUE;
 		GtkWidget *item = GTK_WIDGET(node->data);
 		
 		is_visible = g_object_get_data(G_OBJECT(item), "is_visible");
 		is_sensitive = g_object_get_data(G_OBJECT(item), "is_sensitive");
+		do_update = g_object_get_data(G_OBJECT(item), "do_update");
 
 		if (is_sensitive)
-			gtk_widget_set_sensitive(item, is_sensitive());
+			sensitive = is_sensitive();
+
+		if (is_visible)
+			visible = is_visible();
+
+		if (is_sensitive)
+			gtk_widget_set_sensitive(item, sensitive);
 
 		if (is_visible) {
-			if (is_visible())
+			if (visible)
 				gtk_widget_show(item);
 			else
 				gtk_widget_hide(item);
 		}
+
+		if (visible && sensitive && do_update)
+			do_update(item);
 	}
 
-	update_system_type_menu();
-	gui_update_dip_switch_menu();
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(fps_menu_item),
-				       emu->config->fps_display_enabled);
+#if __APPLE__
+	theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
+	gtkosx_application_sync_menubar(theApp);
+#endif
 }
 
 struct input_device {
@@ -582,18 +609,14 @@ static void fourplayer_mode_callback(GtkRadioMenuItem *widget,
 	io_set_four_player_mode(emu->io, mode, 0);
 }
 
-void gui_update_input_port_menu(int port)
+static void update_input_port_menu(GtkWidget *menu)
 {
 	GtkRadioMenuItem *item;
 	GSList *group;
 	int id, selected_id;
 	GtkWidget *connected;
 	char buffer[80];
-
-	if ((port < PORT_1) || (port > PORT_EXP))
-		return;
-
-	GtkWidget *menu = port_menus[port];
+	int port;
 
 	if (!menu)
 		return;
@@ -601,6 +624,9 @@ void gui_update_input_port_menu(int port)
 	group = g_object_get_data(G_OBJECT(menu), "group");
 
 	if (!group)
+		return;
+
+	if (!emu_loaded(emu))
 		return;
 
 	while (group) {
@@ -657,26 +683,6 @@ void gui_update_input_port_menu(int port)
 	g_signal_handlers_unblock_by_func(G_OBJECT(connected),
 					  G_CALLBACK(input_port_connect_callback),
 					  GINT_TO_POINTER(port));
-
-#if __APPLE__
-	GtkosxApplication *theApp = g_object_new (GTKOSX_TYPE_APPLICATION, NULL);
-	gtkosx_application_sync_menubar(theApp);
-#endif
-}
-
-static void input_menu_item_show_callback(GtkWidget *widget, gpointer user_data)
-{
-	int port;
-
-	if (!emu->loaded || !emu_system_is_vs(emu))
-		return;
-	
-	port = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "port"));
-
-	if (port < 1 || port == 3 || port == 4)
-		gtk_widget_hide(widget);
-	else
-		gtk_widget_show(widget);
 }
 
 static void input_menu_show_callback(GtkWidget *widget, gpointer user_data)
@@ -686,16 +692,11 @@ static void input_menu_show_callback(GtkWidget *widget, gpointer user_data)
 
 	item = g_object_get_data(G_OBJECT(widget), "remember");
 
-
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item),
 				       emu->config->remember_input_devices);
-
-	gtk_container_foreach(GTK_CONTAINER(widget),
-			      input_menu_item_show_callback, NULL);
-
 }
 
-void gui_update_fourplayer_menu(void)
+static void update_fourplayer_menu(GtkWidget *fourplayer_menu)
 {
 	GtkRadioMenuItem *item;
 	GSList *group;
@@ -809,6 +810,40 @@ static GtkWidget *gui_build_input_port_menu(int port)
 	return menu;
 }
 
+static int is_sensitive_if_loaded(void)
+{
+	return emu_loaded(emu);
+}
+
+static int is_visible_if_console(void)
+{
+	return !emu_system_is_vs(emu);
+}
+
+static int is_visible_if_fds(void)
+{
+	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS)
+		return 1;
+	else
+		return 0;
+}
+
+static int is_visible_if_vs(void)
+{
+	if (emu_loaded(emu) && emu_system_is_vs(emu))
+		return 1;
+	else
+		return 0;
+}
+
+static int is_visible_if_has_dip_switches(void)
+{
+	if (emu_loaded(emu) && board_get_num_dip_switches(emu->board))
+		return 1;
+	else
+		return 0;
+}
+
 static GtkWidget *gui_build_input_menu(void)
 {
 	GtkWidget *menu, *submenu;
@@ -822,7 +857,14 @@ static GtkWidget *gui_build_input_menu(void)
 		item = gtk_menu_item_new_with_mnemonic(input_menu_names[i]);
 		g_object_set_data(G_OBJECT(item), "port", GINT_TO_POINTER(i + 1));
 		submenu = gui_build_input_port_menu(i);
-		port_menus[i] = submenu;
+		g_object_set_data(G_OBJECT(submenu), "do_update",
+		                  update_input_port_menu);
+		if ((i == 2) || (i == 3)) {
+			g_object_set_data(G_OBJECT(item), "is_visible",
+			                  is_visible_if_console);
+			menu_list = g_slist_append(menu_list, item);
+		}
+		menu_list = g_slist_append(menu_list, submenu);
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	}
@@ -830,13 +872,12 @@ static GtkWidget *gui_build_input_menu(void)
 	g_signal_connect(G_OBJECT(menu), "show",
 			 G_CALLBACK(input_menu_show_callback), NULL);
 
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
-			      gtk_separator_menu_item_new());
-
 	fourplayer_menu_item = gtk_menu_item_new_with_mnemonic("_Four-Player Mode");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), fourplayer_menu_item);
 	submenu = gtk_menu_new();
-	fourplayer_menu = submenu;
+	g_object_set_data(G_OBJECT(submenu), "do_update", update_fourplayer_menu);
+	g_object_set_data(G_OBJECT(fourplayer_menu_item), "is_visible", is_visible_if_console);
+	menu_list = g_slist_append(menu_list, fourplayer_menu_item);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(fourplayer_menu_item), submenu);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
@@ -886,35 +927,6 @@ static GtkWidget *gui_build_input_menu(void)
 	return menu;
 }
 
-static int is_sensitive_if_loaded(void)
-{
-	return emu_loaded(emu);
-}
-
-static int is_visible_if_fds(void)
-{
-	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS)
-		return 1;
-	else
-		return 0;
-}
-
-static int is_visible_if_vs(void)
-{
-	if (emu_loaded(emu) && emu_system_is_vs(emu))
-		return 1;
-	else
-		return 0;
-}
-
-static int is_visible_if_has_dip_switches(void)
-{
-	if (emu_loaded(emu) && board_get_num_dip_switches(emu->board))
-		return 1;
-	else
-		return 0;
-}
-
 /*
   Capture key events while in menus in order to capture the release events for the
   accelerator modifiers.  This prevents the emu core from thinking the modifier
@@ -930,7 +942,8 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 							      gpointer userdata),
 				    gpointer userdata,
 				    int (*is_visible)(void),
-				    int (*is_sensitive)(void))
+				    int (*is_sensitive)(void),
+				    void (*do_update)(GtkWidget *))
 {
 	GtkWidget *item;
 
@@ -944,7 +957,7 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 	g_signal_connect(G_OBJECT(item), "unmap",
 			 G_CALLBACK(generic_menu_unmap_callback), userdata);
 
-	if (is_visible || is_sensitive) {
+	if (is_visible || is_sensitive || do_update) {
 		menu_list = g_slist_append(menu_list, item);
 		if (is_visible) {
 			g_object_set_data(G_OBJECT(item), "is_visible",
@@ -954,6 +967,11 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 		if (is_sensitive) {
 			g_object_set_data(G_OBJECT(item), "is_sensitive",
 					  is_sensitive);
+		}
+
+		if (do_update) {
+			g_object_set_data(G_OBJECT(item), "do_update",
+					  do_update);
 		}
 	}
 
@@ -968,35 +986,35 @@ static GtkWidget *gui_build_file_menu(void)
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
-	gui_add_menu_item(menu, "_Open...", file_open, NULL, NULL, NULL);
+	gui_add_menu_item(menu, "_Open...", file_open, NULL, NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Close", file_close, NULL, NULL,
-			  is_sensitive_if_loaded);
+			  is_sensitive_if_loaded, NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "_Apply Patch", apply_patch_callback, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded, NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "S_ave Screenshot", screenshot_callback, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded, NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "_Load State...", load_state, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded, NULL);
 	gui_add_menu_item(menu, "_Save State...", save_state, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded, NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 #if (__unix__ || _WIN32)
-	gui_add_menu_item(menu, "_Quit", file_quit_callback, NULL, NULL, NULL);
+	gui_add_menu_item(menu, "_Quit", file_quit_callback, NULL, NULL, NULL, NULL);
 #endif
 
 	return GTK_WIDGET(menu);
@@ -1044,7 +1062,21 @@ static void fps_display_callback(GtkRadioMenuItem *widget,
 	}
 }
 
-static void update_system_type_menu(void)
+static void update_fps_display(GtkWidget *widget)
+{
+	g_signal_handlers_block_by_func(G_OBJECT(widget),
+					G_CALLBACK(fps_display_callback),
+					NULL);
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
+				       emu->config->fps_display_enabled);
+
+	g_signal_handlers_unblock_by_func(G_OBJECT(widget),
+					G_CALLBACK(fps_display_callback),
+					NULL);
+}
+
+static void update_system_type_menu(GtkWidget *system_type_menu_item)
 {
 	GtkRadioMenuItem *item;
 	GtkWidget *submenu;
@@ -1058,15 +1090,6 @@ static void update_system_type_menu(void)
 
 	label = NULL;
 	auto_item = NULL;
-/*
-	fps = g_object_get_data(G_OBJECT(widget), "fps");
-
-	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS) {
-		is_fds = 1;
-	} else {
-		is_fds = 0;
-	}
-*/
 
 	if (!system_type_menu_item)
 		return;
@@ -1210,32 +1233,30 @@ static void dip_switch_toggle_callback(GtkWidget *widget, gpointer user_data)
 	board_set_dip_switch(emu->board, switch_num + 1, active);
 }
 
-void gui_update_dip_switch_menu(void)
+static void update_dip_switch_menu_item(GtkWidget *widget)
 {
 	int switch_total;
-	int i;
+	int switch_num;
 
 	switch_total = board_get_num_dip_switches(emu->board);
+	switch_num = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "switch"));
 
-	for (i = 0; i < switch_total; i++) {
-		GtkWidget *widget = dip_switch_menu_item[i];
-		g_signal_handlers_block_by_func(G_OBJECT(widget),
-						G_CALLBACK(dip_switch_toggle_callback),
-						NULL);
+	g_signal_handlers_block_by_func(G_OBJECT(widget),
+					G_CALLBACK(dip_switch_toggle_callback),
+					NULL);
 
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
-					       board_get_dip_switches(emu->board) &
-					       (1 << i));
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
+				       board_get_dip_switches(emu->board) &
+				       (1 << switch_num));
 
-		g_signal_handlers_unblock_by_func(G_OBJECT(widget),
-						G_CALLBACK(dip_switch_toggle_callback),
-						NULL);
+	g_signal_handlers_unblock_by_func(G_OBJECT(widget),
+					G_CALLBACK(dip_switch_toggle_callback),
+					NULL);
 
-		if (i >= switch_total)
-			gtk_widget_hide(widget);
-		else
-			gtk_widget_show(widget);
-	}
+	if (switch_num >= switch_total)
+		gtk_widget_hide(widget);
+	else
+		gtk_widget_show(widget);
 }
 
 static GtkWidget *gui_build_dip_switches_menu(void)
@@ -1249,7 +1270,7 @@ static GtkWidget *gui_build_dip_switches_menu(void)
 		"dip_switch_1",
 		"dip_switch_2",
 		"dip_switch_3",
-		"dip_swItch_4",
+		"dip_switch_4",
 		"dip_switch_5",
 		"dip_switch_6",
 		"dip_switch_7",
@@ -1268,7 +1289,8 @@ static GtkWidget *gui_build_dip_switches_menu(void)
 		if (!item)
 			continue;
 
-		dip_switch_menu_item[i] = item;
+		g_object_set_data(G_OBJECT(item), "do_update",
+		                  update_dip_switch_menu_item);
 
 		data = config_get_data_ptr(config, config_names[i]);
 
@@ -1291,52 +1313,58 @@ static GtkWidget *gui_build_emulator_menu(void)
 	GtkMenuShell *menu;
 	GtkWidget *submenu;
 	GtkWidget *item;
+	GtkWidget *system_type_menu_item;
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
 	gui_add_menu_item(menu, "_Hard Reset", hard_reset_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  NULL, NULL, is_sensitive_if_loaded, NULL);
 	gui_add_menu_item(menu, "_Soft Reset", soft_reset_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
-	gui_add_menu_item(menu, "_Fullscreen", emulator_fullscreen_callback,
-			  NULL, NULL, NULL);
+			  NULL, NULL, is_sensitive_if_loaded, NULL);
+	item = gtk_check_menu_item_new_with_mnemonic("_Fullscreen");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_fullscreen_callback), NULL);
+	g_object_set_data(G_OBJECT(item), "do_update", update_fullscreen_toggle);
+	menu_list = g_slist_append(menu_list, item);
+
 	gui_add_menu_item(menu, "_Pause/Resume", pause_resume_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  NULL, NULL, is_sensitive_if_loaded, NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "Insert _Coin", insert_coin_callback,
-			  NULL, is_visible_if_vs, NULL);
+			  NULL, is_visible_if_vs, NULL, NULL);
 
 	item = gui_add_menu_item(menu, "DIP _Switches", NULL, NULL,
-				 is_visible_if_has_dip_switches, NULL);
+				 is_visible_if_has_dip_switches, NULL, NULL);
 	submenu = gui_build_dip_switches_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	gui_add_menu_item(menu, "Insert/Eject _Disk", eject_disk_callback,
-			  NULL, is_visible_if_fds, NULL);
+			  NULL, is_visible_if_fds, NULL, NULL);
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
-			  NULL, is_visible_if_fds, NULL);
+			  NULL, is_visible_if_fds, NULL, NULL);
 
-	item = gtk_menu_item_new_with_mnemonic("System _Type");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	system_type_menu_item = item;
+	system_type_menu_item = gui_add_menu_item(menu, "System _Type", NULL,
+			  NULL, NULL, NULL, update_system_type_menu);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	item = gtk_check_menu_item_new_with_mnemonic("FPS _Display");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	fps_menu_item = GTK_WIDGET(item);
 	g_signal_connect(G_OBJECT(item), "toggled",
 			 G_CALLBACK(fps_display_callback), NULL);
+	g_object_set_data(G_OBJECT(item), "do_update", update_fps_display);
+	menu_list = g_slist_append(menu_list, item);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	item = gui_add_menu_item(menu, "_Input", NULL, NULL, NULL,
-				 is_sensitive_if_loaded);
+				 is_sensitive_if_loaded, NULL);
 	submenu = gui_build_input_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
@@ -1365,34 +1393,34 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 
 	gui_add_menu_item(menu, "_Video Configuration...",
 			  gui_video_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "Pa_lette Configuration...",
 			  gui_palette_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Audio Configuration...",
 			  gui_audio_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "V_olume Control...",
 			  gui_volume_control_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Input Binding Configuration...",
 			  gui_binding_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Path Configuration...",
 			  gui_path_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Cheats...",
 			  gui_cheat_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_Misc Configuration...",
 			  gui_misc_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 	gui_add_menu_item(menu, "_ROM-Specific Configuration...",
 			  gui_rom_configuration_dialog, gtkwindow,
-			  NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded, NULL);
 	gui_add_menu_item(menu, "_Joystick Info...",
 			  gui_joystick_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL, NULL, NULL);
 
 	return GTK_WIDGET(menu);
 }
@@ -1404,11 +1432,11 @@ static GtkWidget *gui_build_help_menu(GtkWidget *gtkwindow)
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
 	gui_add_menu_item(menu, "_ROM Info...", rom_info_callback,
-			  gtkwindow, NULL, is_sensitive_if_loaded);
+			  gtkwindow, NULL, is_sensitive_if_loaded, NULL);
 
 #if (__unix__ || _WIN32)
 	gui_add_menu_item(menu, "_About...", about_callback,
-			  gtkwindow, NULL, NULL);
+			  gtkwindow, NULL, NULL, NULL);
 #endif
 
 	return GTK_WIDGET(menu);
@@ -1448,7 +1476,7 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 	submenu = gui_build_file_menu();
 	item = gui_add_menu_item(menubar, "_File",
 				 NULL,
-				 NULL, NULL, NULL);
+				 NULL, NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
 					     G_CALLBACK(generic_menu_unmap_callback),
@@ -1457,7 +1485,7 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 	submenu = gui_build_emulator_menu();
 	item = gui_add_menu_item(menubar, "_Emulator",
 				 NULL,
-				 NULL, NULL, NULL);
+				 NULL, NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
 					     G_CALLBACK(generic_menu_unmap_callback),
@@ -1466,7 +1494,7 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 	submenu = gui_build_options_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Options",
 				 NULL,
-				 NULL, NULL, NULL);
+				 NULL, NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
 					     G_CALLBACK(generic_menu_unmap_callback),
@@ -1475,7 +1503,7 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 	submenu = gui_build_help_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Help",
 				 NULL,
-				 NULL, NULL, NULL);
+				 NULL, NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
 					     G_CALLBACK(generic_menu_unmap_callback),

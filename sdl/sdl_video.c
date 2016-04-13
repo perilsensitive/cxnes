@@ -1350,6 +1350,10 @@ void video_toggle_fps(int enabled)
 	display_fps = enabled;
 	if (enabled)
 		fps_timer = 0;
+
+#if GUI_ENABLED
+	gui_update_menu();
+#endif
 }
 
 void video_toggle_fullscreen(int fs)
@@ -1373,6 +1377,10 @@ void video_toggle_fullscreen(int fs)
 		flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
 
 	fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
+
+#if GUI_ENABLED
+	gui_update_menu();
+#endif
 
 	SDL_SetWindowFullscreen(window, flags);
 }

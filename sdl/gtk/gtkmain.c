@@ -481,7 +481,8 @@ static int keyevent_callback(GtkWidget *widget, GdkEventKey *event, gpointer use
 void fullscreen_callback(void)
 {
 #if __APPLE__
-	video_toggle_fullscreen(!fullscreen ? -1 : 1);
+	video_toggle_fullscreen(!fullscreen);
+	//video_toggle_fullscreen(!fullscreen ? 0 : 1);
 #else
 	gui_resize(!fullscreen, (!fullscreen ? 0 : 1));
 	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);

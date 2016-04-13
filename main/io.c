@@ -22,8 +22,6 @@
 #include "actions.h"
 #if GUI_ENABLED
 #include "gui.h"
-
-extern int gui_enabled;
 #endif
 
 /* These device connect to the controller ports */
@@ -819,8 +817,7 @@ void io_device_select(struct io_state *io, int port, int id)
 	}
 
 #if GUI_ENABLED
-	if (gui_enabled)
-		gui_update_input_port_menu(port);
+	gui_update_menu();
 #endif
 }
 
@@ -836,8 +833,7 @@ void io_device_connect(struct io_state *io, int port, int connected)
 	}
 
 #if GUI_ENABLED
-	if (gui_enabled)
-		gui_update_input_port_menu(port);
+	gui_update_menu();
 #endif
 }
 
@@ -978,8 +974,7 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 	emu_save_rom_config(io->emu);
 
 #if GUI_ENABLED
-	if (gui_enabled)
-		gui_update_fourplayer_menu();
+	gui_update_menu();
 #endif
 
 	if (!display)
