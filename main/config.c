@@ -1965,7 +1965,7 @@ int config_load_main_config(struct config *config)
 		log_dbg("%s main config file %s\n", skip ? "Skipping" : "Loading",
 			buffer);
 
-		if (!skip)
+		if (!skip && check_file_exists(buffer))
 			rc = config_load_file(config, config_parameters, buffer);
 	}
 
