@@ -534,24 +534,49 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	size_t bios_size;
 	int rc = 0;
 
+	/* Look for the BIOS at the location which the
+	   user configured, then try the cxnes data
+	   directory.  If that doesn't work, try the
+	   same directory as the rom, then try the
+	   configured rom path, if any.
+	*/
 	bios_file = config_get_fds_bios(emu->config);
 	if (!bios_file) {
-		char *rom_path, *buffer;
+		char *romfile_path, *buffer;
 		int length;
 
 		buffer = NULL;
-		rom_path = strdup(dirname(rom->filename));
-		if (rom_path) {
-			length = strlen(rom_path) + 1 +
+		romfile_path = strdup(dirname(rom->filename));
+		if (romfile_path) {
+			length = strlen(romfile_path) + 1 +
 				 strlen(DEFAULT_FDS_BIOS) + 1;
 			buffer = malloc(length);
 
 			if (buffer) {
-				snprintf(buffer, length, "%s%s%s", rom_path,
+				snprintf(buffer, length, "%s%s%s", romfile_path,
 				         PATHSEP, DEFAULT_FDS_BIOS);
 			}
 
-			free(rom_path);
+			free(romfile_path);
+		}
+
+		if (!buffer || !check_file_exists(buffer)) {
+			if (emu->config->rom_path) {
+				char *t;
+				length = strlen(emu->config->rom_path) + 1 +
+					 strlen(DEFAULT_FDS_BIOS) + 1;
+				t = realloc(buffer, length);
+				if (!t) {
+					if (buffer)
+						free(buffer);
+					buffer = NULL;
+				} else {
+					buffer = t;
+					snprintf(buffer, length, "%s%s%s",
+					         emu->config->rom_path,
+						 PATHSEP, DEFAULT_FDS_BIOS);
+				}
+			}
 		}
 
 		if (!buffer || !check_file_exists(buffer)) {
@@ -559,6 +584,7 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 			free(buffer);
 			return 1;
 		}
+
 		bios_file = buffer;
 	}
 
