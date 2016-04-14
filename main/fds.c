@@ -17,6 +17,8 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <libgen.h>
+
 #include "emu.h"
 #include "file_io.h"
 #include "fds.h"
@@ -534,8 +536,30 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 
 	bios_file = config_get_fds_bios(emu->config);
 	if (!bios_file) {
-		err_message("Unable to locate FDS BIOS\n");
-		return 1;
+		char *rom_path, *buffer;
+		int length;
+
+		buffer = NULL;
+		rom_path = strdup(dirname(rom->filename));
+		if (rom_path) {
+			length = strlen(rom_path) + 1 +
+				 strlen(DEFAULT_FDS_BIOS) + 1;
+			buffer = malloc(length);
+
+			if (buffer) {
+				snprintf(buffer, length, "%s%s%s", rom_path,
+				         PATHSEP, DEFAULT_FDS_BIOS);
+			}
+
+			free(rom_path);
+		}
+
+		if (!buffer || !check_file_exists(buffer)) {
+			err_message("Unable to locate FDS BIOS\n");
+			free(buffer);
+			return 1;
+		}
+		bios_file = buffer;
 	}
 
 	old_size = rom->buffer_size;

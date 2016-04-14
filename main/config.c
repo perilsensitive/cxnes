@@ -37,7 +37,6 @@
 #define BUF_SIZE 256
 #define DEFAULT_DATA_DIR "cxnes"
 #define DEFAULT_MAIN_CONFIG "cxnes.cfg"
-#define DEFAULT_FDS_BIOS "disksys.rom"
 #define DEFAULT_NSF_ROM "nsf.rom"
 #define DEFAULT_GAMECONTROLLER_DB "gamecontrollerdb.txt"
 #define DEFAULT_ROM_DB "romdb.txt"

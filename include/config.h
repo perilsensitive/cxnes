@@ -38,6 +38,8 @@ enum {
 	CONFIG_DATA_FILE_ROM_DB,
 };
 
+#define DEFAULT_FDS_BIOS "disksys.rom"
+
 #if defined __unix__
 #define DEFAULT_DATA_DIR_BASE ".cxnes"
 #define PATHSEP "/"
