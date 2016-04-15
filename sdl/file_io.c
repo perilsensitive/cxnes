@@ -265,6 +265,13 @@ int process_file(const char *filename, void *data,
 #if _WIN32
 #define WIN_TICKS_PER_SEC 10000000 
 #define WIN_SECS_BEFORE_UNIX_EPOCH 11644473600LL
+int check_directory_exists(const char *name)
+{
+	uint32_t dwAttrib = GetFileAttributesA(name);
+
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+	       (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
 
 int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 {
@@ -313,6 +320,21 @@ int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 	return 0;
 }
 #else
+int check_directory_exists(const char *name)
+{
+	struct stat stat;
+	int rc;
+
+	rc = lstat(path, &stat);
+	if (rc < 0)
+		return 0;
+
+	if (!(stat.st_mode & S_IFDIR))
+		return 0;
+
+	return 1;
+}
+
 int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr)
 {
 	struct stat stat;
