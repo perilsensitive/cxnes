@@ -195,7 +195,6 @@ install-data-hook:
 	  rm -f $(DESTDIR)$(pkgdatadir)/romdb.txt.bak
 	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt && \
 	  rm -f $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt.bak
-	cd $(DESTDIR)$(pkgdatadir) && mkdir -p data/$(PACKAGE_NAME)
 	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
 	cp *.dll $(DESTDIR)$(pkgdatadir)
 	cp -r share $(DESTDIR)$(pkgdatadir)

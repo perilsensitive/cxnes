@@ -64,7 +64,9 @@ static int test_duration = -1;
 static const char *frame_dumpfile;
 static const char *rom_dumpfile;
 
-static int portable;
+#if _WIN32
+static int portable = -1;
+#endif
 static int nomaincfg;
 static int noromcfg;
 static int show_help;
@@ -147,7 +149,10 @@ static struct option long_options[] = {
 	{ "frame-dumpfile", required_argument, 0, 'D'},
 	{ "rom-dumpfile", required_argument, 0, 'F'},
 	{ "test-duration", required_argument, &passed_duration, 1 },
+#if _WIN32
 	{ "portable", no_argument, &portable, 1 },
+	{ "no-portable", no_argument, &portable, 0 },
+#endif
 	{ 0, 0, 0, 0 },
 };
 
@@ -530,7 +535,10 @@ void help(const char *name, int brief)
 	printf("  -w, --window\t\tstart in windowed mode\n");
 	printf("      --help\t\tdisplay this help and exit\n");
 	printf("      --version\t\tdisplay version information and exit\n");
+#if _WIN32
 	printf("      --portable\t\trun " PACKAGE_NAME " in portable mode\n");
+	printf("      --no-portable\t\trun " PACKAGE_NAME " in non-portable mode\n");
+#endif
 }
 
 int parse_command_line(struct cheat_state *cheats,
@@ -649,7 +657,9 @@ int main(int argc, char **argv)
 	noromcfg = 0;
 	show_help = 0;
 	show_version = 0;
-	portable = 0;
+#if _WIN32
+	portable = -1;
+#endif
 
 	rc = parse_command_line(cheats, emu->config, argc, argv);
 	if (rc)

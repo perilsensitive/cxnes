@@ -250,6 +250,8 @@ unsigned int config_get_unsigned_max(const char *name);
 double config_get_float_min(const char *name);
 double config_get_float_max(const char *name);
 void config_load_default_bindings(void);
+#if _WIN32
 int config_set_portable_mode(int portable);
+#endif
 
 #endif				/* __CONFIG_H__ */

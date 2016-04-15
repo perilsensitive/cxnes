@@ -144,31 +144,22 @@ mode.  This can be done by passing '--portable' on the cxNES command line, but t
 will only enable portable mode until you exit cxNES.  To make cxNES always use portable
 mode, follow these steps:
 
-1. Create a folder named 'data' in the same folder where you extracted
-   cxNES, then create a folder named 'cxnes' inside the new 'data'
-   folder.  These folders are included in the cxNES zipfile, so they
-   should already exist (assuming you didn't delete them).
+1. Create a folder named 'userdata' in the same folder where you extracted
+   cxNES.
 
-2. Create a file in data\cxnes called 'portable.txt'.  You can create
-   this file any way you'd like; it's probably easiest to just use
-   Notepad.  The contents of this file don't matter; cxNES doesn't
-   read the file, but only checks to see if it exists.  If this file
-   exists, cxNES wil run in portable mode.  If not, and you didn't pass
-   '--portable' on the command line, it will run normally.
+2. If you have user data in %APPDATA%\cxnes already, you may want to
+   copy it to userdata inside the folder where cxNES is installed.
 
-3. If you have user data in %APPDATA%\cxnes already, you may want to
-   copy it to data\cxnes inside the folder where cxNES is installed.
-
-cxNES should now always look for user data in the data\cxnes folder
+cxNES should now always look for user data in the 'userdata' folder
 inside the folder where cxNES is located rather than in
 %APPDATA%\cxnes.
 
 To upgrade a portable installation, you can unzip the new version of
 cxNES into the same folder as the old one.  User data (stuff in the
-data folder) will not be touched, so you don't need to worry about
+userdata folder) will not be touched, so you don't need to worry about
 wiping out your save states or save files.  Alternatively, you can
 just extract the new version of cxNES to a new folder and copy or move
-the data folder from the old version to the new one.
+the userdata folder from the old version to the new one.
 
 Default Bindings
 ----------------
