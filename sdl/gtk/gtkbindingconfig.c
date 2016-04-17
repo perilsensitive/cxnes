@@ -679,7 +679,11 @@ static void configuration_setup_bindings(GtkWidget *dialog, struct config *confi
 	check_alt = gtk_check_button_new_with_mnemonic("_Alt");
 	check_ctrl = gtk_check_button_new_with_mnemonic("C_trl");
 	check_shift = gtk_check_button_new_with_mnemonic("_Shift");
+#if _WIN32
+	check_gui = gtk_check_button_new_with_mnemonic("_Windows");
+#else
 	check_gui = gtk_check_button_new_with_mnemonic("_GUI");
+#endif
 	check_mod1 = gtk_check_button_new_with_mnemonic("Mod_1");
 	check_mod2 = gtk_check_button_new_with_mnemonic("Mod_2");
 	check_mod3 = gtk_check_button_new_with_mnemonic("Mod_3");
