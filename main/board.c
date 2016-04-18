@@ -90,6 +90,10 @@ extern struct board_info board_contra_100in1;
 extern struct board_info board_cnrom;
 extern struct board_info board_cnrom_no_conflict;
 extern struct board_info board_cnrom_security;
+extern struct board_info board_cnrom_security_bank0;
+extern struct board_info board_cnrom_security_bank1;
+extern struct board_info board_cnrom_security_bank2;
+extern struct board_info board_cnrom_security_bank3;
 extern struct board_info board_singlechip;
 extern struct board_info board_nina001;
 extern struct board_info board_streemerz_bundle;
@@ -259,6 +263,10 @@ static struct board_info *board_info_list[] = {
 	&board_cnrom,
 	&board_cnrom_no_conflict,
 	&board_cnrom_security,
+	&board_cnrom_security_bank0,
+	&board_cnrom_security_bank1,
+	&board_cnrom_security_bank2,
+	&board_cnrom_security_bank3,
 	&board_singlechip,
 	&board_nina001,
 	&board_streemerz_bundle,

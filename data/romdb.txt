@@ -1406,7 +1406,7 @@ SHA1: 4B1055C6881E770D4C0A537A868879EC1BD67B0E
 %%
 Name: B-Wings (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK3
 Mirroring: Horizontal
 PRG: 32k
 PRG CRC: 725D5CC4
@@ -2654,7 +2654,7 @@ VRAM0: 8k
 %%
 Name: Bird Week (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK3
 Mirroring: Vertical
 PRG: 16k
 PRG CRC: 2A629F7D
@@ -14761,7 +14761,7 @@ WRAM0-Battery: True
 %%
 Name: Mighty Bomb Jack (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK1
 Mirroring: Horizontal
 PRG: 32k
 PRG CRC: AA755715
@@ -19526,7 +19526,7 @@ SHA1: 7AEAEAFB8C71F26F2E3DC2464BE431B80F1C4636
 %%
 Name: Sansuu 2 Nen - Keisan Game (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK2
 Mirroring: Vertical
 PRG: 32k
 PRG CRC: DAADEBFA
@@ -19539,7 +19539,7 @@ SHA1: 0C4E40E7BDD45C51BFBFEFA7CB75E375B78833FB
 %%
 Name: Sansuu 3 Nen - Keisan Game (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK2
 Mirroring: Vertical
 PRG: 32k
 PRG CRC: 73DE64AD
@@ -19674,7 +19674,7 @@ SHA1: 32FCB3315187D9E75E873B2B3387E2F3A168B09A
 %%
 Name: Seicross (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK0
 Mirroring: Vertical
 PRG: 32k
 PRG CRC: A03C98A7
@@ -21080,7 +21080,7 @@ SHA1: AD0F560CA3B41D8EF467A007E879D84DD0CCC045
 %%
 Name: Spy vs Spy (Japan)
 System: Famicom
-Board: HVC-CNROM+SECURITY
+Board: HVC-CNROM+SECURITY-BANK1
 Mirroring: Vertical
 PRG: 32k
 PRG CRC: B36457C7
@@ -28764,7 +28764,7 @@ SHA1: 71FDB80C3583010422652CC5AAE8E2E4131E49F3
 %%
 Name: Sansuu 1 Nen - Keisan Game (Japan)
 System: Famicom
-Board: HVC-CNROM
+Board: HVC-CNROM+SECURITY-BANK2
 Mirroring: Horizontal
 PRG: 32k
 PRG CRC: 87A3F91E
