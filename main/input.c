@@ -1503,7 +1503,24 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 
 	for (i = 0; handlers[i].id != ACTION_NONE; i++) {
 		uint32_t emu_action = handlers[i].id;
+
+		if ((handlers[i].id & ACTION_PREFIX_MASK) ==
+		    handlers[i].id) {
+			for (e = emu_action_list; e; e = e->next) {
+				if ((e->id & ACTION_PREFIX_MASK) !=
+				     handlers[i].id) {
+					continue;
+				}
+
+				e->handler = NULL;
+				e->data = NULL;
+			}
+
+			return 0;
+		}
+
 		e = input_lookup_emu_action(emu_action);
+
 		if (!e)
 			continue;
 
