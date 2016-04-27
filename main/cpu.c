@@ -2261,10 +2261,7 @@ static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus)
 
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 {
-	/* If dma is triggered by a RMW instruction,
-	   discard the second write.  I'm not sure that
-	   this is correct, but it's one or the other.
-	*/
+	cpu->oam_dma_addr = addr;
 	if (cpu->oam_dma_step < 256)
 		return;
 
@@ -2272,7 +2269,6 @@ void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 	cpu->polled_interrupts = 1;
 
 	cpu->dma_wait_cycles = 1;
-	cpu->oam_dma_addr = addr;
 	if (odd)
 		cpu->oam_dma_step = -2;
 	else

@@ -1110,6 +1110,8 @@ int video_draw_buffer(void)
 {
 	int i;
 
+	SDL_RenderClear(renderer);
+
 	if (use_ntsc_filter == 1) {
 		int burst_phase = ppu_get_burst_phase(emu->ppu);
 
