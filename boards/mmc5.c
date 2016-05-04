@@ -635,6 +635,7 @@ static CPU_WRITE_HANDLER(mmc5_write_handler)
 		break;
 	case 0x5203:
 		_target_irq_scanline = value;
+		cpu_interrupt_ack(emu->cpu, IRQ_MMC5_TIMER);
 		mmc5_schedule_irq(emu, cycles);
 		break;
 	case 0x5204:
