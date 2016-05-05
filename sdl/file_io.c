@@ -325,7 +325,7 @@ int check_directory_exists(const char *name)
 	struct stat stat;
 	int rc;
 
-	rc = lstat(path, &stat);
+	rc = lstat(name, &stat);
 	if (rc < 0)
 		return 0;
 
