@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ static uint8_t vs_tko_boxing_security_data[32] = {
 };
 
 static CPU_WRITE_HANDLER(namco108_write_handler);
-static CPU_WRITE_HANDLER(ntdec112_write_handler);
 static CPU_READ_HANDLER(vs_super_xevious_security);
 static CPU_READ_HANDLER(vs_rbi_baseball_security);
 static CPU_READ_HANDLER(vs_tko_boxing_security);
@@ -67,11 +66,6 @@ static struct bank namco_3433_init_chr[] = {
 
 static struct board_write_handler namco108_write_handlers[] = {
 	{namco108_write_handler, 0x8000, SIZE_32K, 0},
-	{NULL}
-};
-
-static struct board_write_handler ntdec112_write_handlers[] = {
-	{ntdec112_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL}
 };
 
@@ -160,20 +154,6 @@ struct board_info board_namco3425 = {
 	.max_chr_rom_size = SIZE_64K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
-};
-
-struct board_info board_ntdec_112 = {
-	.board_type = BOARD_TYPE_NTDEC_112,
-	.name = "NTDEC-112",
-	.funcs = &namco108_funcs,
-	.init_prg = std_prg_8k,
-	.init_chr0 = std_chr_2k_1k,
-	.write_handlers = ntdec112_write_handlers,
-	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_512K,
-	.max_wram_size = {SIZE_8K, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M,
-	.mirroring_values = std_mirroring_vh,
 };
 
 struct board_info board_vs_super_xevious = {
@@ -268,53 +248,6 @@ static CPU_WRITE_HANDLER(namco108_write_handler)
 
 	} else {
 		_bank_select = value & 0x07;
-	}
-}
-
-static CPU_WRITE_HANDLER(ntdec112_write_handler)
-{
-	struct board *board;
-	int update_chr;
-	int i;
-
-	board = emu->board;
-	update_chr = 0;
-
-	switch (addr & 0xe000) {
-	case 0x8000:
-		_bank_select = value;
-		break;
-	case 0xa000:
-		if (_bank_select < 2) {
-			update_prg_bank(board, _bank_select + 1, value);
-		} else {
-			i = _bank_select - 2;
-
-			board->chr_banks0[i].bank &= 0x100;
-			board->chr_banks0[i].bank |= value;
-			update_chr = 1;
-		}
-		break;
-	case 0xc000:
-		for (i = 0; i < 6; i++) {
-			board->chr_banks0[i].bank &= 0xff;
-			board->chr_banks0[i].bank |= (value << (6 - i)) & 0x100;
-		}
-		break;
-	case 0xe000:
-		if (value & 0x02)
-			board->chr_and = 0x1ff;
-		else
-			board->chr_and = 0xff;
-
-		update_chr = 1;
-			
-		standard_mirroring_handler(emu, addr, value, cycles);
-		break;
-	}
-
-	if (update_chr) {
-		board_chr_sync(board, 0);
 	}
 }
 

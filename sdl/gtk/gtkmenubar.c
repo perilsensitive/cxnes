@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -386,22 +386,13 @@ static void file_close(GtkWidget *widget, gpointer userdata)
 void menu_shown_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkWidget *item;
-	int (*is_visible)(void);
 	int (*is_sensitive)(void);
 
 	item = user_data;
-	is_visible = g_object_get_data(G_OBJECT(item), "is_visible");
 	is_sensitive = g_object_get_data(G_OBJECT(item), "is_sensitive");
 
 	if (is_sensitive)
 		gtk_widget_set_sensitive(item, is_sensitive());
-
-	if (is_visible) {
-		if (is_visible())
-			gtk_widget_show(item);
-		else
-			gtk_widget_hide(item);
-	}
 }
 
 struct input_device {
@@ -416,6 +407,10 @@ struct input_device port1_input_devices[] = {
 	{ "Controller _2", IO_DEVICE_CONTROLLER_2 },
 	{ "Controller _3", IO_DEVICE_CONTROLLER_3 },
 	{ "Controller _4", IO_DEVICE_CONTROLLER_4 },
+	{ "SNES Controller 1", IO_DEVICE_SNES_CONTROLLER_1 },
+	{ "SNES Controller 2", IO_DEVICE_SNES_CONTROLLER_2 },
+	{ "SNES Controller 3", IO_DEVICE_SNES_CONTROLLER_3 },
+	{ "SNES Controller 4", IO_DEVICE_SNES_CONTROLLER_4 },
 	{ "_Zapper", IO_DEVICE_ZAPPER_1, },
 	{ "_Power Pad Side A", IO_DEVICE_POWERPAD_A1, },
 	{ "_Power Pad Side B", IO_DEVICE_POWERPAD_B1, },
@@ -431,6 +426,10 @@ struct input_device port2_input_devices[] = {
 	{ "Controller _2", IO_DEVICE_CONTROLLER_2 },
 	{ "Controller _3", IO_DEVICE_CONTROLLER_3 },
 	{ "Controller _4", IO_DEVICE_CONTROLLER_4 },
+	{ "SNES Controller 1", IO_DEVICE_SNES_CONTROLLER_1 },
+	{ "SNES Controller 2", IO_DEVICE_SNES_CONTROLLER_2 },
+	{ "SNES Controller 3", IO_DEVICE_SNES_CONTROLLER_3 },
+	{ "SNES Controller 4", IO_DEVICE_SNES_CONTROLLER_4 },
 	{ "_Zapper", IO_DEVICE_ZAPPER_2 },
 	{ "_Power Pad Side A", IO_DEVICE_POWERPAD_A2, },
 	{ "_Power Pad Side B", IO_DEVICE_POWERPAD_B2, },
@@ -446,6 +445,10 @@ struct input_device port3_input_devices[] = {
 	{ "Controller _2", IO_DEVICE_CONTROLLER_2 },
 	{ "Controller _3", IO_DEVICE_CONTROLLER_3 },
 	{ "Controller _4", IO_DEVICE_CONTROLLER_4 },
+	{ "SNES Controller 1", IO_DEVICE_SNES_CONTROLLER_1 },
+	{ "SNES Controller 2", IO_DEVICE_SNES_CONTROLLER_2 },
+	{ "SNES Controller 3", IO_DEVICE_SNES_CONTROLLER_3 },
+	{ "SNES Controller 4", IO_DEVICE_SNES_CONTROLLER_4 },
 	{ "_SNES Mouse", IO_DEVICE_SNES_MOUSE_3 },
 	{ NULL },
 };
@@ -457,6 +460,10 @@ struct input_device port4_input_devices[] = {
 	{ "Controller _2", IO_DEVICE_CONTROLLER_2 },
 	{ "Controller _3", IO_DEVICE_CONTROLLER_3 },
 	{ "Controller _4", IO_DEVICE_CONTROLLER_4 },
+	{ "SNES Controller 1", IO_DEVICE_SNES_CONTROLLER_1 },
+	{ "SNES Controller 2", IO_DEVICE_SNES_CONTROLLER_2 },
+	{ "SNES Controller 3", IO_DEVICE_SNES_CONTROLLER_3 },
+	{ "SNES Controller 4", IO_DEVICE_SNES_CONTROLLER_4 },
 	{ "_SNES Mouse", IO_DEVICE_SNES_MOUSE_4 },
 	{ NULL },
 };
@@ -816,7 +823,7 @@ static int is_sensitive_if_loaded(void)
 	return emu_loaded(emu);
 }
 
-static int is_visible_if_fds(void)
+static int is_sensitive_if_fds(void)
 {
 	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS)
 		return 1;
@@ -824,7 +831,7 @@ static int is_visible_if_fds(void)
 		return 0;
 }
 
-static int is_visible_if_vs(void)
+static int is_sensitive_if_vs(void)
 {
 	if (emu_loaded(emu) && emu_system_is_vs(emu))
 		return 1;
@@ -832,7 +839,7 @@ static int is_visible_if_vs(void)
 		return 0;
 }
 
-static int is_visible_if_has_dip_switches(void)
+static int is_sensitive_if_has_dip_switches(void)
 {
 	if (emu_loaded(emu) && board_get_num_dip_switches(emu->board))
 		return 1;
@@ -854,7 +861,6 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 				    void (*activate_callback)(GtkWidget *widget,
 							      gpointer userdata),
 				    gpointer userdata,
-				    int (*is_visible)(void),
 				    int (*is_sensitive)(void))
 {
 	GtkWidget *item;
@@ -869,19 +875,11 @@ static GtkWidget *gui_add_menu_item(GtkMenuShell *menu, const gchar *label,
 	g_signal_connect(G_OBJECT(item), "unmap",
 			 G_CALLBACK(generic_menu_unmap_callback), userdata);
 
-	if (is_visible || is_sensitive) {
+	if (is_sensitive) {
 		g_signal_connect(G_OBJECT(menu), "show",
-				 G_CALLBACK(menu_shown_callback), item);
+		          G_CALLBACK(menu_shown_callback), item);
 
-		if (is_visible) {
-			g_object_set_data(G_OBJECT(item), "is_visible",
-					  is_visible);
-		}
-
-		if (is_sensitive) {
-			g_object_set_data(G_OBJECT(item), "is_sensitive",
-					  is_sensitive);
-		}
+		g_object_set_data(G_OBJECT(item), "is_sensitive", is_sensitive);
 	}
 
 	return item;
@@ -895,34 +893,34 @@ static GtkWidget *gui_build_file_menu(void)
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
-	gui_add_menu_item(menu, "_Open...", file_open, NULL, NULL, NULL);
-	gui_add_menu_item(menu, "_Close", file_close, NULL, NULL,
+	gui_add_menu_item(menu, "_Open...", file_open, NULL, NULL);
+	gui_add_menu_item(menu, "_Close", file_close, NULL,
 			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "_Apply Patch", apply_patch_callback, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "S_ave Screenshot", screenshot_callback, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "_Load State...", load_state, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Save State...", save_state, NULL,
-			  NULL, is_sensitive_if_loaded);
+			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
-	gui_add_menu_item(menu, "_Quit", file_quit_callback, NULL, NULL, NULL);
+	gui_add_menu_item(menu, "_Quit", file_quit_callback, NULL, NULL);
 
 	return GTK_WIDGET(menu);
 }
@@ -1231,29 +1229,29 @@ static GtkWidget *gui_build_emulator_menu(void)
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
 	gui_add_menu_item(menu, "_Hard Reset", hard_reset_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Soft Reset", soft_reset_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Fullscreen", emulator_fullscreen_callback,
-			  NULL, NULL, NULL);
+			  NULL, NULL);
 	gui_add_menu_item(menu, "_Pause/Resume", pause_resume_callback,
-			  NULL, NULL, is_sensitive_if_loaded);
+			  NULL, is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "Insert _Coin", insert_coin_callback,
-			  NULL, is_visible_if_vs, NULL);
+			  NULL, is_sensitive_if_vs);
 
 	item = gui_add_menu_item(menu, "DIP _Switches", NULL, NULL,
-				 is_visible_if_has_dip_switches, NULL);
+				 is_sensitive_if_has_dip_switches);
 	submenu = gui_build_dip_switches_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	gui_add_menu_item(menu, "Insert/Eject _Disk", eject_disk_callback,
-			  NULL, is_visible_if_fds, NULL);
+			  NULL, is_sensitive_if_fds);
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
-			  NULL, is_visible_if_fds, NULL);
+			  NULL, is_sensitive_if_fds);
 
 	item = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -1275,7 +1273,7 @@ static GtkWidget *gui_build_emulator_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
-	item = gui_add_menu_item(menu, "_Input", NULL, NULL, NULL,
+	item = gui_add_menu_item(menu, "_Input", NULL, NULL,
 				 is_sensitive_if_loaded);
 	submenu = gui_build_input_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
@@ -1308,34 +1306,34 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 
 	gui_add_menu_item(menu, "_Video Configuration...",
 			  gui_video_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "Pa_lette Configuration...",
 			  gui_palette_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_Audio Configuration...",
 			  gui_audio_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "V_olume Control...",
 			  gui_volume_control_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_Input Binding Configuration...",
 			  gui_binding_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_Path Configuration...",
 			  gui_path_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_Cheats...",
 			  gui_cheat_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_Misc Configuration...",
 			  gui_misc_configuration_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 	gui_add_menu_item(menu, "_ROM-Specific Configuration...",
 			  gui_rom_configuration_dialog, gtkwindow,
-			  NULL, is_sensitive_if_loaded);
+			  is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Joystick Info...",
 			  gui_joystick_dialog, gtkwindow,
-			  NULL, NULL);
+			  NULL);
 
 	return GTK_WIDGET(menu);
 }
@@ -1347,10 +1345,10 @@ static GtkWidget *gui_build_help_menu(GtkWidget *gtkwindow)
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
 	gui_add_menu_item(menu, "_ROM Info...", rom_info_callback,
-			  gtkwindow, NULL, is_sensitive_if_loaded);
+			  gtkwindow, is_sensitive_if_loaded);
 
 	gui_add_menu_item(menu, "_About...", about_callback,
-			  gtkwindow, NULL, NULL);
+			  gtkwindow, NULL);
 
 	return GTK_WIDGET(menu);
 }
@@ -1365,7 +1363,6 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 
 	submenu = gui_build_file_menu();
 	item = gui_add_menu_item(menubar, "_File",
-				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
@@ -1374,7 +1371,6 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 
 	submenu = gui_build_emulator_menu();
 	item = gui_add_menu_item(menubar, "_Emulator",
-				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
@@ -1383,7 +1379,6 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 
 	submenu = gui_build_options_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Options",
-				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),
@@ -1392,7 +1387,6 @@ GtkWidget *gui_build_menubar(GtkWidget *gtkwindow)
 
 	submenu = gui_build_help_menu(gtkwindow);
 	item = gui_add_menu_item(menubar, "_Help",
-				 NULL,
 				 NULL, NULL, NULL);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 	g_signal_handlers_disconnect_by_func(G_OBJECT(item),

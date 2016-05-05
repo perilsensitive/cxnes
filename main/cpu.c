@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ static inline void update_interrupt_status(struct cpu_state *cpu);
 
 #define clear_flag(x) { cpu->P &= ~(x); }
 #define set_flag(x) { cpu->P |= (x); }
-#define jam() { cpu->jammed = 1; printf("jammed (PC: %x opcode %hx)\n", \
+#define jam() { cpu->jammed = 1; printf("jammed (PC: %x opcode %02x)\n", \
 					cpu->PC - 1, opcode); }
 
 
@@ -1045,7 +1045,7 @@ static void decode_opcode(struct cpu_state *cpu, int addr)
 		else
 			printf(fmt, cpu->cycles, opcode_addr, mnemonic, addr);
 	} else {
-		printf("% 7d  $%04x:  unknown opcode %02hx", cpu->cycles,
+		printf("% 7d  $%04x:  unknown opcode %02x", cpu->cycles,
 		       opcode_addr, opcode);
 	}
 	printf("  A:$%02X  X:$%02X  Y:$%02X  S:$%02X  P:%c%c%c%c%c%c%c%c",
@@ -2261,10 +2261,7 @@ static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus)
 
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 {
-	/* If dma is triggered by a RMW instruction,
-	   discard the second write.  I'm not sure that
-	   this is correct, but it's one or the other.
-	*/
+	cpu->oam_dma_addr = addr;
 	if (cpu->oam_dma_step < 256)
 		return;
 
@@ -2272,7 +2269,6 @@ void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 	cpu->polled_interrupts = 1;
 
 	cpu->dma_wait_cycles = 1;
-	cpu->oam_dma_addr = addr;
 	if (odd)
 		cpu->oam_dma_step = -2;
 	else

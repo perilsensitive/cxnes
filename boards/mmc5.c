@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -635,6 +635,7 @@ static CPU_WRITE_HANDLER(mmc5_write_handler)
 		break;
 	case 0x5203:
 		_target_irq_scanline = value;
+		cpu_interrupt_ack(emu->cpu, IRQ_MMC5_TIMER);
 		mmc5_schedule_irq(emu, cycles);
 		break;
 	case 0x5204:

@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -186,8 +186,8 @@ static float const consumer_decoder [6] =
 };
 
 /* Sony CXA2025AS US */
-static float const sony_decoder [6] =
-	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 };
+/* static float const sony_decoder [6] = */
+/* 	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 }; */
 
 void video_resize_window(void);
 void video_toggle_fullscreen(int fs);
@@ -1110,6 +1110,8 @@ int video_draw_buffer(void)
 {
 	int i;
 
+	SDL_RenderClear(renderer);
+
 	if (use_ntsc_filter == 1) {
 		int burst_phase = ppu_get_burst_phase(emu->ppu);
 
@@ -1651,8 +1653,6 @@ void video_mouse_motion(int x, int y, int button_state)
 	sdlevent.motion.yrel = y - mouse_lasty;
 	mouse_lastx = x;
 	mouse_lasty = y;
-
-	video_show_cursor(1);
 
 	SDL_PushEvent(&sdlevent);
 }

@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,14 +22,20 @@
 #include "input.h"
 #include "controller.h"
 
-#define BUTTON_A 1
-#define BUTTON_B 2
-#define BUTTON_SEL 4
-#define BUTTON_ST 8
-#define BUTTON_UP 16
-#define BUTTON_DN 32
-#define BUTTON_L  64
-#define BUTTON_R  128
+/* BUTTON_A is 'B' on SNES controller */
+/* BUTTON_B is 'Y' on SNES controller */
+#define BUTTON_A      (1 <<  0)
+#define BUTTON_B      (1 <<  1)
+#define BUTTON_SEL    (1 <<  2)
+#define BUTTON_ST     (1 <<  3)
+#define BUTTON_UP     (1 <<  4) 
+#define BUTTON_DOWN   (1 <<  5) 
+#define BUTTON_LEFT   (1 <<  6) 
+#define BUTTON_RIGHT  (1 <<  7) 
+#define BUTTON_SNES_A (1 <<  8)
+#define BUTTON_SNES_X (1 <<  9)
+#define BUTTON_SNES_L (1 << 10)
+#define BUTTON_SENS_R (1 << 11)
 #define VS_BUTTON_MASK (BUTTON_SEL|BUTTON_ST)
 
 /* Implementation of standard NES/Famicom controllers,
@@ -51,6 +57,7 @@ struct controller_state {
 	int latch;
 	int strobe;
 	int index;
+	int is_snes;
 	struct controller_common_state *common_state;
 };
 
@@ -120,6 +127,66 @@ struct io_device controller4_device = {
 	.removable = 1,
 };
 
+struct io_device snes_controller1_device = {
+	.name = "SNES Controller 1",
+	.id = IO_DEVICE_SNES_CONTROLLER_1,
+	.config_id = "snes_controller1",
+	.connect = controller_connect,
+	.disconnect = controller_disconnect,
+	.read = controller_read,
+	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
+	.apply_config = controller_apply_config,
+	.port = PORT_1,
+	.removable = 1,
+};
+
+struct io_device snes_controller2_device = {
+	.name = "SNES Controller 2",
+	.id = IO_DEVICE_SNES_CONTROLLER_2,
+	.config_id = "snes_controller2",
+	.connect = controller_connect,
+	.disconnect = controller_disconnect,
+	.read = controller_read,
+	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
+	.apply_config = controller_apply_config,
+	.port = PORT_2,
+	.removable = 1,
+};
+
+struct io_device snes_controller3_device = {
+	.name = "SNES Controller 3",
+	.id = IO_DEVICE_SNES_CONTROLLER_3,
+	.config_id = "snes_controller3",
+	.connect = controller_connect,
+	.disconnect = controller_disconnect,
+	.read = controller_read,
+	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
+	.apply_config = controller_apply_config,
+	.port = PORT_3,
+	.removable = 1,
+};
+
+struct io_device snes_controller4_device = {
+	.name = "SNES Controller 4",
+	.id = IO_DEVICE_SNES_CONTROLLER_4,
+	.config_id = "snes_controller4",
+	.connect = controller_connect,
+	.disconnect = controller_disconnect,
+	.read = controller_read,
+	.write = controller_write,
+	.save_state = controller_save_state,
+	.load_state = controller_load_state,
+	.apply_config = controller_apply_config,
+	.port = PORT_4,
+	.removable = 1,
+};
+
 static void controller_write(struct io_device *dev, uint8_t data, int mode,
 			     uint32_t cycles)
 {
@@ -135,7 +202,7 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 	} else if (state->strobe && !(data & 0x01)) {
 		state->strobe = 0;
 
-		if (state->common_state->current_state)
+		if (state->common_state)
 			state->latch = state->common_state->current_state[controller];
 
 		swap_start_select = dev->emu->config->swap_start_select;
@@ -221,18 +288,22 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 		}
 
 		if (dev->emu->config->mask_opposite_directions) {
-			if ((state->latch & (BUTTON_L|BUTTON_R)) ==
-			    (BUTTON_L|BUTTON_R)) {
-				state->latch ^= BUTTON_L|BUTTON_R;
+			if ((state->latch & (BUTTON_LEFT|BUTTON_RIGHT)) ==
+			    (BUTTON_LEFT|BUTTON_RIGHT)) {
+				state->latch ^= BUTTON_LEFT|BUTTON_RIGHT;
 			}
 				
-			if ((state->latch & (BUTTON_UP|BUTTON_DN)) ==
-			    (BUTTON_UP|BUTTON_DN)) {
-				state->latch ^= BUTTON_UP|BUTTON_DN;
+			if ((state->latch & (BUTTON_UP|BUTTON_DOWN)) ==
+			    (BUTTON_UP|BUTTON_DOWN)) {
+				state->latch ^= BUTTON_UP|BUTTON_DOWN;
 			}
 		}
 
-		state->latch |= ~0xff;
+		if (state->is_snes) {
+			state->latch &= 0x0fff;
+		} else {
+			state->latch |= ~0xff;
+		}
 
 		if (mode == FOUR_PLAYER_MODE_NES) {
 			state->latch &= 0xff;
@@ -255,8 +326,12 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 	data = state->latch & 0x01;
 	state->latch >>= 1;
 
-	if (mode != FOUR_PLAYER_MODE_NES)
-		state->latch |= (1 << 7);
+	if (mode != FOUR_PLAYER_MODE_NES) {
+		if (state->is_snes)
+			state->latch |= (1 << 15);
+		else
+			state->latch |= (1 << 7);
+	}
 
 	return data;
 }
@@ -273,17 +348,37 @@ static int controller_connect(struct io_device *dev)
 	dev->private = state;
 
 	switch (dev->id) {
+	case IO_DEVICE_SNES_CONTROLLER_1:
+		state->index = 0;
+		state->is_snes = 1;
+		break;
+	case IO_DEVICE_SNES_CONTROLLER_2:
+		state->index = 1;
+		state->is_snes = 1;
+		break;
+	case IO_DEVICE_SNES_CONTROLLER_3:
+		state->index = 2;
+		state->is_snes = 1;
+		break;
+	case IO_DEVICE_SNES_CONTROLLER_4:
+		state->index = 3;
+		state->is_snes = 1;
+		break;
 	case IO_DEVICE_CONTROLLER_1:
 		state->index = 0;
+		state->is_snes = 0;
 		break;
 	case IO_DEVICE_CONTROLLER_2:
 		state->index = 1;
+		state->is_snes = 0;
 		break;
 	case IO_DEVICE_CONTROLLER_3:
 		state->index = 2;
+		state->is_snes = 0;
 		break;
 	case IO_DEVICE_CONTROLLER_4:
 		state->index = 3;
+		state->is_snes = 0;
 		break;
 	default:
 		state->index = -1;

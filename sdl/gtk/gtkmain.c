@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,15 +20,6 @@
 #include <SDL.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-#if __unix__
-#include <gdk/gdkx.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <X11/Xlib.h>
-#elif _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <gdk/gdkwin32.h>
-#endif
 
 #include "emu.h"
 #include "video.h"
@@ -55,6 +46,11 @@ static int event_mask = (GDK_ALL_EVENTS_MASK & ~(GDK_POINTER_MOTION_HINT_MASK));
 static int ignore_focus_events = 2;
 #endif
 
+extern int gui_prep_drawing_area(GtkWidget *drawingarea);
+extern void *gui_get_window_handle(GdkWindow *gdkwindow);
+
+static void *window_handle;
+
 static GdkCursor *blank_cursor;
 static GdkCursor *crosshair_cursor;
 static GdkDevice *mouse;
@@ -70,25 +66,6 @@ static int menubar_visible;
 
 static int drawingarea_x, drawingarea_y;
 static int drawingarea_height, drawingarea_width;
-
-#if __unix__
-static Window window_handle;
-static Display *xdisplay;
-#elif _WIN32
-static HWND window_handle;
-#endif
-
-#if __unix__
-static GLint glxattributes[] = {
-  GLX_RGBA,
-  GLX_RED_SIZE, 3,
-  GLX_GREEN_SIZE, 3,
-  GLX_BLUE_SIZE, 2,
-  GLX_DOUBLEBUFFER,
-  GLX_DEPTH_SIZE, 16,
-  None
-};
-#endif
 
 static GdkRGBA bg = {0, 0, 0, 255};
 
@@ -503,12 +480,7 @@ static int area_realize(GtkWidget *widget, void *data)
 	gdk_window_set_event_compression(gdkwindow, FALSE);
 #endif
 
-#if __unix__
-	window_handle = gdk_x11_window_get_xid(gdkwindow);
-#elif _WIN32
-	window_handle = gdk_win32_window_get_handle(gdkwindow);
-#endif
-
+	window_handle = gui_get_window_handle(gdkwindow);
 
 	return FALSE;
 }
@@ -746,12 +718,6 @@ void *gui_init(int argc, char **argv)
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
 	int window_w, window_h;
-#if __unix__
-	GdkScreen *screen;
-	int xscreen;
-	XVisualInfo *vinfo = NULL;
-	GdkVisual *gdkvisual;
-#endif
 
 	gtk_init(&argc, &argv);
 	keycode_map_init();
@@ -778,23 +744,8 @@ void *gui_init(int argc, char **argv)
 	video_get_windowed_size(&window_w, &window_h);
 	gtk_widget_set_size_request(drawingarea, window_w, window_h);
 
-#if __unix__
-	screen = gdk_screen_get_default();
-	xdisplay = gdk_x11_get_default_xdisplay();
-	xscreen = DefaultScreen(xdisplay);
-	vinfo = glXChooseVisual(xdisplay, xscreen, glxattributes);
-
-	if (!vinfo)
+	if (gui_prep_drawing_area(drawingarea) < 0)
 		return NULL;
-
-	gdkvisual = gdk_x11_screen_lookup_visual(screen, vinfo->visualid);
-	XFree(vinfo);
-
-	if (!gdkvisual)
-		return NULL;
-
-	gtk_widget_set_visual(drawingarea, gdkvisual);
-#endif
 
 	g_object_set_data(G_OBJECT(gtkwindow), "area", drawingarea);
 

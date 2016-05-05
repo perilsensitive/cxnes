@@ -17,29 +17,19 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "board_private.h"
+#include <gtk/gtk.h>
+#define WIN32_LEAN_AND_MEAN
+#include <gdk/gdkwin32.h>
 
-static CPU_WRITE_HANDLER(axrom_write_handler)
+int gui_prep_drawing_area(GtkWidget *drawingarea)
 {
-	update_prg_bank(emu->board, 1, (value & 0x0f));
-	standard_mirroring_handler(emu, 0, value, cycles);
+	if (drawingarea)
+		return 0;
+	else
+		return -1;
 }
 
-static struct board_write_handler axrom_write_handlers[] = {
-	{axrom_write_handler, 0x8000, SIZE_32K, 0},
-	{NULL},
-};
-
-struct board_info board_axrom = {
-	.board_type = BOARD_TYPE_AxROM,
-	.name = "AxROM",
-	.mirroring_values = std_mirroring_01,
-	.mirroring_shift = 4,
-	.init_prg = std_prg_32k,
-	.init_chr0 = std_chr_8k,
-	.write_handlers = axrom_write_handlers,
-	.max_prg_rom_size = SIZE_512K,
-	.max_chr_rom_size = SIZE_8K,
-	.max_wram_size = {SIZE_8K, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M,
-};
+void *gui_get_window_handle(GdkWindow *gdkwindow)
+{
+	return (void *)gdk_win32_window_get_handle(gdkwindow);
+}

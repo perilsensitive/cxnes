@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -54,6 +54,10 @@ enum io_devices {
 	IO_DEVICE_CONTROLLER_2,
 	IO_DEVICE_CONTROLLER_3,
 	IO_DEVICE_CONTROLLER_4,
+	IO_DEVICE_SNES_CONTROLLER_1,
+	IO_DEVICE_SNES_CONTROLLER_2,
+	IO_DEVICE_SNES_CONTROLLER_3,
+	IO_DEVICE_SNES_CONTROLLER_4,
 	IO_DEVICE_CONTROLLER_COMMON,
 	IO_DEVICE_FOURSCORE,
 	IO_DEVICE_ZAPPER_1,
