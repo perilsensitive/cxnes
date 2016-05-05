@@ -1,3 +1,13 @@
+cxnes (0.3.3-1) unstable; urgency=low
+
+  * Add SNES controller support
+  * Fix bug that would cause cxnes to crash when new rom opened
+  * Fix mapper 36
+  * Fix submappers for mapper 185
+  * Fix MMC5 IRQs
+
+ -- Ryan Jackson <perilsensitive@gmail.com>  Wed, 04 May 2016 19:38:10 -0700
+
 cxnes (0.3.2-1) unstable; urgency=low
 
   * Fix mirroring for Holy Diver

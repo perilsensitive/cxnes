@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -187,6 +187,10 @@
 #define BOARD_TYPE_QJ                      INES_TO_BOARD_TYPE( 47,  0, 0, 0)
 #define BOARD_TYPE_ZZ                      INES_TO_BOARD_TYPE( 37,  0, 0, 0)
 #define BOARD_TYPE_SECURITY_CNROM          INES_TO_BOARD_TYPE(185,  0, 0, 0)
+#define BOARD_TYPE_SECURITY_CNROM_BANK0    INES_TO_BOARD_TYPE(185,  4, 0, 0)
+#define BOARD_TYPE_SECURITY_CNROM_BANK1    INES_TO_BOARD_TYPE(185,  5, 0, 0)
+#define BOARD_TYPE_SECURITY_CNROM_BANK2    INES_TO_BOARD_TYPE(185,  6, 0, 0)
+#define BOARD_TYPE_SECURITY_CNROM_BANK3    INES_TO_BOARD_TYPE(185,  7, 0, 0)
 #define BOARD_TYPE_EVENT	           INES_TO_BOARD_TYPE(105,  0, 0, 0)
 
 /* Sachen */

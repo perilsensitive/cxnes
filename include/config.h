@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ enum {
 	CONFIG_DATA_FILE_GAMECONTROLLER_DB,
 	CONFIG_DATA_FILE_ROM_DB,
 };
+
+#define DEFAULT_FDS_BIOS "disksys.rom"
 
 #if defined __unix__
 #define DEFAULT_DATA_DIR_BASE ".cxnes"
@@ -248,6 +250,8 @@ unsigned int config_get_unsigned_max(const char *name);
 double config_get_float_min(const char *name);
 double config_get_float_max(const char *name);
 void config_load_default_bindings(void);
+#if _WIN32
 int config_set_portable_mode(int portable);
+#endif
 
 #endif				/* __CONFIG_H__ */

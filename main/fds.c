@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+
+#include <libgen.h>
 
 #include "emu.h"
 #include "file_io.h"
@@ -532,10 +534,58 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	size_t bios_size;
 	int rc = 0;
 
+	/* Look for the BIOS at the location which the
+	   user configured, then try the cxnes data
+	   directory.  If that doesn't work, try the
+	   same directory as the rom, then try the
+	   configured rom path, if any.
+	*/
 	bios_file = config_get_fds_bios(emu->config);
 	if (!bios_file) {
-		err_message("Unable to locate FDS BIOS\n");
-		return 1;
+		char *romfile_path, *buffer;
+		int length;
+
+		buffer = NULL;
+		romfile_path = strdup(dirname(rom->filename));
+		if (romfile_path) {
+			length = strlen(romfile_path) + 1 +
+				 strlen(DEFAULT_FDS_BIOS) + 1;
+			buffer = malloc(length);
+
+			if (buffer) {
+				snprintf(buffer, length, "%s%s%s", romfile_path,
+				         PATHSEP, DEFAULT_FDS_BIOS);
+			}
+
+			free(romfile_path);
+		}
+
+		if (!buffer || !check_file_exists(buffer)) {
+			if (emu->config->rom_path) {
+				char *t;
+				length = strlen(emu->config->rom_path) + 1 +
+					 strlen(DEFAULT_FDS_BIOS) + 1;
+				t = realloc(buffer, length);
+				if (!t) {
+					if (buffer)
+						free(buffer);
+					buffer = NULL;
+				} else {
+					buffer = t;
+					snprintf(buffer, length, "%s%s%s",
+					         emu->config->rom_path,
+						 PATHSEP, DEFAULT_FDS_BIOS);
+				}
+			}
+		}
+
+		if (!buffer || !check_file_exists(buffer)) {
+			err_message("Unable to locate FDS BIOS\n");
+			free(buffer);
+			return 1;
+		}
+
+		bios_file = buffer;
 	}
 
 	old_size = rom->buffer_size;

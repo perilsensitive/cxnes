@@ -1,4 +1,4 @@
-AM_CFLAGS = --param large-function-growth=600 -I ./include -Wall -Werror=format-security \
+AM_CFLAGS = -I ./include -Wall -Werror=format-security \
             -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
             -DDEFAULT_OSD_FONT='"PressStart2P.ttf"'
 AM_LDFLAGS = -lm
@@ -140,6 +140,7 @@ cxnes_SOURCES = \
 	boards/sunsoft5b.c \
 	boards/sunsoft3.c \
 	boards/ntdec_193.c \
+	boards/ntdec_112.c \
 	boards/gxrom.c \
 	boards/nina001.c \
 	boards/taito_tc0190fmc.c \
@@ -166,6 +167,11 @@ cxnes_SOURCES = \
 
 if GUI_ENABLED
 cxnes_SOURCES += sdl/gtk/gtkmain.c sdl/gtk/gtkconfig.c sdl/gtk/gtkvideoconfig.c sdl/gtk/gtkcheats.c sdl/gtk/gtkbindingconfig.c sdl/gtk/gtkmenubar.c sdl/gtk/gtkjoystickinfo.c
+if WINDOWS
+cxnes_SOURCES += sdl/gtk/gtk_prep_win32_drawing_area.c
+else
+cxnes_SOURCES += sdl/gtk/gtk_prep_x11_drawing_area.c
+endif
 endif
 
 if ZIP_ENABLED
@@ -189,7 +195,6 @@ install-data-hook:
 	  rm -f $(DESTDIR)$(pkgdatadir)/romdb.txt.bak
 	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt && \
 	  rm -f $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt.bak
-	cd $(DESTDIR)$(pkgdatadir) && mkdir -p data/$(PACKAGE_NAME)
 	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
 	cp *.dll $(DESTDIR)$(pkgdatadir)
 	cp -r share $(DESTDIR)$(pkgdatadir)

@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@
 static int cheats_enabled = 0;
 
 static const char *game_genie_alphabet = "APZLGITYEOXUKSVN";
-static const int rocky_scramble_shifts[31];
 static const int rocky_shifts[31] = {
 		3,  13, 14,  1,  6,  9,  5,  0,
 		12,  7,  2,  8, 10, 11,  4, 19,

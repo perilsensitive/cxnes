@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -97,6 +97,11 @@ struct joystick_list_node {
 
 static struct joystick_list_node **joystick_list;
 static int joystick_list_size;
+
+static void handle_joy_hat_event(struct joystick_list_node *joystick,
+			         union input_new_event *new_event);
+static void handle_joy_axis_event(struct joystick_list_node *joystick,
+			          union input_new_event *new_event);
 
 const char *input_lookup_keyname_from_code(uint32_t keycode)
 {
@@ -371,10 +376,98 @@ static void add_joystick(int index)
 static void remove_joystick(SDL_JoystickID instance_id)
 {
 	struct joystick_list_node *tmp;
+	union input_new_event tmp_event;
+	int axis_count, button_count, i;
 
 	tmp = find_joystick(instance_id);
 	if (!tmp)
 		return;
+
+	axis_count = tmp->axis_count;
+	button_count = tmp->button_count;
+
+	if (tmp->controller) {
+		axis_count -= 6;
+		for (i = 0x100; i < 0x106; i++) {
+			if (tmp->axis_status[i - 0x100 + axis_count].value == 0)
+				continue;
+			tmp_event.type = INPUT_EVENT_TYPE_JOYAXIS;
+			tmp_event.jaxis.device = tmp->index;
+			tmp_event.jaxis.axis = i;
+			tmp_event.jaxis.value = 0;
+			tmp_event.common.misc = 0;
+			handle_joy_axis_event(tmp, &tmp_event);
+		}
+	}
+
+	for (i = 0; i < axis_count; i++) {
+		if (tmp->axis_status[i].value == 0)
+			continue;
+		tmp_event.type = INPUT_EVENT_TYPE_JOYAXIS;
+		tmp_event.jaxis.device = tmp->index;
+		tmp_event.jaxis.axis = i;
+		tmp_event.jaxis.value = 0;
+		tmp_event.common.misc = 0;
+		handle_joy_axis_event(tmp, &tmp_event);
+	}
+
+	memset(&tmp_event, 0, sizeof(tmp_event));
+
+	for (i = 0; i < tmp->hat_count; i++) {
+		tmp_event.type = INPUT_EVENT_TYPE_JOYHAT;
+		tmp_event.jhat.device = tmp->index;
+		tmp_event.jhat.state = 0;
+
+		switch(tmp->hat_status[i].value) {
+		case SDL_HAT_LEFT:
+			tmp_event.jhat.value = INPUT_JOYHAT_LEFT;
+			break;
+		case SDL_HAT_RIGHT:
+			tmp_event.jhat.value = INPUT_JOYHAT_RIGHT;
+			break;
+		case SDL_HAT_UP:
+			tmp_event.jhat.value = INPUT_JOYHAT_UP;
+			break;
+		case SDL_HAT_DOWN:
+			tmp_event.jhat.value = INPUT_JOYHAT_DOWN;
+			break;
+		case SDL_HAT_LEFTUP:
+			tmp_event.jhat.value = INPUT_JOYHAT_LEFTUP;
+			break;
+		case SDL_HAT_RIGHTUP:
+			tmp_event.jhat.value = INPUT_JOYHAT_RIGHTUP;
+			break;
+		case SDL_HAT_LEFTDOWN:
+			tmp_event.jhat.value = INPUT_JOYHAT_LEFTDOWN;
+			break;
+		case SDL_HAT_RIGHTDOWN:
+			tmp_event.jhat.value = INPUT_JOYHAT_RIGHTDOWN;
+			break;
+		}
+
+		handle_joy_hat_event(tmp, &tmp_event);
+	}
+
+	memset(&tmp_event, 0, sizeof(tmp_event));
+
+	if (tmp->controller) {
+		button_count -= 15;
+		for (i = 0x100; i < 0x10E; i++) {
+			tmp_event.type = INPUT_EVENT_TYPE_JOYBUTTON;
+			tmp_event.jbutton.device = tmp->index;
+			tmp_event.jbutton.button = i;
+			tmp_event.jbutton.state = 0;
+			input_queue_event(&tmp_event);
+		}
+	}
+
+	for (i = 0; i < button_count; i++) {
+		tmp_event.type = INPUT_EVENT_TYPE_JOYBUTTON;
+		tmp_event.jbutton.device = tmp->index;
+		tmp_event.jbutton.button = i;
+		tmp_event.jbutton.state = 0;
+		input_queue_event(&tmp_event);
+	}
 
 	joystick_list[tmp->index] = NULL;
 
@@ -490,8 +583,8 @@ int input_native_shutdown(void)
 	return 0;
 }
 
-void handle_joy_hat_event(struct joystick_list_node *joystick,
-			  union input_new_event *new_event)
+static void handle_joy_hat_event(struct joystick_list_node *joystick,
+			         union input_new_event *new_event)
 {
 	int hat;
 	uint8_t old_state, new_state;
@@ -604,8 +697,8 @@ void handle_joy_hat_event(struct joystick_list_node *joystick,
 
 }
 
-void handle_joy_axis_event(struct joystick_list_node *joystick,
-			   union input_new_event *new_event)
+static void handle_joy_axis_event(struct joystick_list_node *joystick,
+			          union input_new_event *new_event)
 {
 	int old_direction;
 	int new_direction;
@@ -692,6 +785,7 @@ int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 		new_event->motion.button_state = event->motion.state;
 		new_event->motion.xrel = event->motion.xrel;
 		new_event->motion.yrel = event->motion.yrel;
+		video_show_cursor(1);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
@@ -714,11 +808,15 @@ int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 	case SDL_CONTROLLERBUTTONUP:
 		if (emu->config->gamecontroller) {
 			joystick_node = find_joystick(event->cbutton.which);
-			new_event->type = INPUT_EVENT_TYPE_JOYBUTTON;
-			new_event->jbutton.device = joystick_node->index;
-			new_event->jbutton.button = event->cbutton.button + 0x100;
-			new_event->jbutton.state =
-				(event->type == SDL_CONTROLLERBUTTONDOWN);
+			if (joystick_node) {
+				new_event->type = INPUT_EVENT_TYPE_JOYBUTTON;
+				new_event->jbutton.device =
+				    joystick_node->index;
+				new_event->jbutton.button =
+				    event->cbutton.button + 0x100;
+				new_event->jbutton.state =
+					(event->type == SDL_CONTROLLERBUTTONDOWN);
+			}
 		} else {
 			rc = 0;
 		}
@@ -727,52 +825,74 @@ int input_convert_event(SDL_Event *event, union input_new_event *new_event)
 	case SDL_JOYBUTTONUP:
 		button_index = event->jbutton.button;
 		joystick_node = find_joystick(event->jbutton.which);
-		if (button_index >= 0x100)
-			button_index = button_index - 0x100 + joystick_node->button_count;
-		if (joystick_node->controller && emu->config->gamecontroller &&
-		    joystick_node->button_status[button_index].mapped) {
-			rc = 0;
-			break;
-		}
+		if (joystick_node) {
+			if (button_index >= 0x100) {
+				button_index = button_index - 0x100 +
+			            joystick_node->button_count;
+			}
 
-		new_event->type = INPUT_EVENT_TYPE_JOYBUTTON;
-		new_event->jbutton.device = joystick_node->index;
-		new_event->jbutton.button = event->jbutton.button;
-		new_event->jbutton.state =
-			(event->type == SDL_JOYBUTTONDOWN);
+			if (joystick_node->controller &&
+			    emu->config->gamecontroller &&
+			    joystick_node->button_status[button_index].mapped) {
+				rc = 0;
+				break;
+			}
+
+			new_event->type = INPUT_EVENT_TYPE_JOYBUTTON;
+			new_event->jbutton.device = joystick_node->index;
+			new_event->jbutton.button = event->jbutton.button;
+			new_event->jbutton.state =
+				(event->type == SDL_JOYBUTTONDOWN);
+		} else {
+			rc = 0;
+		}
 		break;
 	case SDL_JOYHATMOTION:
 		joystick_node =	find_joystick(event->jhat.which);
-		if (joystick_node->controller && emu->config->gamecontroller) {
-			rc = 0;
-			break;
-		}
+		if (joystick_node) {
+			if (joystick_node->controller &&
+			    emu->config->gamecontroller) {
+				rc = 0;
+				break;
+			}
 
-		new_event->type = INPUT_EVENT_TYPE_JOYHAT;
-		new_event->jhat.device = joystick_node->index;
-		new_event->jhat.hat = event->jhat.hat;
-		new_event->jhat.value = event->jhat.value;
+			new_event->type = INPUT_EVENT_TYPE_JOYHAT;
+			new_event->jhat.device = joystick_node->index;
+			new_event->jhat.hat = event->jhat.hat;
+			new_event->jhat.value = event->jhat.value;
+		} else {
+			rc = 0;
+		}
 		break;
 	case SDL_JOYAXISMOTION:
 		joystick_node =	find_joystick(event->jaxis.which);
-		if (joystick_node->controller && emu->config->gamecontroller) {
-			rc = 0;
-			break;
-		}
+		if (joystick_node) {
+			if (joystick_node->controller &&
+			    emu->config->gamecontroller) {
+				rc = 0;
+				break;
+			}
 
-		new_event->type = INPUT_EVENT_TYPE_JOYAXIS;
-		new_event->jaxis.device = joystick_node->index;
-		new_event->jaxis.axis = event->jaxis.axis;
-		new_event->jaxis.value = event->jaxis.value;
-		new_event->common.misc = 0;
+			new_event->type = INPUT_EVENT_TYPE_JOYAXIS;
+			new_event->jaxis.device = joystick_node->index;
+			new_event->jaxis.axis = event->jaxis.axis;
+			new_event->jaxis.value = event->jaxis.value;
+			new_event->common.misc = 0;
+		} else {
+			rc = 0;
+		}
 		break;
 	case SDL_CONTROLLERAXISMOTION:
 		joystick_node =	find_joystick(event->jaxis.which);
-		new_event->type = INPUT_EVENT_TYPE_JOYAXIS;
-		new_event->jaxis.device = joystick_node->index;
-		new_event->jaxis.axis = event->jaxis.axis + 0x100;
-		new_event->jaxis.value = event->jaxis.value;
-		new_event->common.misc = 0;
+		if (joystick_node) {
+			new_event->type = INPUT_EVENT_TYPE_JOYAXIS;
+			new_event->jaxis.device = joystick_node->index;
+			new_event->jaxis.axis = event->jaxis.axis + 0x100;
+			new_event->jaxis.value = event->jaxis.value;
+			new_event->common.misc = 0;
+		} else {
+			rc = 0;
+		}
 		break;
 	default:
 		rc = 0;

@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,6 +90,10 @@ extern struct board_info board_contra_100in1;
 extern struct board_info board_cnrom;
 extern struct board_info board_cnrom_no_conflict;
 extern struct board_info board_cnrom_security;
+extern struct board_info board_cnrom_security_bank0;
+extern struct board_info board_cnrom_security_bank1;
+extern struct board_info board_cnrom_security_bank2;
+extern struct board_info board_cnrom_security_bank3;
 extern struct board_info board_singlechip;
 extern struct board_info board_nina001;
 extern struct board_info board_streemerz_bundle;
@@ -259,6 +263,10 @@ static struct board_info *board_info_list[] = {
 	&board_cnrom,
 	&board_cnrom_no_conflict,
 	&board_cnrom_security,
+	&board_cnrom_security_bank0,
+	&board_cnrom_security_bank1,
+	&board_cnrom_security_bank2,
+	&board_cnrom_security_bank3,
 	&board_singlechip,
 	&board_nina001,
 	&board_streemerz_bundle,
@@ -1279,9 +1287,6 @@ static int board_init_ram(struct board *board, size_t size)
 	board->ram_data = NULL;
 	board->ram_size = 0;
 
-	if (size < 0)
-		return -1;
-
 	if (!size)
 		return 0;
 
@@ -1583,7 +1588,7 @@ static int board_apply_ips_save(struct board *board)
 {
 	uint8_t *p;
 	uint8_t *data_to_patch;
-	size_t size;
+	ssize_t size;
 	size_t data_size;
 	off_t offset;
 	char *save_file;

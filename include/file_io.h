@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,10 +28,11 @@
 int check_file_exists(const char *name);
 int readfile(const char *name, uint8_t * buf, uint32_t size);
 int writefile(const char *name, uint8_t * buf, uint32_t size);
-int get_file_size(const char *name);
+ssize_t get_file_size(const char *name);
 int process_file(const char *filename, void *data,
                  void (*callback)(char *, int, void *), int, int);
 int get_file_mtime(const char *path, int64_t *secptr, int32_t *nsecptr);
+int check_directory_exists(const char *name);
 
 char *get_user_data_path(void);
 char *get_base_path(void);

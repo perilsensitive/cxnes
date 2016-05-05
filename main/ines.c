@@ -1,6 +1,6 @@
 /*
   cxNES - NES/Famicom Emulator
-  Copyright (C) 2011-2015 Ryan Jackson
+  Copyright (C) 2011-2016 Ryan Jackson
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -489,6 +489,12 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return 1;
 
 	switch (header.mapper) {
+	case 185:
+		if (header.submapper) {
+			header.submapper &= 0x03;
+			header.submapper |= 0x04;
+		}
+		break;
 	case 39:
 		/* Subor Study & Game 32-in-1 is oversized BNROM */
 		header.mapper = 34;
