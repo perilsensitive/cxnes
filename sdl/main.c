@@ -751,7 +751,7 @@ int main(int argc, char **argv)
 		}
 
 		if (rom_dumpfile) {
-			if (emu->rom->info.flags & ROM_FLAG_IN_DB)
+			//if (emu->rom->info.flags & ROM_FLAG_IN_DB)
 				writefile(rom_dumpfile, emu->rom->buffer,
 					  emu->rom->offset +
 					  emu->rom->info.total_prg_size +
