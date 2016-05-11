@@ -283,6 +283,7 @@ int ines_generate_header(struct rom *rom, int version)
 	size_t wram_size, nv_wram_size;
 	size_t vram_size, nv_vram_size;
 	uint8_t *data;
+	int i;
 
 	data = rom->buffer;
 
@@ -294,8 +295,16 @@ int ines_generate_header(struct rom *rom, int version)
 
 	memset(&header, 0, sizeof(header));
 
-	prg_size = rom->info.prg_size[0];
-	chr_size = rom->info.chr_size[0];
+	prg_size = 0;
+	chr_size = 0;
+
+	for (i = 0; i < rom->info.prg_size_count; i++) {
+		prg_size += rom->info.prg_size[i];
+	}
+
+	for (i = 0; i < rom->info.chr_size_count; i++) {
+		chr_size += rom->info.chr_size[i];
+	}
 
 	prg_size += rom->offset - INES_HEADER_SIZE;
 	/* PRG data must be a multiple of 16K */
