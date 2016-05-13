@@ -360,6 +360,9 @@ struct ppu_state {
 	uint8_t palette_lookup[64];
 
 	int a12_timer_enabled;
+
+	int wrote_2006;
+	int overflow_flag;
 };
 
 static struct state_item ppu_state_items[] = {
@@ -1603,6 +1606,7 @@ static INLINE void sprite_eval(struct ppu_state *ppu)
 				ppu->secondary_oam_index++;
 			} else if (ppu->scanline_sprite_count == 8) {
 				ppu->status_reg |= STATUS_REG_SPRITE_OVERFLOW;
+				ppu->overflow_flag = ppu->scanline_cycle;
 			}
 
 			ppu->sprite_eval_state = SPRITE_EVAL_COPY_INDEX;
@@ -1977,7 +1981,9 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			ppu->right_tile_latch = do_bg_tile_fetch(ppu);
 			sprite_eval(ppu);
 			if (ppu->scanline_cycle == 256) {
-				increment_y_scroll(ppu);
+				if ((ppu->wrote_2006 < 255) || (ppu->wrote_2006 > 256)) {
+					increment_y_scroll(ppu);
+				}
 				/* If there are less than 8 sprites on this
 				   scanline, then the overwritten sprite zero
 				   data wasn't handled by loading extended
@@ -2399,6 +2405,8 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				ppu->sprite_zero_present = 0;
 				ppu->secondary_oam_index = 0;
 				ppu->scanline_sprite_count = 0;
+				ppu->wrote_2006 = 0;
+				ppu->overflow_flag = 0;
 				memset(ppu->secondary_oam + 32, 0xff,
 				       sizeof(ppu->secondary_oam) - 32);
 			}
@@ -2681,6 +2689,10 @@ static CPU_READ_HANDLER(read_status_reg)
 
 	ppu_run(ppu, cycles);
 	status = ppu->status_reg;
+	if (ppu->overflow_flag > (ppu->scanline_cycle - 2)) {
+		ppu->overflow_flag = 0;
+		status &= ~STATUS_REG_SPRITE_OVERFLOW;
+	}
 
 	if (ppu->scanline == (240 + ppu->post_render_scanlines) &&
 	    ppu->scanline_cycle && ppu->scanline_cycle <= 4) {
@@ -2794,6 +2806,9 @@ static CPU_WRITE_HANDLER(write_address_reg)
 		return;
 
 	ppu_run(ppu, cycles);
+
+	//printf("2006 write at %d,%d\n", ppu->scanline, ppu->scanline_cycle);
+	ppu->wrote_2006 = ppu->scanline_cycle;
 
 	ppu->io_latch = value;
 	ppu->io_latch_decay = ppu->decay_counter_start;
