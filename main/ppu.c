@@ -256,7 +256,6 @@ struct ppu_state {
 	uint8_t ctrl_reg;
 	uint8_t mask_reg;
 	uint8_t status_reg;
-	uint8_t status_reg_sprite_zero;
 	uint8_t oam_addr_reg;
 
 	/* a.k.a. loopy_v */
@@ -1105,11 +1104,10 @@ static INLINE void plot_pixel(struct ppu_state *ppu, int bg_pixel, int x)
 
 	sprite_pixel = ppu->sprite_tile_buffer[x] & ppu->sprite_mask;
 	ppu->sprite_tile_buffer[x] = 0;
-	ppu->status_reg |= ppu->status_reg_sprite_zero;
 
 	if (sprite_pixel) {
 		if ((sprite_pixel & PIXEL_SPRITE_ZERO) && bg_pixel)
-			ppu->status_reg_sprite_zero = STATUS_REG_SPRITE_ZERO;
+			ppu->status_reg |= STATUS_REG_SPRITE_ZERO;
 
 		if (!pixel || !(sprite_pixel & PIXEL_BG_PRIORITY)) {
 			if (!ppu->hide_sprites)
@@ -1145,8 +1143,6 @@ static INLINE void render_disabled_pixels(struct ppu_state *ppu, int x, int coun
 	} else {
 		pixel = 0;
 	}
-
-	ppu->status_reg |= ppu->status_reg_sprite_zero;
 
 	while (count) {
 		ppu->bg_pixels[x & 0xf] = 0; /* FIXME */
@@ -1805,10 +1801,8 @@ static int do_disabled_scanline(struct ppu_state *ppu, int cycles)
 	ppu->scanline_cycle += needed;
 
 	if (ppu->scanline == -1) {
-		if (ppu->scanline_cycle > 1) {
+		if (ppu->scanline_cycle > 1)
 			ppu->status_reg &= STATUS_REG_VBLANK_FLAG;
-			ppu->status_reg_sprite_zero = 0;
-		}
 
 		if (ppu->scanline_cycle > 2)
 			ppu->status_reg &= ~STATUS_REG_VBLANK_FLAG;
@@ -1865,10 +1859,8 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 193: case 201: case 209: case 217:
 		case 225: case 233: case 241: case 249:
 			if (ppu->scanline_cycle == 1) {
-				if (ppu->scanline < 0) {
+				if (ppu->scanline < 0)
 					ppu->status_reg &= STATUS_REG_VBLANK_FLAG;
-					ppu->status_reg_sprite_zero = 0;
-				}
 				ppu->secondary_oam_index = 0;
 				ppu->sprite_eval_state = SPRITE_EVAL_CLEAR;
 			} else {
@@ -1899,10 +1891,8 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 194: case 202: case 210: case 218:
 		case 226: case 234: case 242: case 250:
 			if (ppu->scanline_cycle == 2) {
-				if (ppu->scanline < 0) {
+				if (ppu->scanline < 0)
 					ppu->status_reg &= ~STATUS_REG_VBLANK_FLAG;
-					ppu->status_reg_sprite_zero = 0;
-				}
 				ppu->bg_mask = ppu->bg_left8_mask;
 				ppu->sprite_mask = ppu->sprite_left8_mask;
 			}
