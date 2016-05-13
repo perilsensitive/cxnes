@@ -411,7 +411,6 @@ static struct state_item ppu_state_items[] = {
 	STATE_32BIT(ppu_state, split_screen_bank),
 
 	STATE_8BIT(ppu_state, burst_phase),
-	STATE_8BIT(ppu_state, status_reg_sprite_zero),
 	
 	STATE_ITEM_END(),
 };
