@@ -2099,7 +2099,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 340:
 			ppu->attribute_latch = do_attribute_fetch(ppu);
 			if (ppu->scanline_cycle == 340) {
-				if (ppu->scanline == -1 && ppu->odd_frame) {
+				if ((ppu->scanline == -1) && ppu->odd_frame) {
 					ppu->frame_cycles--;
 					cpu_set_frame_cycles(ppu->emu->cpu,
 							     ppu->frame_cycles *
@@ -2498,7 +2498,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				ppu->first_frame_flag = 0;
 				ppu->vblank_timestamp = 341 *
 					(241 + ppu->post_render_scanlines) + 1;
-				if (ppu->odd_frame& RENDERING_ENABLED())
+				if (ppu->odd_frame && RENDERING_ENABLED())
 					ppu->vblank_timestamp--;
 				ppu->vblank_timestamp *=
 					ppu->ppu_clock_divider;
@@ -2654,7 +2654,7 @@ CPU_WRITE_HANDLER(ppu_mask_reg_write_handler)
 		ppu->rendering = 1;
 	}
 
-	if (ppu->odd_frame& (ppu->scanline == -1) &&
+	if (ppu->odd_frame && (ppu->scanline == -1) &&
 	    (new_rendering_state != old_rendering_state)) {
 		if (new_rendering_state)
 			ppu->vblank_timestamp -= ppu->ppu_clock_divider;
