@@ -414,6 +414,8 @@ static struct state_item ppu_state_items[] = {
 	STATE_32BIT(ppu_state, split_screen_bank),
 
 	STATE_8BIT(ppu_state, burst_phase),
+
+	STATE_16BIT(ppu_state, wrote_2006),
 	
 	STATE_ITEM_END(),
 };
@@ -1982,9 +1984,35 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			sprite_eval(ppu);
 			if (ppu->scanline_cycle == 256) {
 				if ((ppu->wrote_2006 < 255) || (ppu->wrote_2006 > 256)) {
+					/*ThePPU does some odd things if you
+					* complete the second $2006 write
+					* exactly at the start of cycle 256.
+					*
+					* The fine vertical scroll value is
+					* kept from what was written to $2006,
+					* but the rest seems unpredictable and
+					* appears to depend on the value that
+					* was written to the scroll address.
+					* I haven't tested this on actual
+					* hardware, but this is what happens
+					* in Visual 2C02.  Here, the scroll
+					* increment is skipped; while not quite
+					* accurate this appears to work for
+					* the games affected by this behavior.
+					*
+					* Two games, to my knowledge, require
+					* this to be emulated to avoid the
+					*"shaky status bar syndrome":
+					*
+					* - Cosmic Wars (J)
+					* - The Simpsons: Bart vs. the Space
+					*   Mutants (U)
+					*/
 					increment_y_scroll(ppu);
+					increment_x_scroll(ppu);
 				}
-				/* If there are less than 8 sprites on this
+
+				/* If there are fewer than 8 sprites on this
 				   scanline, then the overwritten sprite zero
 				   data wasn't handled by loading extended
 				   OAM in sprite_eval().  Force them to be
@@ -1996,8 +2024,9 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 				    ppu->scanline_sprite_count < 8) {
 					load_extended_oam(ppu, 256);
 				}
+			} else {
+				increment_x_scroll(ppu);
 			}
-			increment_x_scroll(ppu);
 			add_cycle();
 			return_if_done();
 			if (ppu->scanline_cycle < 257)
@@ -2807,9 +2836,7 @@ static CPU_WRITE_HANDLER(write_address_reg)
 
 	ppu_run(ppu, cycles);
 
-	//printf("2006 write at %d,%d\n", ppu->scanline, ppu->scanline_cycle);
-	ppu->wrote_2006 = ppu->scanline_cycle;
-
+	printf("2006 write at %d,%d %x\n", ppu->scanline, ppu->scanline_cycle, ppu->scroll_address_toggle);
 	ppu->io_latch = value;
 	ppu->io_latch_decay = ppu->decay_counter_start;
 
@@ -2817,6 +2844,7 @@ static CPU_WRITE_HANDLER(write_address_reg)
 		ppu->scroll_address_latch =
 		    (ppu->scroll_address_latch & 0xff) | (value & 0x3f) << 8;
 	} else {
+		ppu->wrote_2006 = ppu->scanline_cycle;
 		ppu->scroll_address_latch =
 		    (ppu->scroll_address_latch & 0x7f00) | value;
 		ppu->scroll_address = ppu->scroll_address_latch;
