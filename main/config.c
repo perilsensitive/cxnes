@@ -91,6 +91,7 @@ enum {
 	CONFIG_TYPE_INTEGER,
 	CONFIG_TYPE_UNSIGNED_INTEGER,
 	CONFIG_TYPE_BOOLEAN,
+	CONFIG_TYPE_BOOLEAN_NOSAVE,
 	CONFIG_TYPE_FLOAT,
 	CONFIG_TYPE_STRING,
 	CONFIG_NONE,
@@ -309,6 +310,14 @@ static const char *valid_scaling_modes[] = {
 { \
 	.name = #var, \
 	.type = CONFIG_TYPE_BOOLEAN, \
+	.offset = offsetof(struct config, var), \
+	.default_value.bool = (def), \
+}
+
+#define CONFIG_BOOLEAN_NOSAVE(var, def)		\
+{ \
+	.name = #var, \
+	.type = CONFIG_TYPE_BOOLEAN_NOSAVE, \
 	.offset = offsetof(struct config, var), \
 	.default_value.bool = (def), \
 }
@@ -751,7 +760,7 @@ static struct config_parameter config_parameters[] = {
 
 	CONFIG_BOOLEAN(save_uses_romdir, 0),
 	CONFIG_BOOLEAN(config_uses_romdir, 0),
-	CONFIG_BOOLEAN(cpu_trace_enabled, 0),
+	CONFIG_BOOLEAN_NOSAVE(cpu_trace_enabled, 0),
 	CONFIG_BOOLEAN(blargg_test_rom_hack_enabled, 0),
 	CONFIG_INTEGER(screensaver_deactivate_delay, 60, 0, 3600),
 
@@ -1476,6 +1485,7 @@ static int config_set_item(struct config *config,
 		*((unsigned int *)ptr) = uvalue;
 		break;
 	case CONFIG_TYPE_BOOLEAN:
+	case CONFIG_TYPE_BOOLEAN_NOSAVE:
 		*((int *)ptr) = parameter->default_value.bool;
 		if (!value)
 			break;
@@ -2111,6 +2121,9 @@ static int config_save_file(struct config *config,
 		case CONFIG_TYPE_STRING:
 			value = *((char **)ptr);
 			break;
+		case CONFIG_TYPE_BOOLEAN_NOSAVE:
+			continue;
+			break;
 		}
 
 		len = strlen(param->name);
@@ -2173,6 +2186,7 @@ static int config_check_changed(struct config *config,
 				rc++;
 			break;
 		case CONFIG_TYPE_BOOLEAN:
+		case CONFIG_TYPE_BOOLEAN_NOSAVE:
 			if (*((int *)ptr) != param->default_value.bool)
 				rc++;
 			break;
