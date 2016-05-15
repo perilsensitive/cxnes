@@ -712,14 +712,14 @@ static void f10_accelerator_fix(void)
 	gtk_window_add_accel_group(GTK_WINDOW(gtkwindow), group);
 }
 
-void *gui_init(int argc, char **argv)
+void *gui_init(void)
 {
 	GdkDisplay *gdk_display;
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
 	int window_w, window_h;
 
-	gtk_init(&argc, &argv);
+	gtk_init(NULL, NULL);
 	keycode_map_init();
 
 	icon = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.png",
