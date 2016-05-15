@@ -149,8 +149,6 @@
 #define finish_left_spr_tile_fetch() (ppu->left_tile_latch = read_spr(ppu, ppu->address_bus))
 #define finish_right_spr_tile_fetch() (ppu->right_tile_latch = read_spr(ppu, ppu->address_bus))
 
-#define sprite_read() (ppu->oam_latch = ppu->oam[ppu->oam_address & 0xff])
-
 #if DO_INLINES
 #define INLINE inline
 #define ALWAYS_INLINE __attribute((always_inline))
@@ -362,7 +360,7 @@ struct ppu_state {
 	int a12_timer_enabled;
 
 	int wrote_2006;
-	int overflow_flag;
+	int sprite_overflow_flag;
 };
 
 static struct state_item ppu_state_items[] = {
@@ -449,6 +447,13 @@ void ppu_set_read_hook(void (*hook) (struct board *, int))
 void ppu_enable_a12_timer(struct ppu_state *ppu, int enabled)
 {
 	ppu->a12_timer_enabled = enabled;
+}
+
+static INLINE void sprite_read(struct ppu_state *ppu) ALWAYS_INLINE;
+static INLINE void sprite_read(struct ppu_state *ppu)
+{
+	ppu->status_reg |= ppu->sprite_overflow_flag;
+	ppu->oam_latch = ppu->oam[ppu->oam_address & 0xff];
 }
 
 static INLINE uint8_t read_nmt(struct ppu_state *ppu,
@@ -999,6 +1004,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 		ppu->io_buffer = 0xff;
 
 		ppu->status_reg = 0;
+		ppu->sprite_overflow_flag = 0;
 		ppu->oam_addr_reg = 0;
 		ppu->address_bus = 0;
 		ppu->oam_address = 0;
@@ -1607,8 +1613,7 @@ static INLINE void sprite_eval(struct ppu_state *ppu)
 				    ppu->oam_latch;
 				ppu->secondary_oam_index++;
 			} else if (ppu->scanline_sprite_count == 8) {
-				ppu->status_reg |= STATUS_REG_SPRITE_OVERFLOW;
-				ppu->overflow_flag = ppu->scanline_cycle;
+				ppu->sprite_overflow_flag = STATUS_REG_SPRITE_OVERFLOW;
 			}
 
 			ppu->sprite_eval_state = SPRITE_EVAL_COPY_INDEX;
@@ -1884,7 +1889,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 				}
 			}
 			start_nametable_fetch(ppu);
-			sprite_read();
+			sprite_read(ppu);
 			add_cycle();
 			return_if_done();
 		case   2: case  10: case  18: case  26:
@@ -1916,7 +1921,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 227: case 235: case 243: case 251:
 			render_pixel(ppu);
 			start_attribute_fetch(ppu);
-			sprite_read();
+			sprite_read(ppu);
 			add_cycle();
 			return_if_done();
 		case   4: case  12: case  20: case  28:
@@ -1942,7 +1947,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 229: case 237: case 245: case 253:
 			render_pixel(ppu);
 			start_left_bg_tile_fetch();
-			sprite_read();
+			sprite_read(ppu);
 			add_cycle();
 			return_if_done();
 		case   6: case  14: case  22: case  30:
@@ -1968,7 +1973,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 231: case 239: case 247: case 255:
 			render_pixel(ppu);
 			start_right_bg_tile_fetch();
-			sprite_read();
+			sprite_read(ppu);
 			add_cycle();
 			return_if_done();
 		case   8: case  16: case  24: case  32:
@@ -1984,7 +1989,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			sprite_eval(ppu);
 			if (ppu->scanline_cycle == 256) {
 				if ((ppu->wrote_2006 < 255) || (ppu->wrote_2006 > 256)) {
-					/*ThePPU does some odd things if you
+					/*The PPU does some odd things if you
 					* complete the second $2006 write
 					* exactly at the start of cycle 256.
 					*
@@ -2034,6 +2039,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 		case 257: case 265: case 273: case 281:
 		case 289: case 297: case 305: case 313:
 			if (ppu->scanline_cycle == 257) {
+				ppu->status_reg |= ppu->sprite_overflow_flag;
 				render_pixel(ppu);
 				ppu->oam_latch = 0xff;
 				reset_x_scroll(ppu);
@@ -2350,6 +2356,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 	}
 
 	sprite_eval_scanline(ppu);
+	ppu->status_reg |= ppu->sprite_overflow_flag;
 
 	increment_y_scroll(ppu);
 
@@ -2435,7 +2442,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				ppu->secondary_oam_index = 0;
 				ppu->scanline_sprite_count = 0;
 				ppu->wrote_2006 = 0;
-				ppu->overflow_flag = 0;
+				ppu->sprite_overflow_flag = 0;
 				memset(ppu->secondary_oam + 32, 0xff,
 				       sizeof(ppu->secondary_oam) - 32);
 			}
@@ -2469,6 +2476,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 
 			if ((ppu->scanline == 240) && (ppu->scanline_cycle == 0)) {
 				ppu->rendering = 0;
+				ppu->sprite_overflow_flag = 0;
 				update_address_bus_a12(ppu->scroll_address & 0x3fff);
 			}
 
@@ -2718,10 +2726,6 @@ static CPU_READ_HANDLER(read_status_reg)
 
 	ppu_run(ppu, cycles);
 	status = ppu->status_reg;
-	if (ppu->overflow_flag > (ppu->scanline_cycle - 2)) {
-		ppu->overflow_flag = 0;
-		status &= ~STATUS_REG_SPRITE_OVERFLOW;
-	}
 
 	if (ppu->scanline == (240 + ppu->post_render_scanlines) &&
 	    ppu->scanline_cycle && ppu->scanline_cycle <= 4) {
@@ -2836,7 +2840,6 @@ static CPU_WRITE_HANDLER(write_address_reg)
 
 	ppu_run(ppu, cycles);
 
-	printf("2006 write at %d,%d %x\n", ppu->scanline, ppu->scanline_cycle, ppu->scroll_address_toggle);
 	ppu->io_latch = value;
 	ppu->io_latch_decay = ppu->decay_counter_start;
 
