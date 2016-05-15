@@ -1310,7 +1310,7 @@ static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
 		pulse_out = 0;
 
 	if (tnd_tmp)
-		tnd_out = (65536 * 3 / 4) * 16367  / (100 * 2432900 / tnd_tmp + 10000);
+		tnd_out = (65536) * 16367  / (100 * 2432900 / tnd_tmp + 10000);
 	else
 		tnd_out = 0;
 
