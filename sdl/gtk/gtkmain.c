@@ -51,6 +51,7 @@ extern void *gui_get_window_handle(GdkWindow *gdkwindow);
 
 static void *window_handle;
 
+static int is_fullscreen;
 static GdkCursor *blank_cursor;
 static GdkCursor *crosshair_cursor;
 static GdkDevice *mouse;
@@ -320,53 +321,20 @@ static void keycode_map_cleanup(void)
 	}
 }
 
-void gui_resize(int fs, int show_menubar)
+void gui_resize(int fs)
 {
-	int width, height;
-	gint menubar_height;
-	
 	if (!drawingarea)
 		return;
 
-	if (fs < 0) {
+	if (fs < 0)
 		fs = !fullscreen;
-		show_menubar = !fs;
-	}
 
 	fullscreen = fs;
-	
-	if (fullscreen) {
-		GdkRectangle geometry;
-		GdkScreen *screen;
-		GdkWindow *gdkwindow;
-		int monitor;
 
-		gdkwindow = gtk_widget_get_window(gtkwindow);
-		screen = gdk_window_get_screen(gdkwindow);
-		monitor = gdk_screen_get_monitor_at_window(screen, gdkwindow);
-		gdk_screen_get_monitor_geometry(screen, monitor, &geometry);
+	if (fullscreen)
 		gtk_window_fullscreen(GTK_WINDOW(gtkwindow));
-		width = geometry.width;
-		height = geometry.height;
-	} else {
-		video_get_windowed_size(&width, &height);
-		gtk_window_unfullscreen(GTK_WINDOW(gtkwindow));
-	}
-
-	if (show_menubar)
-		gtk_widget_show(menubar);
 	else
-		gtk_widget_hide(menubar);
-
-	if (show_menubar) {
-		gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
-		if (fullscreen)
-			height -= menubar_height;
-	}
-
-	menubar_visible = show_menubar;
-
-	gtk_widget_set_size_request(drawingarea, width, height);
+		gtk_window_unfullscreen(GTK_WINDOW(gtkwindow));
 }
 
 static gboolean motion_event_callback(GtkWidget *widget, GdkEventMotion *motion,
@@ -413,7 +381,11 @@ static gboolean button_event_callback(GtkWidget *widget, GdkEventButton *button,
 
 void gui_toggle_menubar(void)
 {
-	gui_resize(fullscreen, !menubar_visible);
+	menubar_visible = !menubar_visible;
+	if (menubar_visible)
+		gtk_widget_show(menubar);
+	else
+		gtk_widget_hide(menubar);
 }
 
 int convert_key_event(GdkEventKey *event, SDL_Event *sdlevent)
@@ -487,7 +459,7 @@ static int area_realize(GtkWidget *widget, void *data)
 
 void fullscreen_callback(void)
 {
-	gui_resize(!fullscreen, (!fullscreen ? 0 : 1));
+	//gui_resize(!fullscreen);
 	gtk_widget_override_background_color(drawingarea, GTK_STATE_FLAG_NORMAL, &bg);
 }
 
@@ -519,7 +491,7 @@ static void focus_change_callback(GtkWidget *widget, GdkEventFocus *event, gpoin
 
 static void window_show_callback(GtkWidget *widget, gpointer data)
 {
-	gui_resize(fullscreen, fullscreen ? 0 : 1);
+	gui_resize(fullscreen);
 }
 
 static gboolean draw_callback(GtkWidget *widget, void *cairo_context, gpointer data)
@@ -533,7 +505,7 @@ static gboolean draw_callback(GtkWidget *widget, void *cairo_context, gpointer d
 }
 
 /* Glue window state changes to SDL window state change */
-static void window_state_callback(GtkWidget *widget, GdkEventWindowState *event,
+static gboolean window_state_callback(GtkWidget *widget, GdkEventWindowState *event,
 				  gpointer data)
 {
 	if (event->changed_mask & GDK_WINDOW_STATE_WITHDRAWN) {
@@ -559,6 +531,22 @@ static void window_state_callback(GtkWidget *widget, GdkEventWindowState *event,
 			video_restored();
 		}
 	}
+
+	is_fullscreen = !!(event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN);
+
+	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
+		if (event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN) {
+			gtk_widget_hide(menubar);
+			menubar_visible = 0;
+			video_restored();
+		} else {
+			gtk_widget_show(menubar);
+			menubar_visible = 1;
+			video_restored();
+		}
+	}
+
+	return TRUE;
 }
 
 /* Glue the resize event for the drawing area to SDL_SetWindowSize() */
@@ -737,6 +725,7 @@ void *gui_init(void)
 
 	/* File menu */
 	menubar = gui_build_menubar(gtkwindow);
+	menubar_visible = 1;
 	gtk_box_pack_start(GTK_BOX(box), menubar, FALSE, FALSE, 0);
 
 	/* Now the drawing area */
@@ -923,6 +912,35 @@ static gboolean gui_process_sdl_events(gpointer user_data)
 	}
 
 	return TRUE;
+}
+
+void gui_toggle_fullscreen(int fs)
+{
+	if ((fs < 0) && (is_fullscreen))
+		fs = 0;
+	else if ((fs < 0) && (!is_fullscreen))
+		fs = 1;
+
+	if (fs)
+		gtk_window_unfullscreen(GTK_WINDOW(gtkwindow));	
+	else
+		gtk_window_fullscreen(GTK_WINDOW(gtkwindow));	
+}
+
+void gui_set_size(int w, int h)
+{
+
+	if (!drawingarea)
+		return;
+
+	if (menubar_visible) {
+		int menubar_height;
+		gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
+
+		h += menubar_height;
+	}
+
+	gtk_window_resize(GTK_WINDOW(gtkwindow), w, h);
 }
 
 void gui_enable_event_timer(void)

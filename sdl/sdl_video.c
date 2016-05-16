@@ -833,19 +833,13 @@ int video_apply_config(struct emu *emu)
 	video_apply_palette_and_filter(emu);
 
 #if GUI_ENABLED
-	if (gui_enabled) {
-		/* The GUI widget containing the SDL window will
-		   call video_resize() once it has finished resizing.
-		*/
-		gui_resize(fullscreen, fullscreen ? 0 : 1);
-		if (fullscreen)
-			handle_resize_event();
-	}
-	else
+	if (!gui_enabled)
 #endif
 	{
 		SDL_SetWindowSize(window, window_rect.w, window_rect.h);
 		handle_resize_event();
+	} else {
+		gui_set_size(window_rect.w, window_rect.h);
 	}
 
 	if (emu_paused(emu)) {
@@ -1357,7 +1351,7 @@ void video_toggle_fullscreen(int fs)
 
 #if GUI_ENABLED
 	if (gui_enabled) {
-		gui_resize(fs, fs ? 0 : 1);
+		gui_resize(fs);
 		return;
 	}
 #endif

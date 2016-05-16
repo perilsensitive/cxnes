@@ -20,7 +20,7 @@
 #ifndef __GUI_H__
 #define __GUI_H__
 
-void gui_resize(int fs, int show_menubar);
+void gui_resize(int fs);
 void gui_grab(int grab);
 void gui_toggle_menubar(void);
 extern void *gui_init(void);
@@ -28,5 +28,6 @@ void gui_cleanup(void);
 extern void gui_show_cursor(int show);
 extern void gui_show_crosshairs(int show);
 extern void gui_set_window_title(const char *title);
+extern void gui_set_size(int w, int h);
 
 #endif /* __GUI_H__ */
