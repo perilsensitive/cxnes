@@ -728,7 +728,7 @@ void *gui_init(void)
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	gtk_window_set_title(GTK_WINDOW(gtkwindow), "cxNES");
-	gtk_window_set_resizable(GTK_WINDOW(gtkwindow), FALSE);
+	gtk_window_set_resizable(GTK_WINDOW(gtkwindow), TRUE);
 	gtk_window_set_icon(GTK_WINDOW(gtkwindow), icon);
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
