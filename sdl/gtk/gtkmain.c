@@ -706,6 +706,7 @@ void *gui_init(void)
 	GdkDeviceManager *device_manager;
 	GtkWidget *box;
 	int window_w, window_h;
+	int menubar_height;
 
 	gtk_init(NULL, NULL);
 	keycode_map_init();
@@ -731,7 +732,8 @@ void *gui_init(void)
 	/* Now the drawing area */
 	drawingarea = gtk_drawing_area_new();
 	video_get_windowed_size(&window_w, &window_h);
-	gtk_widget_set_size_request(drawingarea, window_w, window_h);
+	gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
+	gtk_window_set_default_size(GTK_WINDOW(gtkwindow), window_w, window_h + menubar_height);
 
 	if (gui_prep_drawing_area(drawingarea) < 0)
 		return NULL;
@@ -930,17 +932,18 @@ void gui_toggle_fullscreen(int fs)
 void gui_set_size(int w, int h)
 {
 
+	int menubar_height;
+
 	if (!drawingarea)
 		return;
 
 	if (menubar_visible) {
-		int menubar_height;
 		gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
-
-		h += menubar_height;
+	} else {
+		menubar_height = 0;
 	}
 
-	gtk_window_resize(GTK_WINDOW(gtkwindow), w, h);
+	gtk_window_resize(GTK_WINDOW(gtkwindow), w, h + menubar_height);
 }
 
 void gui_enable_event_timer(void)

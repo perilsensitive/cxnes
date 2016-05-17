@@ -833,13 +833,15 @@ int video_apply_config(struct emu *emu)
 	video_apply_palette_and_filter(emu);
 
 #if GUI_ENABLED
-	if (!gui_enabled)
+	if (gui_enabled)
+	{
+		gui_set_size(window_rect.w, window_rect.h);
+	}
+	else
 #endif
 	{
 		SDL_SetWindowSize(window, window_rect.w, window_rect.h);
 		handle_resize_event();
-	} else {
-		gui_set_size(window_rect.w, window_rect.h);
 	}
 
 	if (emu_paused(emu)) {
