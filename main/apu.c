@@ -961,7 +961,7 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 
 	if (!(apu->frame_counter_mode & 0x80)) {
 		if (!(apu->frame_counter_mode & 0x40)) {
-			apu->next_frame_irq  = cycles + (apu->frame_step_delay + 2) *
+			apu->next_frame_irq  = cycles + (1) *
 					       emu->cpu_clock_divider +
 			                       apu->frame_irq_delay;
 			cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
@@ -1467,7 +1467,7 @@ void apu_set_type(struct apu_state *apu, int type)
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
 		apu->frame_step_delay = 7456;
 	}
-	apu->frame_irq_delay = (3 * apu->frame_step_delay + 3) *
+	apu->frame_irq_delay = (4 * apu->frame_step_delay + 4) *
 	    apu->emu->cpu_clock_divider;
 
 }
