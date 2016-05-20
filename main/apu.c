@@ -976,9 +976,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 		if (!(apu->frame_counter_mode & 0x40)) {
 			cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 					       apu->next_frame_irq);
-		} else {
-			apu->next_frame_irq = ~0;
-			cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 		}
 	} else {
 		apu->frame_counter_reset = 1;
@@ -1232,8 +1229,6 @@ static void clock_frame_counter(struct apu_state *apu)
 		break;
 	case 0x05:
 		set_frame_irq_flag(apu->emu);
-		/* apu->next_frame_irq = apu->next_frame_step + */
-		/*      apu->frame_irq_delay - apu->emu->cpu_clock_divider; */
 		apu->next_frame_irq = apu->next_frame_step +
 		    apu->frame_irq_delay;
 		sched_next_frame_step(apu->frame_step_delay + 1);
