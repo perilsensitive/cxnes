@@ -1211,35 +1211,37 @@ static void clock_frame_counter0(struct apu_state *apu)
 {
 	uint32_t cycles = apu->next_frame_step;
 	int do_quarter_frame, do_half_frame;
+	int frame_counter_mode;
 
 	do_quarter_frame = 0;
 	do_half_frame = 0;
+	frame_counter_mode = apu->frame_counter_mode & 0x80;
 
 	switch (apu->frame_counter_step) {
-	case 0:
+	case 0x00:
 		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay);
 		break;
-	case 1:
+	case 0x01:
 		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
-	case 2:
+	case 0x02:
 		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 1);
 		break;
-	case 3:
+	case 0x03:
 		set_frame_irq_flag(apu->emu);
 		apu->next_frame_irq += apu->emu->cpu_clock_divider;
 		sched_next_frame_step(1);
 		break;
-	case 4:
+	case 0x04:
 		do_half_frame = 1;
 		set_frame_irq_flag(apu->emu);
 		apu->next_frame_irq += apu->emu->cpu_clock_divider;
 		sched_next_frame_step(1);
 		break;
-	case 5:
+	case 0x05:
 		set_frame_irq_flag(apu->emu);
 		/* apu->next_frame_irq = apu->next_frame_step + */
 		/*      apu->frame_irq_delay - apu->emu->cpu_clock_divider; */
@@ -1267,8 +1269,15 @@ static void clock_frame_counter0(struct apu_state *apu)
 		apu->frame_counter_reset = 0;
 		apu->next_frame_step = cycles + (apu->frame_step_delay + 2);
 	} else {
-		apu->frame_counter_step = (apu->frame_counter_step + 1) % 6;
+		apu->frame_counter_step = (apu->frame_counter_step + 1);
 	}
+
+	if (frame_counter_mode)
+		apu->frame_counter_step %= 4;
+	else
+		apu->frame_counter_step %= 6;
+
+	apu->frame_counter_step |= frame_counter_mode;
 
 	pulse_update_volume(apu, 0, cycles);
 	pulse_update_volume(apu, 1, cycles);
@@ -1279,24 +1288,26 @@ static void clock_frame_counter1(struct apu_state *apu)
 {
 	uint32_t cycles = apu->next_frame_step;
 	int do_quarter_frame, do_half_frame;
+	int frame_counter_mode;
 
 	do_quarter_frame = 0;
 	do_half_frame = 0;
+	frame_counter_mode = apu->frame_counter_mode & 0x80;
 
 	switch (apu->frame_counter_step) {
-	case 0:
+	case 0x80:
 		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay);
 		break;
-	case 1:
+	case 0x81:
 		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
-	case 2:
+	case 0x82:
 		do_quarter_frame = 1;
 		sched_next_frame_step(2 * apu->frame_step_delay - 2);
 		break;
-	case 3:
+	case 0x83:
 		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
@@ -1329,8 +1340,15 @@ static void clock_frame_counter1(struct apu_state *apu)
 		apu->frame_counter_reset = 0;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 	} else {
-		apu->frame_counter_step = (apu->frame_counter_step + 1) % 4;
+		apu->frame_counter_step = (apu->frame_counter_step + 1);
 	}
+
+	if (frame_counter_mode)
+		apu->frame_counter_step %= 4;
+	else
+		apu->frame_counter_step %= 6;
+
+	apu->frame_counter_step |= frame_counter_mode;
 
 	pulse_update_volume(apu, 0, cycles);
 	pulse_update_volume(apu, 1, cycles);
