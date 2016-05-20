@@ -1248,7 +1248,6 @@ static void clock_frame_counter(struct apu_state *apu)
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 255:
-		apu->frame_counter_reset = 1;
 		break;
 	}
 
