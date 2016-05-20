@@ -1301,10 +1301,14 @@ static void clock_frame_counter1(struct apu_state *apu)
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 255:
-		do_quarter_frame = 1;
-		do_half_frame = 1;
 		apu->frame_counter_reset = 1;
 		break;
+	}
+
+	if (apu->frame_counter_reset &&
+	    (!do_quarter_frame && !do_half_frame)) {
+		do_quarter_frame = 1;
+		do_half_frame = 1;
 	}
 
 	if (do_half_frame) {
