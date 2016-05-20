@@ -1210,22 +1210,22 @@ void apu_end_frame(struct apu_state *apu, uint32_t cycles)
 static void clock_frame_counter0(struct apu_state *apu)
 {
 	uint32_t cycles = apu->next_frame_step;
+	int do_quarter_frame, do_half_frame;
+
+	do_quarter_frame = 0;
+	do_half_frame = 0;
+
 	switch (apu->frame_counter_step) {
 	case 0:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay);
 		break;
 	case 1:
-		clock_length_counters(apu);
-		clock_sweeps(apu);
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 2:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 1);
 		break;
 	case 3:
@@ -1234,10 +1234,7 @@ static void clock_frame_counter0(struct apu_state *apu)
 		sched_next_frame_step(1);
 		break;
 	case 4:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
-		clock_length_counters(apu);
-		clock_sweeps(apu);
+		do_half_frame = 1;
 		set_frame_irq_flag(apu->emu);
 		apu->next_frame_irq += apu->emu->cpu_clock_divider;
 		sched_next_frame_step(1);
@@ -1250,6 +1247,19 @@ static void clock_frame_counter0(struct apu_state *apu)
 		    apu->frame_irq_delay;
 		sched_next_frame_step(apu->frame_step_delay + 1);
 		break;
+	}
+
+	if (do_half_frame) {
+		clock_length_counters(apu);
+		clock_sweeps(apu);
+		clock_linear_counter(&apu->triangle.linear);
+		clock_envelopes(apu);
+		do_quarter_frame = 1;
+	}
+
+	if (do_quarter_frame) {
+		clock_linear_counter(&apu->triangle.linear);
+		clock_envelopes(apu);
 	}
 
 	if (apu->frame_counter_reset) {
@@ -1268,29 +1278,26 @@ static void clock_frame_counter0(struct apu_state *apu)
 static void clock_frame_counter1(struct apu_state *apu)
 {
 	uint32_t cycles = apu->next_frame_step;
+	int do_quarter_frame, do_half_frame;
+
+	do_quarter_frame = 0;
+	do_half_frame = 0;
+
 	switch (apu->frame_counter_step) {
 	case 0:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay);
 		break;
 	case 1:
-		clock_length_counters(apu);
-		clock_sweeps(apu);
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 2:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
+		do_quarter_frame = 1;
 		sched_next_frame_step(2 * apu->frame_step_delay - 2);
 		break;
 	case 3:
-		clock_linear_counter(&apu->triangle.linear);
-		clock_envelopes(apu);
-		clock_length_counters(apu);
-		clock_sweeps(apu);
+		do_half_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 255:
@@ -1303,9 +1310,18 @@ static void clock_frame_counter1(struct apu_state *apu)
 		break;
 	}
 
-	pulse_update_volume(apu, 0, cycles);
-	pulse_update_volume(apu, 1, cycles);
-	noise_update_volume(apu, cycles);
+	if (do_half_frame) {
+		clock_length_counters(apu);
+		clock_sweeps(apu);
+		clock_linear_counter(&apu->triangle.linear);
+		clock_envelopes(apu);
+		do_quarter_frame = 1;
+	}
+
+	if (do_quarter_frame) {
+		clock_linear_counter(&apu->triangle.linear);
+		clock_envelopes(apu);
+	}
 
 	if (apu->frame_counter_reset) {
 		apu->frame_counter_step = 0;
@@ -1314,6 +1330,10 @@ static void clock_frame_counter1(struct apu_state *apu)
 	} else {
 		apu->frame_counter_step = (apu->frame_counter_step + 1) % 4;
 	}
+
+	pulse_update_volume(apu, 0, cycles);
+	pulse_update_volume(apu, 1, cycles);
+	noise_update_volume(apu, cycles);
 }
 
 static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
