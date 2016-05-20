@@ -1467,7 +1467,7 @@ void apu_set_type(struct apu_state *apu, int type)
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
 		apu->frame_step_delay = 7456;
 	}
-	apu->frame_irq_delay = (4 * apu->frame_step_delay + 4) *
+	apu->frame_irq_delay = (3 * apu->frame_step_delay + 3) *
 	    apu->emu->cpu_clock_divider;
 
 }
