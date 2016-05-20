@@ -954,7 +954,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 
 	apu->frame_counter_mode = value;
 
-//      printf("next_frame_step = %d\n", apu->next_frame_step);
 	cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
 	cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 
@@ -981,21 +980,14 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 			cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 		}
 	} else {
+		apu->frame_counter_reset = 1;
 		apu->next_frame_irq = ~0;
 		cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
 		cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
-		/* clock_linear_counter(&apu->triangle.linear); */
-		/* clock_envelopes(apu); */
-		/* clock_length_counters(apu); */
-		/* clock_sweeps(apu); */
-		/* apu->next_frame_step += */
-		/* 	(apu->frame_step_delay + 1) * emu->cpu_clock_divider; */
-		if (apu->next_frame_step == cycles) {
-			apu->frame_counter_reset = 1;
-		} else {
+		if (apu->next_frame_step != cycles) {
 			apu->frame_counter_step = 255;
-			apu->next_frame_step = cycles;
 		}
+		apu->next_frame_step = cycles;
 	}
 
 	if (apu->frame_counter_mode & FRAME_INTERRUPT_DISABLED) {
