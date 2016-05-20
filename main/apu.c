@@ -1251,6 +1251,12 @@ static void clock_frame_counter0(struct apu_state *apu)
 		break;
 	}
 
+	if (apu->frame_counter_reset && frame_counter_mode &&
+	    (!do_quarter_frame && !do_half_frame)) {
+		do_quarter_frame = 1;
+		do_half_frame = 1;
+	}
+
 	if (do_half_frame) {
 		clock_length_counters(apu);
 		clock_sweeps(apu);
@@ -1316,7 +1322,7 @@ static void clock_frame_counter1(struct apu_state *apu)
 		break;
 	}
 
-	if (apu->frame_counter_reset &&
+	if (apu->frame_counter_reset && frame_counter_mode &&
 	    (!do_quarter_frame && !do_half_frame)) {
 		do_quarter_frame = 1;
 		do_half_frame = 1;
