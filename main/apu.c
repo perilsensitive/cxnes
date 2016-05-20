@@ -1254,6 +1254,7 @@ static void clock_frame_counter0(struct apu_state *apu)
 
 	if (apu->frame_counter_reset) {
 		apu->frame_counter_step = 0;
+		apu->frame_counter_reset = 0;
 		apu->next_frame_step = cycles + (apu->frame_step_delay + 2);
 	} else {
 		apu->frame_counter_step = (apu->frame_counter_step + 1) % 6;
