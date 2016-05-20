@@ -958,16 +958,11 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 	apu->next_frame_irq = ~0;
 
+	if (apu->next_frame_step != cycles)
+		apu->frame_counter_step = 255;
+
 	/* not mode 1 */
 	if (!(apu->frame_counter_mode & 0x80)) {
-		if (apu->next_frame_step == cycles) {
-			apu->frame_counter_reset = 1;
-		} else {
-			apu->frame_counter_step = 0;
-			apu->next_frame_step = cycles + (apu->frame_step_delay + 2) *
-					       emu->cpu_clock_divider;
-		}
-
 		if (!(apu->frame_counter_mode & 0x40)) {
 			apu->next_frame_irq  = cycles + (apu->frame_step_delay + 2) *
 					       emu->cpu_clock_divider +
@@ -975,13 +970,10 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 			cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 					       apu->next_frame_irq);
 		}
-	} else {
-		apu->frame_counter_reset = 1;
-		if (apu->next_frame_step != cycles) {
-			apu->frame_counter_step = 255;
-		}
-		apu->next_frame_step = cycles;
 	}
+
+	apu->frame_counter_reset = 1;
+	apu->next_frame_step = cycles;
 
 	if (apu->frame_counter_mode & FRAME_INTERRUPT_DISABLED) {
 		apu->frame_irq_flag = 0;
