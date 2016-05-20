@@ -956,6 +956,7 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 
 	cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
 	cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
+	apu->next_frame_irq = ~0;
 
 	/* not mode 1 */
 	if (!(apu->frame_counter_mode & 0x80)) {
@@ -981,9 +982,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 		}
 	} else {
 		apu->frame_counter_reset = 1;
-		apu->next_frame_irq = ~0;
-		cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
-		cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 		if (apu->next_frame_step != cycles) {
 			apu->frame_counter_step = 255;
 		}
