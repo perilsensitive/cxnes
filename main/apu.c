@@ -938,8 +938,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	cycles += emu->cpu_clock_divider;
 	apu_run(apu, cycles);
 
-	printf("wrote %x to 4017 at %d (%d) (%d)\n", value, cycles, apu->next_frame_step, apu->frame_counter_step);
-
 	/* The reset and clock only happen on odd cycles, and only after
            one even cycle has occurred.
 	 */
@@ -961,7 +959,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	if (apu->next_frame_step != cycles)
 		apu->frame_counter_step = 255;
 
-	/* not mode 1 */
 	if (!(apu->frame_counter_mode & 0x80)) {
 		if (!(apu->frame_counter_mode & 0x40)) {
 			apu->next_frame_irq  = cycles + (apu->frame_step_delay + 2) *
