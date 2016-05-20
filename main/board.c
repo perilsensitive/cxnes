@@ -707,7 +707,7 @@ static uint8_t zero_nmt[1024];
 static int get_bank_list_count(struct bank *list);
 static CPU_WRITE_HANDLER(blargg_wram_hook);
 static cpu_write_handler_t *orig_wram_write_handler = NULL;
-extern void blargg_reset_request(void);
+extern void blargg_reset_request(struct emu *emu);
 static void board_internal_nmt_sync(struct board *board);
 void board_nmt_sync(struct board *board);
 
@@ -2452,7 +2452,7 @@ static CPU_WRITE_HANDLER(blargg_wram_hook)
 		running = 0;
 	} else if (value == 0x81) {
 		/* Reset */
-		blargg_reset_request();
+		blargg_reset_request(emu);
 	}
 }
 

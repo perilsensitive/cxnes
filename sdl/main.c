@@ -442,8 +442,10 @@ static int main_loop(struct emu *emu)
 		}
 
 
-		if (emu->blargg_reset_timer > 0)
+		if (emu->blargg_reset_timer > 0) {
 			emu->blargg_reset_timer--;
+			printf("timer is %d\n", emu->blargg_reset_timer);
+		}
 		else if (!emu->blargg_reset_timer)
 			emu_reset(emu, 0);
 
