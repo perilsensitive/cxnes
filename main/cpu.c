@@ -1113,7 +1113,7 @@ static void brk(struct cpu_state *cpu)
 			vector = IRQ_VECTOR;
 
 			//cpu->interrupts &= ~(1 << 31);
-			if (cpu->debug) {
+			if (1 || cpu->debug) {
 				printf("%s (%x) %d\n",
 				       cpu->P & B_FLAG ? "BRK" : "IRQ",
 				       cpu->interrupts & IRQ_IRQ_MASK,
@@ -1224,6 +1224,8 @@ void cpu_interrupt_schedule(struct cpu_state *cpu, unsigned int intr,
 	if (cpu->interrupt_times[intr] == ~0 &&
 	    !(cpu->interrupts & IRQ_FLAG(intr))) {
 		cycles += cpu->cpu_clock_divider;
+		if (intr == IRQ_APU_FRAME)
+			printf("scheduling for %d\n", cycles);
 		cpu->interrupt_times[intr] = cycles;
 		if (cycles < cpu->step_cycles)
 			cpu->step_cycles = cycles;
