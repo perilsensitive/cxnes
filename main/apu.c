@@ -1249,6 +1249,25 @@ static void clock_frame_counter0(struct apu_state *apu)
 		    apu->frame_irq_delay;
 		sched_next_frame_step(apu->frame_step_delay + 1);
 		break;
+	case 0x80:
+		do_quarter_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay);
+		break;
+	case 0x81:
+		do_half_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay + 2);
+		break;
+	case 0x82:
+		do_quarter_frame = 1;
+		sched_next_frame_step(2 * apu->frame_step_delay - 2);
+		break;
+	case 0x83:
+		do_half_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay + 2);
+		break;
+	case 255:
+		apu->frame_counter_reset = 1;
+		break;
 	}
 
 	if (apu->frame_counter_reset && frame_counter_mode &&
@@ -1301,6 +1320,37 @@ static void clock_frame_counter1(struct apu_state *apu)
 	frame_counter_mode = apu->frame_counter_mode & 0x80;
 
 	switch (apu->frame_counter_step) {
+	case 0x00:
+		do_quarter_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay);
+		break;
+	case 0x01:
+		do_half_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay + 2);
+		break;
+	case 0x02:
+		do_quarter_frame = 1;
+		sched_next_frame_step(apu->frame_step_delay + 1);
+		break;
+	case 0x03:
+		set_frame_irq_flag(apu->emu);
+		apu->next_frame_irq += apu->emu->cpu_clock_divider;
+		sched_next_frame_step(1);
+		break;
+	case 0x04:
+		do_half_frame = 1;
+		set_frame_irq_flag(apu->emu);
+		apu->next_frame_irq += apu->emu->cpu_clock_divider;
+		sched_next_frame_step(1);
+		break;
+	case 0x05:
+		set_frame_irq_flag(apu->emu);
+		/* apu->next_frame_irq = apu->next_frame_step + */
+		/*      apu->frame_irq_delay - apu->emu->cpu_clock_divider; */
+		apu->next_frame_irq = apu->next_frame_step +
+		    apu->frame_irq_delay;
+		sched_next_frame_step(apu->frame_step_delay + 1);
+		break;
 	case 0x80:
 		do_quarter_frame = 1;
 		sched_next_frame_step(apu->frame_step_delay);
