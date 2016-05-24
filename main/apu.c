@@ -149,7 +149,8 @@ struct apu_state {
 	const uint16_t *dmc_rate_table;
 
 	int odd_cycle;
-	int frame_counter_reset;
+	uint8_t frame_counter_register;
+	uint32_t frame_counter_register_timestamp;
 
 	struct emu *emu;
 };
@@ -165,6 +166,8 @@ static struct state_item apu_state_items[] = {
 	STATE_32BIT(apu_state, frame_irq_delay), /* FIXME check type */
 	STATE_8BIT(apu_state, dmc_irq_flag), /* BOOLEAN */
 	STATE_8BIT(apu_state, odd_cycle), /* BOOLEAN */
+	STATE_8BIT(apu_state, frame_counter_register),
+	STATE_32BIT(apu_state, frame_counter_register_timestamp),
 	STATE_ITEM_END(),
 };
 
@@ -937,41 +940,39 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	apu = emu->apu;
 	apu_run(apu, cycles);
 
-	if (apu->odd_cycle)
-		cycles += 2 * emu->cpu_clock_divider;
-	else
-		cycles += 3 * emu->cpu_clock_divider;
-
-	printf("value: %x cycles: %d, next_frame_step: %d, diff: %d\n", value,
-	       cycles, apu->next_frame_step, apu->next_frame_step - cycles);
+	/* Calculate the timestamp when the write will take effect */
+	if (!apu->odd_cycle)
+		cycles += emu->cpu_clock_divider;
+	cycles += 2 * emu->cpu_clock_divider;
 
 	/* NSF doesn't support frame interrupts */
 	if (board_get_type(emu->board) == BOARD_TYPE_NSF)
 		value |= 0x40;
 
-	cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
-	cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
-	apu->next_frame_irq = ~0;
+	apu->frame_counter_register = value;
+	apu->frame_counter_register_timestamp = cycles;
 
-	//if (apu->next_frame_step != cycles)
+	/* If write completes before next frame step,
+	   then we just go straight for the reset step.
+	 */
+	if (cycles < apu->next_frame_step) {
+		apu->next_frame_step = cycles;
 		apu->frame_counter_step = 255;
+	}
 
-	if (!(value & 0x80)) {
-		if (!(value & 0x40)) {
+	/* Deal with IRQ (if IRQ will occur after the write takes effect).
+	   If the IRQ will occur before the write takes effect, there's nothing
+	   to do. */
+	if (!(apu->frame_counter_mode & 0xc0) && (apu->next_frame_irq > cycles)) {
+		cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
+		cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
+		apu->next_frame_irq = ~0;
+
+		if (!(value & 0xc0)) {
 			apu->next_frame_irq  = cycles + apu->frame_irq_delay;
 			cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 					       apu->next_frame_irq);
 		}
-	}
-
-	//printf("mode is now %x\n", value & 0xc0);
-
-	apu->frame_counter_mode = value;
-	apu->frame_counter_reset = 1;
-	apu->next_frame_step = cycles;
-
-	if (apu->frame_counter_mode & FRAME_INTERRUPT_DISABLED) {
-		apu->frame_irq_flag = 0;
 	}
 }
 
@@ -1067,7 +1068,6 @@ void apu_reset(struct apu_state *apu, int hard)
 	memset(&apu->dmc, 0, sizeof(apu->dmc));
 
 	apu->odd_cycle = 0;
-	apu->frame_counter_reset = 0;
 
 	apu->next_frame_step = 0;
 	apu->last_time = 0;
@@ -1104,6 +1104,8 @@ void apu_reset(struct apu_state *apu, int hard)
 
 	apu->frame_counter_step = 0;
 	apu->frame_irq_flag = 0;
+	apu->frame_counter_register = 0;
+	apu->frame_counter_register_timestamp = ~0;
 
 	/* Clear any pending frame and DMC interrupt */
 	cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
@@ -1183,12 +1185,21 @@ static void clock_frame_counter(struct apu_state *apu)
 	uint32_t cycles = apu->next_frame_step;
 	int do_quarter_frame, do_half_frame;
 	int frame_counter_mode;
+	int frame_counter_reset;
 
+	frame_counter_reset = 0;
 	do_quarter_frame = 0;
 	do_half_frame = 0;
+
+	if (cycles == apu->frame_counter_register_timestamp) {
+		apu->frame_counter_mode = apu->frame_counter_register;
+		apu->frame_counter_register_timestamp = ~0;
+		frame_counter_reset = 1;
+	}
+
 	frame_counter_mode = apu->frame_counter_mode & 0x80;
 
-	//printf("step is %x, mode = %x\n", apu->frame_counter_step, frame_counter_mode);
+	//printf("step is %x, mode = %x, cycles = %d\n", apu->frame_counter_step, frame_counter_mode, cycles);
 
 	switch (apu->frame_counter_step) {
 	case 0x00:
@@ -1237,10 +1248,16 @@ static void clock_frame_counter(struct apu_state *apu)
 		sched_next_frame_step(apu->frame_step_delay + 2);
 		break;
 	case 255:
+		frame_counter_reset = 1;
 		break;
 	}
 
-	if (apu->frame_counter_reset && frame_counter_mode &&
+	if (frame_counter_reset &&
+	    (apu->frame_counter_mode & FRAME_INTERRUPT_DISABLED)) {
+		apu->frame_irq_flag = 0;
+	}
+
+	if (frame_counter_reset && frame_counter_mode &&
 	    (!do_quarter_frame && !do_half_frame)) {
 		do_quarter_frame = 1;
 		do_half_frame = 1;
@@ -1256,25 +1273,28 @@ static void clock_frame_counter(struct apu_state *apu)
 		clock_envelopes(apu);
 	}
 
-	if (apu->frame_counter_reset) {
-		apu->frame_counter_step = 0;
-		sched_next_frame_step(apu->frame_step_delay + 1);
+	if (apu->frame_counter_register_timestamp < apu->next_frame_step) {
+		apu->next_frame_step = apu->frame_counter_register_timestamp;
+		apu->frame_counter_step = 255;
 	} else {
-		apu->frame_counter_step = (apu->frame_counter_step + 1);
+		if (frame_counter_reset) {
+			apu->frame_counter_step = 0;
+			sched_next_frame_step(apu->frame_step_delay + 1);
+		} else {
+			apu->frame_counter_step = (apu->frame_counter_step + 1);
+		}
+
+		if (frame_counter_mode)
+			apu->frame_counter_step %= 4;
+		else
+			apu->frame_counter_step %= 6;
+
+		apu->frame_counter_step |= frame_counter_mode;
 	}
-
-	if (frame_counter_mode)
-		apu->frame_counter_step %= 4;
-	else
-		apu->frame_counter_step %= 6;
-
-	apu->frame_counter_step |= frame_counter_mode;
 
 	pulse_update_volume(apu, 0, cycles);
 	pulse_update_volume(apu, 1, cycles);
 	noise_update_volume(apu, cycles);
-
-	apu->frame_counter_reset = 0;
 }
 static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
 {
