@@ -960,19 +960,20 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 		apu->frame_counter_step = 255;
 	}
 
-	/* Deal with IRQ (if IRQ will occur after the write takes effect).
-	   If the IRQ will occur before the write takes effect, there's nothing
-	   to do. */
-	if (!(apu->frame_counter_mode & 0xc0) && (apu->next_frame_irq > cycles)) {
+	if (!(apu->frame_counter_mode & 0xc0) &&
+	    (apu->next_frame_irq > cycles)) {
 		cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_FRAME);
 		cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_FRAME);
 		apu->next_frame_irq = ~0;
+	}
 
-		if (!(value & 0xc0)) {
-			apu->next_frame_irq  = cycles + apu->frame_irq_delay;
-			cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
-					       apu->next_frame_irq);
-		}
+	/* Deal with IRQ (if IRQ will occur after the write takes effect).
+	   If the IRQ will occur before the write takes effect, there's nothing
+	   to do. */
+	if (!(value & 0xc0) && (apu->next_frame_irq > cycles)) {
+		apu->next_frame_irq  = cycles + apu->frame_irq_delay;
+		cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
+				       apu->next_frame_irq);
 	}
 }
 
@@ -1215,6 +1216,8 @@ static void clock_frame_counter(struct apu_state *apu)
 		sched_next_frame_step(apu->frame_step_delay + 1);
 		break;
 	case 0x03:
+		do_half_frame = -1;
+		do_quarter_frame = -1;
 		set_frame_irq_flag(apu->emu);
 		apu->next_frame_irq += apu->emu->cpu_clock_divider;
 		sched_next_frame_step(1);
@@ -1226,6 +1229,8 @@ static void clock_frame_counter(struct apu_state *apu)
 		sched_next_frame_step(1);
 		break;
 	case 0x05:
+		do_half_frame = -1;
+		do_quarter_frame = -1;
 		set_frame_irq_flag(apu->emu);
 		apu->next_frame_irq = apu->next_frame_step +
 		    apu->frame_irq_delay;
@@ -1263,12 +1268,12 @@ static void clock_frame_counter(struct apu_state *apu)
 		do_half_frame = 1;
 	}
 
-	if (do_half_frame) {
+	if (do_half_frame > 0) {
 		clock_length_counters(apu);
 		clock_sweeps(apu);
 	}
 
-	if (do_quarter_frame) {
+	if (do_quarter_frame > 0) {
 		clock_linear_counter(&apu->triangle.linear);
 		clock_envelopes(apu);
 	}
