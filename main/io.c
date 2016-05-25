@@ -1082,6 +1082,8 @@ static int controller_common_connect(struct io_device *dev)
 
 		memset(state, 0, sizeof(*state));
 
+		state->canary = 0xdeadbeef;
+
 		state->port_mapping[0] = -1;
 		state->port_mapping[1] = -1;
 		state->port_mapping[2] = -1;
@@ -1135,6 +1137,9 @@ static void controller_common_end_frame(struct io_device *dev, uint32_t cycles)
 	int i;
 
 	state = dev->private;
+	if (state->canary != 0xdeadbeef) {
+		printf("wtf: canary is %x\n", state->canary);
+	}
 	state->turbo_counter = (state->turbo_counter + 1) %
 		state->turbo_cycle_length;
 

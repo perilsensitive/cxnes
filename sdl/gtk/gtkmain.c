@@ -553,6 +553,7 @@ static gboolean window_state_callback(GtkWidget *widget, GdkEventWindowState *ev
 static void size_allocate_cb(GtkWidget *widget, GdkRectangle *allocation, gpointer data)
 {
 	video_resize(allocation->width, allocation->height);
+
 	drawingarea_x = allocation->x;
 	drawingarea_y = allocation->y;
 	drawingarea_height = allocation->height;
@@ -707,6 +708,11 @@ void *gui_init(void)
 	GtkWidget *box;
 	int window_w, window_h;
 	int menubar_height;
+	int gdk_window_scale_factor;
+#if GTK_MINOR_VERSION >= 10
+	GdkWindow *gdk_window;
+#endif
+
 
 	gtk_init(NULL, NULL);
 	keycode_map_init();
@@ -731,6 +737,7 @@ void *gui_init(void)
 
 	/* Now the drawing area */
 	drawingarea = gtk_drawing_area_new();
+
 	video_get_windowed_size(&window_w, &window_h);
 	gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
 	gtk_window_set_default_size(GTK_WINDOW(gtkwindow), window_w, window_h + menubar_height);
@@ -823,6 +830,14 @@ void *gui_init(void)
 	crosshair_cursor = gdk_cursor_new_for_display(gdk_display, GDK_CROSSHAIR);
 
 	f10_accelerator_fix();
+
+#if GTK_MINOR_VERSION >= 10
+	gdk_window = gtk_widget_get_window(gtkwindow);
+	gdk_window_scale_factor = gdk_window_get_scale_factor(gdk_window);
+#else
+	gdk_window_scale_factor = 1;
+#endif
+	video_set_scaling_factor(gdk_window_scale_factor);
 
 	return (void *)window_handle;
 }

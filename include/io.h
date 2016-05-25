@@ -91,6 +91,7 @@ struct controller_common_state {
 	int turbo_buttons[4];
 	int turbo_toggles[4];
 	int turbo_mask[4];
+	uint32_t canary;
 	int turbo_cycle_length;
 	int turbo_pressed_frames;
 	int turbo_counter;

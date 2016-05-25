@@ -85,6 +85,7 @@ int center_x, center_y;
 int mouse_grabbed;
 int crosshairs_enabled;
 
+static int scaling_factor = 1;
 static uint32_t rgb_palette[512];
 uint32_t *nes_screen;
 static int nes_screen_width = 256;
@@ -1575,7 +1576,7 @@ void video_set_window_title(const char *title)
 void video_resize(int w, int h)
 {
 	if (window)
-		SDL_SetWindowSize(window, w, h);
+		SDL_SetWindowSize(window, w * scaling_factor, h * scaling_factor);
 }
 
 /* Force a redraw of the current buffer.  Useful if
@@ -1626,8 +1627,8 @@ void video_mouse_button(int button, int state, int x, int y)
 
 	sdlevent.button.which = 0;
 	sdlevent.button.windowID = SDL_GetWindowID(window);
-	sdlevent.button.x = x;
-	sdlevent.button.y = y;
+	sdlevent.button.x = x * scaling_factor;
+	sdlevent.button.y = y * scaling_factor;
 	sdlevent.button.button = button;
 	sdlevent.button.clicks = 1;
 
@@ -1646,11 +1647,11 @@ void video_mouse_motion(int x, int y, int button_state)
 	sdlevent.type = SDL_MOUSEMOTION;
 	sdlevent.motion.which = 0;
 	sdlevent.button.windowID = SDL_GetWindowID(window);
-	sdlevent.motion.x = x;
-	sdlevent.motion.y = y;
+	sdlevent.motion.x = x * scaling_factor;
+	sdlevent.motion.y = y * scaling_factor;
 	sdlevent.motion.state = button_state;
-	sdlevent.motion.xrel = x - mouse_lastx;
-	sdlevent.motion.yrel = y - mouse_lasty;
+	sdlevent.motion.xrel = (x - mouse_lastx) * scaling_factor;
+	sdlevent.motion.yrel = (y - mouse_lasty) * scaling_factor;
 	mouse_lastx = x;
 	mouse_lasty = y;
 
@@ -1689,6 +1690,11 @@ void video_maximized(void)
 void video_restored(void)
 {
 	video_state_event(SDL_WINDOWEVENT_RESTORED);
+}
+
+void video_set_scaling_factor(int factor)
+{
+	scaling_factor = factor;
 }
 
 void video_get_windowed_size(int *w, int *h)

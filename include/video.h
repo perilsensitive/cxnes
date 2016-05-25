@@ -59,6 +59,7 @@ void video_minimized(void);
 void video_maximized(void);
 void video_restored(void);
 void video_get_windowed_size(int *w, int *h);
+void video_set_scaling_factor(int factor);
 #endif
 
 #endif				/* __VIDEO_H__ */
