@@ -1161,8 +1161,8 @@ static int controller_common_set_button(void *data, uint32_t pressed, uint32_t b
 	dev = data;
 	state = dev->private;
 
+	controller = (button & 0x3000) >> 12;
 
-	controller = (button & 0x3000) >> 8;
 	turbo = button & ACTION_CONTROLLER_TURBO_FLAG;
 	turbo_toggle = button & ACTION_CONTROLLER_TURBO_TOGGLE_FLAG;
 	button &= 0xfff;
