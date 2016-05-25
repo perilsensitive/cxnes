@@ -975,7 +975,9 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	   If the IRQ will occur before the write takes effect, there's nothing
 	   to do. */
 	if (!(value & 0xc0) /*&& (apu->next_frame_irq > cycles)*/) {
-		apu->next_frame_irq  = cycles + 12 + apu->frame_irq_delay;
+		apu->next_frame_irq  = cycles + emu->cpu_clock_divider +
+		                       apu->frame_irq_delay;
+		printf("next irq at %d\n", apu->next_frame_irq);
 		cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 				       apu->next_frame_irq);
 	}
