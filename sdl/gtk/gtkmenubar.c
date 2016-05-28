@@ -61,7 +61,29 @@ static void file_quit_callback(GtkWidget *widget, gpointer userdata)
 
 static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 {
+
+	printf("here\n");
 	fullscreen_callback();
+}
+
+static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
+{
+	int is_fullscreen = fullscreen;
+	GtkWidget *item;
+
+	item = user_data;
+	g_signal_handlers_block_by_func(G_OBJECT(item),
+					G_CALLBACK(emulator_fullscreen_callback),
+					NULL);
+
+	if (is_fullscreen < 0)
+		is_fullscreen = emu->config->fullscreen;
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), is_fullscreen);
+
+	g_signal_handlers_unblock_by_func(G_OBJECT(item),
+					G_CALLBACK(emulator_fullscreen_callback),
+					NULL);
 }
 
 static void screenshot_callback(GtkWidget *widget, gpointer userdata)
@@ -1232,8 +1254,13 @@ static GtkWidget *gui_build_emulator_menu(void)
 			  NULL, is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Soft Reset", soft_reset_callback,
 			  NULL, is_sensitive_if_loaded);
-	gui_add_menu_item(menu, "_Fullscreen", emulator_fullscreen_callback,
-			  NULL, NULL);
+	item = gtk_check_menu_item_new_with_mnemonic("_Fullscreen");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_fullscreen_callback), NULL);
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(update_fullscreen_toggle), item);
+
 	gui_add_menu_item(menu, "_Pause/Resume", pause_resume_callback,
 			  NULL, is_sensitive_if_loaded);
 
