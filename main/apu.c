@@ -773,6 +773,19 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 	}
 }
 
+static uint32_t fix_timestamp(struct apu_state *apu, uint32_t cycles, uint32_t timestamp)
+{
+	int count;
+
+	count = timestamp - cycles;
+	count /= apu->emu->cpu_clock_divider;
+
+	if ((count & 1) == (apu->odd_cycle))
+		timestamp += apu->emu->cpu_clock_divider;
+
+	return timestamp;
+}
+
 static CPU_WRITE_HANDLER(dmc_write_handler)
 {
 	struct dmc *dmc;
@@ -798,6 +811,7 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 			apu->dmc_irq_flag = 0;
 
 		new_dma = apu_dmc_set_period(apu, value & 0x0f, cycles);
+		new_dma = fix_timestamp(apu, cycles, new_dma);
 		if (apu->dmc.bytes_remaining) {
 			cpu_set_dma_timestamp(emu->cpu, new_dma,
 					  apu->dmc.addr_current, 0);
@@ -877,11 +891,13 @@ static CPU_WRITE_HANDLER(status_write_handler)
 		if (apu->dmc.empty) {
 			/* FIXME previously set wait_cycles to 2 */
 			next_dma = cycles;
+			next_dma = fix_timestamp(apu, cycles, next_dma);
 			apu->dmc.dma_timestamp = next_dma;
 			cpu_set_dma_timestamp(emu->cpu, next_dma,
 					  apu->dmc.addr_current, 1);
 		} else {
 			next_dma = apu_dmc_calc_dma_time(apu, cycles);
+			next_dma = fix_timestamp(apu, cycles, next_dma);
 
 			/* Tell the cpu which byte to dma next and
 			   when to do it.
