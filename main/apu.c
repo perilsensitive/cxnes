@@ -366,7 +366,6 @@ static void clock_linear_counter(struct linear_counter *l)
 static void clock_length_counters(struct apu_state *apu)
 {
 	clock_length(&apu->pulse[0].length);
-	printf("length: %u\n", apu->pulse[0].length.counter);
 	clock_length(&apu->pulse[1].length);
 	clock_length(&apu->triangle.length);
 	clock_length(&apu->noise.length);
@@ -946,7 +945,7 @@ static CPU_READ_HANDLER(status_read_handler)
 		result |= 0x10;
 	}
 
-	printf("got result %x from 4015, %d %d\n", result, cycles, apu->odd_cycle);
+	//printf("got result %x from 4015, %d %d\n", result, cycles, apu->odd_cycle);
 
 	return result;
 }
@@ -970,8 +969,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	apu->frame_counter_register = value;
 	apu->frame_counter_register_timestamp = cycles;
 
-	printf("wrote %x to 4017 at %d, next step is %d (%d)\n",
-	       value, cycles, apu->next_frame_step, apu->frame_counter_step);
 	/* If write completes before next frame step,
 	   then we just go straight for the reset step.
 	 */
@@ -993,7 +990,6 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	if (!(value & 0xc0) /*&& (apu->next_frame_irq > cycles)*/) {
 		apu->next_frame_irq  = cycles + emu->cpu_clock_divider +
 		                       apu->frame_irq_delay;
-		printf("next irq at %d\n", apu->next_frame_irq);
 		cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 				       apu->next_frame_irq);
 	}
@@ -1221,8 +1217,6 @@ static void clock_frame_counter(struct apu_state *apu)
 	}
 
 	frame_counter_mode = apu->frame_counter_mode & 0x80;
-
-	printf("step is %x, (%d) mode = %x, cycles = %d\n", apu->frame_counter_step, apu->odd_cycle, frame_counter_mode, cycles);
 
 	switch (apu->frame_counter_step) {
 	case 0x00:
