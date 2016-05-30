@@ -2271,7 +2271,7 @@ void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 	cpu->polled_interrupts = 1;
 
 	cpu->dma_wait_cycles = 1;
-	if (odd)
+	if (!odd)
 		cpu->oam_dma_step = -2;
 	else
 		cpu->oam_dma_step = -1;
