@@ -798,23 +798,41 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 		printf("READ STEP NONE\n");
 		break;
 	case DMC_DMA_STEP_RDY:
-		printf("READ STEP RDY\n");
-		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
+		printf("READ STEP RDY\n");
+		if (cpu->oam_dma_step >= 256) {
+			/* FIXME should be read_mem() with side effects */
+			cpu->cycles += cpu->cpu_clock_divider;
+		} else {
+			printf("step: %d\n", cpu->oam_dma_step);
+			break;
+		}
 	case DMC_DMA_STEP_DUMMY:
 		printf("READ STEP DUMMY\n");
-		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
+		if (cpu->oam_dma_step >= 256) {
+			/* FIXME should be read_mem() with side effects */
+			cpu->cycles += cpu->cpu_clock_divider;
+		} else {
+			printf("step: %d\n", cpu->oam_dma_step);
+			break;
+		}
 	case DMC_DMA_STEP_ALIGN:
 		printf("READ STEP ALIGN\n");
-		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
+		if (cpu->oam_dma_step >= 256) {
+			/* FIXME should be read_mem() with side effects */
+			cpu->cycles += cpu->cpu_clock_divider;
+		} else {
+			printf("step: %d\n", cpu->oam_dma_step);
+			break;
+		}
 	case DMC_DMA_STEP_XFER:
 		printf("READ STEP XFER\n");
 		cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
@@ -824,6 +842,12 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 		data = cpu->data_bus;
 		apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
 				 &cpu->dmc_dma_addr, cpu->cycles);
+		if (cpu->oam_dma_step < 256) {
+			/* Re-align to finish OAM DMA  */
+			/* FIXME should be read_mem() with side effects */
+			cpu->cycles += cpu->cpu_clock_divider;
+			printf("step: %d\n", cpu->oam_dma_step);
+		}
 		printf("READ STEP -> NONE\n");
 		break;
 	}
@@ -846,27 +870,32 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 	switch (cpu->dmc_dma_step) {
 	case DMC_DMA_STEP_NONE:
 		printf("WRITE STEP NONE\n");
+			printf("step: %d\n", cpu->oam_dma_step);
 		break;
 	case DMC_DMA_STEP_RDY:
 		printf("WRITE STEP RDY\n");
+			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		break;
 	case DMC_DMA_STEP_DUMMY:
 		printf("WRITE STEP DUMMY\n");
+			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		break;
 	case DMC_DMA_STEP_ALIGN:
 		printf("WRITE STEP ALIGN\n");
+			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		break;
 	case DMC_DMA_STEP_XFER:
 		printf("WRITE STEP XFER\n");
+			printf("step: %d\n", cpu->oam_dma_step);
 		/* Shouldn't ever get here */
 		break;
 	}
@@ -2289,7 +2318,6 @@ void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 	update_interrupt_status(cpu);
 	cpu->polled_interrupts = 1;
 
-	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	if (!odd)
 		cpu->oam_dma_step = -2;
 	else
@@ -2337,34 +2365,32 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 		max = 254 * 2;
 
 	for (i = cpu->oam_dma_step * 2; i < max; i+= 2) {
-		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		read_mem(cpu, addr);
 		value = cpu->data_bus;
-		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		write_mem(cpu, 0x2004, value);
 		addr++;
 		cpu->oam_dma_step++;
 	}
 
 
-	if (i < 508)
+	if (i < 507)
 		return 1;
 
-	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
+	//cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	read_mem(cpu, addr);
 	value = cpu->data_bus;
 	addr++;
-	cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
+	//cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 	write_mem(cpu, 0x2004, value);
 	cpu->oam_dma_step++;
-	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
+	//cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	read_mem(cpu, addr);
 	value = cpu->data_bus;
 	addr++;
-	cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
+	//cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 	write_mem(cpu, 0x2004, value);
 	cpu->oam_dma_step++;
-	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
+	//cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 
 	return 0;
 }
