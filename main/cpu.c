@@ -1267,7 +1267,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	cpu->resetting = 1;
 	cpu->dmc_dma_timestamp = ~0;
 	cpu->oam_dma_timestamp = ~0;
-	cpu->dmc_dma_timestamp = ~0;
+	cpu->dma_timestamp = ~0;
 	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 
 }
