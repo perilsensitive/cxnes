@@ -151,8 +151,11 @@ static inline void update_interrupt_status(struct cpu_state *cpu);
 
 static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 {
+	addr &= 0xffff;
+
 	if (cpu->dma_timestamp != ~0 &&
 	    cpu->cycles >= cpu->dma_timestamp) {
+		printf("calling write transfer\n");
 		write_dma_transfer(cpu, addr);	
 	}
 	cpu->cycles += cpu->cpu_clock_divider;
@@ -170,8 +173,12 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 static inline void read_mem(struct cpu_state *cpu, int addr)
 {
 	uint8_t value = cpu->data_bus;
+
+	addr &= 0xffff;
+
 	if (cpu->dma_timestamp != ~0 &&
 	    cpu->cycles >= cpu->dma_timestamp) {
+		printf("calling write transfer\n");
 		read_dma_transfer(cpu, addr);
 	}
 	
@@ -837,11 +844,19 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 		printf("READ STEP XFER\n");
 		cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 		cpu->dmc_dma_timestamp = ~0;
-		cpu->dma_timestamp = cpu->oam_dma_timestamp;
+		cpu->dma_timestamp = ~0;
 		read_mem(cpu, cpu->dmc_dma_addr);
 		data = cpu->data_bus;
 		apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
 				 &cpu->dmc_dma_addr, cpu->cycles);
+
+		if (cpu->oam_dma_timestamp < cpu->dmc_dma_timestamp)
+			cpu->dma_timestamp = cpu->oam_dma_timestamp;
+		else
+			cpu->dma_timestamp = cpu->dmc_dma_timestamp;
+
+			printf("set to %d\n", cpu->dmc_dma_timestamp);
+
 		if (cpu->oam_dma_step < 256) {
 			/* Re-align to finish OAM DMA  */
 			/* FIXME should be read_mem() with side effects */
@@ -2373,7 +2388,7 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 	}
 
 
-	if (i < 507)
+	if (i < 508)
 		return 1;
 
 	//cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
