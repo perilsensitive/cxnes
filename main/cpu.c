@@ -47,6 +47,14 @@
 
 #define IRQ_FLAG(x) (1 << (x))
 
+enum {
+	DMC_DMA_STEP_NONE,
+	DMC_DMA_STEP_RDY,
+	DMC_DMA_STEP_DUMMY,
+	DMC_DMA_STEP_ALIGN,
+	DMC_DMA_STEP_XFER,
+};
+
 struct cpu_state {
 	uint8_t A;
 	uint8_t X;
@@ -69,7 +77,7 @@ struct cpu_state {
 	int step_cycles;
 	int board_run_timestamp;
 	int resetting;
-	int dma_wait_cycles;
+	int dmc_dma_step;
 	int oam_dma_step;
 	int oam_dma_addr;
 	int is_opcode_fetch;
@@ -105,7 +113,7 @@ static struct state_item cpu_state_items[] = {
 	STATE_32BIT(cpu_state, step_cycles),
 	STATE_32BIT(cpu_state, board_run_timestamp),
 	STATE_8BIT(cpu_state, resetting), /* BOOLEAN */
-	STATE_8BIT(cpu_state, dma_wait_cycles),
+	STATE_8BIT(cpu_state, dmc_dma_step),
 	STATE_16BIT(cpu_state, oam_dma_step),
 	STATE_32BIT(cpu_state, frame_cycles),
 	STATE_16BIT(cpu_state, oam_dma_addr),
@@ -115,7 +123,6 @@ static struct state_item cpu_state_items[] = {
 };
 
 static int cpu_do_oam_dma(struct cpu_state *cpu);
-static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus);
 CPU_WRITE_HANDLER(cpu_dma_ppu_oam_write_handler);
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd_cycle);
 static void write_dma_transfer(struct cpu_state *cpu, int addr);
@@ -771,6 +778,7 @@ cpu_write_handler_t *cpu_get_write_handler(struct cpu_state *cpu, int addr)
 
 static void read_dma_transfer(struct cpu_state *cpu, int addr)
 {
+	uint8_t data;
 #if 1
 	/* FIXME should only be ==, not >= */
 	if (cpu->cycles > cpu->dma_timestamp) {
@@ -779,10 +787,46 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 			cpu->dma_timestamp);
 	}
 #endif
-	if (cpu->dma_wait_cycles < 0)
-		cpu->dma_wait_cycles = 3;
 
-	cpu_dma_transfer(cpu, addr);
+	if (cpu->dmc_dma_step == DMC_DMA_STEP_NONE)
+		cpu->dmc_dma_step = DMC_DMA_STEP_RDY;
+
+
+	/* FIXME do actual read_mem() calls */
+	switch (cpu->dmc_dma_step) {
+	case DMC_DMA_STEP_NONE:
+		printf("READ STEP NONE\n");
+		break;
+	case DMC_DMA_STEP_RDY:
+		printf("READ STEP RDY\n");
+		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
+	case DMC_DMA_STEP_DUMMY:
+		printf("READ STEP DUMMY\n");
+		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
+	case DMC_DMA_STEP_ALIGN:
+		printf("READ STEP ALIGN\n");
+		cpu->cycles += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
+	case DMC_DMA_STEP_XFER:
+		printf("READ STEP XFER\n");
+		cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
+		cpu->dmc_dma_timestamp = ~0;
+		cpu->dma_timestamp = cpu->oam_dma_timestamp;
+		read_mem(cpu, cpu->dmc_dma_addr);
+		data = cpu->data_bus;
+		apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
+				 &cpu->dmc_dma_addr, cpu->cycles);
+		printf("READ STEP -> NONE\n");
+		break;
+	}
 }
 
 static void write_dma_transfer(struct cpu_state *cpu, int addr)
@@ -795,19 +839,36 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 			cpu->dma_timestamp);
 	}
 #endif
-	if (addr == 0x4014) {
-		cpu->dma_wait_cycles = 1;
-		cpu_dma_transfer(cpu, addr);
-	} else if (cpu->oam_dma_step < 256) {
-		cpu_dma_transfer(cpu, addr);
-	} else if (cpu->dma_wait_cycles < 0) {
-		cpu->dma_wait_cycles = 2;
+
+	if (cpu->dmc_dma_step == DMC_DMA_STEP_NONE)
+		cpu->dmc_dma_step = DMC_DMA_STEP_RDY;
+
+	switch (cpu->dmc_dma_step) {
+	case DMC_DMA_STEP_NONE:
+		printf("WRITE STEP NONE\n");
+		break;
+	case DMC_DMA_STEP_RDY:
+		printf("WRITE STEP RDY\n");
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
+		break;
+	case DMC_DMA_STEP_DUMMY:
+		printf("WRITE STEP DUMMY\n");
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-	} else {
-		cpu->dma_wait_cycles--;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
+		break;
+	case DMC_DMA_STEP_ALIGN:
+		printf("WRITE STEP ALIGN\n");
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
+		break;
+	case DMC_DMA_STEP_XFER:
+		printf("WRITE STEP XFER\n");
+		/* Shouldn't ever get here */
+		break;
 	}
 }
 
@@ -1178,7 +1239,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	cpu->dmc_dma_timestamp = ~0;
 	cpu->oam_dma_timestamp = ~0;
 	cpu->dmc_dma_timestamp = ~0;
-	cpu->dma_wait_cycles = -1;
+	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 
 }
 
@@ -2216,63 +2277,7 @@ void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 		cpu->dma_timestamp = cycles;
 
 	if (immediate)
-		cpu->dma_wait_cycles = 2;
-}
-
-/*
- * DMA is done in the CPU core to ensure that it happens on the correct
- * cycle.  While this could probably be done by other means, this seems
- * (to me) the most straightforward approach.  Also, this facilitates
- * interacting with OAM DMA accurately.
- */
-
-static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus)
-{
-	uint8_t data;
-	int i;
-
-	cpu->dmc_dma_timestamp = ~0;
-	cpu->dma_timestamp = ~0;
-
-	for (i = 0; i < cpu->dma_wait_cycles; i++) {
-		/* DMC DMA can trigger an extra read of the address already on
-		   the bus.  This only matters for memory-mapped I/O that is
-		   affected by reads, like $2002, $2007, $4016 and $4017.  So
-		   we just call the read handler for the address here (if
-		   defined) and discard the result.
-
-		   This bug only affects the 2A03, not the 2A07.  This means
-		   that the PAL NES isn't affected, but both the NTSC NES and
-		   the Famicom are.
-		*/
-
-		/* If DMA_AFFECTS_IO_ONLY is 1, then only $4016/$4017
-		   reads are affected by this glitch.  The timing of
-		   extra $200x reads isn't fully understood (by me at
-		   least), and emulating them causes graphical glitches
-		   in some games (Ninja Gaiden, for example).
-`		*/
-		if ((cpu->type == CPU_TYPE_RP2A03) &&
-#if DMA_AFFECTS_IO_ONLY
-		    ((addr_bus & 0xfffe) == 0x4016) &&
-#endif
-		    cpu->read_handlers[addr_bus]) {
-			if (i == 0 || (addr_bus != 0x4016 && addr_bus != 0x4017)) {
-				cpu->read_handlers[addr_bus] (cpu->emu, addr_bus,
-							      cpu->data_bus,
-							      cpu->cycles);
-			}
-		}
-		cpu->cycles += cpu->cpu_clock_divider;
-	}
-
-	cpu->dma_wait_cycles = -1;
-	cpu->dmc_dma_timestamp = ~0;
-
-	read_mem(cpu, cpu->dmc_dma_addr);
-	data = cpu->data_bus;
-	apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
-			 &cpu->dmc_dma_addr, cpu->cycles);
+		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 }
 
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
@@ -2284,7 +2289,7 @@ void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
 	update_interrupt_status(cpu);
 	cpu->polled_interrupts = 1;
 
-	cpu->dma_wait_cycles = 1;
+	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	if (!odd)
 		cpu->oam_dma_step = -2;
 	else
@@ -2332,10 +2337,10 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 		max = 254 * 2;
 
 	for (i = cpu->oam_dma_step * 2; i < max; i+= 2) {
-		cpu->dma_wait_cycles = 1;
+		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		read_mem(cpu, addr);
 		value = cpu->data_bus;
-		cpu->dma_wait_cycles = 1;
+		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		write_mem(cpu, 0x2004, value);
 		addr++;
 		cpu->oam_dma_step++;
@@ -2345,21 +2350,21 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 	if (i < 508)
 		return 1;
 
-	cpu->dma_wait_cycles = 1;
+	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	read_mem(cpu, addr);
 	value = cpu->data_bus;
 	addr++;
-	cpu->dma_wait_cycles = 0;
+	cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 	write_mem(cpu, 0x2004, value);
 	cpu->oam_dma_step++;
-	cpu->dma_wait_cycles = 1;
+	cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 	read_mem(cpu, addr);
 	value = cpu->data_bus;
 	addr++;
-	cpu->dma_wait_cycles = 2;
+	cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 	write_mem(cpu, 0x2004, value);
 	cpu->oam_dma_step++;
-	cpu->dma_wait_cycles = -1;
+	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 
 	return 0;
 }
