@@ -92,7 +92,7 @@ void cpu_set_read_handler(struct cpu_state *cpu, int addr, size_t size,
 void cpu_set_write_handler(struct cpu_state *cpu, int addr, size_t size,
 			   int mask, cpu_write_handler_t * h);
 
-void cpu_set_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
+void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 			   int immediate);
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd);
 cpu_write_handler_t *cpu_get_write_handler(struct cpu_state *cpu, int addr);

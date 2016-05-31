@@ -812,7 +812,7 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 		new_dma = apu_dmc_set_period(apu, value & 0x0f, cycles);
 		new_dma = fix_timestamp(apu, cycles, new_dma);
 		if (apu->dmc.bytes_remaining) {
-			cpu_set_dma_timestamp(emu->cpu, new_dma,
+			cpu_set_dmc_dma_timestamp(emu->cpu, new_dma,
 					  apu->dmc.addr_current, 0);
 		}
 		cpu_interrupt_ack(emu->cpu, IRQ_APU_DMC);
@@ -878,7 +878,7 @@ static CPU_WRITE_HANDLER(status_write_handler)
 		apu->dmc_irq_flag = 0;
 		next_dma = ~0;
 		apu->dmc.bytes_remaining = 0;
-		cpu_set_dma_timestamp(apu->emu->cpu, next_dma,
+		cpu_set_dmc_dma_timestamp(apu->emu->cpu, next_dma,
 				  apu->dmc.addr, 0);
 		return;
 	}
@@ -892,7 +892,7 @@ static CPU_WRITE_HANDLER(status_write_handler)
 			next_dma = cycles;
 			next_dma = fix_timestamp(apu, cycles, next_dma);
 			apu->dmc.dma_timestamp = next_dma;
-			cpu_set_dma_timestamp(emu->cpu, next_dma,
+			cpu_set_dmc_dma_timestamp(emu->cpu, next_dma,
 					  apu->dmc.addr_current, 1);
 		} else {
 			next_dma = apu_dmc_calc_dma_time(apu, cycles);
@@ -902,7 +902,7 @@ static CPU_WRITE_HANDLER(status_write_handler)
 			   when to do it.
 			*/
 			apu->dmc.dma_timestamp = next_dma;
-			cpu_set_dma_timestamp(emu->cpu, next_dma,
+			cpu_set_dmc_dma_timestamp(emu->cpu, next_dma,
 					  apu->dmc.addr_current, 0);
 		}
 	}
@@ -1066,7 +1066,7 @@ void apu_reset(struct apu_state *apu, int hard)
 		apu->triangle.length.counter = 0;
 		apu->noise.length.counter = 0;
 
-		cpu_set_dma_timestamp(apu->emu->cpu, ~0, 0, 0);
+		cpu_set_dmc_dma_timestamp(apu->emu->cpu, ~0, 0, 0);
 		cpu_interrupt_ack(apu->emu->cpu, IRQ_APU_DMC);
 		cpu_interrupt_cancel(apu->emu->cpu, IRQ_APU_DMC);
 		apu->dmc_irq_flag = 0;

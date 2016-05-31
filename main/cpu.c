@@ -58,8 +58,10 @@ struct cpu_state {
 	uint16_t address_bus;
 	uint32_t cycles;
 	uint32_t interrupt_times[IRQ_MAX + 1];
+	uint32_t dmc_dma_timestamp;
+	uint32_t oam_dma_timestamp;
 	uint32_t dma_timestamp;
-	int dma_addr;
+	int dmc_dma_addr;
 	int jammed;
 	int interrupts;
 	int interrupt_mask;
@@ -94,8 +96,8 @@ static struct state_item cpu_state_items[] = {
 	STATE_8BIT(cpu_state, data_bus),
 	STATE_32BIT(cpu_state, cycles),
 	STATE_32BIT_ARRAY(cpu_state, interrupt_times),
-	STATE_32BIT(cpu_state, dma_timestamp),
-	STATE_16BIT(cpu_state, dma_addr),
+	STATE_32BIT(cpu_state, dmc_dma_timestamp),
+	STATE_16BIT(cpu_state, dmc_dma_addr),
 	STATE_8BIT(cpu_state, jammed), /* BOOLEAN */
 	STATE_32BIT(cpu_state, interrupts),
 	STATE_32BIT(cpu_state, interrupt_mask),
@@ -107,6 +109,8 @@ static struct state_item cpu_state_items[] = {
 	STATE_16BIT(cpu_state, oam_dma_step),
 	STATE_32BIT(cpu_state, frame_cycles),
 	STATE_16BIT(cpu_state, oam_dma_addr),
+	STATE_32BIT(cpu_state, oam_dma_timestamp),
+	STATE_32BIT(cpu_state, dma_timestamp),
 	STATE_ITEM_END(),
 };
 
@@ -140,8 +144,8 @@ static inline void update_interrupt_status(struct cpu_state *cpu);
 
 static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 {
-	if (cpu->dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dma_timestamp) {
+	if (cpu->dmc_dma_timestamp != ~0 &&
+	    cpu->cycles >= cpu->dmc_dma_timestamp) {
 		write_dma_transfer(cpu, addr);	
 	}
 	cpu->cycles += cpu->cpu_clock_divider;
@@ -159,8 +163,8 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 static inline void read_mem(struct cpu_state *cpu, int addr)
 {
 	uint8_t value = cpu->data_bus;
-	if (cpu->dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dma_timestamp) {
+	if (cpu->dmc_dma_timestamp != ~0 &&
+	    cpu->cycles >= cpu->dmc_dma_timestamp) {
 		read_dma_transfer(cpu, addr);
 	}
 	
@@ -769,10 +773,10 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 {
 #if 1
 	/* FIXME should only be ==, not >= */
-	if (cpu->cycles > cpu->dma_timestamp) {
+	if (cpu->cycles > cpu->dmc_dma_timestamp) {
 		log_err("DEBUG read_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
-			cpu->dma_timestamp);
+			cpu->dmc_dma_timestamp);
 	}
 #endif
 	if (cpu->dma_wait_cycles < 0)
@@ -785,10 +789,10 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 {
 #if 1
 	/* FIXME should only be ==, not >= */
-	if (cpu->cycles > cpu->dma_timestamp) {
+	if (cpu->cycles > cpu->dmc_dma_timestamp) {
 		log_err("DEBUG write_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
-			cpu->dma_timestamp);
+			cpu->dmc_dma_timestamp);
 	}
 #endif
 	if (addr == 0x4014) {
@@ -798,10 +802,12 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 		cpu_dma_transfer(cpu, addr);
 	} else if (cpu->dma_wait_cycles < 0) {
 		cpu->dma_wait_cycles = 2;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 	} else {
 		cpu->dma_wait_cycles--;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
+		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 	}
 }
 
@@ -1148,9 +1154,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		cpu->PC = 0;
 		cpu->data_bus = 0;
 		cpu->cycles = 0;
-		cpu->dma_timestamp = ~0;
-		cpu->dma_wait_cycles = -1;
-		cpu->dma_addr = 0;
+		cpu->dmc_dma_addr = 0;
 		cpu->jammed = 0;
 		cpu->polled_interrupts = 0;
 		cpu->interrupts = 0;
@@ -1158,8 +1162,6 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		cpu->step_cycles = 0;
 		cpu->board_run_timestamp = ~0;
 		cpu->resetting = 0;
-		cpu->dma_wait_cycles = 0;
-		cpu->oam_dma_step = 0;
 		memset(cpu->interrupt_times, 0xff,
 		       sizeof(cpu->interrupt_times));
 	}
@@ -1173,7 +1175,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	cpu->jammed = 0;
 	cpu->cycles = 0;
 	cpu->resetting = 1;
-	cpu->dma_timestamp = ~0;
+	cpu->dmc_dma_timestamp = ~0;
+	cpu->oam_dma_timestamp = ~0;
+	cpu->dmc_dma_timestamp = ~0;
 	cpu->dma_wait_cycles = -1;
 
 }
@@ -2180,8 +2184,14 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 		}
 	}
 
-	if (cpu->dma_timestamp != ~0 && cpu->dma_timestamp >= frame_cycles)
-		cpu->dma_timestamp -= frame_cycles;
+	if (cpu->dmc_dma_timestamp != ~0 && cpu->dmc_dma_timestamp >= frame_cycles)
+		cpu->dmc_dma_timestamp -= frame_cycles;
+
+	if (cpu->oam_dma_timestamp != ~0 && cpu->oam_dma_timestamp >= frame_cycles)
+		cpu->oam_dma_timestamp -= frame_cycles;
+
+	if (cpu->dmc_dma_timestamp != ~0 && cpu->dmc_dma_timestamp >= frame_cycles)
+		cpu->dmc_dma_timestamp -= frame_cycles;
 
 	cpu->cycles -= frame_cycles;
 }
@@ -2196,11 +2206,14 @@ int cpu_get_stack_pointer(struct cpu_state *cpu)
 	return cpu->S;
 }
 
-void cpu_set_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
+void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 			   int immediate)
 {
-	cpu->dma_timestamp = cycles;
-	cpu->dma_addr = addr;
+	cpu->dmc_dma_timestamp = cycles;
+	cpu->dmc_dma_addr = addr;
+
+	if (cycles < cpu->oam_dma_timestamp)
+		cpu->dmc_dma_timestamp = cycles;
 
 	if (immediate)
 		cpu->dma_wait_cycles = 2;
@@ -2218,7 +2231,7 @@ static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus)
 	uint8_t data;
 	int i;
 
-	cpu->dma_timestamp = ~0;
+	cpu->dmc_dma_timestamp = ~0;
 
 	for (i = 0; i < cpu->dma_wait_cycles; i++) {
 		/* DMC DMA can trigger an extra read of the address already on
@@ -2253,12 +2266,12 @@ static void cpu_dma_transfer(struct cpu_state *cpu, int addr_bus)
 	}
 
 	cpu->dma_wait_cycles = -1;
-	cpu->dma_timestamp = ~0;
+	cpu->dmc_dma_timestamp = ~0;
 
-	read_mem(cpu, cpu->dma_addr);
+	read_mem(cpu, cpu->dmc_dma_addr);
 	data = cpu->data_bus;
-	apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dma_timestamp,
-			 &cpu->dma_addr, cpu->cycles);
+	apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
+			 &cpu->dmc_dma_addr, cpu->cycles);
 }
 
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd)
