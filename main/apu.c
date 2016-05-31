@@ -1466,7 +1466,7 @@ void apu_dmc_load_buf(struct apu_state * apu, uint8_t data, uint32_t *dma_time_p
 
 	dmc->dma_buf = data;
 	dmc->bytes_remaining--;
-	dmc->addr_current++;
+	dmc->addr_current = ((dmc->addr_current + 1) & 0x3fff) | 0xc000;
 	dmc->empty = 0;
 
 	if (!dmc->bytes_remaining) {
