@@ -155,7 +155,6 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 
 	if (cpu->dma_timestamp != ~0 &&
 	    cpu->cycles >= cpu->dma_timestamp) {
-		printf("calling write transfer\n");
 		write_dma_transfer(cpu, addr);	
 	}
 	cpu->cycles += cpu->cpu_clock_divider;
@@ -178,7 +177,6 @@ static inline void read_mem(struct cpu_state *cpu, int addr)
 
 	if (cpu->dma_timestamp != ~0 &&
 	    cpu->cycles >= cpu->dma_timestamp) {
-		printf("calling write transfer\n");
 		read_dma_transfer(cpu, addr);
 	}
 	
@@ -802,50 +800,46 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 	/* FIXME do actual read_mem() calls */
 	switch (cpu->dmc_dma_step) {
 	case DMC_DMA_STEP_NONE:
-		printf("READ STEP NONE\n");
 		break;
 	case DMC_DMA_STEP_RDY:
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
-		printf("READ STEP RDY\n");
+
 		if (cpu->oam_dma_step >= 256) {
 			/* FIXME should be read_mem() with side effects */
 			cpu->cycles += cpu->cpu_clock_divider;
 		} else {
-			printf("step: %d\n", cpu->oam_dma_step);
 			break;
 		}
 	case DMC_DMA_STEP_DUMMY:
-		printf("READ STEP DUMMY\n");
 		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
+
 		if (cpu->oam_dma_step >= 256) {
 			/* FIXME should be read_mem() with side effects */
 			cpu->cycles += cpu->cpu_clock_divider;
 		} else {
-			printf("step: %d\n", cpu->oam_dma_step);
 			break;
 		}
 	case DMC_DMA_STEP_ALIGN:
-		printf("READ STEP ALIGN\n");
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
+
 		if (cpu->oam_dma_step >= 256) {
 			/* FIXME should be read_mem() with side effects */
 			cpu->cycles += cpu->cpu_clock_divider;
 		} else {
-			printf("step: %d\n", cpu->oam_dma_step);
 			break;
 		}
 	case DMC_DMA_STEP_XFER:
-		printf("READ STEP XFER\n");
 		cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 		cpu->dmc_dma_timestamp = ~0;
 		cpu->dma_timestamp = ~0;
 		read_mem(cpu, cpu->dmc_dma_addr);
+
 		data = cpu->data_bus;
 		apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
 				 &cpu->dmc_dma_addr, cpu->cycles);
@@ -855,15 +849,11 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 		else
 			cpu->dma_timestamp = cpu->dmc_dma_timestamp;
 
-			printf("set to %d\n", cpu->dmc_dma_timestamp);
-
 		if (cpu->oam_dma_step < 256) {
 			/* Re-align to finish OAM DMA  */
 			/* FIXME should be read_mem() with side effects */
 			cpu->cycles += cpu->cpu_clock_divider;
-			printf("step: %d\n", cpu->oam_dma_step);
 		}
-		printf("READ STEP -> NONE\n");
 		break;
 	}
 }
@@ -884,33 +874,23 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 
 	switch (cpu->dmc_dma_step) {
 	case DMC_DMA_STEP_NONE:
-		printf("WRITE STEP NONE\n");
-			printf("step: %d\n", cpu->oam_dma_step);
 		break;
 	case DMC_DMA_STEP_RDY:
-		printf("WRITE STEP RDY\n");
-			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		break;
 	case DMC_DMA_STEP_DUMMY:
-		printf("WRITE STEP DUMMY\n");
-			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		break;
 	case DMC_DMA_STEP_ALIGN:
-		printf("WRITE STEP ALIGN\n");
-			printf("step: %d\n", cpu->oam_dma_step);
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		break;
 	case DMC_DMA_STEP_XFER:
-		printf("WRITE STEP XFER\n");
-			printf("step: %d\n", cpu->oam_dma_step);
 		/* Shouldn't ever get here */
 		break;
 	}
@@ -2317,7 +2297,7 @@ void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 	cpu->dmc_dma_timestamp = cycles;
 	cpu->dmc_dma_addr = addr;
 
-	if (cycles < cpu->oam_dma_timestamp)
+	if (cycles <= cpu->oam_dma_timestamp)
 		cpu->dma_timestamp = cycles;
 
 	if (immediate)
