@@ -175,11 +175,11 @@ static const char *valid_rgb_decoder_values[] = {
 };
 
 static const char *valid_video_filter_values[] = {
-	"none", "ntsc",
+	"none", "ntsc", "scale2x", "scale3x", "scale4x",
 };
 
 static const char *valid_video_filter_names[] = {
-	"None", "NTSC",
+	"None", "NTSC", "Scale2x", "Scale3x", "Scale4x",
 };
 
 static const char *valid_palette_names[] = {

@@ -1,5 +1,6 @@
 /* nes_ntsc 0.2.2. http://www.slack.net/~ant/ */
 
+#include <stdint.h>
 #include "nes_ntsc.h"
 
 /* Copyright (C) 2006-2007 Shay Green. This module is free software; you

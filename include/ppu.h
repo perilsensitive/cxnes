@@ -25,7 +25,7 @@
 struct ppu_state;
 
 int ppu_run(struct ppu_state *ppu, int cycles);
-void ppu_begin_frame(struct ppu_state *, uint32_t * buf, uint16_t *nes_pixel_buf);
+void ppu_begin_frame(struct ppu_state *, uint32_t * buf, uint32_t *nes_pixel_buf);
 uint32_t ppu_end_frame(struct ppu_state *, uint32_t cycles);
 int ppu_apply_config(struct ppu_state *ppu);
 void ppu_reset(struct ppu_state *, int hard);

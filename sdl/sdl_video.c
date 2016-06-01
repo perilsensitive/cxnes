@@ -36,6 +36,7 @@
 #include "input.h"
 #include "palette.h"
 #include "nes_ntsc.h"
+#include "scalebit.h"
 #if GUI_ENABLED
 #include "gui.h"
 #endif
@@ -49,6 +50,15 @@
 
 #define NES_WIDTH  256
 #define NES_HEIGHT 240
+
+enum filter {
+	FILTER_UNDEFINED,
+	FILTER_NONE,
+	FILTER_NTSC,
+	FILTER_SCALE2X,
+	FILTER_SCALE3X,
+	FILTER_SCALE4X,
+};
 
 #if __unix__
 struct SDL_Window
@@ -89,7 +99,7 @@ static uint32_t rgb_palette[512];
 uint32_t *nes_screen;
 static int nes_screen_width = 256;
 static int nes_screen_height = 240;
-uint16_t nes_pixel_screen[NES_WIDTH*NES_HEIGHT];
+uint32_t nes_pixel_screen[NES_WIDTH*NES_HEIGHT];
 static int integer_scaling_factor;
 static nes_ntsc_t ntsc;
 static nes_ntsc_setup_t ntsc_setup;
@@ -144,7 +154,7 @@ static int top;
 static const char *aspect;
 static double width_stretch_factor;
 static double height_stretch_factor;
-static int use_ntsc_filter = -1;
+static enum filter current_filter = FILTER_UNDEFINED;
 static int scanlines_enabled = -1;
 
 /* Video state */
@@ -572,7 +582,7 @@ int video_apply_config(struct emu *emu)
 	int recreate_scaled_texture;
 	int scaling_mode_changed;
 	int vsync_changed;
-	int new_use_ntsc_filter;
+	enum filter new_filter;
 	char *new_scaling_mode;
 	int nes_screen_size;
 	int view_w, view_h;
@@ -580,24 +590,40 @@ int video_apply_config(struct emu *emu)
 
 	new_scaling_mode = (char *)emu->config->scaling_mode;
 	if (strcasecmp(emu->config->video_filter, "ntsc") == 0)
-		new_use_ntsc_filter = 1;
+		new_filter = FILTER_NTSC;
+	else if (strcasecmp(emu->config->video_filter, "scale2x") == 0)
+		new_filter = FILTER_SCALE2X;
+	else if (strcasecmp(emu->config->video_filter, "scale3x") == 0)
+		new_filter = FILTER_SCALE3X;
+	else if (strcasecmp(emu->config->video_filter, "scale4x") == 0)
+		new_filter = FILTER_SCALE4X;
 	else
-		new_use_ntsc_filter = 0;
+		new_filter = FILTER_NONE;
 
-	if ((new_use_ntsc_filter != use_ntsc_filter) ||
+	if ((new_filter != current_filter) ||
 	    (scanlines_enabled != emu->config->scanlines_enabled)) {
-		if (new_use_ntsc_filter)
-			nes_screen_width = NES_NTSC_OUT_WIDTH(256);
-		else
-			nes_screen_width = 256;
-
+		nes_screen_width = 256;
 		nes_screen_height = 240;
+		if (new_filter == FILTER_NTSC) {
+			nes_screen_width = NES_NTSC_OUT_WIDTH(256);
+			nes_screen_height = 240;
+		} else if (new_filter == FILTER_SCALE2X) {
+			nes_screen_width *= 2;
+			nes_screen_height *= 2;
+		} else if (new_filter == FILTER_SCALE3X) {
+			nes_screen_width *= 3;
+			nes_screen_height *= 3;
+		} else if (new_filter == FILTER_SCALE4X) {
+			nes_screen_width *= 4;
+			nes_screen_height *= 4;
+		}
+
 		scanlines_enabled = emu->config->scanlines_enabled;
 		if (scanlines_enabled)
 			nes_screen_height *= 2;
 
 
-		use_ntsc_filter = new_use_ntsc_filter;
+		current_filter = new_filter;
 		if (nes_screen) {
 			free(nes_screen);
 			nes_screen = NULL;
@@ -682,10 +708,21 @@ int video_apply_config(struct emu *emu)
 		int width;
 
 		height = NES_HEIGHT;
-		if (use_ntsc_filter) {
+		if (current_filter == FILTER_NTSC) {
 			width = NES_NTSC_OUT_WIDTH(NES_WIDTH);
+			height = NES_HEIGHT;
+		} else if (current_filter == FILTER_SCALE2X) {
+			width = NES_WIDTH * 2;
+			height = NES_HEIGHT * 2;
+		} else if (current_filter == FILTER_SCALE3X) {
+			width = NES_WIDTH * 3;
+			height = NES_HEIGHT * 3;
+		} else if (current_filter == FILTER_SCALE4X) {
+			width = NES_WIDTH * 4;
+			height = NES_HEIGHT * 4;
 		} else {
 			width = NES_WIDTH;
+			height = NES_HEIGHT;
 		}
 
 		if (scanlines_enabled) {
@@ -777,26 +814,58 @@ int video_apply_config(struct emu *emu)
 
 	width_stretch = 1;
 
-	if (use_ntsc_filter) {
+	if (current_filter == FILTER_NTSC) {
 		clip_rect.w = NES_NTSC_OUT_WIDTH(clip_rect.w);
 		if (clip_rect.x)
 			clip_rect.x = NES_NTSC_OUT_WIDTH(clip_rect.x);
 
 		view_w *= 2;
 		view_h *= 2;
+	} else if (current_filter == FILTER_SCALE2X) {
+		clip_rect.w = 2 * clip_rect.w;
+		if (clip_rect.x)
+			clip_rect.x = 2 * clip_rect.x;
+
+		view_w *= 2;
+		view_h *= 2;
+	} else if (current_filter == FILTER_SCALE3X) {
+		clip_rect.w = 3 * clip_rect.w;
+		if (clip_rect.x)
+			clip_rect.x = 3 * clip_rect.x;
+
+		view_w *= 3;
+		view_h *= 3;
+	} else if (current_filter == FILTER_SCALE4X) {
+		clip_rect.w = 4 * clip_rect.w;
+		if (clip_rect.x)
+			clip_rect.x = 4 * clip_rect.x;
+
+		view_w *= 4;
+		view_h *= 4;
+	}
+
+	if (current_filter == FILTER_SCALE2X) {
+		clip_rect.h *= 2;
+		clip_rect.y *= 2;
+	} else if (current_filter == FILTER_SCALE3X) {
+		clip_rect.h *= 3;
+		clip_rect.y *= 3;
+	} else if (current_filter == FILTER_SCALE4X) {
+		clip_rect.h *= 4;
+		clip_rect.y *= 4;
 	}
 
 	if (scanlines_enabled) {
 		clip_rect.h *= 2;
 		clip_rect.y *= 2;
-		if (!use_ntsc_filter) {
+		if (current_filter == FILTER_NONE) {
 			view_h *= 2;
 			view_w *= 2;
 		}
 	}
 
 	if (!strcasecmp(aspect, "ntsc")) {
-		if (use_ntsc_filter)
+		if (current_filter == FILTER_NTSC)
 			view_w = NES_NTSC_OUT_WIDTH(right - left + 1);
 		else
 			width_stretch = NTSC_WIDTH_STRETCH;
@@ -970,7 +1039,7 @@ int video_init_testing(struct emu *emu)
 	nes_screen_height = 240;
 	nes_screen = malloc(nes_screen_width * nes_screen_height *
 			    sizeof(*nes_screen));
-	use_ntsc_filter = 0;
+	current_filter = FILTER_NONE;
 	video_apply_palette_and_filter(emu);
 	emu->display_framerate = 60;
 
@@ -1113,7 +1182,7 @@ int video_draw_buffer(void)
 
 	SDL_RenderClear(renderer);
 
-	if (use_ntsc_filter == 1) {
+	if (current_filter == FILTER_NTSC) {
 		int burst_phase = ppu_get_burst_phase(emu->ppu);
 
 		if (ntsc_setup.merge_fields)
@@ -1122,9 +1191,30 @@ int video_draw_buffer(void)
 		nes_ntsc_blit(&ntsc, nes_pixel_screen,
 			      256, burst_phase, 256, 240,
 			      nes_screen, output_pitch);
+	} else if (current_filter == FILTER_SCALE2X) {
+		for (i = 0; i < 256 * 240; i++) {
+			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
+		}
+		scale(2, nes_screen, nes_screen_width * sizeof(uint32_t),
+		      nes_pixel_screen, 256 * sizeof(uint32_t),
+		      4, 256, 240);
+	} else if (current_filter == FILTER_SCALE3X) {
+		for (i = 0; i < 256 * 240; i++) {
+			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
+		}
+		scale(3, nes_screen, nes_screen_width * sizeof(uint32_t),
+		      nes_pixel_screen, 256 * sizeof(uint32_t),
+		      4, 256, 240);
+	} else if (current_filter == FILTER_SCALE4X) {
+		for (i = 0; i < 256 * 240; i++) {
+			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
+		}
+		scale(4, nes_screen, nes_screen_width * sizeof(uint32_t),
+		      nes_pixel_screen, 256 * sizeof(uint32_t),
+		      4, 256, 240);
 	} else {
 		for (i = 0; i < 256 * 240; i++) {
-			nes_screen[i] = rgb_palette[nes_pixel_screen[i]];
+			nes_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
 		}
 	}
 
@@ -1247,15 +1337,24 @@ static void handle_resize_event(void)
 	view_w = right - left + 1;
 	view_h = bottom - top + 1;
 
-	if (use_ntsc_filter || scanlines_enabled) {
+
+	if ((current_filter == FILTER_NTSC) ||
+	    (current_filter == FILTER_SCALE2X) ||
+	    scanlines_enabled) {
 		view_h *= 2;
 		view_w *= 2;
+	} else if (current_filter == FILTER_SCALE3X) {
+		view_h *= 3;
+		view_w *= 3;
+	} else if (current_filter == FILTER_SCALE4X) {
+		view_h *= 4;
+		view_w *= 4;
 	}
 
 	width_stretch = 1;
 
 	if (!strcasecmp(aspect, "ntsc")) {
-		if (use_ntsc_filter)
+		if (current_filter == FILTER_NTSC)
 			view_w = NES_NTSC_OUT_WIDTH(right - left + 1);
 		else
 			width_stretch = NTSC_WIDTH_STRETCH;
@@ -1411,8 +1510,14 @@ void video_update_texture(void)
 {
 	int width;
 
-	if (use_ntsc_filter)
+	if (current_filter == FILTER_NTSC)
 		width = NES_NTSC_OUT_WIDTH(NES_WIDTH);
+	else if (current_filter == FILTER_SCALE2X)
+		width = NES_WIDTH * 2;
+	else if (current_filter == FILTER_SCALE3X)
+		width = NES_WIDTH * 3;
+	else if (current_filter == FILTER_SCALE4X)
+		width = NES_WIDTH * 4;
 	else
 		width = NES_WIDTH;
 	
@@ -1716,7 +1821,7 @@ int video_save_screenshot(const char *filename)
 		return -1;
 	}
 
-	if (use_ntsc_filter == 1) {
+	if (current_filter == FILTER_NTSC) {
 		int burst_phase = ppu_get_burst_phase(emu->ppu);
 		int pitch = 4 * NES_NTSC_OUT_WIDTH(256);
 
@@ -1726,6 +1831,15 @@ int video_save_screenshot(const char *filename)
 		nes_ntsc_blit(&ntsc, nes_pixel_screen,
 			      256, burst_phase, 256, 240,
 			      (uint32_t *)screen->pixels, pitch);
+	} else if (current_filter == FILTER_SCALE2X) {
+		scale(2, screen->pixels, 256 * 4 * 2, nes_pixel_screen, 256 * 4,
+		      4, 256, 240);
+	} else if (current_filter == FILTER_SCALE3X) {
+		scale(3, screen->pixels, 256 * 4 * 2, nes_pixel_screen, 256 * 4,
+		      4, 256, 240);
+	} else if (current_filter == FILTER_SCALE4X) {
+		scale(4, screen->pixels, 256 * 4 * 2, nes_pixel_screen, 256 * 4,
+		      4, 256, 240);
 	} else {
 		int i;
 

@@ -82,7 +82,7 @@ extern int center_x, center_y;
 extern int mouse_grabbed;
 extern int window_minimized;
 extern uint32_t *nes_screen;
-extern uint16_t nes_pixel_screen[];
+extern uint32_t nes_pixel_screen[];
 
 #if __unix__
 static struct timespec prev_clock;

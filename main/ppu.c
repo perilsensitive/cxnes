@@ -306,7 +306,7 @@ struct ppu_state {
 	int hide_bg;
 
 	uint32_t *buf;
-	uint16_t *nes_pixel_buf;
+	uint32_t *nes_pixel_buf;
 
 	/* Set when ppu_run() is called and cleared when it's done
 	   to make sure we don't nest ppu_run() calls.
@@ -1062,7 +1062,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 	cpu_interrupt_cancel(ppu->emu->cpu, IRQ_NMI);
 }
 
-void ppu_begin_frame(struct ppu_state *ppu, uint32_t * buf, uint16_t *nes_pixel_buf)
+void ppu_begin_frame(struct ppu_state *ppu, uint32_t * buf, uint32_t *nes_pixel_buf)
 {
 	ppu->buf = buf;
 	ppu->nes_pixel_buf = nes_pixel_buf;

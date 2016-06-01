@@ -165,7 +165,7 @@ void emu_deinit(struct emu *emu);
 struct emu *emu_new(void);
 int emu_patch_rom(struct emu *emu, char *patch_filename);
 int emu_load_rom(struct emu *emu, char *, int, char **);
-int emu_run_frame(struct emu *emu, uint32_t *buffer, uint16_t *nes_buffer);
+int emu_run_frame(struct emu *emu, uint32_t *buffer, uint32_t *nes_buffer);
 int emu_reset(struct emu *, int hard);
 int emu_apply_config(struct emu *);
 void emu_cleanup(struct emu *);

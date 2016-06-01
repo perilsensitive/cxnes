@@ -786,7 +786,7 @@ int emu_reset(struct emu *emu, int hard)
 	return 1;
 }
 
-int emu_run_frame(struct emu *emu, uint32_t *buffer, uint16_t *nes_buffer)
+int emu_run_frame(struct emu *emu, uint32_t *buffer, uint32_t *nes_buffer)
 {
 	int cycles;
 
