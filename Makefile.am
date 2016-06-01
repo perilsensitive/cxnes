@@ -1,6 +1,6 @@
 AM_CFLAGS = -I ./include -Wall -Werror=format-security \
             -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
-            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"'
+            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"' -std=c99
 AM_LDFLAGS = -lm
 
 .rc.o:
@@ -71,6 +71,9 @@ cxnes_SOURCES = \
 	main/cpu.c \
 	main/fds.c \
 	main/ppu.c \
+	main/scalebit.c \
+	main/scale2x.c \
+	main/scale3x.c \
 	main/blip_buf.c \
 	main/state.c \
 	main/nes_ntsc.c \
