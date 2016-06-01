@@ -134,6 +134,7 @@ struct io_state {
 	int auto_vs_controller_mode;
 	int initialized;
 	int queue_processed;
+	uint32_t last_read[2];
 	struct emu *emu;
 };
 
@@ -239,6 +240,12 @@ static CPU_READ_HANDLER(io_read_handler)
 
 	port = addr - 0x4016;
 
+	if (io->last_read[port] + emu->cpu_clock_divider == cycles) {
+		io->last_read[port] = cycles;
+
+		return value;
+	}
+
 	if (!io->queue_processed) {
 		input_poll_events();
 		input_process_queue(0);
@@ -285,6 +292,8 @@ static CPU_READ_HANDLER(io_read_handler)
 			}
 		}
 	}
+
+	io->last_read[port] = cycles;
 
 	return result | (value & ~io->read_mask);
 }
@@ -627,6 +636,12 @@ void io_end_frame(struct io_state *io, uint32_t cycles)
 
 	/* if (!io->queue_processed) */
 	/* 	input_process_queue(0); */
+
+	if (io->last_read[0] != ~0)
+		io->last_read[0] -= cycles;
+
+	if (io->last_read[1] != ~0)
+		io->last_read[1] -= cycles;
 
 	for (port = 0; port < 5; port++) {
 		for (device = io->port[port]; device; device = device->next) {

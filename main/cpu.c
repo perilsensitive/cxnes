@@ -67,8 +67,6 @@ struct cpu_state {
 	uint32_t cycles;
 	uint32_t interrupt_times[IRQ_MAX + 1];
 	uint32_t dmc_dma_timestamp;
-	uint32_t oam_dma_timestamp;
-	uint32_t dma_timestamp;
 	int dmc_dma_addr;
 	int jammed;
 	int interrupts;
@@ -117,8 +115,6 @@ static struct state_item cpu_state_items[] = {
 	STATE_16BIT(cpu_state, oam_dma_step),
 	STATE_32BIT(cpu_state, frame_cycles),
 	STATE_16BIT(cpu_state, oam_dma_addr),
-	STATE_32BIT(cpu_state, oam_dma_timestamp),
-	STATE_32BIT(cpu_state, dma_timestamp),
 	STATE_ITEM_END(),
 };
 
@@ -153,8 +149,8 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 {
 	addr &= 0xffff;
 
-	if (cpu->dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dma_timestamp) {
+	if (cpu->dmc_dma_timestamp != ~0 &&
+	    cpu->cycles >= cpu->dmc_dma_timestamp) {
 		write_dma_transfer(cpu, addr);	
 	}
 	cpu->cycles += cpu->cpu_clock_divider;
@@ -175,8 +171,8 @@ static inline void read_mem(struct cpu_state *cpu, int addr)
 
 	addr &= 0xffff;
 
-	if (cpu->dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dma_timestamp) {
+	if (cpu->dmc_dma_timestamp != ~0 &&
+	    cpu->cycles >= cpu->dmc_dma_timestamp) {
 		read_dma_transfer(cpu, addr);
 	}
 	
@@ -781,15 +777,38 @@ cpu_write_handler_t *cpu_get_write_handler(struct cpu_state *cpu, int addr)
 	return cpu->write_handlers[addr];
 }
 
+static inline void dma_dummy_read_mem(struct cpu_state *cpu, int addr)
+{
+	uint8_t value = cpu->data_bus;
+
+	addr &= 0xffff;
+
+	if (cpu->type != CPU_TYPE_RP2A03) {
+		cpu->cycles += cpu->cpu_clock_divider;
+		return;
+	}
+
+	cpu->cycles += cpu->cpu_clock_divider;
+	if (cpu->read_pagetable[addr >> CPU_PAGE_SHIFT]) {
+		value = cpu->read_pagetable[addr >> CPU_PAGE_SHIFT][addr];	
+	}
+	
+	if (cpu->read_handlers[addr]) {
+		value = cpu->read_handlers[addr](cpu->emu, addr, value,
+						 cpu->cycles);
+	}
+
+	cpu->data_bus = value;
+}
+
 static void read_dma_transfer(struct cpu_state *cpu, int addr)
 {
 	uint8_t data;
 #if 1
-	/* FIXME should only be ==, not >= */
-	if (cpu->cycles > cpu->dma_timestamp) {
+	if (cpu->cycles > cpu->dmc_dma_timestamp) {
 		log_err("DEBUG read_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
-			cpu->dma_timestamp);
+			cpu->dmc_dma_timestamp);
 	}
 #endif
 
@@ -797,62 +816,48 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 		cpu->dmc_dma_step = DMC_DMA_STEP_RDY;
 
 
-	/* FIXME do actual read_mem() calls */
 	switch (cpu->dmc_dma_step) {
 	case DMC_DMA_STEP_NONE:
 		break;
 	case DMC_DMA_STEP_RDY:
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 
 		if (cpu->oam_dma_step >= 256) {
-			/* FIXME should be read_mem() with side effects */
-			cpu->cycles += cpu->cpu_clock_divider;
+			dma_dummy_read_mem(cpu, addr);
 		} else {
 			break;
 		}
 	case DMC_DMA_STEP_DUMMY:
 		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 
 		if (cpu->oam_dma_step >= 256) {
-			/* FIXME should be read_mem() with side effects */
-			cpu->cycles += cpu->cpu_clock_divider;
+			dma_dummy_read_mem(cpu, addr);
 		} else {
 			break;
 		}
 	case DMC_DMA_STEP_ALIGN:
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 
 		if (cpu->oam_dma_step >= 256) {
-			/* FIXME should be read_mem() with side effects */
-			cpu->cycles += cpu->cpu_clock_divider;
+			dma_dummy_read_mem(cpu, addr);
 		} else {
 			break;
 		}
 	case DMC_DMA_STEP_XFER:
 		cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 		cpu->dmc_dma_timestamp = ~0;
-		cpu->dma_timestamp = ~0;
 		read_mem(cpu, cpu->dmc_dma_addr);
 
 		data = cpu->data_bus;
 		apu_dmc_load_buf(cpu->emu->apu, data, &cpu->dmc_dma_timestamp,
 				 &cpu->dmc_dma_addr, cpu->cycles);
 
-		if (cpu->oam_dma_timestamp < cpu->dmc_dma_timestamp)
-			cpu->dma_timestamp = cpu->oam_dma_timestamp;
-		else
-			cpu->dma_timestamp = cpu->dmc_dma_timestamp;
-
 		if (cpu->oam_dma_step < 256) {
 			/* Re-align to finish OAM DMA  */
-			/* FIXME should be read_mem() with side effects */
-			cpu->cycles += cpu->cpu_clock_divider;
+			dma_dummy_read_mem(cpu, addr);
 		}
 		break;
 	}
@@ -861,11 +866,10 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 static void write_dma_transfer(struct cpu_state *cpu, int addr)
 {
 #if 1
-	/* FIXME should only be ==, not >= */
-	if (cpu->cycles > cpu->dma_timestamp) {
+	if (cpu->cycles > cpu->dmc_dma_timestamp) {
 		log_err("DEBUG write_mem: cycles should never be greater "
 			"than dma timestamp (%d vs %d)\n", cpu->cycles,
-			cpu->dma_timestamp);
+			cpu->dmc_dma_timestamp);
 	}
 #endif
 
@@ -877,17 +881,14 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 		break;
 	case DMC_DMA_STEP_RDY:
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;
 		break;
 	case DMC_DMA_STEP_DUMMY:
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_ALIGN;
 		break;
 	case DMC_DMA_STEP_ALIGN:
 		cpu->dmc_dma_timestamp += cpu->cpu_clock_divider;
-		cpu->dma_timestamp += cpu->cpu_clock_divider;
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		break;
 	case DMC_DMA_STEP_XFER:
@@ -1261,8 +1262,6 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	cpu->cycles = 0;
 	cpu->resetting = 1;
 	cpu->dmc_dma_timestamp = ~0;
-	cpu->oam_dma_timestamp = ~0;
-	cpu->dma_timestamp = ~0;
 	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
 
 }
@@ -2272,12 +2271,6 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 	if (cpu->dmc_dma_timestamp != ~0 && cpu->dmc_dma_timestamp >= frame_cycles)
 		cpu->dmc_dma_timestamp -= frame_cycles;
 
-	if (cpu->oam_dma_timestamp != ~0 && cpu->oam_dma_timestamp >= frame_cycles)
-		cpu->oam_dma_timestamp -= frame_cycles;
-
-	if (cpu->dma_timestamp != ~0 && cpu->dma_timestamp >= frame_cycles)
-		cpu->dma_timestamp -= frame_cycles;
-
 	cpu->cycles -= frame_cycles;
 }
 
@@ -2296,9 +2289,6 @@ void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 {
 	cpu->dmc_dma_timestamp = cycles;
 	cpu->dmc_dma_addr = addr;
-
-	if (cycles <= cpu->oam_dma_timestamp)
-		cpu->dma_timestamp = cycles;
 
 	if (immediate)
 		cpu->dmc_dma_step = DMC_DMA_STEP_DUMMY;

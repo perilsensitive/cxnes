@@ -772,6 +772,10 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 	}
 }
 
+/* DMC DMA always starts by trying to pull RDY low on an odd clock cycle.  If the
+ * requested timestamp is not for an odd clock, adjust it ahead by one tick.  This
+ * should go away at some point when I finish cleaning up the APU.
+ */
 static uint32_t fix_timestamp(struct apu_state *apu, uint32_t cycles, uint32_t timestamp)
 {
 	int count;
