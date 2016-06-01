@@ -134,6 +134,12 @@ struct io_state {
 	int auto_vs_controller_mode;
 	int initialized;
 	int queue_processed;
+	/* timestamp of last read; used to emulate the 2A03's
+ 	   DMA-induced bit deletion bug.  This can only happen
+	   during DMC DMA, which we will complete before ending
+	   the frame.  Since we can only save state between frames,
+	   we don't need to save this state.
+	 */
 	uint32_t last_read[2];
 	struct emu *emu;
 };
