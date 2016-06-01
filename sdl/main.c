@@ -341,12 +341,19 @@ int save_screenshot(void)
 		i++;
 	}
 
-	if (i < 1000)
-		rc = video_save_screenshot(buffer);
+	if (create_directory(buffer, 1, 1) == 0) {
+		if (i < 1000) {
+			rc = video_save_screenshot(buffer);
+			if (rc == 0) {
+				osdprintf("Screenshot %03d saved\n", i);
+			}
+		}
 
-	free(buffer);
-	free(screenshot_path);
-	free(base);
+		free(buffer);
+		free(screenshot_path);
+		free(base);
+	}
+
 
 	return rc;
 }
