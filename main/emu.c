@@ -782,6 +782,7 @@ int emu_reset(struct emu *emu, int hard)
 	emu->resetting = 0;
 
 	emu->blargg_reset_timer = -1;
+	video_set_screensaver_enabled(0);
 
 	return 1;
 }
@@ -892,6 +893,7 @@ void emu_pause(struct emu *emu, int pause)
 	if (pause)
 		gui_enable_event_timer();
 #endif
+	video_set_screensaver_enabled(pause);
 	video_show_cursor(emu->paused);
 	}
 }

@@ -47,6 +47,7 @@ void video_update_texture(void);
 int video_apply_config(struct emu *emu);
 void video_set_window_title(const char *title);
 void video_clear(void);
+void video_set_screensaver_enabled(int enabled);
 
 #if GUI_ENABLED
 void video_resize(int w, int h);

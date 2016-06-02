@@ -1774,3 +1774,11 @@ int video_save_screenshot(const char *filename)
 
 	return rc;
 }
+
+void video_set_screensaver_enabled(int enabled)
+{
+	if (enabled)
+		SDL_EnableScreenSaver();
+	else
+		SDL_DisableScreenSaver();
+}
