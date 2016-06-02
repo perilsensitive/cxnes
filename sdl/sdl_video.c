@@ -144,7 +144,6 @@ static SDL_SysWMinfo wm_info;
 
 /* Config settings */
 static int window_scaling_factor;
-static int fullscreen_scaling_factor;
 static int stretch_to_fit;
 static char *scaling_mode;
 static int left;
@@ -168,6 +167,7 @@ static double current_scaling_factor;
 static SDL_Rect clip_rect;
 static SDL_Rect window_rect;
 static SDL_Rect dest_rect;
+static int view_w, view_h;
 
 extern struct emu *emu;
 
@@ -573,15 +573,14 @@ static void video_apply_palette_and_filter(struct emu *emu)
 
 }
 
-int video_apply_config(struct emu *emu)
+static int video_create_textures(struct emu *emu)
 {
 	int ppu_type;
 	int flags;
 	enum filter new_filter;
 	char *new_scaling_mode;
 	int nes_screen_size;
-	int view_w, view_h;
-	double width_stretch;
+	int multiplier;
 
 	new_scaling_mode = (char *)emu->config->scaling_mode;
 	if (strcasecmp(emu->config->video_filter, "ntsc") == 0)
@@ -595,61 +594,125 @@ int video_apply_config(struct emu *emu)
 	else
 		new_filter = FILTER_NONE;
 
-	if ((new_filter != current_filter) ||
-	    (scanlines_enabled != emu->config->scanlines_enabled)) {
-		nes_screen_width = 256;
-		nes_screen_height = 240;
-		if (new_filter == FILTER_NTSC) {
-			nes_screen_width = NES_NTSC_OUT_WIDTH(256);
-			nes_screen_height = 240;
-		} else if (new_filter == FILTER_SCALE2X) {
-			nes_screen_width *= 2;
-			nes_screen_height *= 2;
-		} else if (new_filter == FILTER_SCALE3X) {
-			nes_screen_width *= 3;
-			nes_screen_height *= 3;
-		} else if (new_filter == FILTER_SCALE4X) {
-			nes_screen_width *= 4;
-			nes_screen_height *= 4;
+	ppu_type = -1;
+	if (emu_loaded(emu))
+		ppu_type = ppu_get_type(emu->ppu);
+
+	if ((ppu_type == PPU_TYPE_RP2C07) || (ppu_type == PPU_TYPE_DENDY)) {
+		aspect = emu->config->pal_pixel_aspect_ratio;
+		left = emu->config->pal_first_pixel;
+		right = emu->config->pal_last_pixel;
+		top = emu->config->pal_first_scanline;
+		bottom = emu->config->pal_last_scanline;
+	} else {
+		aspect = emu->config->ntsc_pixel_aspect_ratio;
+		left = emu->config->ntsc_first_pixel;
+		right = emu->config->ntsc_last_pixel;
+		top = emu->config->ntsc_first_scanline;
+		bottom = emu->config->ntsc_last_scanline;
+	}
+
+	clip_rect.x = left;
+	clip_rect.y = top;
+	clip_rect.w = right - left + 1;
+	clip_rect.h = bottom - top + 1;
+
+	view_w = clip_rect.w;
+	view_h = clip_rect.h;
+
+	width_stretch_factor = 1;
+	height_stretch_factor = 1;
+
+/*
+	if (scanlines_enabled) {
+		clip_rect.h *= 2;
+		clip_rect.y *= 2;
+		if (current_filter == FILTER_NONE) {
+			view_h *= 2;
+			view_w *= 2;
 		}
+	}
+*/
 
-		scanlines_enabled = emu->config->scanlines_enabled;
-		if (scanlines_enabled)
-			nes_screen_height *= 2;
+	nes_screen_width = 256;
+	nes_screen_height = 240;
+	multiplier = 1;
+
+	switch (new_filter) {
+	case FILTER_NTSC:
+		memset(nes_pixel_screen, 0, 256 * 240 * sizeof(*nes_pixel_screen));
+		nes_screen_width = NES_NTSC_OUT_WIDTH(256);
+		clip_rect.w = NES_NTSC_OUT_WIDTH(clip_rect.w);
+		if (clip_rect.x)
+			clip_rect.x = NES_NTSC_OUT_WIDTH(clip_rect.x);
+
+		view_w *= 2;
+		view_h *= 2;
+		break;
+	case FILTER_SCALE2X:
+		multiplier = 2;
+		break;
+	case FILTER_SCALE3X:
+		multiplier = 3;
+		break;
+	case FILTER_SCALE4X:
+		multiplier = 4;
+		break;
+	default:
+		break;
+	}
+
+	if (multiplier > 1) {
+		nes_screen_width *= multiplier;
+		nes_screen_height *= multiplier;
+		clip_rect.h *= multiplier;
+		clip_rect.y *= multiplier;
+		clip_rect.w *= multiplier;
+		clip_rect.x *= multiplier;
+		view_w *= multiplier;
+		view_h *= multiplier;
+	}
 
 
-		current_filter = new_filter;
-		if (nes_screen) {
-			free(nes_screen);
-			nes_screen = NULL;
+	scanlines_enabled = emu->config->scanlines_enabled;
+	if (scanlines_enabled)
+		nes_screen_height *= 2;
+
+
+	if (strcasecmp(aspect, "ntsc") == 0) {
+		if (new_filter == FILTER_NTSC)
+			view_w = NES_NTSC_OUT_WIDTH(right - left + 1);
+		else
+			width_stretch_factor = NTSC_WIDTH_STRETCH;
+		height_stretch_factor = NTSC_HEIGHT_STRETCH;
+	} else if (strcasecmp(aspect, "pal") == 0) {
+		width_stretch_factor = PAL_WIDTH_STRETCH;
+		height_stretch_factor = PAL_HEIGHT_STRETCH;
+	} else {
+		width_stretch_factor = 1;
+		height_stretch_factor = 1;
+		if (strcasecmp(aspect, "square") != 0) {
+			log_err("Invalid aspect ratio \"%s\"\n",
+				aspect);
 		}
+	}
 
-		if (nes_texture) {
-			SDL_DestroyTexture(nes_texture);
-			nes_texture = NULL;
-		}
+	current_filter = new_filter;
+
+	if (nes_screen) {
+		free(nes_screen);
+		nes_screen = NULL;
+	}
+
+	if (nes_texture) {
+		SDL_DestroyTexture(nes_texture);
+		nes_texture = NULL;
 	}
 	nes_screen_size = nes_screen_width * nes_screen_height;
 
-	if (!nes_screen)
-		nes_screen = malloc(nes_screen_size * sizeof(*nes_screen));
-
+	nes_screen = malloc(nes_screen_size * sizeof(*nes_screen));
 	if (!nes_screen)
 		return 1;
-
-	if (!scaling_mode ||
-	    (strcasecmp(scaling_mode, new_scaling_mode) != 0)) {
-		if (scaling_mode)
-			free(scaling_mode);
-		scaling_mode = strdup(new_scaling_mode);
-
-		if (strcasecmp(scaling_mode, "nearest_then_linear") != 0) {
-			SDL_DestroyTexture(scaled_texture);
-			scaled_texture = NULL;
-		} else {
-			create_scaled_texture(&scaled_rect);
-		}
-	}
 
 	if (window) {
 		if (renderer)
@@ -712,9 +775,6 @@ int video_apply_config(struct emu *emu)
 
 	window_scaling_factor = emu->config->window_scaling_factor;
 
-	/* FIXME Fullscreen is always scaled as large as possible now, so this will go away */
-	fullscreen_scaling_factor = 0;
-
 	if (display_fps == -1)
 		display_fps = emu->config->fps_display_enabled;
 
@@ -722,113 +782,27 @@ int video_apply_config(struct emu *emu)
 		fullscreen = emu->config->fullscreen;
 
 	stretch_to_fit = emu->config->stretch_to_fit;
+	if (scaling_mode)
+		free(scaling_mode);
+	scaling_mode = strdup(new_scaling_mode);
 
-	ppu_type = -1;
-	if (emu_loaded(emu))
-		ppu_type = ppu_get_type(emu->ppu);
-
-	if ((ppu_type == PPU_TYPE_RP2C07) || (ppu_type == PPU_TYPE_DENDY)) {
-		aspect = emu->config->pal_pixel_aspect_ratio;
-		left = emu->config->pal_first_pixel;
-		right = emu->config->pal_last_pixel;
-		top = emu->config->pal_first_scanline;
-		bottom = emu->config->pal_last_scanline;
+	if (strcasecmp(scaling_mode, "nearest_then_linear") != 0) {
+		SDL_DestroyTexture(scaled_texture);
+		scaled_texture = NULL;
 	} else {
-		aspect = emu->config->ntsc_pixel_aspect_ratio;
-		left = emu->config->ntsc_first_pixel;
-		right = emu->config->ntsc_last_pixel;
-		top = emu->config->ntsc_first_scanline;
-		bottom = emu->config->ntsc_last_scanline;
+		create_scaled_texture(&scaled_rect);
 	}
 
-	if (strcasecmp(aspect, "ntsc") == 0) {
-		width_stretch_factor = NTSC_WIDTH_STRETCH;
-		height_stretch_factor = NTSC_HEIGHT_STRETCH;
-	} else if (strcasecmp(aspect, "pal") == 0) {
-		width_stretch_factor = PAL_WIDTH_STRETCH;
-		height_stretch_factor = PAL_HEIGHT_STRETCH;
-	} else {
-		width_stretch_factor = 1;
-		height_stretch_factor = 1;
-		if (strcasecmp(aspect, "square") != 0) {
-			log_err("Invalid aspect ratio \"%s\"\n",
-				aspect);
-		}
-	}
-
-	create_scaled_texture(&scaled_rect);
-
-	clip_rect.x = left;
-	clip_rect.y = top;
-	clip_rect.w = right - left + 1;
-	clip_rect.h = bottom - top + 1;
-
-	view_w = clip_rect.w;
-	view_h = clip_rect.h;
-
-	width_stretch = 1;
-
-	if (current_filter == FILTER_NTSC) {
-		clip_rect.w = NES_NTSC_OUT_WIDTH(clip_rect.w);
-		if (clip_rect.x)
-			clip_rect.x = NES_NTSC_OUT_WIDTH(clip_rect.x);
-
-		view_w *= 2;
-		view_h *= 2;
-	} else if (current_filter == FILTER_SCALE2X) {
-		clip_rect.w = 2 * clip_rect.w;
-		if (clip_rect.x)
-			clip_rect.x = 2 * clip_rect.x;
-
-		view_w *= 2;
-		view_h *= 2;
-	} else if (current_filter == FILTER_SCALE3X) {
-		clip_rect.w = 3 * clip_rect.w;
-		if (clip_rect.x)
-			clip_rect.x = 3 * clip_rect.x;
-
-		view_w *= 3;
-		view_h *= 3;
-	} else if (current_filter == FILTER_SCALE4X) {
-		clip_rect.w = 4 * clip_rect.w;
-		if (clip_rect.x)
-			clip_rect.x = 4 * clip_rect.x;
-
-		view_w *= 4;
-		view_h *= 4;
-	}
-
-	if (current_filter == FILTER_SCALE2X) {
-		clip_rect.h *= 2;
-		clip_rect.y *= 2;
-	} else if (current_filter == FILTER_SCALE3X) {
-		clip_rect.h *= 3;
-		clip_rect.y *= 3;
-	} else if (current_filter == FILTER_SCALE4X) {
-		clip_rect.h *= 4;
-		clip_rect.y *= 4;
-	}
-
-	if (scanlines_enabled) {
-		clip_rect.h *= 2;
-		clip_rect.y *= 2;
-		if (current_filter == FILTER_NONE) {
-			view_h *= 2;
-			view_w *= 2;
-		}
-	}
-
-	if (!strcasecmp(aspect, "ntsc")) {
-		if (current_filter == FILTER_NTSC)
-			view_w = NES_NTSC_OUT_WIDTH(right - left + 1);
-		else
-			width_stretch = NTSC_WIDTH_STRETCH;
-	} else if (!strcasecmp(aspect, "pal")) {
-		width_stretch = PAL_WIDTH_STRETCH;
-	}
-
-	window_rect.w = view_w * width_stretch * window_scaling_factor;
+	window_rect.w = view_w * width_stretch_factor * window_scaling_factor;
 	window_rect.h = view_h * window_scaling_factor;
+
+	return 0;
+}
+
+int video_apply_config(struct emu *emu)
+{
+
+	video_create_textures(emu);
 
 	osd_enabled = emu->config->osd_enabled;
 
@@ -1278,57 +1252,28 @@ void video_clear(void)
 static void handle_resize_event(void)
 {
 	double scaling_factor;
-	double width_stretch;
 	int old_width, old_height;
 	int winw, winh;
-	int view_w, view_h;
 
 	SDL_GetWindowSize(window, &winw, &winh);
 
 	old_width = dest_rect.w;
 	old_height = dest_rect.h;
 
-	view_w = right - left + 1;
-	view_h = bottom - top + 1;
-
-
-	if ((current_filter == FILTER_NTSC) ||
-	    (current_filter == FILTER_SCALE2X) ||
-	    scanlines_enabled) {
-		view_h *= 2;
-		view_w *= 2;
-	} else if (current_filter == FILTER_SCALE3X) {
-		view_h *= 3;
-		view_w *= 3;
-	} else if (current_filter == FILTER_SCALE4X) {
-		view_h *= 4;
-		view_w *= 4;
-	}
-
-	width_stretch = 1;
-
-	if (!strcasecmp(aspect, "ntsc")) {
-		if (current_filter == FILTER_NTSC)
-			view_w = NES_NTSC_OUT_WIDTH(right - left + 1);
-		else
-			width_stretch = NTSC_WIDTH_STRETCH;
-	} else if (!strcasecmp(aspect, "pal")) {
-		width_stretch = PAL_WIDTH_STRETCH;
-	}
-
 	if (winh < winw) {
 		scaling_factor = (double)winh / view_h;
 		integer_scaling_factor = floor(scaling_factor);
 	} else {
-		scaling_factor = (double)winw / (view_w * width_stretch);
+		scaling_factor = (double)winw / (view_w * width_stretch_factor);
 		integer_scaling_factor = floor(scaling_factor);
 	}
 
 	if (stretch_to_fit || !integer_scaling_factor) {
-		dest_rect.w = view_w * width_stretch * scaling_factor;
+		dest_rect.w = view_w * width_stretch_factor * scaling_factor;
 		dest_rect.h = view_h * scaling_factor;
 	} else {
-		dest_rect.w = view_w * width_stretch * integer_scaling_factor;
+		dest_rect.w = view_w * width_stretch_factor *
+		              integer_scaling_factor;
 		dest_rect.h = view_h * integer_scaling_factor;
 	}
 
