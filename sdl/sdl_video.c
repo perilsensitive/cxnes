@@ -37,6 +37,7 @@
 #include "palette.h"
 #include "nes_ntsc.h"
 #include "scalebit.h"
+#include "hqx.h"
 #if GUI_ENABLED
 #include "gui.h"
 #endif
@@ -988,6 +989,8 @@ int video_init(struct emu *emu)
 	fps_timer = 0;
 	reset_autohide_timer();
 
+   	hqxInit();
+
 	osd_font_name = config_get_path(emu->config,
 					    CONFIG_DATA_FILE_OSD_FONT,
 					    NULL, -1);
@@ -1126,30 +1129,30 @@ int video_draw_buffer(void)
 		nes_ntsc_blit(&ntsc, nes_pixel_screen,
 			      256, burst_phase, 256, 240,
 			      nes_screen, output_pitch);
-	} else if (current_filter == FILTER_SCALE2X) {
+	} else if (current_filter == FILTER_NONE) {
 		for (i = 0; i < 256 * 240; i++) {
-			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
+			nes_screen[i] = rgb_palette[nes_pixel_screen[i]];
 		}
-		scale(2, nes_screen, nes_screen_width * sizeof(uint32_t),
-		      nes_pixel_screen, 256 * sizeof(uint32_t),
-		      4, 256, 240);
-	} else if (current_filter == FILTER_SCALE3X) {
-		for (i = 0; i < 256 * 240; i++) {
-			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
-		}
-		scale(3, nes_screen, nes_screen_width * sizeof(uint32_t),
-		      nes_pixel_screen, 256 * sizeof(uint32_t),
-		      4, 256, 240);
-	} else if (current_filter == FILTER_SCALE4X) {
-		for (i = 0; i < 256 * 240; i++) {
-			nes_pixel_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
-		}
-		scale(4, nes_screen, nes_screen_width * sizeof(uint32_t),
-		      nes_pixel_screen, 256 * sizeof(uint32_t),
-		      4, 256, 240);
 	} else {
 		for (i = 0; i < 256 * 240; i++) {
-			nes_screen[i] = rgb_palette[(uint16_t)nes_pixel_screen[i]];
+			nes_pixel_screen[i] = rgb_palette[nes_pixel_screen[i]];
+		}
+
+		if (current_filter == FILTER_SCALE2X) {
+			scale(2, nes_screen, nes_screen_width * sizeof(uint32_t),
+			      nes_pixel_screen, 256 * sizeof(uint32_t), 4, 256, 240);
+		} else if (current_filter == FILTER_SCALE3X) {
+			scale(3, nes_screen, nes_screen_width * sizeof(uint32_t),
+			      nes_pixel_screen, 256 * sizeof(uint32_t), 4, 256, 240);
+		} else if (current_filter == FILTER_SCALE4X) {
+			scale(4, nes_screen, nes_screen_width * sizeof(uint32_t),
+			      nes_pixel_screen, 256 * sizeof(uint32_t), 4, 256, 240);
+		} else if (current_filter == FILTER_HQ2X) {
+			hq2x_32(nes_pixel_screen, nes_screen, 256, 240);
+		} else if (current_filter == FILTER_HQ3X) {
+			hq3x_32(nes_pixel_screen, nes_screen, 256, 240);
+		} else if (current_filter == FILTER_HQ4X) {
+			hq4x_32(nes_pixel_screen, nes_screen, 256, 240);
 		}
 	}
 
