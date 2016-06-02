@@ -58,6 +58,9 @@ enum filter {
 	FILTER_SCALE2X,
 	FILTER_SCALE3X,
 	FILTER_SCALE4X,
+	FILTER_HQ2X,
+	FILTER_HQ3X,
+	FILTER_HQ4X,
 };
 
 #if __unix__
@@ -591,6 +594,12 @@ static int video_create_textures(struct emu *emu)
 		new_filter = FILTER_SCALE3X;
 	else if (strcasecmp(emu->config->video_filter, "scale4x") == 0)
 		new_filter = FILTER_SCALE4X;
+	else if (strcasecmp(emu->config->video_filter, "hq2x") == 0)
+		new_filter = FILTER_HQ2X;
+	else if (strcasecmp(emu->config->video_filter, "hq3x") == 0)
+		new_filter = FILTER_HQ3X;
+	else if (strcasecmp(emu->config->video_filter, "hq4x") == 0)
+		new_filter = FILTER_HQ4X;
 	else
 		new_filter = FILTER_NONE;
 
@@ -648,6 +657,15 @@ static int video_create_textures(struct emu *emu)
 		multiplier = 3;
 		break;
 	case FILTER_SCALE4X:
+		multiplier = 4;
+		break;
+	case FILTER_HQ2X:
+		multiplier = 2;
+		break;
+	case FILTER_HQ3X:
+		multiplier = 3;
+		break;
+	case FILTER_HQ4X:
 		multiplier = 4;
 		break;
 	default:
@@ -1405,6 +1423,12 @@ void video_update_texture(void)
 	else if (current_filter == FILTER_SCALE3X)
 		width = NES_WIDTH * 3;
 	else if (current_filter == FILTER_SCALE4X)
+		width = NES_WIDTH * 4;
+	else if (current_filter == FILTER_HQ2X)
+		width = NES_WIDTH * 2;
+	else if (current_filter == FILTER_HQ3X)
+		width = NES_WIDTH * 3;
+	else if (current_filter == FILTER_HQ4X)
 		width = NES_WIDTH * 4;
 	else
 		width = NES_WIDTH;
