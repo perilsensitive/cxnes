@@ -623,22 +623,14 @@ static int video_create_textures(struct emu *emu)
 	width_stretch_factor = 1;
 	height_stretch_factor = 1;
 
-/*
-	if (scanlines_enabled) {
-		clip_rect.h *= 2;
-		clip_rect.y *= 2;
-		if (current_filter == FILTER_NONE) {
-			view_h *= 2;
-			view_w *= 2;
-		}
-	}
-*/
-
 	nes_screen_width = 256;
 	nes_screen_height = 240;
 	multiplier = 1;
 
+	scanlines_enabled = emu->config->scanlines_enabled;
 	switch (new_filter) {
+	case FILTER_NONE:
+		break;
 	case FILTER_NTSC:
 		memset(nes_pixel_screen, 0, 256 * 240 * sizeof(*nes_pixel_screen));
 		nes_screen_width = NES_NTSC_OUT_WIDTH(256);
@@ -673,10 +665,16 @@ static int video_create_textures(struct emu *emu)
 		view_h *= multiplier;
 	}
 
-
-	scanlines_enabled = emu->config->scanlines_enabled;
-	if (scanlines_enabled)
+	if (scanlines_enabled) {
 		nes_screen_height *= 2;
+		clip_rect.h *= 2;
+		clip_rect.y *= 2;
+		if (new_filter != FILTER_NTSC) {
+			view_h *= 2;
+			view_w *= 2;
+		}
+	}
+
 
 
 	if (strcasecmp(aspect, "ntsc") == 0) {
@@ -738,16 +736,6 @@ static int video_create_textures(struct emu *emu)
 	}
 
 	if (renderer) {
-		int height;
-		int width;
-
-		height = nes_screen_height;
-		width = nes_screen_width;
-
-		if (scanlines_enabled) {
-			height *= 2;
-		}
-		
 		if (nes_texture)
 			SDL_DestroyTexture(nes_texture);
 
@@ -759,7 +747,8 @@ static int video_create_textures(struct emu *emu)
 		nes_texture = SDL_CreateTexture(renderer,
 						SDL_PIXELFORMAT_ARGB8888,
 						SDL_TEXTUREACCESS_STREAMING,
-						width, height);
+						nes_screen_width,
+		                                nes_screen_height);
 				  
 		if (!nes_texture) {
 			log_err("video_init: SDL_CreateTexture() failed: %s\n",
