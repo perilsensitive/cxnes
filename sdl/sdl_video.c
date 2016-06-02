@@ -723,13 +723,13 @@ static int video_create_textures(struct emu *emu)
 
 		renderer = SDL_CreateRenderer(window, 0, flags);
 		if (!renderer) {
-			log_err("video_init: SDL_CreateRenderer() failed: %s\n",
+			printf("video_init: SDL_CreateRenderer() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}
 
 		if (SDL_GetRendererInfo(renderer, &renderer_info) < 0) {
-			log_err("video_init: SDL_GetRendererInfo() failed: %s\n",
+			printf("video_init: SDL_GetRendererInfo() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}
@@ -751,7 +751,7 @@ static int video_create_textures(struct emu *emu)
 		                                nes_screen_height);
 				  
 		if (!nes_texture) {
-			log_err("video_init: SDL_CreateTexture() failed: %s\n",
+			printf("video_init: SDL_CreateTexture() failed: %s\n",
 				SDL_GetError());
 			return 1;
 		}

@@ -74,6 +74,10 @@ cxnes_SOURCES = \
 	main/scalebit.c \
 	main/scale2x.c \
 	main/scale3x.c \
+	main/hq2x.c \
+	main/hq3x.c \
+	main/hq4x.c \
+	main/hqx_init.c \
 	main/blip_buf.c \
 	main/state.c \
 	main/nes_ntsc.c \
