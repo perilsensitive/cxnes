@@ -577,11 +577,6 @@ int video_apply_config(struct emu *emu)
 {
 	int ppu_type;
 	int flags;
-	int create_renderer;
-	int create_nes_texture;
-	int recreate_scaled_texture;
-	int scaling_mode_changed;
-	int vsync_changed;
 	enum filter new_filter;
 	char *new_scaling_mode;
 	int nes_screen_size;
@@ -642,16 +637,8 @@ int video_apply_config(struct emu *emu)
 	if (!nes_screen)
 		return 1;
 
-	vsync_changed = 0;
-	if (!!(renderer_info.flags & SDL_RENDERER_PRESENTVSYNC) !=
-	    !!emu->config->vsync) {
-		vsync_changed = 1;
-	}
-
-	scaling_mode_changed = 0;
 	if (!scaling_mode ||
 	    (strcasecmp(scaling_mode, new_scaling_mode) != 0)) {
-		scaling_mode_changed = 1;
 		if (scaling_mode)
 			free(scaling_mode);
 		scaling_mode = strdup(new_scaling_mode);
@@ -664,23 +651,7 @@ int video_apply_config(struct emu *emu)
 		}
 	}
 
-	create_renderer = 0;
-	if (!renderer) {
-		create_renderer = 1;
-	}
-
-	if (vsync_changed)
-		create_renderer = 1;
-
-	create_nes_texture = 0;
-	if (!nes_texture || create_renderer || scaling_mode_changed)
-		create_nes_texture = 1;
-
-	recreate_scaled_texture = 0;
-	if (scaled_texture && (create_renderer || scaling_mode_changed))
-		recreate_scaled_texture = 1;
-
-	if (window && create_renderer) {
+	if (window) {
 		if (renderer)
 			SDL_DestroyRenderer(renderer);
 
@@ -703,27 +674,12 @@ int video_apply_config(struct emu *emu)
 		}
 	}
 
-	if (renderer && create_nes_texture) {
+	if (renderer) {
 		int height;
 		int width;
 
-		height = NES_HEIGHT;
-		if (current_filter == FILTER_NTSC) {
-			width = NES_NTSC_OUT_WIDTH(NES_WIDTH);
-			height = NES_HEIGHT;
-		} else if (current_filter == FILTER_SCALE2X) {
-			width = NES_WIDTH * 2;
-			height = NES_HEIGHT * 2;
-		} else if (current_filter == FILTER_SCALE3X) {
-			width = NES_WIDTH * 3;
-			height = NES_HEIGHT * 3;
-		} else if (current_filter == FILTER_SCALE4X) {
-			width = NES_WIDTH * 4;
-			height = NES_HEIGHT * 4;
-		} else {
-			width = NES_WIDTH;
-			height = NES_HEIGHT;
-		}
+		height = nes_screen_height;
+		width = nes_screen_width;
 
 		if (scanlines_enabled) {
 			height *= 2;
@@ -800,9 +756,7 @@ int video_apply_config(struct emu *emu)
 		}
 	}
 
-	if (recreate_scaled_texture) {
-		create_scaled_texture(&scaled_rect);
-	}
+	create_scaled_texture(&scaled_rect);
 
 	clip_rect.x = left;
 	clip_rect.y = top;
