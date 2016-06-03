@@ -475,7 +475,7 @@ static int main_loop(struct emu *emu)
 		emu->draw_frame = audio_buffer_check();
 
 #if __unix__
-		if (screensaver_counter > 0) {
+		if ((screensaver_counter > 0) && !SDL_IsScreenSaverEnabled()) {
 			screensaver_counter--;
 
 			if (!screensaver_counter ) {
@@ -872,6 +872,8 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 		free(path);
 	}
 
+	video_set_screensaver_enabled(0);
+
 	return 0;
 }
 
@@ -903,6 +905,8 @@ int close_rom(struct emu *emu)
 
 	if (!testing)
 		audio_shutdown();
+
+	video_set_screensaver_enabled(1);
 
 	return 0;
 }

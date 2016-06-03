@@ -782,7 +782,6 @@ int emu_reset(struct emu *emu, int hard)
 	emu->resetting = 0;
 
 	emu->blargg_reset_timer = -1;
-	video_set_screensaver_enabled(0);
 
 	return 1;
 }

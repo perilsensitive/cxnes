@@ -731,7 +731,9 @@ static int video_create_textures(struct emu *emu)
 	if (!nes_screen)
 		return 1;
 
-	if (window) {
+	if (window && (!renderer ||
+	               (!!emu->config->vsync !=
+	                !!(renderer_info.flags & SDL_RENDERER_PRESENTVSYNC)))) {
 		if (renderer)
 			SDL_DestroyRenderer(renderer);
 
