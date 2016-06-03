@@ -4,6 +4,7 @@ cxNES has support for NES Sound Format (NSF) files.  Currently, the following
 expansion audio chips are supported:
 
 - VRC6
+- VRC7
 - FDS
 - MMC5
 - Namco 163

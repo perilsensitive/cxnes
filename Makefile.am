@@ -195,9 +195,11 @@ clean-local:
 install-data-hook:
 	rm -rf $(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip
 	mkdir -p $(DESTDIR)$(pkgdatadir)/data
+	mkdir -p $(DESTDIR)$(pkgdatadir)/doc
 	sed 's/$$/\r/' COPYING > $(DESTDIR)$(pkgdatadir)/COPYING.txt
-	sed 's/$$/\r/' doc/icon_license.txt > $(DESTDIR)$(pkgdatadir)/data/icon_license.txt
-	sed 's/$$/\r/' doc/icon_readme.txt > $(DESTDIR)$(pkgdatadir)/data/icon_readme.txt
+	for f in doc/*.txt; do \
+		sed 's/$$/\r/' $$f > $(DESTDIR)$(pkgdatadir)/$$f; \
+	done
 	sed 's/$$/\r/' README.md > $(DESTDIR)$(pkgdatadir)/README.txt
 	mv $(DESTDIR)$(pkgdatadir)/romdb.txt $(DESTDIR)$(pkgdatadir)/data
 	mv $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt $(DESTDIR)$(pkgdatadir)/data
