@@ -25,10 +25,10 @@
 
 extern struct emu *emu;
 
-static void filter_settings_callback(GtkWidget *widget, GdkEvent *event,
-				     gpointer user_data);
-static void ntsc_filter_preset_callback(GtkWidget *widget, GdkEvent *Event,
-					gpointer user_data);
+static void video_filter_changed_callback(GtkComboBox *widget,
+                                          gpointer user_data);
+static void filter_settings_callback(GtkWidget *widget, gpointer user_data);
+static void ntsc_filter_preset_callback(GtkWidget *widget, gpointer user_data);
 
 static void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data);
 
@@ -80,14 +80,14 @@ static void palette_combo_box_callback(GtkComboBox *combo, gpointer user_data)
 	GtkWidget *entry;
 	GtkWidget *button;
 	gboolean sensitive;
-	char *tmp;
+	const gchar *tmp;
 
 	entry = g_object_get_data(G_OBJECT(combo), "custom_entry");
 	button = g_object_get_data(G_OBJECT(combo), "custom_button");
 
-	tmp = strdup(gtk_combo_box_get_active_id(combo));
+	tmp = gtk_combo_box_get_active_id(combo);
 
-	if (strcmp(tmp, "custom") == 0)
+	if (tmp && strcmp(tmp, "custom") == 0)
 		sensitive = TRUE;
 	else
 		sensitive = FALSE;
@@ -347,6 +347,12 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 			 G_CALLBACK(filter_settings_callback), dialog);
 	g_object_set_data(G_OBJECT(button_filter_settings), "combo",
 			  combo_video_filter);
+	g_signal_connect(G_OBJECT(combo_video_filter), "changed",
+	                          G_CALLBACK(video_filter_changed_callback),
+	                          button_filter_settings);
+	video_filter_changed_callback(GTK_COMBO_BOX(combo_video_filter),
+	                              button_filter_settings);
+
 	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(filter_grid), combo_video_filter, 1, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(filter_grid), button_filter_settings, 2, 0, 1, 1);
@@ -686,22 +692,18 @@ void gui_palette_configuration_dialog(GtkWidget *widget, gpointer user_data)
 				 widget, user_data);
 }
 
-static void filter_settings_callback(GtkWidget *widget, GdkEvent *event,
-				     gpointer user_data)
+static void filter_settings_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkWidget *combo;
-	char * type;
+	const gchar * type;
 
 	combo = g_object_get_data(G_OBJECT(widget), "combo");
 
-	type = strdup(gtk_combo_box_get_active_id(GTK_COMBO_BOX(combo)));
+	type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(combo));
 
-	if (strcasecmp(type, "ntsc") == 0) {
+	if (type && strcasecmp(type, "ntsc") == 0) {
 		gui_ntsc_filter_settings_dialog(NULL, user_data);
-	} else {
 	}
-
-	free(type);
 }
 
 static void configuration_setup_ntsc_filter(GtkWidget *dialog, struct config *config)
@@ -816,8 +818,24 @@ static void configuration_setup_ntsc_filter(GtkWidget *dialog, struct config *co
 	gtk_box_pack_start(GTK_BOX(dialog_box), button_grid, FALSE, FALSE, 8);
 }
 
-static void ntsc_filter_preset_callback(GtkWidget *widget, GdkEvent *Event,
-					gpointer user_data)
+static void video_filter_changed_callback(GtkComboBox *widget, gpointer user_data)
+{
+	GtkWidget *button;
+	gboolean sensitive;
+	const gchar *tmp;
+
+	button = user_data;
+	tmp = gtk_combo_box_get_active_id(widget);
+
+	if (tmp && strcmp(tmp, "ntsc") == 0)
+		sensitive = TRUE;
+	else
+		sensitive = FALSE;
+
+	gtk_widget_set_sensitive(button, sensitive);
+}
+
+static void ntsc_filter_preset_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkWidget *dialog;
 	GtkWidget *sharpness;
