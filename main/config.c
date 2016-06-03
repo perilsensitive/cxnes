@@ -1872,6 +1872,39 @@ void config_load_default_bindings(void)
 	input_configure_keyboard_modifiers();
 }
 
+void config_restore(struct config *original, struct config *backup)
+{
+	int i;
+
+	/* Free all string values from original struct */
+	for (i = 0; config_parameters[i].type != CONFIG_NONE; i++) {
+		char **ptr;
+		size_t offset;
+
+		if (config_parameters[i].type != CONFIG_TYPE_STRING)
+			continue;
+
+		offset = config_parameters[i].offset;
+		ptr = (char **)((char *)original + offset);
+
+		if (!(*ptr))
+			continue;
+
+		free(*ptr);
+	}
+
+	/* Copy shallow copy of backup onto original. The original
+           and backup now both point to the same strings.
+         */
+	memcpy(original, backup, sizeof(*original));
+
+	/* Free the backup config struct.  The string pointers have
+           been copied back to the original struct, so we don't leak
+           memory from doing this.
+	 */
+	free(backup);
+}
+
 struct config *config_copy(struct config *config)
 {
 	struct config *new_config;

@@ -1463,10 +1463,10 @@ void gui_configuration_dialog(const char *name,
 			config_save_main_config(emu->config);
 		}
 	} else {
-		config_cleanup(emu->config);
-		emu->config = config;
-		if (emu_loaded(emu))
+		config_restore(emu->config, config);
+		if (emu_loaded(emu)) {
 			emu_apply_config(emu);
+		}
 
 		video_apply_config(emu);
 		audio_apply_config(emu);
