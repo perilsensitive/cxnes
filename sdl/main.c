@@ -383,7 +383,6 @@ static int main_loop(struct emu *emu)
 #else
 	prev_clock = SDL_GetTicks();
 #endif
-
 	fps_timer = 0;
 
 	emu->draw_frame = 1;
@@ -747,6 +746,8 @@ int main(int argc, char **argv)
 	   Anything POSIX.1-2001 compliant should work. */
 	signal(SIGCHLD, SIG_IGN);
 #endif
+	video_set_screensaver_enabled(1);
+
 
 #if GUI_ENABLED
 	if (gui_enabled && !testing)
