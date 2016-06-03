@@ -1152,8 +1152,10 @@ int path_list_add_entry(struct path_list *list, char *path)
 static int init_path_lists(void)
 {
 	char *path;
+	int length;
+	char *t;
 #if __unix__
-	char *t, *c;
+	char *c;
 	char *xdg_data_dirs;
 #endif
 
@@ -1189,7 +1191,7 @@ static int init_path_lists(void)
 			*c = '\0';
 
 		if (strlen(t) && t[0] == '/') {
-			int length = strlen(t) + 1 + strlen("/" PACKAGE_NAME);
+			length = strlen(t) + 1 + strlen("/" PACKAGE_NAME);
 			path = malloc(length);
 			if (!path)
 				return -1;
@@ -1212,12 +1214,21 @@ static int init_path_lists(void)
 
 #elif defined _WIN32
 	path = get_base_path();
-
 	if (!path)
 		return -1;
 
-	if (path_list_add_entry(data_path_list, path)) {
+	length = strlen(path) + strlen(PATHSEP "data") + 1;
+	t = malloc(length);
+	if (!t) {
 		free(path);
+		return -1;
+	}
+
+	snprintf(t, length, "%s" PATHSEP "data", path);
+	free(path);
+
+	if (path_list_add_entry(data_path_list, t)) {
+		free(t);
 		return -1;
 	}
 #endif

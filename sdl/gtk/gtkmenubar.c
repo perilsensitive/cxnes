@@ -26,6 +26,7 @@
 #include "gtkconfig.h"
 #include "license.h"
 #include "text_buffer.h"
+#include "file_io.h"
 
 extern void quit_callback(void);
 extern void fullscreen_callback(void);
@@ -185,8 +186,29 @@ static void about_callback(GtkWidget *widget, gpointer userdata) {
 	GdkPixbuf *logo;
 	GtkWindow *gtkwindow;
 
+#if _WIN32
+	char *base_path, *data_path;
+	base_path = get_base_path();
+	logo = NULL;
+	if (base_path) {
+		int length = strlen(base_path) +
+		             strlen("\\data\\icons\\cxnes128.png") + 1;
+
+		data_path = malloc(length);
+		if (data_path) {
+			snprintf(data_path, length, "%sdata\\icons\\cxnes128.png",
+			         base_path);
+			logo = gdk_pixbuf_new_from_file_at_size(data_path,
+								128, 128, NULL);
+			free(data_path);
+		}
+		free(base_path);
+	}
+#else
 	logo = gdk_pixbuf_new_from_file_at_size(PACKAGE_DATADIR "/icons/cxnes.svg",
 						128, 128, NULL);
+
+#endif
 
 	gtkwindow = userdata;
 	aboutdialog = gtk_about_dialog_new();

@@ -194,16 +194,22 @@ clean-local:
 
 install-data-hook:
 	rm -rf $(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip
+	mkdir -p $(DESTDIR)$(pkgdatadir)/data
 	sed 's/$$/\r/' COPYING > $(DESTDIR)$(pkgdatadir)/COPYING.txt
-	sed 's/$$/\r/' doc/icon_license.txt > $(DESTDIR)$(pkgdatadir)/icon_license.txt
-	sed 's/$$/\r/' doc/icon_readme.txt > $(DESTDIR)$(pkgdatadir)/icon_readme.txt
+	sed 's/$$/\r/' doc/icon_license.txt > $(DESTDIR)$(pkgdatadir)/data/icon_license.txt
+	sed 's/$$/\r/' doc/icon_readme.txt > $(DESTDIR)$(pkgdatadir)/data/icon_readme.txt
 	sed 's/$$/\r/' README.md > $(DESTDIR)$(pkgdatadir)/README.txt
-	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/romdb.txt && \
-	  rm -f $(DESTDIR)$(pkgdatadir)/romdb.txt.bak
-	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt && \
-	  rm -f $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt.bak
+	mv $(DESTDIR)$(pkgdatadir)/romdb.txt $(DESTDIR)$(pkgdatadir)/data
+	mv $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt $(DESTDIR)$(pkgdatadir)/data
+	mv $(DESTDIR)$(pkgdatadir)/nsf.rom $(DESTDIR)$(pkgdatadir)/data
+	mv $(DESTDIR)$(pkgdatadir)/*.ttf $(DESTDIR)$(pkgdatadir)/data
+	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/data/romdb.txt && \
+	  rm -f $(DESTDIR)$(pkgdatadir)/data/romdb.txt.bak
+	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/data/gamecontrollerdb.txt && \
+	  rm -f $(DESTDIR)$(pkgdatadir)/data/gamecontrollerdb.txt.bak
 	mv $(DESTDIR)$(bindir)/cxnes.exe $(DESTDIR)$(pkgdatadir)/cxnes.exe
 	cp *.dll $(DESTDIR)$(pkgdatadir)
 	cp -r share $(DESTDIR)$(pkgdatadir)
+	cp -r data/icons $(DESTDIR)$(pkgdatadir)/data
 	(cd $(DESTDIR)$(pkgdatadir) && zip -r ../../$(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip .)
 endif
