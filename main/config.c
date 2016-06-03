@@ -1872,11 +1872,11 @@ void config_load_default_bindings(void)
 	input_configure_keyboard_modifiers();
 }
 
-void config_restore(struct config *original, struct config *backup)
+void config_replace(struct config *dest, struct config *src)
 {
 	int i;
 
-	/* Free all string values from original struct */
+	/* Free all string values from dest struct */
 	for (i = 0; config_parameters[i].type != CONFIG_NONE; i++) {
 		char **ptr;
 		size_t offset;
@@ -1885,7 +1885,7 @@ void config_restore(struct config *original, struct config *backup)
 			continue;
 
 		offset = config_parameters[i].offset;
-		ptr = (char **)((char *)original + offset);
+		ptr = (char **)((char *)dest + offset);
 
 		if (!(*ptr))
 			continue;
@@ -1893,16 +1893,28 @@ void config_restore(struct config *original, struct config *backup)
 		free(*ptr);
 	}
 
-	/* Copy shallow copy of backup onto original. The original
-           and backup now both point to the same strings.
-         */
-	memcpy(original, backup, sizeof(*original));
+	/* Copy shallow copy of src onto dest. They now both point
+           to the same strings.  */
+	memcpy(dest, src, sizeof(*dest));
 
-	/* Free the backup config struct.  The string pointers have
-           been copied back to the original struct, so we don't leak
-           memory from doing this.
-	 */
-	free(backup);
+	/* Strdup each string value in dest and set it to use the
+           newly-duped string */
+	for (i = 0; config_parameters[i].type != CONFIG_NONE; i++) {
+		char *tmp, **ptr;
+		size_t offset;
+
+		if (config_parameters[i].type != CONFIG_TYPE_STRING)
+			continue;
+
+		offset = config_parameters[i].offset;
+		ptr = (char **)((char *)dest + offset);
+
+		if (!(*ptr))
+			continue;
+
+		tmp = strdup(*ptr);
+		*ptr = tmp;
+	}
 }
 
 struct config *config_copy(struct config *config)
