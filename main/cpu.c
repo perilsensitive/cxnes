@@ -2268,8 +2268,9 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 		}
 	}
 
-	if (cpu->dmc_dma_timestamp != ~0 && cpu->dmc_dma_timestamp >= frame_cycles)
+	if (cpu->dmc_dma_timestamp != ~0 && cpu->dmc_dma_timestamp >= frame_cycles) {
 		cpu->dmc_dma_timestamp -= frame_cycles;
+	}
 
 	cpu->cycles -= frame_cycles;
 }

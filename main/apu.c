@@ -772,23 +772,6 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 	}
 }
 
-/* DMC DMA always starts by trying to pull RDY low on an odd clock cycle.  If the
- * requested timestamp is not for an odd clock, adjust it ahead by one tick.  This
- * should go away at some point when I finish cleaning up the APU.
- */
-static uint32_t fix_timestamp(struct apu_state *apu, uint32_t cycles, uint32_t timestamp)
-{
-	int count;
-
-	count = timestamp - cycles;
-	count /= apu->emu->cpu_clock_divider;
-
-	if ((count & 1) == (apu->odd_cycle))
-		timestamp += apu->emu->cpu_clock_divider;
-
-	return timestamp;
-}
-
 static CPU_WRITE_HANDLER(dmc_write_handler)
 {
 	struct dmc *dmc;
@@ -814,7 +797,6 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 			apu->dmc_irq_flag = 0;
 
 		new_dma = apu_dmc_set_period(apu, value & 0x0f, cycles);
-		new_dma = fix_timestamp(apu, cycles, new_dma);
 		if (apu->dmc.bytes_remaining) {
 			cpu_set_dmc_dma_timestamp(emu->cpu, new_dma,
 					  apu->dmc.addr_current, 0);
@@ -894,13 +876,11 @@ static CPU_WRITE_HANDLER(status_write_handler)
 		if (apu->dmc.empty) {
 			/* FIXME previously set wait_cycles to 2 */
 			next_dma = cycles;
-			next_dma = fix_timestamp(apu, cycles, next_dma);
 			apu->dmc.dma_timestamp = next_dma;
 			cpu_set_dmc_dma_timestamp(emu->cpu, next_dma,
 					  apu->dmc.addr_current, 1);
 		} else {
 			next_dma = apu_dmc_calc_dma_time(apu, cycles);
-			next_dma = fix_timestamp(apu, cycles, next_dma);
 
 			/* Tell the cpu which byte to dma next and
 			   when to do it.
@@ -1422,6 +1402,7 @@ static uint32_t apu_dmc_calc_dma_time(struct apu_state *apu, uint32_t cycles)
 {
 	uint32_t next_dma;
 	struct dmc *dmc;
+	int diff;
 
 	apu_run(apu, cycles);
 
@@ -1430,9 +1411,10 @@ static uint32_t apu_dmc_calc_dma_time(struct apu_state *apu, uint32_t cycles)
 	if (!dmc->bytes_remaining)
 		return ~0;
 
-	next_dma = dmc->next_clock;
-	next_dma += (dmc->shift_bits - 1) *
-	    (dmc->period * apu->emu->cpu_clock_divider);
+	next_dma = dmc->next_clock + apu->emu->cpu_clock_divider;
+	diff = (dmc->shift_bits - 1) *
+	       (dmc->period * apu->emu->cpu_clock_divider);
+	next_dma += diff;
 
 	/*
 	   FIXME HACK ALERT Occasionally a dma restart via $4015 write
@@ -1495,8 +1477,6 @@ static uint32_t apu_dmc_set_period(struct apu_state *apu, int period, uint32_t c
 {
 	apu_run(apu, cycles);
 	apu->dmc.period = apu->dmc_rate_table[period & 0x0f];
-	/* FIXME must update dma time if we change period while
-	   playing sample */
 	return apu_dmc_calc_dma_time(apu, cycles);
 }
 
