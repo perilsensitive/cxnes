@@ -20,12 +20,15 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+struct emu;
+
 enum {
 	LOG_PRIORITY_DEBUG,
 	LOG_PRIORITY_INFO,
 	LOG_PRIORITY_WARN,
 	LOG_PRIORITY_ERROR,
-	LOG_PRIORITY_CRITICAL
+	LOG_PRIORITY_CRITICAL,
+	LOG_PRIORITY_NUM_PRIORITIES
 };
 
 #define log_err(fmt, ...) log_message(LOG_PRIORITY_ERROR, \
@@ -40,6 +43,7 @@ enum {
 #define log_info(fmt, ...) log_message(LOG_PRIORITY_INFO, \
 				       fmt, ##__VA_ARGS__)
 
+extern void log_apply_config(struct emu *emu);
 extern void log_init(void);
 extern void log_message(int priority, const char *fmt, ...);
 extern void log_set_loglevel(int priority);

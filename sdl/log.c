@@ -18,6 +18,7 @@
 */
 
 #include "SDL.h"
+#include "emu.h"
 #include <stdio.h>
 
 #if GUI_ENABLED
@@ -25,7 +26,6 @@ extern void gui_error(const char *);
 extern int gui_enabled;
 #endif
 
-#if _WIN32
 /* Taken from SDL2's SDL_log.c */
 static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
     NULL,
@@ -37,6 +37,7 @@ static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
     "CRITICAL"
 };
 
+#if _WIN32
 static void console_output_log(void *userdata, int category, SDL_LogPriority priority,
                                const char *message)
 {
@@ -94,4 +95,23 @@ void log_init(void)
 #if _WIN32
 	SDL_LogSetOutputFunction(console_output_log, NULL);
 #endif
+}
+
+void log_apply_config(struct emu *emu)
+{
+	const char *priority;
+	int log_priority;
+	int i;
+
+	priority = emu->config->log_priority;
+	log_priority = LOG_PRIORITY_INFO;
+
+	for (i = 2; priority && (i < LOG_PRIORITY_NUM_PRIORITIES + 2); i++) {
+		if (strcasecmp(priority, priority_prefixes[i]) == 0) {
+			log_priority = i - 2;
+			break;
+		}
+	}
+
+	log_set_loglevel(log_priority);
 }

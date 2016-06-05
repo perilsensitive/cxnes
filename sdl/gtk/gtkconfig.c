@@ -1455,6 +1455,7 @@ void gui_configuration_dialog(const char *name,
 		if (emu_loaded(emu))
 			emu_apply_config(emu);
 
+		log_apply_config(emu);
 		video_apply_config(emu);
 		audio_apply_config(emu);
 		if (rom_specific) {
@@ -1469,6 +1470,7 @@ void gui_configuration_dialog(const char *name,
 			emu_apply_config(emu);
 		}
 
+		log_apply_config(emu);
 		video_apply_config(emu);
 		audio_apply_config(emu);
 	}

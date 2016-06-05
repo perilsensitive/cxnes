@@ -851,6 +851,7 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 	}
 
 	if (!testing) {
+		log_apply_config(emu);
 		video_apply_config(emu);
 		audio_apply_config(emu);
 	}
