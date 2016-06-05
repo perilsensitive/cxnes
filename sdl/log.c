@@ -25,6 +25,29 @@ extern void gui_error(const char *);
 extern int gui_enabled;
 #endif
 
+#if _WIN32
+/* Taken from SDL2's SDL_log.c */
+static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
+    NULL,
+    "VERBOSE",
+    "DEBUG",
+    "INFO",
+    "WARN",
+    "ERROR",
+    "CRITICAL"
+};
+
+static void console_output_log(void *userdata, int category, SDL_LogPriority priority,
+                               const char *message)
+{
+	const char *priority_string;
+
+	priority_string = priority_prefixes[priority];
+
+	fprintf(stderr, "%s: %s\n", priority_string, message);
+}
+#endif
+
 void log_set_loglevel(int priority)
 {
 	/* Our lowest priority is debug, but otherwise we match up to SDL */
@@ -64,4 +87,11 @@ void err_message(const char*fmt, ...)
 #endif
 
 	log_message(SDL_LOG_PRIORITY_ERROR, buffer);
+}
+
+void log_init(void)
+{
+#if _WIN32
+	SDL_LogSetOutputFunction(console_output_log, NULL);
+#endif
 }

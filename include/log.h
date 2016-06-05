@@ -40,6 +40,7 @@ enum {
 #define log_info(fmt, ...) log_message(LOG_PRIORITY_INFO, \
 				       fmt, ##__VA_ARGS__)
 
+extern void log_init(void);
 extern void log_message(int priority, const char *fmt, ...);
 extern void log_set_loglevel(int priority);
 extern void err_message(const char *fmt, ...);
