@@ -22,7 +22,7 @@
 
 struct emu;
 
-enum {
+enum log_priority {
 	LOG_PRIORITY_DEBUG,
 	LOG_PRIORITY_INFO,
 	LOG_PRIORITY_WARN,
@@ -45,8 +45,8 @@ enum {
 
 extern void log_apply_config(struct emu *emu);
 extern void log_init(void);
-extern void log_message(int priority, const char *fmt, ...);
-extern void log_set_loglevel(int priority);
+extern void log_message(enum log_priority priority, const char *fmt, ...);
+extern void log_set_loglevel(enum log_priority priority);
 extern void err_message(const char *fmt, ...);
 
 #endif

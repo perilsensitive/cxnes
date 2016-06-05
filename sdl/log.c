@@ -26,6 +26,20 @@ extern void gui_error(const char *);
 extern int gui_enabled;
 #endif
 
+struct priority_info {
+	enum log_priority priority;
+	SDL_LogPriority sdl_priority;
+	const char *name;
+};
+
+static struct priority_info priority_info[] = {
+	{ LOG_PRIORITY_DEBUG, SDL_LOG_PRIORITY_DEBUG, "DEBUG" },
+	{ LOG_PRIORITY_INFO, SDL_LOG_PRIORITY_INFO, "INFO" },
+	{ LOG_PRIORITY_WARN, SDL_LOG_PRIORITY_WARN, "WARN" },
+	{ LOG_PRIORITY_ERROR, SDL_LOG_PRIORITY_ERROR, "ERROR" },
+	{ LOG_PRIORITY_CRITICAL, SDL_LOG_PRIORITY_CRITICAL, "CRITICAL" },
+};
+
 /* Taken from SDL2's SDL_log.c */
 static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
     NULL,
@@ -38,8 +52,8 @@ static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
 };
 
 #if _WIN32
-static void console_output_log(void *userdata, int category, SDL_LogPriority priority,
-                               const char *message)
+static void console_output(void *userdata, int category, SDL_LogPriority priority,
+                           const char *message)
 {
 	const char *priority_string;
 
@@ -49,25 +63,24 @@ static void console_output_log(void *userdata, int category, SDL_LogPriority pri
 }
 #endif
 
-void log_set_loglevel(int priority)
+void log_set_loglevel(enum log_priority priority)
 {
-	/* Our lowest priority is debug, but otherwise we match up to SDL */
-	priority += SDL_LOG_PRIORITY_DEBUG;
-
-	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, priority);
+	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION,
+	                   priority_info[priority].sdl_priority);
 }
 
 
-void log_message(int priority, const char *fmt, ...)
+void log_message(enum log_priority priority, const char *fmt, ...)
 {
+	SDL_LogPriority sdl_priority;
 	va_list args;
 
-	/* Our lowest priority is debug, but otherwise we match up to SDL */
-	priority += SDL_LOG_PRIORITY_DEBUG;
+	sdl_priority = priority_info[priority].sdl_priority;
 
 	va_start(args, fmt);
 
-	SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, priority, fmt, args);
+	SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, sdl_priority,
+	                fmt, args);
 
 	va_end(args);
 }
@@ -93,22 +106,27 @@ void err_message(const char*fmt, ...)
 void log_init(void)
 {
 #if _WIN32
-	SDL_LogSetOutputFunction(console_output_log, NULL);
+	SDL_LogSetOutputFunction(console_output, NULL);
 #endif
 }
 
 void log_apply_config(struct emu *emu)
 {
 	const char *priority;
-	int log_priority;
+	enum log_priority log_priority;
 	int i;
 
 	priority = emu->config->log_priority;
+	if (!priority) {
+		log_set_loglevel(LOG_PRIORITY_INFO);
+		return;
+	}
+
 	log_priority = LOG_PRIORITY_INFO;
 
-	for (i = 2; priority && (i < LOG_PRIORITY_NUM_PRIORITIES + 2); i++) {
-		if (strcasecmp(priority, priority_prefixes[i]) == 0) {
-			log_priority = i - 2;
+	for (i = LOG_PRIORITY_DEBUG; i < LOG_PRIORITY_NUM_PRIORITIES; i++) {
+		if (strcasecmp(priority, priority_info[i].name) == 0) {
+			log_priority = i;
 			break;
 		}
 	}
