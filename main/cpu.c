@@ -19,12 +19,6 @@
 
 #include "emu.h"
 
-/* Allow DMC DMA to only affect $4016/$4017 reads (1)
-   or all memory-mapped I/O reads (0). 0 is technically
-   more correct, but somewhat glitchy at the moment.
-*/
-#define DMA_AFFECTS_IO_ONLY 1
-
 #define CPU_MEM_SIZE 0x10000
 #define CPU_ADDR_MAX 0xffff
 #define CPU_PAGE_SHIFT 10
