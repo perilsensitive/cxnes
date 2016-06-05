@@ -97,7 +97,7 @@ enum {
 	CONFIG_NONE,
 };
 
-static const char *valid_log_priorities[] = {
+static const char *valid_loglevels[] = {
 	"debug",
 	"info",
 	"warn",
@@ -105,7 +105,7 @@ static const char *valid_log_priorities[] = {
 	"critical",
 };
 
-static const char *valid_log_priority_names[] = {
+static const char *valid_loglevel_names[] = {
 	"DEBUG",
 	"INFO",
 	"WARN",
@@ -519,9 +519,9 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_STRING_LIST(sprite_limit_mode, "no",
 			   valid_sprite_limit_modes,
 			   valid_sprite_limit_mode_names),
-	CONFIG_STRING_LIST(log_priority, "info",
-			   valid_log_priorities,
-			   valid_log_priority_names),
+	CONFIG_STRING_LIST(loglevel, "info",
+			   valid_loglevels,
+			   valid_loglevel_names),
 	CONFIG_BOOLEAN(scanline_renderer_enabled, 1),
 	CONFIG_BOOLEAN(fps_display_enabled, 0),
 	CONFIG_INTEGER(window_scaling_factor, 1, 1, 5),

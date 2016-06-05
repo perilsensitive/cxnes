@@ -65,6 +65,9 @@ static void console_output(void *userdata, int category, SDL_LogPriority priorit
 
 void log_set_loglevel(enum log_priority priority)
 {
+	if (priority >= LOG_PRIORITY_NUM_PRIORITIES)
+		priority = LOG_PRIORITY_INFO;
+
 	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION,
 	                   priority_info[priority].sdl_priority);
 }
@@ -74,6 +77,9 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 {
 	SDL_LogPriority sdl_priority;
 	va_list args;
+
+	if (priority >= LOG_PRIORITY_NUM_PRIORITIES)
+		priority = LOG_PRIORITY_INFO;
 
 	sdl_priority = priority_info[priority].sdl_priority;
 
@@ -116,7 +122,7 @@ void log_apply_config(struct emu *emu)
 	enum log_priority log_priority;
 	int i;
 
-	priority = emu->config->log_priority;
+	priority = emu->config->loglevel;
 	if (!priority) {
 		log_set_loglevel(LOG_PRIORITY_INFO);
 		return;

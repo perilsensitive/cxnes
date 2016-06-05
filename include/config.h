@@ -137,7 +137,7 @@ struct config {
 	/* Misc emulator options */
 
 	int gui_enabled;
-	const char *log_priority;
+	const char *loglevel;
 	const char *save_path;
 	const char *screenshot_path;
 	const char *config_path;

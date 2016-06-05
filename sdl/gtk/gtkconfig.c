@@ -1104,7 +1104,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
 	tmp = gtk_label_new_with_mnemonic("Console loglevel");
 	combo = config_combo_box(dialog,
-				 config, "log_priority");
+				 config, "loglevel");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo);
 	gtk_grid_attach(GTK_GRID(grid), tmp, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), combo, 1, 0, 1, 1);
