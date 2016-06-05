@@ -648,7 +648,7 @@ int main(int argc, char **argv)
 	setbuf(stderr, NULL);
 
 	log_init();
-	log_set_loglevel(LOG_PRIORITY_DEBUG);
+	log_set_loglevel(LOG_PRIORITY_INFO);
 
 	emu = emu_new();
 	if (!emu) {
