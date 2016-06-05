@@ -383,7 +383,6 @@ int emu_set_framerate(struct emu *emu, int framerate)
 	if (old_framerate != framerate) {
 		if (emu->config->alternate_speed_mute)
 			audio_mute(framerate != emu->nes_framerate);
-		video_apply_config(emu);
 		audio_apply_config(emu);
 		emu_apply_config(emu);
 	}
