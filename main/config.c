@@ -1611,7 +1611,7 @@ static int config_set_item(struct config *config,
 				return -1;
 			}
 
-			strvalue = (char *)value;
+			strvalue = (char *)parameter->valid_values.string_list[i];
 		} else if (value) {
 			strvalue = (char *)value;
 		}
