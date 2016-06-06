@@ -43,18 +43,6 @@ struct board_info;
 #define ROM_FLAG_HAS_CRC   128
 #define ROM_FLAG_HAS_SHA1  256
 
-struct archive_file_list_entry {
-	size_t size;
-	uint32_t crc;
-	uint8_t sha1[20];
-	char *name;
-};
-
-struct archive_file_list {
-	struct archive_file_list_entry *entries;
-	int count;
-};
-
 struct rom_info {
 	/* char *title; */
 	size_t total_prg_size;

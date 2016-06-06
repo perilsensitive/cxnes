@@ -1,3 +1,4 @@
+#include "archive.h"
 #include "emu.h"
 #include "db.h"
 #include "crc32.h"
@@ -9,155 +10,12 @@
 #define MAX_CHR_ROMS 2
 #define MAX_ROMS (MAX_PRG_ROMS + MAX_CHR_ROMS)
 
-static void free_archive_file_list(struct archive_file_list *list)
-{
-	int i;
-
-	if (!list)
-		return;
-	
-	if (list->entries) {
-		for (i = 0; i < list->count; i++) {
-			if (list->entries[i].name)
-				free(list->entries[i].name);
-		}
-			free(list->entries);
-	}
-	free(list);
-}
-
-static int build_archive_file_list(const char *filename, struct archive_file_list **ptr)
-{
-	unzFile zip;
-	unz_global_info global_info;
-	unz_file_info file_info;
-	struct archive_file_list *list;
-	struct archive_file_list_entry *entries;
-	uint8_t *tmp_buffer;
-	size_t tmp_buffer_size;
-	int list_size;
-	int err;
-	int i;
-	int rc;
-
-	zip = unzOpen(filename);
-	if (zip == NULL)
-		return -1;
-
-	err = unzGetGlobalInfo(zip, &global_info);
-	if (err != UNZ_OK) {
-		unzClose(zip);
-		return -1;
-	}
-
-	list = malloc(sizeof(*list));
-	if (!list) {
-		unzClose(zip);
-		return -1;
-	}
-
-	entries = malloc(sizeof(*entries) * global_info.number_entry);
-	if (!entries) {
-		unzClose(zip);
-		free(list);
-		return -1;
-	}
-
-	list->entries = entries;
-
-	list_size = 0;
-
-	tmp_buffer = NULL;
-	tmp_buffer_size = 0;
-	rc = -1;
-
-	for (i = 0; i < global_info.number_entry; i++) {
-		sha1nfo sha1nfo;
-		uint8_t *result;
-		int bytes_read;
-		int name_length;
-		char *name;
-
-		err = unzGetCurrentFileInfo(zip, &file_info,
-					    NULL, 0, NULL, 0, NULL, 0);
-		if (err != UNZ_OK)
-			break;
-
-		entries[list_size].size = file_info.uncompressed_size;
-		name_length = file_info.size_filename + 1;
-		name = malloc(name_length);
-		entries[list_size].name = name;
-		if (name) {
-			err = unzGetCurrentFileInfo(zip, &file_info, name, name_length,
-						    NULL, 0, NULL, 0);
-			if (err != UNZ_OK)
-				break;
-		}
-
-		if (file_info.uncompressed_size > tmp_buffer_size) {
-			uint8_t *tmp = realloc(tmp_buffer,
-					       entries[list_size].size);
-
-			if (!tmp)
-				break;
-
-			tmp_buffer = tmp;
-			tmp_buffer_size = entries[list_size].size;
-		}
-
-		err = unzOpenCurrentFile(zip);
-		if (err != UNZ_OK)
-			break;
-
-		bytes_read = unzReadCurrentFile(zip, tmp_buffer,
-					 file_info.uncompressed_size);
-		err = unzCloseCurrentFile(zip);
-
-		if ((err != UNZ_OK) || (bytes_read != entries[list_size].size))
-			break;
-
-
-		sha1_init(&sha1nfo);
-		entries[list_size].crc = crc32buf(tmp_buffer,
-						  entries[list_size].size, NULL);
-		sha1_write(&sha1nfo, (char *)tmp_buffer,
-			   entries[list_size].size);
-		result = sha1_result(&sha1nfo);
-		memcpy(entries[list_size].sha1, result, 20);
-			   
-		list_size++;
-
-		err = unzGoToNextFile(zip);
-		if (err != UNZ_OK) {
-			if (err == UNZ_END_OF_LIST_OF_FILE)
-				rc = 0;
-
-			break;
-		}
-	}
-
-	unzClose(zip);
-	if (tmp_buffer)
-		free(tmp_buffer);
-
-	if (rc == 0) {
-		*ptr = list;
-		list->count = list_size;
-	} else {
-		free_archive_file_list(list);
-	}
-
-	return rc;
-}
-
-uint8_t *load_split_rom_parts(const char *filename, struct archive_file_list *file_list,
-			      int *chip_list, size_t *sizep)
+uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, size_t *sizep)
 {
 	uint8_t *buffer;
-	unzFile zip;
 	size_t size;
 	off_t offsets[MAX_ROMS];
-	int err;
+	int status;
 	int i;
 
 	size = 0;
@@ -169,62 +27,33 @@ uint8_t *load_split_rom_parts(const char *filename, struct archive_file_list *fi
 			break;
 
 		offsets[i] = size;
-		size += file_list->entries[file_index].size;
+		size += archive->file_list->entries[file_index].size;
 	}
 
 	buffer = malloc(INES_HEADER_SIZE + size);
 	if (!buffer)
 		return NULL;
 
-	zip = unzOpen(filename);
-	if (zip == NULL)
-		return NULL;
+	status = -1;
 
-	err = UNZ_OK;
+	for (i = 0; i < MAX_ROMS; i++) {
+		uint8_t *ptr;
 
-	for (i = 0; i < file_list->count; i++) {
-		int j;
-
-		for (j = 0; j < MAX_ROMS; j++) {
-			if (chip_list[j] == i)
-				break;
+		if (chip_list[i] < 0) {
+			status = 0;
+			break;
 		}
 
-		if (j == MAX_ROMS) {
-			err = unzGoToNextFile(zip);
-			if (err != UNZ_OK)
-				break;
-
-			continue;
-		}
-
-
-		err = UNZ_OK;
-
-		err = unzOpenCurrentFile(zip);
-		if (err != UNZ_OK)
-			break;
-
-		err = unzReadCurrentFile(zip, buffer + INES_HEADER_SIZE +
-					 offsets[j], file_list->entries[i].size);
-		if (err != file_list->entries[i].size)
-			break;
-
-		err = unzCloseCurrentFile(zip);
-		if (err != UNZ_OK)
-			break;
-
-		err = unzGoToNextFile(zip);
-		if (err != UNZ_OK)
+		ptr = buffer + INES_HEADER_SIZE + offsets[i];
+		status = archive_read_file_by_index(archive, i, ptr);
+		if (status)
 			break;
 	}
 
-	if (err != UNZ_END_OF_LIST_OF_FILE) {
+	if (status) {
 		free(buffer);
-		buffer = NULL;
+		return NULL;
 	}
-
-	unzClose(zip);
 
 	if (sizep) {
 		*sizep = size;
@@ -248,7 +77,7 @@ uint8_t *load_split_rom_parts(const char *filename, struct archive_file_list *fi
  
 int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 {
-	struct archive_file_list *list;
+	struct archive *archive;
 	uint8_t *buffer;
 	size_t size;
 	struct rom_info *rom_info;
@@ -261,18 +90,18 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 
 	*romptr = NULL;
 
-	if (build_archive_file_list(filename, &list) < 0)
+	if (archive_open(&archive, filename))
 		return -1;
 
 	rom_info = NULL;
 	rom = NULL;
 	buffer = NULL;
 	do {
-		rom_info = db_lookup_split_rom(list, chip_list, rom_info);
+		rom_info = db_lookup_split_rom(archive, chip_list, rom_info);
 		if (!rom_info)
 			break;
 
-		buffer = load_split_rom_parts(filename, list, chip_list, &size);
+		buffer = load_split_rom_parts(archive, chip_list, &size);
 
 		if (!buffer)
 			break;
@@ -285,9 +114,9 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 		   filename; this allows patches to be included (provided they
 		   exist in the same dir in the zip as this prg chip.
 		*/
-		if (list->entries[chip_list[0]].name) {
+		if (archive->file_list->entries[chip_list[0]].name) {
 			rom->compressed_filename =
-				strdup(list->entries[chip_list[0]].name);
+				strdup(archive->file_list->entries[chip_list[0]].name);
 		}
 
 		buffer = NULL;
@@ -295,15 +124,15 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 		rom->offset = INES_HEADER_SIZE;
 		rom_calculate_checksum(rom);
 
-		for (i = 0; i < list->count; i++) {
+		for (i = 0; i < archive->file_list->count; i++) {
 			char *basename;
 
-			if (!list->entries[i].name)
+			if (!archive->file_list->entries[i].name)
 				continue;
 
-			basename = strrchr(list->entries[i].name, '/');
+			basename = strrchr(archive->file_list->entries[i].name, '/');
 			if (!basename)
-				basename = list->entries[i].name;
+				basename = archive->file_list->entries[i].name;
 
 			/* Hack for PlayChoice ROMs; most of these are the same as NES
 			   carts, so check for a file called 'security.prm' to distinguish
@@ -338,7 +167,7 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 		rom = NULL;
 	} while (rom_info);
 
-	free_archive_file_list(list);
+	archive_close(&archive);
 
 	if (buffer)
 		free(buffer);

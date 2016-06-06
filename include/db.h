@@ -22,8 +22,10 @@
 
 #include "emu.h"
 
+struct archive;
+
 struct rom_info *db_lookup(struct rom *rom, struct rom_info *start);
-struct rom_info *db_lookup_split_rom(struct archive_file_list *list, int *chip_list,
+struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 				     struct rom_info *start);
 
 void print_rom(struct rom *rom);

@@ -18,6 +18,7 @@
 */
 
 #include <ctype.h>
+#include "archive.h"
 #include "emu.h"
 #include "file_io.h"
 #include "db.h"
@@ -363,11 +364,13 @@ static void fixup_entry(struct rom_info *info)
 			info->prg_crc[0] = info->combined_crc;
 		}
 
+#if 0
 		if (!info->prg_sha1_count &&
 		    (info->flags & ROM_FLAG_HAS_SHA1)) {
 			info->prg_sha1_count = 1;
 			memcpy(&info->prg_sha1[0], info->combined_sha1, 20);
 		}
+#endif
 	}
 
 	/* If the checksum counts don't match the size
@@ -379,19 +382,24 @@ static void fixup_entry(struct rom_info *info)
 	if (info->prg_crc_count != info->prg_size_count)
 		info->prg_crc_count = 0;
 
+#if 0
 	if (info->prg_sha1_count != info->prg_size_count)
 		info->prg_sha1_count = 0;
+#endif
 
 	if (info->chr_crc_count != info->chr_size_count)
 		info->chr_crc_count = 0;
 
+#if 0
 	if (info->chr_sha1_count != info->chr_size_count)
 		info->chr_sha1_count = 0;
+#endif
 
 	/* Split rom checksums must be present for both
 	   prg and chr (if chr is present), otherwise
 	   split rom checksums aren't useful.
 	*/
+#if 0
 	if (info->chr_size_count &&
 	    (info->prg_sha1_count || info->prg_crc_count) &&
 	    !(info->chr_sha1_count || info->chr_crc_count)) {
@@ -411,6 +419,21 @@ static void fixup_entry(struct rom_info *info)
 	} else {
 		insert_rom(info);
 	}
+#else
+	if (info->chr_size_count && (info->prg_crc_count) && !(info->chr_crc_count)) {
+		info->prg_crc_count = 0;
+	}
+
+	if ((info->chr_crc_count) && !(info->prg_crc_count)) {
+		info->chr_crc_count = 0;
+	}
+
+	if (!info->prg_crc_count && !(info->flags & (ROM_FLAG_HAS_CRC))) {
+		free(info);
+	} else {
+		insert_rom(info);
+	}
+#endif
 }
 
 static void process_field(struct db_parser_state *state)
@@ -667,9 +690,13 @@ void db_cleanup(void)
 
 }
 
-struct rom_info *db_lookup_split_rom(struct archive_file_list *list, int *chip_list,
+struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 				     struct rom_info *start)
 {
+	struct archive_file_list *list;
+
+	list = archive->file_list;
+
 	if (start)
 		start = start->next;
 	else
