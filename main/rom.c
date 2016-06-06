@@ -123,6 +123,9 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 	size_t file_size;
 	uint8_t *buffer;
 	struct archive *archive;
+	int rc;
+	int i;
+	char *ext;
 
 	if (!romptr)
 		return -1;
@@ -136,58 +139,53 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		return -1;
 
 	archive_open(&archive, filename);
-	if (archive != NULL) {
-		int rc;
-		int i;
-		char *ext;
+	if (!archive)
+		return -1;
 
-		buffer = NULL;
-		rc = -1;
+	buffer = NULL;
+	rc = -1;
 
-		for (i = 0; i < archive->file_list->count; i++) {
-			const char *name = archive->file_list->entries[i].name;
-			if ((archive->format != ARCHIVE_FORMAT_NULL) &&
-			    (archive->file_list->count > 1)) {
-				ext = strrchr(name, '.');
-				if (!ext || (strcasecmp(ext, ".nes") &&
-					     strcasecmp(ext, ".unf") && 
-					     strcasecmp(ext, ".unif") && 
-					     strcasecmp(ext, ".fds") && 
-					     strcasecmp(ext, ".nsf"))) {
-						continue;
-				}
-			}
-
-			file_size = archive->file_list->entries[i].size;
-			if (file_size == 0)
-				continue;
-
-			buffer = malloc(file_size + 16);
-			if (!buffer)
-				break;
-
-			rc = archive_read_file_by_index(archive, i, buffer);
-			if (rc) {
-				free(buffer);
-				buffer = NULL;
-				break;
-			}
-
-			if (rom_load_file_data(emu, filename, romptr,
-					       buffer, file_size) >= 0) {
-				rc = 0;
-				if (archive->format != ARCHIVE_FORMAT_NULL)
-					(*romptr)->compressed_filename = strdup(name);
-				break;
+	for (i = 0; i < archive->file_list->count; i++) {
+		const char *name = archive->file_list->entries[i].name;
+		if ((archive->format != ARCHIVE_FORMAT_NULL) &&
+		    (archive->file_list->count > 1)) {
+			ext = strrchr(name, '.');
+			if (!ext || (strcasecmp(ext, ".nes") &&
+				     strcasecmp(ext, ".unf") && 
+				     strcasecmp(ext, ".unif") && 
+				     strcasecmp(ext, ".fds") && 
+				     strcasecmp(ext, ".nsf"))) {
+					continue;
 			}
 		}
 
-		archive_close(&archive);
+		file_size = archive->file_list->entries[i].size;
+		if (file_size == 0)
+			continue;
 
-		return rc;
+		buffer = malloc(file_size + 16);
+		if (!buffer)
+			break;
+
+		rc = archive_read_file_by_index(archive, i, buffer);
+		if (rc) {
+			free(buffer);
+			buffer = NULL;
+			break;
+		}
+
+		if (rom_load_file_data(emu, filename, romptr,
+				       buffer, file_size) >= 0) {
+			rc = 0;
+			if (archive->format != ARCHIVE_FORMAT_NULL)
+				(*romptr)->compressed_filename = strdup(name);
+			break;
+		}
 	}
 
-	return 0;
+	archive_close(&archive);
+
+	return rc;
 }
 
 struct rom *rom_load_file(struct emu *emu, const char *filename)
