@@ -27,10 +27,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
-#if ZIP_ENABLED
-#include <zlib.h>
-#include <unzip.h>
-#endif
+#include "archive.h"
 
 #include "config.h"
 #include "emu.h"
@@ -127,11 +124,7 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 	uint8_t *buffer;
 	char *filename_inzip;
 	int filename_inzip_size;
-#if ZIP_ENABLED
-	unzFile zip;
-	unz_file_info file_info;
-	unz_global_info global_info;
-#endif
+	struct archive *archive;
 
 	if (!romptr)
 		return -1;
@@ -144,74 +137,36 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 	if (!check_file_exists(filename))
 		return -1;
 
-#if ZIP_ENABLED
-	filename_inzip = NULL;
-	filename_inzip_size = 0;
-	zip = unzOpen(filename);
-	if (zip != NULL) {
-		int err, i;
+	archive_open(&archive, filename);
+	if (archive != NULL) {
 		int rc;
+		int i;
 		char *ext;
 
 		buffer = NULL;
 		rc = -1;
 
-		err = unzGetGlobalInfo(zip, &global_info);
-		if (err != UNZ_OK)
-			return -1;
-
-		for (i = 0; i < global_info.number_entry; i++) {
-			err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
-						    filename_inzip_size,
-						    NULL, 0, NULL, 0);
-			if (err != UNZ_OK)
-				break;
-
-			if (file_info.size_filename >= filename_inzip_size) {
-				char *tmp;
-				filename_inzip_size = file_info.size_filename + 1;
-				tmp = realloc(filename_inzip, filename_inzip_size);
-				if (!tmp)
-					break;
-
-				filename_inzip = tmp;
-
-				err = unzGetCurrentFileInfo(zip, &file_info, filename_inzip,
-							    filename_inzip_size,
-							    NULL, 0, NULL, 0);
-				if (err != UNZ_OK)
-					break;
-			
-			}
-
-			ext = strrchr(filename_inzip, '.');
+		for (i = 0; i < archive->file_list->count; i++) {
+			const char *name = archive->file_list->entries[i].filename;
+			ext = strrchr(name, '.');
 			if (!ext || (strcasecmp(ext, ".nes") &&
 				     strcasecmp(ext, ".unf") && 
 				     strcasecmp(ext, ".unif") && 
 				     strcasecmp(ext, ".fds") && 
 				     strcasecmp(ext, ".nsf"))) {
-				err = unzGoToNextFile(zip);
-				if (err != UNZ_OK)
-					break;
-				else
 					continue;
 			}
 
-			file_size = file_info.uncompressed_size;
+			file_size = archive->file_list->entries[i].size;
 			if (file_size == 0)
 				continue;
-
-			err = unzOpenCurrentFile(zip);
-			if (err != UNZ_OK)
-				break;
 
 			buffer = malloc(file_size + 16);
 			if (!buffer)
 				break;
 
-			err = unzReadCurrentFile(zip, buffer, file_size);
-
-			if (err != file_size) {
+			rc = archive_read_file_by_index(archive, i, buffer);
+			if (rc) {
 				free(buffer);
 				buffer = NULL;
 				break;
@@ -219,34 +174,13 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 
 			if (rom_load_file_data(emu, filename, romptr,
 					       buffer, file_size) >= 0) {
-				err = unzCloseCurrentFile(zip);
-				if (err != UNZ_OK)
-					break;
-
 				rc = 0;
-				(*romptr)->compressed_filename = filename_inzip;
-				filename_inzip = NULL;
+				(*romptr)->compressed_filename = strdup(name);
 				break;
 			}
-
-			err = unzCloseCurrentFile(zip);
-			if (err != UNZ_OK)
-				break;
-
-			err = unzGoToNextFile(zip);
-			if (err != UNZ_OK)
-				break;
 		}
 
-		if (rc < 0) {
-
-			unzCloseCurrentFile(zip);
-		}
-
-		if (filename_inzip)
-			free(filename_inzip);
-
-		unzClose(zip);
+		archive_close(&archive);
 
 		return rc;
 	}
@@ -707,24 +641,19 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 	int patch_buffer_size;
 	int patches_applied;
 	int i;
-#if ZIP_ENABLED
-	unzFile zip;
-	unz_file_info file_info;
-	int err;
-#endif
+	struct archive *archive;
+	int rc;
 
 	patch_buffer = NULL;
-	zip = NULL;
 	patch_buffer_size = 0;
 	patches_applied = 0;
 
 	buffer_crc = crc32buf(rom->buffer, rom->buffer_size, NULL);
 
+	archive = NULL;
 #if ZIP_ENABLED
 	if (from_zip) {
-		zip = unzOpen(rom->filename);
-		if (!zip)
-			return -1;
+		archive_open(&archive, filename);
 	}
 #endif
 

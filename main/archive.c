@@ -66,6 +66,8 @@ int archive_open(struct archive **archive, const char *filename)
 	ptr->private = NULL;
 	ptr->functions = NULL;
 
+	*archive = NULL;
+
 	for (i = 0; archive_handlers[i]; i++) {
 		if (archive_handlers[i](ptr, filename) == 0) {
 			*archive = ptr;
@@ -92,7 +94,10 @@ int archive_close(struct archive **archive)
 	}
 
 	free_archive_file_list(a->file_list);
-	free(a);
+
+	if (a)
+		free(a);
+
 	*archive = NULL;
 
 	return status;
@@ -111,3 +116,14 @@ int archive_read_file_by_index(struct archive *archive, int index, uint8_t *ptr)
 	return archive->functions->read_file_by_index(archive, index, ptr);
 }
 
+int archive_read_file_by_name(struct archive *archive, const char *name, uint8_t *ptr)
+{
+	if (!archive || (archive->format == ARCHIVE_FORMAT_UNDEFINED))
+		return -1;
+
+	if (!archive->functions || !archive->functions->read_file_by_name)
+		return -1;
+
+
+	return archive->functions->read_file_by_name(archive, name, ptr);
+}

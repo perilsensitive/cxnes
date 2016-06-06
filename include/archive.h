@@ -13,6 +13,7 @@ enum archive_format {
 struct archive_functions {
 	int (*close)(struct archive *);
 	int (*read_file_by_index)(struct archive *, int, uint8_t *);
+	int (*read_file_by_name)(struct archive *, const char *, uint8_t *);
 };
 
 struct archive_file_list_entry {
@@ -37,6 +38,7 @@ struct archive {
 int archive_open(struct archive **archive, const char *filename);
 int archive_close(struct archive **archive);
 int archive_read_file_by_index(struct archive *archive, int index, uint8_t *ptr);
+int archive_read_file_by_name(struct archive *archive, const char *name, uint8_t *ptr);
 int archive_create_empty_file_list(struct archive *archive, int count);
 
 #endif /* __ARCHIVE_H__ */

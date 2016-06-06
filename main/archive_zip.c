@@ -12,10 +12,13 @@ struct archive_zip {
 static int zip_close(struct archive *archive);
 static int zip_read_file_by_index(struct archive *archive, int index,
                                   uint8_t *ptr);
+static int zip_read_file_by_name(struct archive *archive, const char *name,
+                                 uint8_t *ptr);
 
 static struct archive_functions zip_functions = {
 	zip_close,
 	zip_read_file_by_index,
+	zip_read_file_by_name,
 };
 
 static int zip_create_file_list(struct archive *archive)
@@ -136,12 +139,41 @@ static int zip_close(struct archive *archive)
 	return 0;
 }
 
+static int zip_read_current_file(struct archive *archive, uint8_t *ptr)
+{
+	struct archive_zip *data;
+	unz_file_info file_info;
+	unzFile zip;
+	size_t size;
+	int status;
+
+	data = archive->private;
+	zip = data->zip_file;
+
+	status = unzOpenCurrentFile(zip);
+	if (status != UNZ_OK)
+		return -1;
+
+	status = unzGetCurrentFileInfo(zip, &file_info, NULL, 0,
+		                       NULL, 0, NULL, 0);
+	if (status != UNZ_OK)
+		return -1;
+
+	size = file_info.uncompressed_size;
+
+	status = unzReadCurrentFile(zip, ptr, size);
+	if (status != UNZ_OK) {
+		return -1;
+	}
+	
+	return 0;
+}
+
 static int zip_read_file_by_index(struct archive *archive, int index,
                                   uint8_t *ptr)
 {
 	struct archive_zip *data;
 	unzFile zip;
-	size_t size;
 	int status;
 	int i;
 
@@ -159,17 +191,32 @@ static int zip_read_file_by_index(struct archive *archive, int index,
 			return -1;
 	}
 
-	status = unzOpenCurrentFile(zip);
+	status = zip_read_current_file(archive, ptr);
+
+	unzCloseCurrentFile(zip);
+
+	return 0;
+}
+
+static int zip_read_file_by_name(struct archive *archive, const char *name,
+                                  uint8_t *ptr)
+{
+	struct archive_zip *data;
+	unzFile zip;
+	int status;
+
+	data = archive->private;
+	zip = data->zip_file;
+ 
+	status = unzGoToFirstFile(zip);
 	if (status != UNZ_OK)
 		return -1;
 
-	size = archive->file_list->entries[i].size;
-
-	status = unzReadCurrentFile(zip, ptr, size);
-	if (status != UNZ_OK) {
-		unzCloseCurrentFile(zip);
+	status = unzLocateFile(zip, name, 1);
+	if (status != UNZ_OK)
 		return -1;
-	}
+
+	status = zip_read_current_file(archive, ptr);
 
 	unzCloseCurrentFile(zip);
 

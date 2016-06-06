@@ -3,8 +3,6 @@
 #include "db.h"
 #include "crc32.h"
 #include "sha1.h"
-#include <zlib.h>
-#include <unzip.h>
 
 #define MAX_PRG_ROMS 4
 #define MAX_CHR_ROMS 2
