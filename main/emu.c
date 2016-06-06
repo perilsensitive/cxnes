@@ -1303,9 +1303,7 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 			       int patch_count, char **patchfiles)
 {
 	int patches_applied = 0;
-#if ZIP_ENABLED
-	char **zip_patchfiles;
-#endif
+	char **archive_patchfiles;
 	int i;
 
 	if (rom->info.board_type == BOARD_TYPE_FDS) {
@@ -1322,17 +1320,15 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 		rom->buffer_size += 16;
 	}
 
-#if ZIP_ENABLED
-	zip_patchfiles = rom_find_zip_autopatches(emu->config, rom);
-	if (zip_patchfiles)
-		patchfiles = zip_patchfiles;
-#endif	
+	archive_patchfiles = rom_find_archive_autopatches(emu->config, rom);
+	if (archive_patchfiles)
+		patchfiles = archive_patchfiles;
 
 	if (patchfiles) {
 		patches_applied = rom_apply_patches(rom, patch_count,
-						    patchfiles, zip_patchfiles != NULL);
-		if (zip_patchfiles)
-			free(zip_patchfiles);
+						    patchfiles, archive_patchfiles != NULL);
+		if (archive_patchfiles)
+			free(archive_patchfiles);
 	}
 
 	if (patches_applied < 0) {

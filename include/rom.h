@@ -89,11 +89,9 @@ extern void print_rom_info(struct rom *rom);
 extern int rom_calculate_checksum(struct rom *rom);
 extern struct rom *rom_load_file(struct emu *emu, const char *filename);
 extern struct rom *rom_reload_file(struct emu *emu, struct rom *rom);
-extern int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zip);
+extern int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_archive);
 extern char **rom_find_autopatches(struct config *, struct rom *rom);
-#if ZIP_ENABLED
-extern char **rom_find_zip_autopatches(struct config *, struct rom *rom);
-#endif
+extern char **rom_find_archive_autopatches(struct config *, struct rom *rom);
 extern void rom_get_info(struct rom *rom, struct text_buffer *tbuffer);
 
 extern struct rom *rom_alloc(const char *filename, uint8_t *buffer, size_t size);

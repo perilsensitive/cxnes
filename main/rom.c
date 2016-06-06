@@ -43,7 +43,7 @@
 #include "sha1.h"
 
 int rom_apply_patches(struct rom *rom, int count,
-		      char **patchfiles, int from_zip);
+		      char **patchfiles, int from_archive);
 
 static int rom_load_file_data(struct emu *emu, const char *filename,
 			      struct rom **romptr, uint8_t *buffer,
@@ -631,7 +631,7 @@ static int rom_apply_patch_data(struct rom *rom, uint8_t *buffer, size_t size,
    - 'rom' is a pointer to the rom struct which points to the rom data
    - returns -1 on error, or the number of patches applied if successful
 */
-int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zip)
+int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_archive)
 {
 	uint32_t buffer_crc;
 	uint8_t *patch_buffer;
@@ -648,7 +648,7 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 	buffer_crc = crc32buf(rom->buffer, rom->buffer_size, NULL);
 
 	archive = NULL;
-	if (from_zip) {
+	if (from_archive) {
 		archive_open(&archive, rom->filename);
 	}
 
@@ -661,9 +661,9 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 		patch_size = 0;
 
 		printf("Applying patch \"%s\"%s\n", patch_file,
-		       from_zip ? " (from ZIP)" : "");
+		       from_archive ? " (from archive)" : "");
 
-		if (from_zip) {
+		if (from_archive) {
 			int j;
 
 			for (j = 0; j < archive->file_list->count; j++) {
@@ -699,7 +699,7 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 			patch_buffer_size = patch_size;
 		}
 
-		if (from_zip) {
+		if (from_archive) {
 			rc = archive_read_file_by_index(archive, patch_index, patch_buffer);
 			if (rc) {
 				err_message("rom_apply_patches: %s: failed to load file\n",
@@ -722,7 +722,7 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 		}
 	}
 
-	if (from_zip) {
+	if (from_archive) {
 		archive_close(&archive);
 	}
 
@@ -788,7 +788,7 @@ static int cmpstringp(const void *p1, const void *p2)
 	return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-char **rom_find_zip_autopatches(struct config *config, struct rom *rom)
+char **rom_find_archive_autopatches(struct config *config, struct rom *rom)
 {
 	char **patch_list;
 	char *buffer;
