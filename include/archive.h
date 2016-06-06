@@ -8,6 +8,7 @@ struct archive;
 enum archive_format {
 	ARCHIVE_FORMAT_UNDEFINED,
 	ARCHIVE_FORMAT_ZIP,
+	ARCHIVE_FORMAT_NULL,
 };
 
 struct archive_functions {

@@ -5,9 +5,11 @@
 #include "archive.h"
 
 extern int archive_handler_zip(struct archive *archive, const char *filename);
+extern int archive_handler_null(struct archive *archive, const char *filename);
 
 static int (*archive_handlers[])(struct archive *, const char *) = {
 	archive_handler_zip,
+	archive_handler_null,
 	NULL,
 };
 

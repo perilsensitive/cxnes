@@ -146,13 +146,16 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 
 		for (i = 0; i < archive->file_list->count; i++) {
 			const char *name = archive->file_list->entries[i].name;
-			ext = strrchr(name, '.');
-			if (!ext || (strcasecmp(ext, ".nes") &&
-				     strcasecmp(ext, ".unf") && 
-				     strcasecmp(ext, ".unif") && 
-				     strcasecmp(ext, ".fds") && 
-				     strcasecmp(ext, ".nsf"))) {
-					continue;
+			if ((archive->format != ARCHIVE_FORMAT_NULL) &&
+			    (archive->file_list->count > 1)) {
+				ext = strrchr(name, '.');
+				if (!ext || (strcasecmp(ext, ".nes") &&
+					     strcasecmp(ext, ".unf") && 
+					     strcasecmp(ext, ".unif") && 
+					     strcasecmp(ext, ".fds") && 
+					     strcasecmp(ext, ".nsf"))) {
+						continue;
+				}
 			}
 
 			file_size = archive->file_list->entries[i].size;
@@ -173,7 +176,8 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 			if (rom_load_file_data(emu, filename, romptr,
 					       buffer, file_size) >= 0) {
 				rc = 0;
-				(*romptr)->compressed_filename = strdup(name);
+				if (archive->format != ARCHIVE_FORMAT_NULL)
+					(*romptr)->compressed_filename = strdup(name);
 				break;
 			}
 		}
@@ -181,25 +185,6 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		archive_close(&archive);
 
 		return rc;
-	}
-
-	file_size = get_file_size(filename);
-	if ((int)file_size < 0)
-		return -1;
-
-	/* FIXME enforce maximum size */
-	buffer = malloc(file_size + 16);
-	if (!buffer)
-		return -1;
-
-	if (readfile(filename, buffer, file_size)) {
-		free(buffer);
-		return -1;
-	}
-
-	if (rom_load_file_data(emu, filename, romptr,
-			       buffer, file_size) < 0) {
-		return -1;
 	}
 
 	return 0;

@@ -215,7 +215,7 @@ static int zip_read_file_by_name(struct archive *archive, const char *name,
 	if (status != UNZ_OK)
 		return -1;
 
-	status = unzLocateFile(zip, name, 1);
+	status = unzLocateFile(zip, name, 0);
 	if (status != UNZ_OK)
 		return -1;
 

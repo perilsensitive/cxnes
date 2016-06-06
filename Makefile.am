@@ -52,6 +52,7 @@ cxnes_SOURCES = \
 	input/snes_mouse.c \
 	input/microphone.c \
 	main/archive.c \
+	main/archive_null.c \
 	main/archive_zip.c \
 	main/board.c \
 	main/crc32.c \
