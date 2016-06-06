@@ -68,12 +68,16 @@ static int zip_create_file_list(struct archive *archive)
 		archive->file_list->entries[i].crc =
 		    file_info.crc;
 
-		if (unzGoToNextFile(zip) != UNZ_OK)
-			break;
-	}
+		printf("i = %d\n", i);
+		status = unzGoToNextFile(zip);
 
-	if (i == number_entries)
-		status = 0;
+		if (status == UNZ_END_OF_LIST_OF_FILE) {
+			status = 0;
+			break;
+		} else if (status != UNZ_OK) {
+			break;
+		}
+	}
 
 	return status;
 }
