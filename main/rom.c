@@ -667,7 +667,7 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_zi
 			int j;
 
 			for (j = 0; j < archive->file_list->count; j++) {
-				char *name = archive->file_list->entries[i].name;
+				char *name = archive->file_list->entries[j].name;
 				if (strcasecmp(patch_file, name) == 0)
 					break;
 			}
