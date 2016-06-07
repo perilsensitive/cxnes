@@ -6,10 +6,6 @@
 
 #include <stddef.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #ifndef EXTERN_C_BEGIN
 #ifdef __cplusplus
 #define EXTERN_C_BEGIN extern "C" {
@@ -19,8 +15,6 @@
 #define EXTERN_C_END
 #endif
 #endif
-
-EXTERN_C_BEGIN
 
 #define SZ_OK 0
 
@@ -41,12 +35,7 @@ EXTERN_C_BEGIN
 #define SZ_ERROR_NO_ARCHIVE 17
 
 typedef int SRes;
-
-#ifdef _WIN32
-typedef DWORD WRes;
-#else
 typedef int WRes;
-#endif
 
 #ifndef RINOK
 #define RINOK(x) { int __result__ = (x); if (__result__ != 0) return __result__; }
@@ -97,11 +86,7 @@ typedef int Bool;
 #define False 0
 
 
-#ifdef _WIN32
-#define MY_STD_CALL __stdcall
-#else
 #define MY_STD_CALL
-#endif
 
 #ifdef _MSC_VER
 
@@ -248,7 +233,5 @@ typedef struct
 #define WSTRING_PATH_SEPARATOR L"/"
 
 #endif
-
-EXTERN_C_END
 
 #endif

@@ -53,6 +53,7 @@ cxnes_SOURCES = \
 	input/microphone.c \
 	main/archive.c \
 	main/archive_null.c \
+	main/archive_7zip.c \
 	main/archive_zip.c \
 	main/board.c \
 	main/crc32.c \
@@ -85,6 +86,23 @@ cxnes_SOURCES = \
 	main/state.c \
 	main/nes_ntsc.c \
 	main/text_buffer.c \
+	main/7z/7zAlloc.c \
+	main/7z/7zBuf2.c \
+	main/7z/7zCrcOpt.c \
+	main/7z/7zFile.c \
+	main/7z/7zStream.c \
+	main/7z/Bra.c \
+	main/7z/CpuArch.c \
+	main/7z/LzmaDec.c \
+	main/7z/Ppmd7Dec.c \
+	main/7z/7zBuf.c \
+	main/7z/7zCrc.c \
+	main/7z/7zDec.c \
+	main/7z/7zIn.c \
+	main/7z/Bcj2.c \
+	main/7z/Bra86.c \
+	main/7z/Lzma2Dec.c \
+	main/7z/Ppmd7.c \
 	boards/subor.c \
 	boards/76in1.c \
 	boards/cufrom.c \

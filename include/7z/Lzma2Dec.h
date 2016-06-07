@@ -4,7 +4,7 @@
 #ifndef __LZMA2_DEC_H
 #define __LZMA2_DEC_H
 
-#include "LzmaDec.h"
+#include "7z/LzmaDec.h"
 
 #ifdef __cplusplus
 extern "C" {

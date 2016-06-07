@@ -11,8 +11,6 @@ If you need the compatibility with original PPMd var.H, you can use external Ran
 
 #include "Ppmd.h"
 
-EXTERN_C_BEGIN
-
 #define PPMD7_MIN_ORDER 2
 #define PPMD7_MAX_ORDER 64
 
@@ -135,6 +133,4 @@ void Ppmd7z_RangeEnc_FlushData(CPpmd7z_RangeEnc *p);
 
 void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol);
 
-EXTERN_C_END
- 
 #endif

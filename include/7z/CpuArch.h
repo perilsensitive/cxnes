@@ -4,9 +4,7 @@
 #ifndef __CPU_ARCH_H
 #define __CPU_ARCH_H
 
-#include "Types.h"
-
-EXTERN_C_BEGIN
+#include "7z/Types.h"
 
 /*
 MY_CPU_LE means that CPU is LITTLE ENDIAN.
@@ -34,14 +32,6 @@ If MY_CPU_LE_UNALIGN is not defined, we don't know about these properties of pla
 
 #if defined(MY_CPU_X86) || defined(_M_ARM)
 #define MY_CPU_32BIT
-#endif
-
-#if defined(_WIN32) && defined(_M_ARM)
-#define MY_CPU_ARM_LE
-#endif
-
-#if defined(_WIN32) && defined(_M_IA64)
-#define MY_CPU_IA64_LE
 #endif
 
 #if defined(MY_CPU_X86_OR_AMD64)
@@ -149,7 +139,5 @@ Bool CPU_Is_InOrder();
 Bool CPU_Is_Aes_Supported();
 
 #endif
-
-EXTERN_C_END
 
 #endif

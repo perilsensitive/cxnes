@@ -8,8 +8,6 @@ This code is based on PPMd var.H (2001): Dmitry Shkarin : Public domain */
 #include "Types.h"
 #include "CpuArch.h"
 
-EXTERN_C_BEGIN
-
 #ifdef MY_CPU_32BIT
   #define PPMD_32BIT
 #endif
@@ -76,6 +74,4 @@ typedef
   { unsigned i; for (i = 0; i < 256 / sizeof(p[0]); i += 8) { \
   p[i+7] = p[i+6] = p[i+5] = p[i+4] = p[i+3] = p[i+2] = p[i+1] = p[i+0] = ~(size_t)0; }}
 
-EXTERN_C_END
- 
 #endif

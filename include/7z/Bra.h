@@ -4,7 +4,7 @@
 #ifndef __BRA_H
 #define __BRA_H
 
-#include "Types.h"
+#include "7z/Types.h"
 
 #ifdef __cplusplus
 extern "C" {
