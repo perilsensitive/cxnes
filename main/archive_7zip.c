@@ -120,7 +120,7 @@ static int Utf16_To_Utf8(char *dest, size_t *destLen, const uint16_t *src, size_
 	return 0;
 }
 
-static int Utf16_To_Utf8Buf(char *dest, const uint16_t *src, size_t srcLen)
+static int Utf16_To_Utf8Buf(char **dest, const uint16_t *src, size_t srcLen)
 {
 	size_t destLen = 0;
 	int res;
@@ -128,17 +128,17 @@ static int Utf16_To_Utf8Buf(char *dest, const uint16_t *src, size_t srcLen)
 	Utf16_To_Utf8(NULL, &destLen, src, srcLen);
 	destLen += 1;
 
-	dest = malloc(destLen);
+	*dest = malloc(destLen);
 	if (!*dest)
 		return -1;
 
-	res = Utf16_To_Utf8(dest, &destLen, src, srcLen);
+	res = Utf16_To_Utf8(*dest, &destLen, src, srcLen);
 	dest[destLen] = 0;
 
-	return res ? 0 : -1;
+	return res ? destLen : -1;
 }
 
-static int Utf16_To_Char(char *buf, const uint16_t *s)
+static int Utf16_To_Char(char **buf, const uint16_t *s)
 {
 	int len = 0;
 
@@ -188,13 +188,7 @@ static int p7zip_create_file_list(struct archive *archive)
 
  	      	SzArEx_GetFileNameUtf16(&data->db, i, name);
 		
-		len = Utf16_To_Char(NULL, name);
-
-		utf8_name = malloc(len);
-		if (!utf8_name)
-			return -1;
-
-		Utf16_To_Char(utf8_name, name);
+		Utf16_To_Char(&utf8_name, name);
 
 		f = data->db.db.Files + i;
 
