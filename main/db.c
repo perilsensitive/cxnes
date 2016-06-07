@@ -136,9 +136,9 @@ static int parse_int_list(char *value, uint32_t *list, int limit, int base)
 	count = 0;
 
 	for (i = 0; tokens[i] && i < limit; i++) {
-		long v;
+		unsigned long v;
 		char *end;
-		v = strtol(tokens[i], &end, base);
+		v = strtoul(tokens[i], &end, base);
 		if (*end == 'k' || *end == 'K') {
 			v *= 1024;
 			end++;
