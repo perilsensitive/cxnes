@@ -274,11 +274,13 @@ static void file_open(GtkWidget *widget, gpointer user_data)
 	char *file;
 	int paused;
 	char *filter_patterns[] = { "*.[nN][eE][sS]",
+				    "*.[nN][eE][zZ]",
 				    "*.[uU][nN][iI][fF]",
 				    "*.[uU][nN][fF]",
 				    "*.[fF][dD][sS]",
 				    "*.[nN][sS][fF]",
 				    "*.[zZ][iI][pP]",
+				    "*.7[zZ]",
 				    NULL };
 	char *shortcuts[] = { (char *)emu->config->rom_path, NULL };
 	GtkWidget *gtkwindow = user_data;
