@@ -149,6 +149,11 @@ int rom_load_single_file(struct emu *emu, const char *filename, struct rom **rom
 		const char *name = archive->file_list->entries[i].name;
 		if ((archive->format != ARCHIVE_FORMAT_NULL) &&
 		    (archive->file_list->count > 1)) {
+			uint32_t flags = archive->file_list->entries[i].flags;
+
+			if (flags & ARCHIVE_FILE_FLAG_DIR)
+				continue;
+
 			ext = strrchr(name, '.');
 			if (!ext || (strcasecmp(ext, ".nes") &&
 				     strcasecmp(ext, ".unf") && 
@@ -805,15 +810,20 @@ char **rom_find_archive_autopatches(struct config *config, struct rom *rom)
 	for (i = 0; i < archive->file_list->count; i++) {
 		char *ext;
 		char *filename;
+		uint32_t flags;
+
+		flags = archive->file_list->entries[i].flags;
 
 		if (archive->file_list->entries[i].size == 0)
+			continue;
+
+		if (flags & ARCHIVE_FILE_FLAG_DIR)
 			continue;
 
 		filename = archive->file_list->entries[i].name;
 
 		if (strncmp(filename, rom->compressed_filename,
-			     prefix_length) ||
-		     strchr(filename + prefix_length, '/')) {
+			     prefix_length)) {
 			continue;
 		}
 

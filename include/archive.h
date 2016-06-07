@@ -25,7 +25,7 @@
 struct archive;
 
 enum archive_file_flags {
-	ARCHIVE_FILE_FLAG_DIRECTORY = 0x01,
+	ARCHIVE_FILE_FLAG_DIR = 0x01,
 };
 
 enum archive_format {

@@ -195,6 +195,11 @@ static int p7zip_create_file_list(struct archive *archive)
 		archive->file_list->entries[i].size = f->Size;
 		archive->file_list->entries[i].crc = f->Crc;
 		archive->file_list->entries[i].name = utf8_name;
+
+		if (f->IsDir) {
+			archive->file_list->entries[i].flags =
+			    ARCHIVE_FILE_FLAG_DIR;
+		}
 	}
 
 	if (name)

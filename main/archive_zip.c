@@ -83,7 +83,7 @@ static int zip_create_file_list(struct archive *archive)
 
 		if (name[name_length - 2] == '/') {
 			name[name_length - 2] = '\0';
-			archive->file_list->entries[i].flags = ARCHIVE_FILE_FLAG_DIRECTORY;
+			archive->file_list->entries[i].flags = ARCHIVE_FILE_FLAG_DIR;
 		}
 
 		archive->file_list->entries[i].name = name;
