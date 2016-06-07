@@ -195,8 +195,6 @@ static int p7zip_create_file_list(struct archive *archive)
 		archive->file_list->entries[i].size = f->Size;
 		archive->file_list->entries[i].crc = f->Crc;
 		archive->file_list->entries[i].name = utf8_name;
-
-		printf("%d: %s\n", i, utf8_name);
 	}
 
 	if (name)
