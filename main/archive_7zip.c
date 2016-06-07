@@ -294,15 +294,11 @@ static int p7zip_read_file_by_index(struct archive *archive, int index,
 		            &offset, &outSizeProcessed,
 		            &data->alloc_imp, &data->alloc_temp_imp);
 
-	printf("%c%c%c\n", data->out_buffer[0], data->out_buffer[1], data->out_buffer[2]);
-
 	if (rc)
 		return -1;
 
 	memcpy(ptr, data->out_buffer + offset,
 	       archive->file_list->entries[index].size);
-
-	printf("Here\n");
 
 	return 0;
 }
