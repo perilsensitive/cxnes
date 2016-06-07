@@ -81,6 +81,11 @@ static int zip_create_file_list(struct archive *archive)
 			break;
 		}
 
+		if (name[name_length - 2] == '/') {
+			name[name_length - 2] = '\0';
+			archive->file_list->entries[i].flags = ARCHIVE_FILE_FLAG_DIRECTORY;
+		}
+
 		archive->file_list->entries[i].name = name;
 		archive->file_list->entries[i].size =
 		    file_info.uncompressed_size;

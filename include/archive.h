@@ -24,6 +24,10 @@
 
 struct archive;
 
+enum archive_file_flags {
+	ARCHIVE_FILE_FLAG_DIRECTORY = 0x01,
+};
+
 enum archive_format {
 	ARCHIVE_FORMAT_UNDEFINED,
 	ARCHIVE_FORMAT_ZIP,
@@ -41,6 +45,7 @@ struct archive_file_list_entry {
 	size_t size;
 	uint32_t crc;
 	uint8_t sha1[20];
+	uint32_t flags;
 	char *name;
 };
 
