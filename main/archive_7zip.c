@@ -133,7 +133,7 @@ static int Utf16_To_Utf8Buf(char **dest, const uint16_t *src, size_t srcLen)
 		return -1;
 
 	res = Utf16_To_Utf8(*dest, &destLen, src, srcLen);
-	dest[destLen] = 0;
+	(*dest)[destLen] = 0;
 
 	return res ? destLen : -1;
 }
@@ -195,6 +195,8 @@ static int p7zip_create_file_list(struct archive *archive)
 		archive->file_list->entries[i].size = f->Size;
 		archive->file_list->entries[i].crc = f->Crc;
 		archive->file_list->entries[i].name = utf8_name;
+
+		printf("%d: %s\n", i, utf8_name);
 	}
 
 	if (name)
@@ -282,6 +284,8 @@ static int p7zip_read_file_by_index(struct archive *archive, int index,
 	if (!archive || !archive->private)
 		return -1;
 
+	printf("calling read_file_by_index: %d\n", index);
+
 	data = archive->private;
 
 	rc = SzArEx_Extract(&data->db, &data->look_stream.s, index,
@@ -290,11 +294,15 @@ static int p7zip_read_file_by_index(struct archive *archive, int index,
 		            &offset, &outSizeProcessed,
 		            &data->alloc_imp, &data->alloc_temp_imp);
 
+	printf("%c%c%c\n", data->out_buffer[0], data->out_buffer[1], data->out_buffer[2]);
+
 	if (rc)
 		return -1;
 
-	memcpy(ptr, data->out_buffer,
+	memcpy(ptr, data->out_buffer + offset,
 	       archive->file_list->entries[index].size);
+
+	printf("Here\n");
 
 	return 0;
 }
