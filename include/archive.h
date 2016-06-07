@@ -27,6 +27,7 @@ struct archive;
 enum archive_format {
 	ARCHIVE_FORMAT_UNDEFINED,
 	ARCHIVE_FORMAT_ZIP,
+	ARCHIVE_FORMAT_7ZIP,
 	ARCHIVE_FORMAT_NULL,
 };
 

@@ -32,10 +32,10 @@ struct archive_7zip {
 	UInt32 block_index;
 	Byte *out_buffer;
 	size_t out_buffer_size;
-	ISzAlloc allocImp;
-	ISzAlloc allocTempImp;
-	CFileInStream archiveStream;
-	CLookToRead lookStream;
+	ISzAlloc alloc_imp;
+	ISzAlloc alloc_temp_imp;
+	CFileInStream archive_string;
+	CLookToRead look_stream;
 	CSzArEx db;
 };
 
@@ -197,6 +197,9 @@ static int p7zip_create_file_list(struct archive *archive)
 		archive->file_list->entries[i].name = utf8_name;
 	}
 
+	if (name)
+		free(name);
+
 	return 0;
 }
 
@@ -212,35 +215,36 @@ int archive_handler_7zip(struct archive *archive, const char *filename)
 	data->block_index = ~0;
 	data->out_buffer = NULL;
 	data->out_buffer_size = 0;
-	data->allocImp.Alloc = SzAlloc;
-	data->allocImp.Free = SzFree;
-	data->allocTempImp.Alloc = SzAllocTemp;
-	data->allocTempImp.Free = SzFreeTemp;
+	data->alloc_imp.Alloc = SzAlloc;
+	data->alloc_imp.Free = SzFree;
+	data->alloc_temp_imp.Alloc = SzAllocTemp;
+	data->alloc_temp_imp.Free = SzFreeTemp;
 
-	if (InFile_Open(&data->archiveStream.file, filename))
+	if (InFile_Open(&data->archive_string.file, filename))
 		return -1;
 
 	/* FIXME Error checking? */
-	FileInStream_CreateVTable(&data->archiveStream);
-	LookToRead_CreateVTable(&data->lookStream, False);
+	FileInStream_CreateVTable(&data->archive_string);
+	LookToRead_CreateVTable(&data->look_stream, False);
 	  
-	data->lookStream.realStream = &data->archiveStream.s;
-	LookToRead_Init(&data->lookStream);
+	data->look_stream.realStream = &data->archive_string.s;
+	LookToRead_Init(&data->look_stream);
 
 	CrcGenerateTable();
 
 	SzArEx_Init(&data->db);
-	res = SzArEx_Open(&data->db, &data->lookStream.s, &data->allocImp,
-	                  &data->allocTempImp);
+	res = SzArEx_Open(&data->db, &data->look_stream.s, &data->alloc_imp,
+	                  &data->alloc_temp_imp);
 
 	if (res != SZ_OK) {
 		/* FIXME how to clean up? */
-		SzArEx_Free(&data->db, &data->allocImp);
-		IAlloc_Free(&data->allocImp, data->out_buffer);
-		File_Close(&data->archiveStream.file);
+		SzArEx_Free(&data->db, &data->alloc_imp);
+		IAlloc_Free(&data->alloc_imp, data->out_buffer);
+		File_Close(&data->archive_string.file);
 		free(data);
 	}
 
+	archive->format = ARCHIVE_FORMAT_7ZIP;
 	archive->private = data;
 	archive->functions = &p7zip_functions;
 
@@ -260,27 +264,58 @@ static int p7zip_close(struct archive *archive)
 
 	data = archive->private;
 
-	IAlloc_Free(&data->allocImp, data->out_buffer);
-	SzArEx_Free(&data->db, &data->allocImp);
-	//SzFree(NULL, temp);
-	File_Close(&data->archiveStream.file);
+	IAlloc_Free(&data->alloc_imp, data->out_buffer);
+	SzArEx_Free(&data->db, &data->alloc_imp);
+	File_Close(&data->archive_string.file);
 
-	return -1;
-}
-
-static int p7zip_read_current_file(struct archive *archive, uint8_t *ptr)
-{
 	return -1;
 }
 
 static int p7zip_read_file_by_index(struct archive *archive, int index,
                                     uint8_t *ptr)
 {
-	return -1;
+	struct archive_7zip *data;
+        size_t offset = 0;
+        size_t outSizeProcessed = 0;
+	int rc;
+
+	if (!archive || !archive->private)
+		return -1;
+
+	data = archive->private;
+
+	rc = SzArEx_Extract(&data->db, &data->look_stream.s, index,
+		            &data->block_index, &data->out_buffer,
+	                    &data->out_buffer_size,
+		            &offset, &outSizeProcessed,
+		            &data->alloc_imp, &data->alloc_temp_imp);
+
+	if (rc)
+		return -1;
+
+	memcpy(ptr, data->out_buffer,
+	       archive->file_list->entries[index].size);
+
+	return 0;
 }
 
 static int p7zip_read_file_by_name(struct archive *archive, const char *name,
                                    uint8_t *ptr)
 {
-	return -1;
+	int i;
+
+	if (!archive || !archive->private)
+		return -1;
+
+	for (i = 0; i < archive->file_list->count; i++) {
+		if (strcasecmp(name, archive->file_list->entries[i].name) == 0)
+			break;
+	}
+
+	if (i == archive->file_list->count)
+		return -1;
+
+	return p7zip_read_file_by_index(archive, i, ptr);
+
+	return 0;
 }
