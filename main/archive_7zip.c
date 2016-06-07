@@ -237,11 +237,11 @@ int archive_handler_7zip(struct archive *archive, const char *filename)
 	                  &data->alloc_temp_imp);
 
 	if (res != SZ_OK) {
-		/* FIXME how to clean up? */
 		SzArEx_Free(&data->db, &data->alloc_imp);
 		IAlloc_Free(&data->alloc_imp, data->out_buffer);
 		File_Close(&data->archive_string.file);
 		free(data);
+		return -1;
 	}
 
 	archive->format = ARCHIVE_FORMAT_7ZIP;
