@@ -8,25 +8,42 @@
 #define MAX_CHR_ROMS 2
 #define MAX_ROMS (MAX_PRG_ROMS + MAX_CHR_ROMS)
 
-uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, size_t *sizep)
+static uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, int num_chips, size_t *sizep)
 {
 	uint8_t *buffer;
 	size_t size;
 	off_t offsets[MAX_ROMS];
+	int file_list[MAX_ROMS];
 	int status;
 	int i;
 
 	size = 0;
 
-	for (i = 0; i < MAX_ROMS; i++)	{
-		int file_index = chip_list[i];
+	for (i = 0; i < MAX_ROMS; i++)
+		file_list[i] = -1;
 
-		if (file_index < 0)
+	status = 0;
+	for (i = 0; i < num_chips; i++){
+		int j;
+
+		for (j = 0; j < archive->file_list->count; j++) {
+			if (chip_list[j] == i) {
+				/* FIXME validate sha1, move on to next j if no match */
+				file_list[i] = j;
+				offsets[i] = size;
+				size += archive->file_list->entries[j].size;
+				break;
+			}
+		}
+
+		if (j == archive->file_list->count) {
+			status = -1;
 			break;
-
-		offsets[i] = size;
-		size += archive->file_list->entries[file_index].size;
+		}
 	}
+
+	if (status < 0)
+		return NULL;
 
 	buffer = malloc(INES_HEADER_SIZE + size);
 	if (!buffer)
@@ -34,16 +51,12 @@ uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, size_t *s
 
 	status = -1;
 
-	for (i = 0; i < MAX_ROMS; i++) {
+	for (i = 0; (i < MAX_ROMS) && (file_list[i] >= 0); i++) {
 		uint8_t *ptr;
 
-		if (chip_list[i] < 0) {
-			status = 0;
-			break;
-		}
-
 		ptr = buffer + INES_HEADER_SIZE + offsets[i];
-		status = archive_read_file_by_index(archive, i, ptr);
+		status = archive_read_file_by_index(archive, file_list[i], ptr);
+
 		if (status)
 			break;
 	}
@@ -80,29 +93,39 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 	size_t size;
 	struct rom_info *rom_info;
 	struct rom *rom;
-	int chip_list[MAX_ROMS];
+	int *chip_list;
 	int i;
 
 	if (!romptr)
 		return -1;
+
+	chip_list = NULL;
 
 	*romptr = NULL;
 
 	if (archive_open(&archive, filename))
 		return -1;
 
+	chip_list = malloc(archive->file_list->count * sizeof(*chip_list));
+	if (!chip_list)
+		return -1;
+
 	rom_info = NULL;
 	rom = NULL;
 	buffer = NULL;
 	do {
+		int total_chips;
+
 		rom_info = db_lookup_split_rom(archive, chip_list, rom_info);
 		if (!rom_info)
 			break;
 
-		buffer = load_split_rom_parts(archive, chip_list, &size);
+		total_chips = rom_info->prg_size_count + rom_info->chr_size_count;
 
-		if (!buffer)
+		buffer = load_split_rom_parts(archive, chip_list, total_chips, &size);
+		if (!buffer) {
 			break;
+		}
 
 		rom = rom_alloc(filename, buffer, size);
 		if (!rom)
@@ -112,10 +135,7 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 		   filename; this allows patches to be included (provided they
 		   exist in the same dir in the zip as this prg chip.
 		*/
-		if (archive->file_list->entries[chip_list[0]].name) {
-			rom->compressed_filename =
-				strdup(archive->file_list->entries[chip_list[0]].name);
-		}
+		rom->compressed_filename = strdup("");
 
 		buffer = NULL;
 		memcpy(&rom->info, rom_info, sizeof(*rom_info));
@@ -166,6 +186,9 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 	} while (rom_info);
 
 	archive_close(&archive);
+
+	if (chip_list)
+		free(chip_list);
 
 	if (buffer)
 		free(buffer);

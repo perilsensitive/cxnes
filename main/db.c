@@ -694,6 +694,8 @@ struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 				     struct rom_info *start)
 {
 	struct archive_file_list *list;
+	int index;
+	int matched_chips[MAX_ROMS];
 
 	list = archive->file_list;
 
@@ -704,22 +706,35 @@ struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 
 	while (start) {
 		int i;
-		int remaining;
-	
-		remaining = start->prg_size_count + start->chr_size_count;
+		int total_roms;
 
-		if (!remaining) {
+		total_roms = start->prg_size_count + start->chr_size_count;
+
+		if (total_roms == 0) {
 			start = start->next;
 			continue;
 		}
 
-		for (i = 0; i < MAX_ROMS; i++)
-			chip_list[i] = -1;
+		for (index = 0; index < archive->file_list->count; index++)
+			chip_list[index] = -1;
 
-		if ((start->prg_size_count &&
-		     !(start->prg_crc_count || start->prg_sha1_count)) ||
-		    (start->chr_size_count &&
-		     !(start->chr_crc_count || start->chr_sha1_count))) {
+		for (index = 0; index < MAX_ROMS; index++) {
+			matched_chips[index] = 0;
+		}
+
+		if (!start->prg_size_count ||
+		    (start->prg_size_count != start->prg_crc_count) ||
+		    (start->prg_sha1_count &&
+		     (start->prg_sha1_count != start->prg_size_count))) {
+			printf("wtf1: %d %d %d\n", start->prg_size_count, start->prg_crc_count, start->prg_sha1_count);
+			start = start->next;
+			continue;
+		}
+
+		if (start->chr_size_count &&
+		    ((start->chr_size_count != start->chr_crc_count) ||
+		     (start->chr_sha1_count &&
+		     (start->chr_sha1_count != start->chr_size_count)))) {
 			start = start->next;
 			continue;
 		}
@@ -727,24 +742,10 @@ struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 		for (i = 0; i < list->count; i++) {
 			int j;
 
-			if (!remaining)
-				break;
-
 			for (j = 0; j < start->prg_size_count; j++) {
-				if (start->prg_crc_count &&
-				    (list->entries[i].crc != start->prg_crc[j])) {
-					continue;
-				}
-
-				if (start->prg_sha1_count &&
-				    memcmp(list->entries[i].sha1, start->prg_sha1[j],
-					   20)) {
-					continue;
-				}
-
-				if (chip_list[j] < 0) {
-					chip_list[j] = i;
-					remaining--;
+				if (list->entries[i].crc == start->prg_crc[j]) {
+					chip_list[i] = j;
+					matched_chips[j]++;
 					break;
 				}
 			}
@@ -755,28 +756,24 @@ struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 			}
 
 			for (j = 0; j < start->chr_size_count; j++) {
-				if (start->chr_crc_count &&
-				    (list->entries[i].crc != start->chr_crc[j])) {
-					continue;
-				}
-
-				if (start->chr_sha1_count &&
-				    memcmp(list->entries[i].sha1, start->chr_sha1[j],
-					   20)) {
-					continue;
-				}
-
-				if (chip_list[j + start->prg_size_count] < 0) {
-					chip_list[j + start->prg_size_count] = i;
-					remaining--;
+				if (list->entries[i].crc == start->chr_crc[j]) {
+					chip_list[i] = j + start->prg_size_count;
+					matched_chips[j + start->prg_size_count]++;
 					break;
 				}
+
 			}
 
 		}
 
-		if (!remaining)
+		for (index = 0; index < MAX_ROMS; index++) {
+			if (matched_chips[index] == 0)
+				break;
+		}
+
+		if (index == total_roms) {
 			break;
+		}
 
 		start = start->next;
 	}
