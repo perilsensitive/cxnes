@@ -726,7 +726,6 @@ struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 		    (start->prg_size_count != start->prg_crc_count) ||
 		    (start->prg_sha1_count &&
 		     (start->prg_sha1_count != start->prg_size_count))) {
-			printf("wtf1: %d %d %d\n", start->prg_size_count, start->prg_crc_count, start->prg_sha1_count);
 			start = start->next;
 			continue;
 		}

@@ -8,30 +8,84 @@
 #define MAX_CHR_ROMS 2
 #define MAX_ROMS (MAX_PRG_ROMS + MAX_CHR_ROMS)
 
-static uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, int num_chips, size_t *sizep)
+static int load_split_rom_parts(struct archive *archive, int *chip_list, struct rom_info *rom_info,
+                                 uint8_t **bufferp, size_t *sizep)
 {
 	uint8_t *buffer;
+	uint8_t *ptr;
 	size_t size;
 	off_t offsets[MAX_ROMS];
 	int file_list[MAX_ROMS];
+	int num_chips;
 	int status;
 	int i;
 
 	size = 0;
 
+	num_chips = rom_info->prg_size_count + rom_info->chr_size_count;
+
 	for (i = 0; i < MAX_ROMS; i++)
 		file_list[i] = -1;
 
 	status = 0;
-	for (i = 0; i < num_chips; i++){
+	for (i = 0; i < num_chips; i++) {
 		int j;
 
 		for (j = 0; j < archive->file_list->count; j++) {
 			if (chip_list[j] == i) {
-				/* FIXME validate sha1, move on to next j if no match */
-				file_list[i] = j;
 				offsets[i] = size;
 				size += archive->file_list->entries[j].size;
+				break;
+			}
+		}
+	}
+
+	buffer = malloc(INES_HEADER_SIZE + size);
+	if (!buffer) {
+		return -1;
+	}
+
+	ptr = buffer + INES_HEADER_SIZE;
+
+	for (i = 0; i < num_chips; i++) {
+		int j;
+
+		for (j = 0; j < archive->file_list->count; j++) {
+			if (chip_list[j] == i) {
+				sha1nfo sha1;
+				uint8_t *result;
+
+				file_list[i] = j;
+				status = archive_read_file_by_index(archive, file_list[i], ptr);
+				if (status) {
+					free(buffer);
+					return -1;
+				}
+
+				/* Validate each chip's SHA1, if present. If it doesn't match,
+				   then move on to the next match for that chip in the archive.
+				 */
+
+				if ((i < rom_info->prg_size_count) && rom_info->prg_sha1_count) {
+					sha1_init(&sha1);
+					sha1_write(&sha1, (char *)ptr,
+					           archive->file_list->entries[file_list[i]].size);
+					result = sha1_result(&sha1);
+					if (memcmp(result, rom_info->prg_sha1[i], 20) != 0) {
+						continue;
+					}
+				} else if (rom_info->chr_sha1_count) {
+					sha1_init(&sha1);
+					sha1_write(&sha1, (char *)ptr,
+					           archive->file_list->entries[file_list[i]].size);
+					result = sha1_result(&sha1);
+					if (memcmp(result, rom_info->chr_sha1[i -
+					                   rom_info->prg_size_count], 20) != 0) {
+						continue;
+					}
+				}
+
+				ptr += archive->file_list->entries[file_list[i]].size;
 				break;
 			}
 		}
@@ -42,12 +96,11 @@ static uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, in
 		}
 	}
 
-	if (status < 0)
-		return NULL;
-
-	buffer = malloc(INES_HEADER_SIZE + size);
-	if (!buffer)
-		return NULL;
+	if (status < 0) {
+		if (bufferp)
+			*bufferp = NULL;
+		return 0;
+	}
 
 	status = -1;
 
@@ -63,14 +116,17 @@ static uint8_t *load_split_rom_parts(struct archive *archive, int *chip_list, in
 
 	if (status) {
 		free(buffer);
-		return NULL;
+		if (bufferp)
+			*bufferp = NULL;
+		return 0;
 	}
 
 	if (sizep) {
-		*sizep = size;
+		*sizep = size + INES_HEADER_SIZE;
 	}
 
-	return buffer;
+	*bufferp = buffer;
+	return 0;
 }
 
 /* This is a generic split-ROM format loader.  It requires the
@@ -114,26 +170,26 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 	rom = NULL;
 	buffer = NULL;
 	do {
-		int total_chips;
-
 		rom_info = db_lookup_split_rom(archive, chip_list, rom_info);
 		if (!rom_info)
 			break;
 
-		total_chips = rom_info->prg_size_count + rom_info->chr_size_count;
-
-		buffer = load_split_rom_parts(archive, chip_list, total_chips, &size);
-		if (!buffer) {
+		if (load_split_rom_parts(archive, chip_list, rom_info, &buffer,
+		                         &size)) {
 			break;
 		}
+
+		if (!buffer)
+			continue;
 
 		rom = rom_alloc(filename, buffer, size);
 		if (!rom)
 			break;
 
-		/* Store the filename of the first PRG chip as the compressed
-		   filename; this allows patches to be included (provided they
-		   exist in the same dir in the zip as this prg chip.
+		/* Store the filename of the first PRG chip as the empty string;
+		   this allows patches to be included with split roms as well,
+		   but they need to be located in the top-level directory of the
+		   archive.
 		*/
 		rom->compressed_filename = strdup("");
 
