@@ -1352,8 +1352,29 @@ static GtkWidget *gui_build_window_size_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
 
-	item = gtk_radio_menu_item_new_with_mnemonic(group, "_Custom");
-	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(0));
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_5X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(5));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_6X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(6));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_7X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(7));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_8X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(8));
 	g_signal_connect(G_OBJECT(item), "activate",
 	                 G_CALLBACK(select_window_size_callback), NULL);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
