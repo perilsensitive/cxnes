@@ -273,7 +273,7 @@ static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *co
 	gtk_grid_attach(GTK_GRID(display_size_grid), combo_scaling_mode, 1, 6, 2, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_scaling_mode);
 
-	tmp = gtk_label_new_with_mnemonic("_Window scaling factor:");
+	tmp = gtk_label_new_with_mnemonic("_Window default scaling factor:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 7, 1, 1);
 	spin_window_scaling_factor = config_int_spinbutton(dialog, config,
