@@ -163,10 +163,9 @@ void ntsc_auto_tune_callback(GtkToggleButton *toggle, gpointer user_data)
 	gtk_widget_set_sensitive(widget, !gtk_toggle_button_get_active(toggle));
 }
 
-static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *config)
+static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 {
-	GtkWidget *display_size_frame;
-	GtkWidget *display_size_grid;
+	GtkWidget *scaler_grid;
 
 	GtkWidget *combo_scaling_mode;
 	GtkWidget *combo_ntsc_aspect_ratio;
@@ -180,43 +179,42 @@ static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *co
 	GtkWidget *spin_pal_first_pixel;
 	GtkWidget *spin_pal_last_pixel;
 	GtkWidget *spin_window_scaling_factor;
+	GtkWidget *combo_video_filter;
+	GtkWidget *button_filter_settings;
+	GtkWidget *filter_grid;
+	GtkWidget *check_stretch_to_fit;
+	GtkWidget *scale;
 
 	GtkWidget *box, *scaling_box;
 
 	GtkWidget *tmp;
 
-	display_size_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Display Size</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(display_size_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(display_size_frame), GTK_SHADOW_NONE);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(display_size_frame), box);
 
-	display_size_grid = gtk_grid_new();
-	gtk_grid_set_column_spacing(GTK_GRID(display_size_grid), 8);
-	gtk_grid_set_row_spacing(GTK_GRID(display_size_grid), 8);
-	gtk_box_pack_start(GTK_BOX(box), display_size_grid, FALSE, FALSE, 0);
+	scaler_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(scaler_grid), 8);
+	gtk_grid_set_row_spacing(GTK_GRID(scaler_grid), 8);
+	gtk_box_pack_start(GTK_BOX(box), scaler_grid, FALSE, FALSE, 0);
 	tmp = gtk_label_new("NTSC");
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 1, 0, 1, 1);
 	tmp = gtk_label_new("PAL");
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 2, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 2, 0, 1, 1);
 	tmp = gtk_label_new_with_mnemonic("Pixel Aspect _Ratio:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 1, 1, 1);
 	
 	combo_ntsc_aspect_ratio =
 		config_combo_box(dialog,
 				 config, "ntsc_pixel_aspect_ratio");
-	gtk_grid_attach(GTK_GRID(display_size_grid), combo_ntsc_aspect_ratio, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), combo_ntsc_aspect_ratio, 1, 1, 1, 1);
 	combo_pal_aspect_ratio =
 		config_combo_box(dialog,
 				 config, "pal_pixel_aspect_ratio");
-	gtk_grid_attach(GTK_GRID(display_size_grid), combo_pal_aspect_ratio, 2, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), combo_pal_aspect_ratio, 2, 1, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("F_irst Scanline:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 2, 1, 1);
 	spin_ntsc_first_scanline =
 		config_int_spinbutton(dialog, config,
 				      "ntsc_first_scanline");
@@ -224,12 +222,12 @@ static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *co
 	spin_pal_first_scanline =
 		config_int_spinbutton(dialog, config,
 				      "pal_first_scanline");
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_ntsc_first_scanline, 1, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_pal_first_scanline, 2, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_first_scanline, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_first_scanline, 2, 2, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("L_ast Scanline:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 3, 1, 1);
 	spin_ntsc_last_scanline =
 		config_int_spinbutton(dialog, config,
 				      "ntsc_last_scanline");
@@ -237,30 +235,30 @@ static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *co
 	spin_pal_last_scanline =
 		config_int_spinbutton(dialog, config,
 				      "pal_last_scanline");
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_ntsc_last_scanline, 1, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_pal_last_scanline, 2, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_last_scanline, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_last_scanline, 2, 3, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("First _Pixel:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 4, 1, 1);
 	spin_ntsc_first_pixel =
 		config_int_spinbutton(dialog, config,
 				      "ntsc_first_pixel");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_first_pixel);
 	spin_pal_first_pixel =
 		config_int_spinbutton(dialog, config,"pal_first_pixel");
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_ntsc_first_pixel, 1, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_pal_first_pixel, 2, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_first_pixel, 1, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_first_pixel, 2, 4, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("Last P_ixel:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 5, 1, 1);
 	spin_ntsc_last_pixel =
 		config_int_spinbutton(dialog, config, "ntsc_last_pixel");
 	spin_pal_last_pixel =
 		config_int_spinbutton(dialog, config, "pal_last_pixel");
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_ntsc_last_pixel, 1, 5, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_pal_last_pixel, 2, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_last_pixel, 1, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_last_pixel, 2, 5, 1, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_last_pixel);
 
 	scaling_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -268,22 +266,69 @@ static GtkWidget *create_display_size_frame(GtkWidget *dialog, struct config *co
 
 	tmp = gtk_label_new_with_mnemonic("Scali_ng mode:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 6, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 6, 1, 1);
 	combo_scaling_mode = config_combo_box(dialog, config, "scaling_mode");
-	gtk_grid_attach(GTK_GRID(display_size_grid), combo_scaling_mode, 1, 6, 2, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), combo_scaling_mode, 1, 6, 2, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_scaling_mode);
 
 	tmp = gtk_label_new_with_mnemonic("_Window default scaling factor:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(display_size_grid), tmp, 0, 7, 1, 1);
+	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 7, 1, 1);
 	spin_window_scaling_factor = config_int_spinbutton(dialog, config,
 							   "window_scaling_factor");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_window_scaling_factor);
-	gtk_grid_attach(GTK_GRID(display_size_grid), spin_window_scaling_factor,
+	gtk_grid_attach(GTK_GRID(scaler_grid), spin_window_scaling_factor,
 			1, 7, 1, 1);
 
+	check_stretch_to_fit = config_checkbox(dialog,"S_tretch to fit",
+					       config, "stretch_to_fit");
 
-	return display_size_frame;
+	gtk_grid_attach(GTK_GRID(scaler_grid), check_stretch_to_fit,
+			0, 8, 1, 1);
+
+	tmp = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 0);
+
+
+	filter_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(filter_grid), 8);
+	gtk_box_pack_start(GTK_BOX(box), filter_grid,
+			   FALSE, FALSE, 0);
+
+	tmp = gtk_label_new_with_mnemonic("_Filter:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 0, 1, 1);
+	combo_video_filter = config_combo_box(dialog, config, "video_filter");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
+	gtk_grid_attach(GTK_GRID(filter_grid), combo_video_filter, 1, 0, 1, 1);
+
+	button_filter_settings = gtk_button_new_with_label("Settings...");
+	g_signal_connect(G_OBJECT(button_filter_settings), "clicked",
+			 G_CALLBACK(filter_settings_callback), dialog);
+	g_object_set_data(G_OBJECT(button_filter_settings), "combo",
+			  combo_video_filter);
+	g_signal_connect(G_OBJECT(combo_video_filter), "changed",
+	                          G_CALLBACK(video_filter_changed_callback),
+	                          button_filter_settings);
+	video_filter_changed_callback(GTK_COMBO_BOX(combo_video_filter),
+	                              button_filter_settings);
+	gtk_grid_attach(GTK_GRID(filter_grid), button_filter_settings, 2, 0, 1, 1);
+
+	tmp = config_checkbox(dialog, "Emulate scan_lines",
+			      config, "scanlines_enabled");
+	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 1, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("Scanline _Intensity:");
+	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 2, 1, 1);
+	
+
+	scale = config_int_scale(0, 100, 0, 100, dialog, config,
+			       "scanline_intensity");
+
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
+	gtk_grid_attach(GTK_GRID(filter_grid), scale, 1, 2, 2, 1);
+
+	return box;
 }
 
 static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config *config)
@@ -294,15 +339,9 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	GtkWidget *check_fullscreen;
 	GtkWidget *check_vsync;
 	GtkWidget *check_autohide_cursor;
-	GtkWidget *check_stretch_to_fit;
 	GtkWidget *combo_sprite_limit_mode;
 	GtkWidget *check_scanline_renderer;
-	GtkWidget *combo_video_filter;
 	GtkWidget *box;
-	GtkWidget *filter_grid;
-	GtkWidget *button_filter_settings;
-	GtkWidget *scale;
-	
 
 	GtkWidget *tmp;
 
@@ -319,11 +358,6 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	gtk_box_pack_start(GTK_BOX(box), display_options_grid,
 			   FALSE, FALSE, 0);
 
-	filter_grid = gtk_grid_new();
-	gtk_grid_set_column_spacing(GTK_GRID(filter_grid), 8);
-	gtk_box_pack_start(GTK_BOX(box), filter_grid,
-			   FALSE, FALSE, 0);
-
 	check_vsync = config_checkbox(dialog, "_VSync",
 					   config, "vsync");
 
@@ -333,43 +367,8 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	check_autohide_cursor = config_checkbox(dialog, "Automatically hide mouse _cursor",
 						config, "autohide_cursor");
 
-	check_stretch_to_fit = config_checkbox(dialog,"S_tretch to fit",
-					       config, "stretch_to_fit");
-
 	check_scanline_renderer = config_checkbox(dialog,"Us_e scanline renderer",
 					       config, "scanline_renderer_enabled");
-
-	tmp = gtk_label_new_with_mnemonic("_Filter:");
-	combo_video_filter = config_combo_box(dialog, config, "video_filter");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
-	button_filter_settings = gtk_button_new_with_label("Settings...");
-	g_signal_connect(G_OBJECT(button_filter_settings), "clicked",
-			 G_CALLBACK(filter_settings_callback), dialog);
-	g_object_set_data(G_OBJECT(button_filter_settings), "combo",
-			  combo_video_filter);
-	g_signal_connect(G_OBJECT(combo_video_filter), "changed",
-	                          G_CALLBACK(video_filter_changed_callback),
-	                          button_filter_settings);
-	video_filter_changed_callback(GTK_COMBO_BOX(combo_video_filter),
-	                              button_filter_settings);
-
-	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(filter_grid), combo_video_filter, 1, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(filter_grid), button_filter_settings, 2, 0, 1, 1);
-
-	tmp = config_checkbox(dialog, "Emulate scan_lines",
-			      config, "scanlines_enabled");
-
-	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 1, 1, 1);
-
-	tmp = gtk_label_new_with_mnemonic("Scanline _Intensity:");
-	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 2, 1, 1);
-	
-
-	scale = config_int_scale(0, 100, 0, 100, dialog, config,
-			       "scanline_intensity");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
-	gtk_grid_attach(GTK_GRID(filter_grid), scale, 1, 2, 2, 1);
 
 	gtk_grid_attach(GTK_GRID(display_options_grid), check_vsync,
 			0, 0, 1, 1);
@@ -377,8 +376,6 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 			0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(display_options_grid), check_autohide_cursor,
 			0, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_options_grid), check_stretch_to_fit,
-			0, 3, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("Allow more than 8 s_prites per scanline?");
 	combo_sprite_limit_mode = config_combo_box(dialog, config, "sprite_limit_mode");
@@ -648,34 +645,44 @@ static void configuration_setup_palette(GtkWidget *dialog, struct config *config
 			   FALSE, FALSE, 8);
 }
 
+static void configuration_setup_scaler(GtkWidget *dialog, struct config *config)
+{
+	GtkWidget *dialog_box;
+	GtkWidget *scaler_box;
+
+	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+	scaler_box = create_scaler_box(dialog, config);
+	gtk_box_pack_start(GTK_BOX(dialog_box), scaler_box, FALSE, FALSE, 8);
+}
+
 static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *dialog_box;
 	GtkWidget *row1_box;
-	GtkWidget *row2_box;
 
 	GtkWidget *display_options_frame;
-	GtkWidget *display_size_frame;
 	GtkWidget *osd_config_frame;
 
 	row1_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-	row2_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_box_pack_start(GTK_BOX(dialog_box), row1_box, FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(dialog_box), row2_box, FALSE, FALSE, 8);
 
 	display_options_frame = create_display_options_frame(dialog, config);
-	display_size_frame = create_display_size_frame(dialog, config);
 	osd_config_frame = create_osd_config_frame(dialog, config);
 
 	gtk_box_set_spacing(GTK_BOX(row1_box), 70);
 
 	gtk_box_pack_start(GTK_BOX(row1_box), display_options_frame,
 			   FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(row1_box), display_size_frame,
+	gtk_box_pack_start(GTK_BOX(row1_box), osd_config_frame,
 			   FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(row2_box), osd_config_frame,
-			   FALSE, FALSE, 8);
+}
+
+void gui_scaler_configuration_dialog(GtkWidget *widget, gpointer user_data)
+{
+	gui_configuration_dialog("Scaler Configuration",
+				 configuration_setup_scaler, 0,
+				 widget, user_data);
 }
 
 void gui_video_configuration_dialog(GtkWidget *widget, gpointer user_data)

@@ -44,6 +44,7 @@ static GtkWidget *gui_build_system_type_menu(const int mask);
 extern void gui_volume_control_dialog(GtkWidget *, gpointer);
 extern void gui_cheat_dialog(GtkWidget *, gpointer);
 extern void gui_video_configuration_dialog(GtkWidget *, gpointer);
+extern void gui_scaler_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_palette_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_binding_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_audio_configuration_dialog(GtkWidget *, gpointer);
@@ -1356,6 +1357,9 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 
 	gui_add_menu_item(menu, "_Video Configuration...",
 			  gui_video_configuration_dialog, gtkwindow,
+			  NULL);
+	gui_add_menu_item(menu, "_Scaler Configuration...",
+			  gui_scaler_configuration_dialog, gtkwindow,
 			  NULL);
 	gui_add_menu_item(menu, "Pa_lette Configuration...",
 			  gui_palette_configuration_dialog, gtkwindow,
