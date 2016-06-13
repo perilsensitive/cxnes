@@ -455,7 +455,9 @@ static struct config_parameter rom_config_parameters[] = {
 			   valid_four_player_modes,
 			   valid_four_player_names),
 
+#if 0
 	CONFIG_STRING(periodic_savestate_path, NULL),
+#endif
 	{
 		.name = "dip_switch_1",
 		.type = CONFIG_TYPE_BOOLEAN,
@@ -808,8 +810,10 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_BOOLEAN(autoload_state, 0),
 	CONFIG_BOOLEAN(autosave_state, 0),
 
+#if 0
 	CONFIG_BOOLEAN(periodic_savestate_enabled, 0),
 	CONFIG_INTEGER(periodic_savestate_delay, 0, 0, 3600),
+#endif
 
 	CONFIG_INTEGER(turbo_speed, 5, 0, 7),
 	CONFIG_INTEGER(scanline_intensity, 50, 0, 100),

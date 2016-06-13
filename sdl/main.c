@@ -95,7 +95,9 @@ static int screensaver_deactivate_delay;
 static int screensaver_counter;
 #endif
 
+#if 0
 static int savestate_counter;
+#endif
 
 int total_frame_time;
 #if __unix__
@@ -368,6 +370,7 @@ static int main_loop(struct emu *emu)
 		screensaver_counter = -1;
 	}
 
+#if 0
 	if (emu->config->periodic_savestate_enabled &&
 	    (emu->config->periodic_savestate_delay > 0)) {
 		savestate_counter = emu->current_framerate *
@@ -375,6 +378,7 @@ static int main_loop(struct emu *emu)
 	} else {
 		savestate_counter = -1;
 	}
+#endif
 
 	if (clock_gettime(CLOCK_MONOTONIC, &prev_clock) < 0) {
 		log_err("clock_gettime() failed\n");
@@ -486,6 +490,7 @@ static int main_loop(struct emu *emu)
 		}
 #endif
 
+#if 0
 		if (savestate_counter > 0) {
 			savestate_counter--;
 
@@ -502,6 +507,7 @@ static int main_loop(struct emu *emu)
 					emu_save_state(emu, path);
 			}
 		}
+#endif
 
 		process_events();
 		input_poll_events();

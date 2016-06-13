@@ -952,13 +952,15 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	GtkWidget *dialog_box, *box;
 	GtkWidget *check;
 	GtkWidget *tmp;
-	GtkWidget *entry;
 	GtkWidget *input_frame;
 	GtkWidget *emu_frame;
 	GtkWidget *combo;
 	GtkWidget *label;
 	GtkWidget *grid;
+#if 0
 	GtkWidget *button;
+	GtkWidget *entry;
+#endif
 	
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -1001,6 +1003,7 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
 	gtk_box_pack_start(GTK_BOX(box), grid, FALSE, FALSE, 0);
 
+#if 0
 	label = gtk_label_new_with_mnemonic("_Periodic savestate path (defaults to slot 1):");
 	entry = config_entry(dialog, config, "periodic_savestate_path");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
@@ -1013,6 +1016,7 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), button, 2, 0, 1, 1);
+#endif
 
 }
 
@@ -1027,7 +1031,9 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	GtkWidget *grid;
 	GtkWidget *combo;
 	GtkWidget *main_grid;
+#if 0
 	GtkWidget *spinbutton;
+#endif
 	GtkWidget *scale;
 #if __unix__
 	GtkWidget *entry;
@@ -1193,6 +1199,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 				config,
 				"autosave_state");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+#if 0
 	check = config_checkbox(dialog,
 				"Periodically save state _while playing",
 				config,
@@ -1206,7 +1213,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_box_pack_start(GTK_BOX(box), box2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(box2), tmp, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(box2), spinbutton, FALSE, FALSE, 0);
-					   
+#endif					   
 
 	ines_frame = gtk_frame_new(NULL);
 	tmp = gtk_label_new_with_mnemonic(NULL);
