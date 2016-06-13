@@ -1266,6 +1266,105 @@ static GtkWidget *gui_build_dip_switches_menu(void)
 	return menu;
 }
 
+static void select_window_size_callback(GtkWidget *widget, gpointer useradata)
+{
+	int multiplier;
+
+	if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget)))
+		return;
+
+	multiplier = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+	                                               "multiplier"));
+
+	emu->config->window_scaling_factor = multiplier;
+	video_apply_config(emu);
+	config_save_main_config(emu->config);
+
+}
+
+static void window_size_menu_show_callback(GtkWidget *widget, gpointer userdata)
+{
+	GtkRadioMenuItem *item;
+	GSList *group;
+	int multiplier;
+
+	group = userdata;
+
+	if (!group)
+		return;
+
+	while (group) {
+		item = group->data;
+		group = group->next;
+		multiplier = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item),
+		                                               "multiplier"));
+
+		if (multiplier != emu->config->window_scaling_factor)
+			continue;
+
+		g_signal_handlers_block_by_func(G_OBJECT(item),
+						G_CALLBACK(select_window_size_callback),
+						NULL);
+
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
+
+		g_signal_handlers_unblock_by_func(
+		    G_OBJECT(item),
+		    G_CALLBACK(select_window_size_callback),
+		    NULL);
+	}
+}
+
+static GtkWidget *gui_build_window_size_menu(void)
+{
+	GtkWidget *menu;
+	GtkWidget *item;
+	GSList *group;
+
+	menu = gtk_menu_new();
+	group = NULL;
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_1X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(1));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_2X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(2));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_3X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(3));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_4X");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(4));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_Custom");
+	g_object_set_data(G_OBJECT(item), "multiplier", GINT_TO_POINTER(0));
+	g_signal_connect(G_OBJECT(item), "activate",
+	                 G_CALLBACK(select_window_size_callback), NULL);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(window_size_menu_show_callback), group);
+
+	return menu;
+}
+
 static GtkWidget *gui_build_emulator_menu(void)
 {
 	GtkMenuShell *menu;
@@ -1278,12 +1377,6 @@ static GtkWidget *gui_build_emulator_menu(void)
 			  NULL, is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Soft Reset", soft_reset_callback,
 			  NULL, is_sensitive_if_loaded);
-	item = gtk_check_menu_item_new_with_mnemonic("_Fullscreen");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(emulator_fullscreen_callback), NULL);
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(update_fullscreen_toggle), item);
 
 	gui_add_menu_item(menu, "_Pause/Resume", pause_resume_callback,
 			  NULL, is_sensitive_if_loaded);
@@ -1314,6 +1407,17 @@ static GtkWidget *gui_build_emulator_menu(void)
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
+
+	item = gtk_check_menu_item_new_with_mnemonic("_Full Screen");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_fullscreen_callback), NULL);
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(update_fullscreen_toggle), item);
+	item = gtk_menu_item_new_with_mnemonic("_Window Size");
+	submenu = gui_build_window_size_menu();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
 	item = gtk_check_menu_item_new_with_mnemonic("FPS _Display");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);

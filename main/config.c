@@ -526,7 +526,7 @@ static struct config_parameter config_parameters[] = {
 			   valid_loglevel_names),
 	CONFIG_BOOLEAN(scanline_renderer_enabled, 1),
 	CONFIG_BOOLEAN(fps_display_enabled, 0),
-	CONFIG_INTEGER(window_scaling_factor, 1, 1, 5),
+	CONFIG_INTEGER(window_scaling_factor, 1, 1, 4),
 	CONFIG_BOOLEAN(fullscreen, 0),
 	CONFIG_BOOLEAN(autohide_cursor, 1),
 	CONFIG_BOOLEAN(vsync, 1),
