@@ -63,8 +63,7 @@ static void file_quit_callback(GtkWidget *widget, gpointer userdata)
 static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 {
 
-	printf("here\n");
-	fullscreen_callback();
+	video_toggle_fullscreen(-1);
 }
 
 static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
