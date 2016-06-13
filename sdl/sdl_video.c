@@ -173,7 +173,6 @@ static SDL_Rect clip_rect;
 static SDL_Rect window_rect;
 static SDL_Rect dest_rect;
 static int view_w, view_h;
-static int custom_size;
 
 extern struct emu *emu;
 

@@ -1130,7 +1130,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 				"mask_opposite_directions");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 	check = config_checkbox(dialog,
-				"_Map Start to 'Insert Coin' for VS. System games",
+				"_Map Start/Select to 'Insert Coin' for VS. System games",
 				config,
 				"vs_coin_on_start");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
