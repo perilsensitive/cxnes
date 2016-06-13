@@ -723,7 +723,7 @@ void *gui_init(void)
 	gtkwindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	gtk_window_set_title(GTK_WINDOW(gtkwindow), "cxNES");
-	gtk_window_set_resizable(GTK_WINDOW(gtkwindow), TRUE);
+	gtk_window_set_resizable(GTK_WINDOW(gtkwindow), FALSE);
 	gtk_window_set_icon(GTK_WINDOW(gtkwindow), icon);
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -740,7 +740,8 @@ void *gui_init(void)
 
 	video_get_windowed_size(&window_w, &window_h);
 	gtk_widget_get_preferred_height(menubar, NULL, &menubar_height);
-	gtk_window_set_default_size(GTK_WINDOW(gtkwindow), window_w, window_h + menubar_height);
+	gtk_widget_set_size_request(drawingarea, window_w, window_h);
+	//gtk_window_set_default_size(GTK_WINDOW(gtkwindow), window_w, window_h + menubar_height);
 
 	if (gui_prep_drawing_area(drawingarea) < 0)
 		return NULL;
@@ -958,6 +959,7 @@ void gui_set_size(int w, int h)
 		menubar_height = 0;
 	}
 
+	gtk_widget_set_size_request(drawingarea, w, h);
 	gtk_window_resize(GTK_WINDOW(gtkwindow), w, h + menubar_height);
 }
 
