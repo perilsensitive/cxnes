@@ -437,7 +437,7 @@ static struct config_parameter rom_config_parameters[] = {
 			   valid_rom_vs_ppu_type_values,
 			   valid_rom_vs_ppu_type_names),
 	CONFIG_BOOLEAN(swap_a_b, 0),
-	CONFIG_BOOLEAN(swap_start_select, 0),
+	CONFIG_BOOLEAN(swap_start_select, 1),
 	CONFIG_STRING_LIST(vs_controller_mode, "auto",
 		           valid_vs_controller_modes, vs_controller_mode_names),
 	CONFIG_BOOLEAN(combine_p1p2, 0),
