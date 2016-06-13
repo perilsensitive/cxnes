@@ -361,13 +361,13 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	check_vsync = config_checkbox(dialog, "_VSync",
 					   config, "vsync");
 
-	check_fullscreen = config_checkbox(dialog, "Switch to fullscreen _mode at startup",
+	check_fullscreen = config_checkbox(dialog, "Switch to _fullscreen mode at startup",
 					   config, "fullscreen");
 
-	check_autohide_cursor = config_checkbox(dialog, "Automatically hide mouse _cursor",
+	check_autohide_cursor = config_checkbox(dialog, "Automatically _hide mouse cursor",
 						config, "autohide_cursor");
 
-	check_scanline_renderer = config_checkbox(dialog,"Us_e scanline renderer",
+	check_scanline_renderer = config_checkbox(dialog,"Use scanline _renderer",
 					       config, "scanline_renderer_enabled");
 
 	gtk_grid_attach(GTK_GRID(display_options_grid), check_vsync,
@@ -377,7 +377,7 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	gtk_grid_attach(GTK_GRID(display_options_grid), check_autohide_cursor,
 			0, 2, 1, 1);
 
-	tmp = gtk_label_new_with_mnemonic("Allow more than 8 s_prites per scanline?");
+	tmp = gtk_label_new_with_mnemonic("Allow more than 8 _sprites per scanline?");
 	combo_sprite_limit_mode = config_combo_box(dialog, config, "sprite_limit_mode");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_sprite_limit_mode);
 	gtk_grid_attach(GTK_GRID(display_options_grid), tmp,
@@ -573,18 +573,18 @@ static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *conf
 	gtk_container_add(GTK_CONTAINER(osd_options_frame),
 			  osd_options_grid);
 
-	check_osd_enabled = config_checkbox(dialog, "On-Screen Display enabled",
+	check_osd_enabled = config_checkbox(dialog, "_On-Screen Display enabled",
 					    config, "osd_enabled");
 	spin_osd_min_font_size = config_int_spinbutton(dialog, config,
 						       "osd_min_font_size");
-	tmp = gtk_label_new("Minimum font size:");
+	tmp = gtk_label_new_with_mnemonic("_Minimum font size:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_min_font_size, 1, 1, 1, 1);
 
 	gtk_grid_attach(GTK_GRID(osd_options_grid), check_osd_enabled, 0, 0, 1, 1);
 
-	tmp = gtk_label_new("Seconds OSD displayed:");
+	tmp = gtk_label_new_with_mnemonic("Seconds OSD messages dis_played:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 
 	spin_osd_delay = config_int_spinbutton(dialog, config,
@@ -593,19 +593,19 @@ static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *conf
 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(osd_options_grid), spin_osd_delay, 1, 2, 1, 1);
 
-	tmp = gtk_label_new("Foreground color:");
+	tmp = gtk_label_new_with_mnemonic("F_oreground color:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	osd_fg_color = config_color_button(dialog, config, "osd_fg_rgba");
 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 3, 1, 1);
 	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_fg_color, 1, 3, 1, 1);
 
-	tmp = gtk_label_new("Background color:");
+	tmp = gtk_label_new_with_mnemonic("_Background color:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	osd_bg_color = config_color_button(dialog, config, "osd_bg_rgba");
 	gtk_grid_attach(GTK_GRID(osd_options_grid), tmp, 0, 4, 1, 1);
 	gtk_grid_attach(GTK_GRID(osd_options_grid), osd_bg_color, 1, 4, 1, 1);
 
-	tmp = gtk_label_new("Font path:");
+	tmp = gtk_label_new_with_mnemonic("Font p_ath:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
 	font_path_entry = config_entry(dialog, config, "osd_font_path");
 	// set width?
@@ -658,23 +658,21 @@ static void configuration_setup_scaler(GtkWidget *dialog, struct config *config)
 static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *dialog_box;
-	GtkWidget *row1_box;
+	GtkWidget *box1;
 
 	GtkWidget *display_options_frame;
 	GtkWidget *osd_config_frame;
 
-	row1_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	box1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-	gtk_box_pack_start(GTK_BOX(dialog_box), row1_box, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(dialog_box), box1, FALSE, FALSE, 8);
 
 	display_options_frame = create_display_options_frame(dialog, config);
 	osd_config_frame = create_osd_config_frame(dialog, config);
 
-	gtk_box_set_spacing(GTK_BOX(row1_box), 70);
-
-	gtk_box_pack_start(GTK_BOX(row1_box), display_options_frame,
+	gtk_box_pack_start(GTK_BOX(box1), display_options_frame,
 			   FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(row1_box), osd_config_frame,
+	gtk_box_pack_start(GTK_BOX(box1), osd_config_frame,
 			   FALSE, FALSE, 8);
 }
 
