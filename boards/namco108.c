@@ -260,7 +260,8 @@ static CPU_READ_HANDLER(vs_super_xevious_security)
 		value = 0x05;
 		break;
 	case 0x5567:
-		value = ((security_counter ^= 1) ? 0x37 : 0x3e);
+		value = security_counter ? 0x3e : 0x37;
+		security_counter ^= 1;
 		break;
 	case 0x5678:
 		value = security_counter ? 0x00 : 0x01;
@@ -301,7 +302,17 @@ static CPU_READ_HANDLER(vs_rbi_baseball_security)
 		security_counter = 0;
 		break;
 	case 0x5e01:
-		value = (security_counter++ == 0x09) ? 0x6f : 0xb4;
+		switch(security_counter) {
+		case 0x09:
+			value = 0x6f;
+			break;
+		case 0x0e:
+			value = 0x94;
+			break;
+		default:
+			value = 0xb4;
+		}
+		security_counter++;
 		break;
 	}
 
