@@ -178,7 +178,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	GtkWidget *spin_pal_last_scanline;
 	GtkWidget *spin_pal_first_pixel;
 	GtkWidget *spin_pal_last_pixel;
-	GtkWidget *spin_window_scaling_factor;
 	GtkWidget *combo_video_filter;
 	GtkWidget *button_filter_settings;
 	GtkWidget *filter_grid;
@@ -271,20 +270,11 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	gtk_grid_attach(GTK_GRID(scaler_grid), combo_scaling_mode, 1, 6, 2, 1);
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_scaling_mode);
 
-	tmp = gtk_label_new_with_mnemonic("_Window default scaling factor:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 7, 1, 1);
-	spin_window_scaling_factor = config_int_spinbutton(dialog, config,
-							   "window_scaling_factor");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_window_scaling_factor);
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_window_scaling_factor,
-			1, 7, 1, 1);
-
 	check_stretch_to_fit = config_checkbox(dialog,"S_tretch to fit",
 					       config, "stretch_to_fit");
 
 	gtk_grid_attach(GTK_GRID(scaler_grid), check_stretch_to_fit,
-			0, 8, 1, 1);
+			0, 7, 1, 1);
 
 	tmp = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 0);
