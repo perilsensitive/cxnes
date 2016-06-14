@@ -437,10 +437,9 @@ static struct config_parameter rom_config_parameters[] = {
 			   valid_rom_vs_ppu_type_values,
 			   valid_rom_vs_ppu_type_names),
 	CONFIG_BOOLEAN(swap_a_b, 0),
-	CONFIG_BOOLEAN(swap_start_select, 1),
+	CONFIG_BOOLEAN(swap_start_select, 0),
 	CONFIG_STRING_LIST(vs_controller_mode, "auto",
 		           valid_vs_controller_modes, vs_controller_mode_names),
-	CONFIG_BOOLEAN(combine_p1p2, 0),
 	CONFIG_STRING_LIST(default_port1_device, "auto",
 			   valid_port1_devices, port1_device_names),
 	CONFIG_STRING_LIST(default_port2_device, "auto",
@@ -800,7 +799,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_BOOLEAN(run_in_background, 0),
 	CONFIG_BOOLEAN(nsf_run_in_background, 1),
 
-	CONFIG_BOOLEAN(vs_swap_start_select, 0),
+	CONFIG_BOOLEAN(vs_swap_start_select, 1),
 	CONFIG_BOOLEAN(vs_coin_on_start, 1),
 
 	CONFIG_BOOLEAN(cheats_enabled, 1),

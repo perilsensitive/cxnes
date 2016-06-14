@@ -186,7 +186,6 @@ struct config {
 	int swap_start_select;
 	int swap_a_b;
 	int vs_coin_on_start;
-	int combine_p1p2;
 	int arkanoid_paddle2_connected; /* FIXME ugh */
 
 	int cheats_enabled;
