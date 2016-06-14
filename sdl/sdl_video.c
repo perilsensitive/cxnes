@@ -290,6 +290,8 @@ static void draw_fps_display(void)
 {
 	int text_w, text_h;
 //	int text_line_skip;
+	int framerate;
+	double fps;
 
 	if (!font)
 		return;
@@ -303,12 +305,16 @@ static void draw_fps_display(void)
 		SDL_DestroyTexture(fps_text_texture);
 		fps_text_texture = NULL;
 	}
+	
 
-	snprintf(fps_display, sizeof(fps_display), "%3.4f",
-	         (double) time_base / ((double)total_frame_time /
-				       (emu->display_framerate > emu->user_framerate ?
-					emu->user_framerate :
-					emu->display_framerate)));
+	if (emu->display_framerate > emu->user_framerate)
+		framerate = emu->user_framerate;
+	else
+		framerate = emu->display_framerate;
+
+	fps = (double) time_base / ((double)total_frame_time / framerate);
+
+	snprintf(fps_display, sizeof(fps_display), "%3.4f", fps);
 
 	TTF_SizeUTF8(font, fps_display, &text_w, &text_h);
 //	text_line_skip = TTF_FontLineSkip(font);
