@@ -946,7 +946,7 @@ static GtkWidget *gui_build_file_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
-	gui_add_menu_item(menu, "_Apply Patch", apply_patch_callback, NULL,
+	gui_add_menu_item(menu, "Apply _Patch", apply_patch_callback, NULL,
 			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
@@ -1015,21 +1015,12 @@ static void fps_display_callback(GtkRadioMenuItem *widget,
 static void emulator_menu_show_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkWidget *system_type, *submenu;
-	GtkWidget *separator;
 	GtkWidget *fps;
 	const char *id;
 	int loaded;
-	int is_fds;
 
 	system_type = g_object_get_data(G_OBJECT(widget), "system_type");
 	fps = g_object_get_data(G_OBJECT(widget), "fps");
-	separator = g_object_get_data(G_OBJECT(widget), "separator");
-
-	if (emu_loaded(emu) && board_get_type(emu->board) == BOARD_TYPE_FDS) {
-		is_fds = 1;
-	} else {
-		is_fds = 0;
-	}
 
 	loaded = emu_loaded(emu);
 	gtk_widget_set_sensitive(system_type, loaded);
@@ -1043,13 +1034,6 @@ static void emulator_menu_show_callback(GtkWidget *widget, gpointer user_data)
 			id = "console_menu";
 	} else {
 		id = NULL;
-	}
-
-	if (!is_fds && !emu_system_is_vs(emu) &&
-	    !board_get_num_dip_switches(emu->board)) {
-		gtk_widget_hide(separator);
-	} else {
-		gtk_widget_show(separator);
 	}
 
 	if (id) {
@@ -1394,11 +1378,31 @@ static GtkWidget *gui_build_emulator_menu(void)
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
+	item = gtk_check_menu_item_new_with_mnemonic("_Full Screen");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_fullscreen_callback), NULL);
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(update_fullscreen_toggle), item);
+
+	item = gtk_menu_item_new_with_mnemonic("_Window Size");
+	submenu = gui_build_window_size_menu();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	item = gtk_check_menu_item_new_with_mnemonic("FPS Disp_lay");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_object_set_data(G_OBJECT(menu), "fps", item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(fps_display_callback), NULL);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
+	gui_add_menu_item(menu, "Soft _Reset", soft_reset_callback,
+			  NULL, is_sensitive_if_loaded);
 	gui_add_menu_item(menu, "_Hard Reset", hard_reset_callback,
 			  NULL, is_sensitive_if_loaded);
-	gui_add_menu_item(menu, "_Soft Reset", soft_reset_callback,
-			  NULL, is_sensitive_if_loaded);
-
 	gui_add_menu_item(menu, "_Pause/Resume", pause_resume_callback,
 			  NULL, is_sensitive_if_loaded);
 
@@ -1408,46 +1412,25 @@ static GtkWidget *gui_build_emulator_menu(void)
 	gui_add_menu_item(menu, "Insert _Coin", insert_coin_callback,
 			  NULL, is_sensitive_if_vs);
 
-	item = gui_add_menu_item(menu, "DIP _Switches", NULL, NULL,
+	item = gui_add_menu_item(menu, "DIP Swi_tches", NULL, NULL,
 				 is_sensitive_if_has_dip_switches);
 	submenu = gui_build_dip_switches_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
 
 	gui_add_menu_item(menu, "Insert/Eject _Disk", eject_disk_callback,
 			  NULL, is_sensitive_if_fds);
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
 			  NULL, is_sensitive_if_fds);
 
-	item = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "separator", item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
 
-	item = gtk_menu_item_new_with_mnemonic("System _Type");
+	item = gtk_menu_item_new_with_mnemonic("Syste_m Type");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	g_object_set_data(G_OBJECT(menu), "system_type", item);
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
-			      gtk_separator_menu_item_new());
-
-	item = gtk_check_menu_item_new_with_mnemonic("_Full Screen");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(emulator_fullscreen_callback), NULL);
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(update_fullscreen_toggle), item);
-	item = gtk_menu_item_new_with_mnemonic("_Window Size");
-	submenu = gui_build_window_size_menu();
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-
-	item = gtk_check_menu_item_new_with_mnemonic("FPS _Display");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "fps", item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(fps_display_callback), NULL);
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
-			      gtk_separator_menu_item_new());
 
 	item = gui_add_menu_item(menu, "_Input", NULL, NULL,
 				 is_sensitive_if_loaded);
