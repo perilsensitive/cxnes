@@ -1007,6 +1007,7 @@ static void fps_display_callback(GtkRadioMenuItem *widget,
 
 	if (active != emu->config->fps_display_enabled) {
 		emu->config->fps_display_enabled = active;
+		video_toggle_fps(active);
 		video_apply_config(emu);
 		config_save_main_config(emu->config);
 	}
