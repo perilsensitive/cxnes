@@ -632,6 +632,7 @@ int rom_apply_patches(struct rom *rom, int count, char **patchfiles, int from_ar
 	patch_buffer = NULL;
 	patch_buffer_size = 0;
 	patches_applied = 0;
+	rc = 0;
 
 	buffer_crc = crc32buf(rom->buffer, rom->buffer_size, NULL);
 
