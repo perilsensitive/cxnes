@@ -1271,6 +1271,7 @@ static void clock_frame_counter(struct apu_state *apu)
 
 	if (do_half_frame > 0) {
 		clock_length_counters(apu);
+		do_quarter_frame = 1;
 		clock_sweeps(apu);
 	}
 
