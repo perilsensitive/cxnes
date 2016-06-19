@@ -30,7 +30,7 @@
 #define FRAME_INTERRUPT_DISABLED 0x40
 
 #define sched_next_frame_step(y) (apu->next_frame_step += \
-                                  apu->emu->cpu_clock_divider * (y))
+                                  apu->apu_clock_divider * (y))
 
 #define CPU_CYCLES(x) ((x) / apu->emu->cpu_clock_divider)
 
