@@ -41,7 +41,6 @@ struct namco163_audio_state {
 	int current_address;
 	int auto_increment;
 	int enabled;
-	int master_clock_divider;
 	uint8_t *ram;
 	int last_amp[8];
 	int next_channel;
@@ -109,7 +108,7 @@ void namco163_audio_run(struct namco163_audio_state *audio,
 	}
 
 	clocks_elapsed = (cycles - audio->timestamp) /
-		(audio->emu->cpu_clock_divider * 15);
+		(audio->emu->apu_clock_divider * 15);
 
 	channel = audio->next_channel;
 	min_channel = 7 - active_channels();
@@ -117,7 +116,7 @@ void namco163_audio_run(struct namco163_audio_state *audio,
 	if (channel < min_channel)
 		channel = 7;
 
-	multiplier = 15 * audio->emu->cpu_clock_divider;
+	multiplier = 15 * audio->emu->apu_clock_divider;
 
 	while (clocks_elapsed) {
 		int old_phase, phase;

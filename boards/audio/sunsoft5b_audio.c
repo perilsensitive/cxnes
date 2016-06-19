@@ -61,7 +61,6 @@ struct sunsoft5b_audio_state {
 	int noise_enabled[3];
 	int envelope_enabled[3];
 	int register_select;
-	int clock_divider;
 	int last_amplitude;
 	struct emu *emu;
 };
@@ -151,8 +150,6 @@ void sunsoft5b_audio_reset(struct sunsoft5b_audio_state *audio, int hard)
 		memset(audio, 0, sizeof(*audio));
 		audio->emu = emu;
 		audio->noise.seed = 0xffff;
-
-		audio->clock_divider = emu->cpu_clock_divider;
 	}
 
 	audio->envelope.next_clock = 0;
@@ -199,7 +196,7 @@ static void sunsoft5b_envelope_run(struct sunsoft5b_audio_state *audio,
 	/* if (envelope->period == 0) */
 	/* 	return; */
 
-	period_cycles = (envelope->period + 1) * 16 * audio->clock_divider;
+	period_cycles = (envelope->period + 1) * 16 * audio->emu->apu_clock_divider;
 
 	if (!envelope->pause) {
 		int incr;
@@ -232,7 +229,7 @@ static void sunsoft5b_noise_run(struct sunsoft5b_audio_state *audio,
 {
 	int period_cycles;
 
-	period_cycles = (audio->noise.period + 1) * 16 * audio->clock_divider;
+	period_cycles = (audio->noise.period + 1) * 16 * audio->emu->apu_clock_divider;
 
 	if (audio->noise.seed & 0x01)
 		audio->noise.seed ^= 0x24000;
@@ -256,7 +253,7 @@ static void sunsoft5b_tone_run(struct sunsoft5b_audio_state *audio, int c,
 		int count;
 
 		cycles_to_run = cycles - tone->next_clock;
-		period_cycles = (tone->period + 1) * 16 * audio->clock_divider;
+		period_cycles = (tone->period + 1) * 16 * audio->emu->apu_clock_divider;
 
 		count = cycles_to_run / period_cycles;
 		if (cycles_to_run % period_cycles)
@@ -281,7 +278,7 @@ static void sunsoft5b_tone_run(struct sunsoft5b_audio_state *audio, int c,
 
 	tone->amplitude = amplitude;
 	tone->step ^= 1;
-	tone->next_clock += (tone->period + 1) * 16 * audio->clock_divider;
+	tone->next_clock += (tone->period + 1) * 16 * audio->emu->apu_clock_divider;
 }
 
 void sunsoft5b_audio_update_amplitude(struct sunsoft5b_audio_state *audio,
@@ -432,7 +429,7 @@ static CPU_WRITE_HANDLER(sunsoft5b_audio_write_handler)
 		/* if (audio->envelope.period == 0) */
 		/* 	audio->envelope.next_clock = ~0; */
 		/* else */
-		/* 	audio->envelope.next_clock = cycles + ((audio->envelope.period + 1) * 16 * audio->clock_divider); /\* FIXME *\/ */
+		/* 	audio->envelope.next_clock = cycles + ((audio->envelope.period + 1) * 16 * audio->emu->apu_clock_divider); /\* FIXME *\/ */
 		break;
 		sunsoft5b_audio_update_amplitude(audio, cycles);
 		break;

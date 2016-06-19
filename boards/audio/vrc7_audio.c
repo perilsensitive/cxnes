@@ -27,7 +27,6 @@ struct vrc7_audio_state {
 	OPLL *opll;
 	uint32_t timestamp;
 	int last_amplitude;
-	int cpu_clock_divider;
 	int muted;
 	struct emu *emu;
 };
@@ -126,8 +125,6 @@ int vrc7_audio_init(struct emu *emu)
 
 void vrc7_audio_reset(struct vrc7_audio_state *audio, int hard)
 {
-	audio->cpu_clock_divider = audio->emu->cpu_clock_divider;
-
 	if (hard) {
 		int i;
 
@@ -209,12 +206,12 @@ void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles)
 
 	timestamp = audio->timestamp;
 	elapsed = cycles - timestamp;
-	clocks = elapsed / (36 * audio->cpu_clock_divider);
+	clocks = elapsed / (36 * audio->emu->apu_clock_divider);
 
 	while (clocks > 0) {
 		int delta;
 
-		timestamp += 36 * audio->cpu_clock_divider;
+		timestamp += 36 * audio->emu->apu_clock_divider;
 		OPLL_calc(audio->opll);
 		delta = update_amplitude(audio);
 		if (delta)

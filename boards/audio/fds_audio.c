@@ -74,7 +74,6 @@ struct fds_audio_state {
 	struct wave_unit wave;
 	int envelopes_enabled;
 	int envelopes_speed;
-	int master_clock_divider;
 	int enabled;
 
 	struct emu *emu;
@@ -458,7 +457,7 @@ static void sweep_run(struct fds_audio_state *audio, uint32_t cycles)
 		return;
 	}
 
-	remaining = (cycles - sweep->timestamp) / audio->emu->cpu_clock_divider;;
+	remaining = (cycles - sweep->timestamp) / audio->emu->apu_clock_divider;;
 
 	while (remaining) {
 		int ticks_to_next_clock;
@@ -470,7 +469,7 @@ static void sweep_run(struct fds_audio_state *audio, uint32_t cycles)
 		if (ticks > remaining)
 			ticks = remaining;
 
-		sweep->timestamp += ticks * audio->emu->cpu_clock_divider;;
+		sweep->timestamp += ticks * audio->emu->apu_clock_divider;;
 		
 		sweep->counter += ticks;
 		wave_run(audio, sweep->timestamp);
@@ -503,7 +502,7 @@ static void volume_run(struct fds_audio_state *audio, uint32_t cycles)
 		return;
 	}
 
-	remaining = (cycles - volume->timestamp) / audio->emu->cpu_clock_divider;;
+	remaining = (cycles - volume->timestamp) / audio->emu->apu_clock_divider;;
 
 	while (remaining) {
 		int ticks_to_next_clock;
@@ -515,7 +514,7 @@ static void volume_run(struct fds_audio_state *audio, uint32_t cycles)
 		if (ticks > remaining)
 			ticks = remaining;
 
-		volume->timestamp += ticks * audio->emu->cpu_clock_divider;;
+		volume->timestamp += ticks * audio->emu->apu_clock_divider;;
 		
 		volume->counter += ticks;
 		if (volume->counter == volume->period) {
@@ -547,7 +546,7 @@ static void wave_run(struct fds_audio_state *audio, uint32_t cycles)
 	}
 
 	remaining = (cycles - wave->timestamp) /
-		audio->emu->cpu_clock_divider;;
+		audio->emu->apu_clock_divider;;
 
 	while (remaining) {
 		int acc_remaining;
@@ -564,7 +563,7 @@ static void wave_run(struct fds_audio_state *audio, uint32_t cycles)
 			clocks = remaining;
 			
 		wave->accumulator += clocks * wave->pitch;
-		wave->timestamp += clocks * audio->emu->cpu_clock_divider;;
+		wave->timestamp += clocks * audio->emu->apu_clock_divider;;
 		remaining -= clocks;
 		volume_run(audio, wave->timestamp);
 		if (wave->accumulator >= 65536) {
@@ -592,7 +591,7 @@ static void modulator_run(struct fds_audio_state *audio, uint32_t cycles)
 	}
 
 	remaining = (cycles - modulator->timestamp) /
-		audio->emu->cpu_clock_divider;;
+		audio->emu->apu_clock_divider;;
 
 	while (remaining) {
 		int acc_remaining;
@@ -609,7 +608,7 @@ static void modulator_run(struct fds_audio_state *audio, uint32_t cycles)
 			clocks = remaining;
 			
 		modulator->accumulator += clocks * modulator->pitch;
-		modulator->timestamp += clocks * audio->emu->cpu_clock_divider;;
+		modulator->timestamp += clocks * audio->emu->apu_clock_divider;;
 		remaining -= clocks;
 		sweep_run(audio, modulator->timestamp);
 		if (modulator->accumulator >= 65536) {

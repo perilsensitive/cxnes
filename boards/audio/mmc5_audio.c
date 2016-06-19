@@ -64,7 +64,6 @@ struct mmc5_audio_state {
 	struct mmc5_pulse mmc5_pulse[2];
 	uint32_t next_frame_clock;
 	int frame_counter_period;
-	int cpu_clock_multiplier;
 	int pcm_irq_enabled;
 	int pcm_irq_fired;
 	int pcm_read_mode;
@@ -192,7 +191,7 @@ static void mmc5_pulse_run(struct mmc5_audio_state *audio, int c,
 		limit = cycles;
 
 	timer_period = (pulse->period << 1) + 2;
-	timer_period *= audio->cpu_clock_multiplier;
+	timer_period *= audio->emu->apu_clock_divider;
 
 	if (pulse->counter == 0 || pulse->period < 8)
 		volume = 0;
@@ -313,7 +312,7 @@ void mmc5_audio_run(struct mmc5_audio_state *audio, uint32_t cycles)
 			mmc5_pulse_frame_clock(audio, 0, limit);
 			mmc5_pulse_frame_clock(audio, 1, limit);
 			audio->next_frame_clock += audio->frame_counter_period *
-				audio->cpu_clock_multiplier;
+				audio->emu->apu_clock_divider;
 		}
 
 		if (audio->mmc5_pulse[0].next_clock <= limit)
@@ -493,7 +492,6 @@ void mmc5_audio_reset(struct mmc5_audio_state *audio, int hard)
 	audio->pcm_irq_fired = 0;
 	audio->pcm_read_mode = 0;
 	audio->pcm = 0;
-	audio->cpu_clock_multiplier = audio->emu->cpu_clock_divider;
 	switch (cpu_get_type(audio->emu->cpu)) {
 	case CPU_TYPE_RP2A03:
 		audio->frame_counter_period = FRAME_COUNTER_PERIOD_NTSC;
@@ -506,7 +504,7 @@ void mmc5_audio_reset(struct mmc5_audio_state *audio, int hard)
 		break;
 	}
 	audio->next_frame_clock = audio->frame_counter_period *
-	    audio->cpu_clock_multiplier;
+	    audio->emu->apu_clock_divider;
 }
 
 void mmc5_audio_end_frame(struct mmc5_audio_state *audio, uint32_t cycles)

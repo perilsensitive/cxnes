@@ -47,7 +47,6 @@ struct vrc6_audio_state {
 	uint32_t timestamp;
 	int halt;
 	int period_shift;
-	int cpu_clock_divider;
 	int swap_lines;
 	int last_amplitude;
 	struct emu *emu;
@@ -109,8 +108,6 @@ int vrc6_audio_init(struct emu *emu)
 
 void vrc6_audio_reset(struct vrc6_audio_state *audio, int hard)
 {
-	audio->cpu_clock_divider = audio->emu->cpu_clock_divider;
-
 	if (hard) {
 		memset(&audio->pulse[0], 0, sizeof(audio->pulse[0]));
 		memset(&audio->pulse[1], 0, sizeof(audio->pulse[1]));
@@ -158,7 +155,7 @@ static void pulse_enable(struct vrc6_audio_state *audio, int channel,
 		return;
 
 	period_cycles = ((pulse->period >> audio->period_shift) + 1) *
-		audio->cpu_clock_divider;
+		audio->emu->apu_clock_divider;
 
 	if (enabled) {
 		pulse->counter = period_cycles;
@@ -281,7 +278,7 @@ static void pulse_run(struct vrc6_audio_state *audio, int channel,
 	volume *= pulse->volume;
 
 	period_cycles = ((pulse->period >> audio->period_shift) + 1) *
-		audio->cpu_clock_divider;
+		audio->emu->apu_clock_divider;
 
 	if (clocks < pulse->counter) {
 		pulse->counter -= clocks;
@@ -319,7 +316,7 @@ static void sawtooth_run(struct vrc6_audio_state *audio, int clocks)
 	}
 
 	period_cycles = ((sawtooth->period >> audio->period_shift) + 1) *
-		audio->cpu_clock_divider;
+		audio->emu->apu_clock_divider;
 
 	sawtooth->counter = period_cycles;
 
