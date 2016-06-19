@@ -151,6 +151,7 @@ struct apu_state {
 	int odd_cycle;
 	uint8_t frame_counter_register;
 	uint32_t frame_counter_register_timestamp;
+	int apu_clock_divider;
 
 	struct emu *emu;
 };
@@ -461,7 +462,7 @@ static inline void pulse_run(struct apu_state *apu, int c, uint32_t cycles)
 		int period;
 		int count;
 
-		period = timer_period * apu->emu->cpu_clock_divider;
+		period = timer_period * apu->apu_clock_divider;
 		cycles_to_run = limit - pulse->next_clock;
 
 		count = cycles_to_run / period;
@@ -482,7 +483,7 @@ static inline void pulse_run(struct apu_state *apu, int c, uint32_t cycles)
 		delta = -delta;
 		pulse->amplitude += delta;
 	}
-	pulse->next_clock += timer_period * apu->emu->cpu_clock_divider;
+	pulse->next_clock += timer_period * apu->apu_clock_divider;
 }
 
 static inline void triangle_run(struct apu_state *apu,
@@ -513,7 +514,7 @@ static inline void triangle_run(struct apu_state *apu, uint32_t cycles)
 		int period;
 		int count;
 
-		period = timer_period * apu->emu->cpu_clock_divider;
+		period = timer_period * apu->apu_clock_divider;
 		cycles_to_run = limit - triangle->next_clock;
 
 		count = cycles_to_run / period;
@@ -532,7 +533,7 @@ static inline void triangle_run(struct apu_state *apu, uint32_t cycles)
 		triangle->amplitude = triangle->phase - 16;
 
 	triangle->next_clock +=
-		timer_period * apu->emu->cpu_clock_divider;
+		timer_period * apu->apu_clock_divider;
 }
 
 static void noise_update_volume(struct apu_state *apu, uint32_t cycles)
@@ -573,7 +574,7 @@ static inline void noise_run(struct apu_state *apu, uint32_t cycles)
 		    ((noise->shift) ^ (noise->shift >> bit_to_xor)) & 0x1;
 		noise->shift = (feedback << 14) | (noise->shift >> 1);
 		noise->amplitude = (((noise->shift & 1) ^ 1) * volume);
-		noise->next_clock += noise->period * apu->emu->cpu_clock_divider;
+		noise->next_clock += noise->period * apu->apu_clock_divider;
 	} while (!volume && noise->next_clock < limit);
 }
 
@@ -614,7 +615,7 @@ static inline void dmc_run(struct apu_state *apu, uint32_t cycles)
 //                              printf("empty buffer at %d\n", dmc->next_clock);
 		}
 	}
-	dmc->next_clock += dmc->period * apu->emu->cpu_clock_divider;
+	dmc->next_clock += dmc->period * apu->apu_clock_divider;
 }
 
 CPU_WRITE_HANDLER(oam_dma)
@@ -658,7 +659,7 @@ static CPU_WRITE_HANDLER(pulse_write_handler)
 		pulse->envelope.period = (value & 0x0f) + 1;
 		pulse->envelope.constant_volume = value & 0x0f;
 		pulse_update_volume(apu, c, cycles);
-		/* apu_run(apu, cycles + emu->cpu_clock_divider); */
+		/* apu_run(apu, cycles + apu_clock_divider); */
 		pulse->length.halt = (value & 0x20);
 		break;
 	case 1:
@@ -683,7 +684,7 @@ static CPU_WRITE_HANDLER(pulse_write_handler)
 				length_table[(value >> 3) & 0x1f];
 			pulse_update_volume(apu, c,
 					    cycles +
-					    emu->cpu_clock_divider);
+					    apu->apu_clock_divider);
 		}
 		break;
 	}
@@ -705,7 +706,7 @@ static CPU_WRITE_HANDLER(triangle_write_handler)
 	case 0:
 		triangle->linear.reload = (value & 0x7f);
 		triangle->linear.control_flag = (value & 0x80);
-		/* apu_run(apu, cycles + emu->cpu_clock_divider); */
+		/* apu_run(apu, cycles + apu_clock_divider); */
 		triangle->length.halt = (value & 0x80);
 		break;
 	case 1:
@@ -718,7 +719,7 @@ static CPU_WRITE_HANDLER(triangle_write_handler)
 		    ((value & 0x7) << 8);
 		if (triangle->enabled) {
 			tmp = triangle->length.counter;
-			/* apu_run(apu, cycles + emu->cpu_clock_divider); */
+			/* apu_run(apu, cycles + apu_clock_divider); */
 			if (tmp == triangle->length.counter)
 				triangle->length.counter =
 				    length_table[(value >> 3) & 0x1f];
@@ -747,7 +748,7 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 		noise->envelope.period = (value & 0x0f) + 1;
 		noise->envelope.constant_volume = value & 0x0f;
 		noise_update_volume(apu, cycles);
-		/* apu_run(apu, cycles + emu->cpu_clock_divider); */
+		/* apu_run(apu, cycles + apu_clock_divider); */
 		noise->length.halt = (value & 0x20);
 		break;
 	case 1:
@@ -764,7 +765,7 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 				    length_table[(value >> 3) & 0x1f];
 				noise_update_volume(apu,
 						    cycles +
-						    emu->cpu_clock_divider);
+						    apu->apu_clock_divider);
 			}
 		}
 		noise->envelope.start_flag = 1;
@@ -943,8 +944,8 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 
 	/* Calculate the timestamp when the write will take effect */
 	if (apu->odd_cycle)
-		cycles += emu->cpu_clock_divider;
-	cycles += emu->cpu_clock_divider;
+		cycles += apu->apu_clock_divider;
+	cycles += apu->apu_clock_divider;
 
 	/* NSF doesn't support frame interrupts */
 	if (board_get_type(emu->board) == BOARD_TYPE_NSF)
@@ -972,7 +973,7 @@ static CPU_WRITE_HANDLER(frame_counter_write_handler)
 	   If the IRQ will occur before the write takes effect, there's nothing
 	   to do. */
 	if (!(value & 0xc0) /*&& (apu->next_frame_irq > cycles)*/) {
-		apu->next_frame_irq  = cycles + emu->cpu_clock_divider +
+		apu->next_frame_irq  = cycles + apu->apu_clock_divider +
 		                       apu->frame_irq_delay;
 		cpu_interrupt_schedule(apu->emu->cpu, IRQ_APU_FRAME,
 				       apu->next_frame_irq);
@@ -1059,7 +1060,7 @@ void apu_reset(struct apu_state *apu, int hard)
 		frame_counter_write_handler(apu->emu, 0x4017,
 					    apu->frame_counter_mode,
 					    cpu_get_cycles(apu->emu->cpu) +
-			apu->emu->cpu_clock_divider);
+			apu->apu_clock_divider);
 
 		return;
 	}
@@ -1120,7 +1121,7 @@ void apu_reset(struct apu_state *apu, int hard)
 	apu->frame_counter_step = 0;
 	apu->next_frame_irq = apu->frame_irq_delay;
 	apu->next_frame_step = (apu->frame_step_delay + 1) *
-	    apu->emu->cpu_clock_divider;
+	    apu->apu_clock_divider;
 
 	/* Always disable frame interrupts for NSF */
 	if (board_get_type(apu->emu->board) == BOARD_TYPE_NSF) {
@@ -1131,14 +1132,14 @@ void apu_reset(struct apu_state *apu, int hard)
 				       apu->next_frame_irq);
 	}
 
-//      apu->next_frame_step = apu->emu->cpu_clock_divider;
+//      apu->next_frame_step = apu->apu_clock_divider;
 
      apu->pulse[0].phase = 7;
      apu->pulse[1].phase = 7;
-//      apu->pulse[0].next_clock = (apu->pulse[0].period + 1) * 2 * apu->emu->cpu_clock_divider;
-//      apu->pulse[1].next_clock = (apu->pulse[1].period + 1) * 2 * apu->emu->cpu_clock_divider;
-//      apu->triangle.next_clock = (apu->triangle.period + 1) * apu->emu->cpu_clock_divider;
-//      apu->noise.next_clock = apu->noise.period * apu->emu->cpu_clock_divider;
+//      apu->pulse[0].next_clock = (apu->pulse[0].period + 1) * 2 * apu->apu_clock_divider;
+//      apu->pulse[1].next_clock = (apu->pulse[1].period + 1) * 2 * apu->apu_clock_divider;
+//      apu->triangle.next_clock = (apu->triangle.period + 1) * apu->apu_clock_divider;
+//      apu->noise.next_clock = apu->noise.period * apu->apu_clock_divider;
 	apu->noise.period = apu->noise_period_table[0];
 	/* Reset length counters */
 	apu->pulse[0].enabled = 0;
@@ -1219,13 +1220,13 @@ static void clock_frame_counter(struct apu_state *apu)
 		do_half_frame = -1;
 		do_quarter_frame = -1;
 		set_frame_irq_flag(apu->emu);
-		apu->next_frame_irq += apu->emu->cpu_clock_divider;
+		apu->next_frame_irq += apu->apu_clock_divider;
 		sched_next_frame_step(1);
 		break;
 	case 0x04:
 		do_half_frame = 1;
 		set_frame_irq_flag(apu->emu);
-		apu->next_frame_irq += apu->emu->cpu_clock_divider;
+		apu->next_frame_irq += apu->apu_clock_divider;
 		sched_next_frame_step(1);
 		break;
 	case 0x05:
@@ -1362,7 +1363,7 @@ void apu_run(struct apu_state *apu, uint32_t cycles)
 		if (time >= cycles) {
 			if (cycles > apu->last_time) {
 				if (((cycles - apu->last_time) /
-				     apu->emu->cpu_clock_divider) & 1) {
+				     apu->apu_clock_divider) & 1) {
 					apu->odd_cycle ^= 1;
 				}
 				apu->last_time = cycles;
@@ -1372,7 +1373,7 @@ void apu_run(struct apu_state *apu, uint32_t cycles)
 
 		if (time > apu->last_time) {
 			if ( ((time - apu->last_time) /
-			     apu->emu->cpu_clock_divider) & 1) {
+			     apu->apu_clock_divider) & 1) {
 				apu->odd_cycle ^= 1;
 			}
 			apu->last_time = time;
@@ -1411,9 +1412,9 @@ static uint32_t apu_dmc_calc_dma_time(struct apu_state *apu, uint32_t cycles)
 	if (!dmc->bytes_remaining)
 		return ~0;
 
-	next_dma = dmc->next_clock + apu->emu->cpu_clock_divider;
+	next_dma = dmc->next_clock + apu->apu_clock_divider;
 	diff = (dmc->shift_bits - 1) *
-	       (dmc->period * apu->emu->cpu_clock_divider);
+	       (dmc->period * apu->apu_clock_divider);
 	next_dma += diff;
 
 	/*
@@ -1434,7 +1435,7 @@ static uint32_t apu_dmc_calc_dma_time(struct apu_state *apu, uint32_t cycles)
 	   if we have only one bit left.
 	 */
 	if (next_dma == cycles) {
-		next_dma += 8 * dmc->period * apu->emu->cpu_clock_divider;
+		next_dma += 8 * dmc->period * apu->apu_clock_divider;
 	}
 
 	return next_dma;
@@ -1488,18 +1489,22 @@ void apu_set_type(struct apu_state *apu, int type)
 		apu->noise_period_table = pal_noise_period_table;
 		apu->dmc_rate_table = pal_dmc_rate_table;
 		apu->frame_step_delay = 8312;
+		apu->apu_clock_divider = 15;
 	} else if (type == APU_TYPE_DENDY) {
 		apu->noise_period_table = ntsc_noise_period_table;
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
 		apu->frame_step_delay = 7456;
 		apu->swap_duty_cycles = 1;
+		apu->apu_clock_divider = 16;
 	} else {
 		apu->noise_period_table = ntsc_noise_period_table;
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
 		apu->frame_step_delay = 7456;
+		apu->apu_clock_divider = 12;
 	}
 	apu->frame_irq_delay = (4 * apu->frame_step_delay + 4) *
-	    apu->emu->cpu_clock_divider;
+	    apu->apu_clock_divider;
+	apu->emu->apu_clock_divider = apu->apu_clock_divider;
 
 }
 

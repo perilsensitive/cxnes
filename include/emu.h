@@ -123,6 +123,7 @@ struct emu {
 	*/
 	/* Timing variables */
 	int cpu_clock_divider;
+	int apu_clock_divider;
 	int ppu_clock_divider;
 	int draw_frame;
 	int frame_timer;
