@@ -76,6 +76,7 @@ struct a12_timer {
 	int cycle;
 	int delay;
 	int vblank_scanlines;
+	int post_render_scanlines;
 	int force_reload_delay;
 	int alt;
 	int has_short_frame;
@@ -273,6 +274,7 @@ void a12_timer_reset(struct a12_timer *timer, int hard)
 		timer->next_clock = 0;
 		timer->prev_a12 = 0;
 		timer->vblank_scanlines = 20;
+		timer->post_render_scanlines = 1;
 		timer->has_short_frame = 0;
 		timer->frame_start_cpu_cycles = 0;
 		timer->reload = 0;
@@ -455,11 +457,11 @@ static int a12_timer_fast_calculate_irq(struct a12_timer *timer, uint32_t *cycle
 		} else if (BG_MODE() && timer->sprite_mode) {
 			/* Only clocks on scanline -1, cycle 5 */
 			if (scanline > -1) {
-				cycles += ((240 + timer->vblank_scanlines + 1) - scanline) * 341;
+				cycles += ((240 + timer->vblank_scanlines + timer->post_render_scanlines) - scanline) * 341;
 				scanline = -1;
 			}
 
-			cycles += ((240 + timer->vblank_scanlines + 2) * 341) * count;
+			cycles += ((240 + timer->vblank_scanlines + timer->post_render_scanlines + 1) * 341) * count;
 			break;
 		}
 
@@ -470,7 +472,7 @@ static int a12_timer_fast_calculate_irq(struct a12_timer *timer, uint32_t *cycle
 
 		if ((scanline == 239) && count) {
 			cycles += (341 - cycle) + 5;
-			cycles += (timer->vblank_scanlines + 1) * 341;
+			cycles += (timer->vblank_scanlines + timer->post_render_scanlines) * 341;
 			scanline = -1;
 			cycle = 5;
 		}
@@ -588,7 +590,7 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 		int rise;
 
 		if (scanline >= 240) {
-			int frame_scanlines = 241 + timer->vblank_scanlines;
+			int frame_scanlines = 240 + timer->post_render_scanlines + timer->vblank_scanlines;
 
 			cycles += 341 - cycle;
 			cycles += 341 * (frame_scanlines -
@@ -1201,7 +1203,7 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			if (cycle == 341) {
 				scanline++;
 				cycle = 0;
-				if (scanline == 241 + timer->vblank_scanlines) {
+				if (scanline == 240 + timer->post_render_scanlines + timer->vblank_scanlines) {
 					scanline = -1;
 				}
 			}
@@ -1209,7 +1211,7 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 		}
 
 		if (scanline > 239) {
-			int ppu_clocks_left = (240 + timer->vblank_scanlines + 1 - scanline) *
+			int ppu_clocks_left = (240 + timer->vblank_scanlines + timer->post_render_scanlines - scanline) *
 				341 - cycle;
 
 			if (clocks < ppu_clocks_left)
@@ -1222,8 +1224,8 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			scanline += cycle / 341;
 			cycle %= 341;
 
-			if (scanline >= 240 + 1 + timer->vblank_scanlines) {
-				scanline -= 240 + 1 + timer->vblank_scanlines + 1;
+			if (scanline >= 240 + timer->post_render_scanlines + timer->vblank_scanlines) {
+				scanline -= 240 + timer->post_render_scanlines + timer->vblank_scanlines + 1;
 			}
 	/* printf("ending with count=%d, scanline=%d, cycle=%d (%d %d), (%d, %d) (v)\n", */
 	/*        timer->counter, scanline, cycle, ppu_scanline, ppu_cycle, cycles, ppu_cycles); */
