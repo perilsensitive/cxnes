@@ -902,7 +902,6 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		break;
 	case DMC_DMA_STEP_XFER:
-		printf("here: %d\n", cpu->oam_dma_step);
 		/* Shouldn't ever get here */
 		break;
 	}
@@ -1279,6 +1278,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		       sizeof(cpu->interrupt_times));
 	}
 
+	cpu->frame_state = FRAME_STATE_VISIBLE;
 	cpu->frames_before_overclock =
 		emu->config->frames_before_overclock;
 
@@ -1399,7 +1399,6 @@ void cpu_set_type(struct cpu_state *cpu, int type)
 	cpu->frame_cycles = 0;
 	cpu->visible_cycles = 0;
 	cpu->overclock_cycles = 0;
-	cpu->frame_state = 0;
 	cpu->type = type;
 	cpu->emu->cpu_clock_divider = cpu->cpu_clock_divider;
 }
@@ -2285,7 +2284,7 @@ uint32_t cpu_run(struct cpu_state *cpu)
 					emu_oc_pause(cpu->emu, cpu->backup_cycles, 1);
 					cpu->frame_cycles = cpu->visible_cycles + cpu->overclock_cycles;
 				} else {
-					cpu->frame_state = 2;
+					cpu->frame_state = FRAME_STATE_POSTRENDER;
 				}
 			}
 			calculate_step_cycles(cpu);
@@ -2310,7 +2309,6 @@ uint32_t cpu_run(struct cpu_state *cpu)
 		}
 
 		update_interrupt_status(cpu);
-
 	}
 end_of_frame:
 
