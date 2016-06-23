@@ -148,6 +148,8 @@ struct emu {
 
 	int quick_save_slot;
 
+	int oc_paused;
+
 	struct rom *rom;
 	char *rom_path;
 	char *rom_file;
@@ -198,6 +200,6 @@ void emu_set_remember_system_type(struct emu *emu, int enabled);
 
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);
-
+void emu_oc_pause(struct emu *emu, uint32_t cycles, int pause);
 
 #endif				/* __EMU_H__ */

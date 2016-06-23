@@ -107,4 +107,8 @@ int cpu_is_opcode_fetch(struct cpu_state *cpu);
 uint8_t cpu_get_accumulator(struct cpu_state *cpu);
 void cpu_set_accumulator(struct cpu_state *cpu, uint8_t value);
 void cpu_set_x_register(struct cpu_state *cpu, uint8_t value);
+void cpu_set_visible_cycles(struct cpu_state *cpu, uint32_t cycles);
+void cpu_disable_overclock_for_frame(struct cpu_state *cpu);
+void cpu_set_overclock(struct cpu_state *cpu, int enabled, int display);
+int cpu_get_overclock(struct cpu_state *cpu);
 #endif				/* __CPU_H__ */

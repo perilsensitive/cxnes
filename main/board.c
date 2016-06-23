@@ -1801,6 +1801,9 @@ int board_init(struct emu *emu, struct rom *rom)
 
 void board_run(struct board *board, uint32_t cycles)
 {
+	if (board->emu->oc_paused)
+		return;
+
 	if (board->info->funcs && board->info->funcs->run)
 		board->info->funcs->run(board, cycles);
 

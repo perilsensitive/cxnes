@@ -415,5 +415,6 @@
 #define ACTION_ALT_SPEED            0x20ffff53
 
 #define ACTION_TOGGLE_FULLSCREEN    0x30ffff54
+#define ACTION_TOGGLE_OVERCLOCK     0x00ffff55
 
 #endif

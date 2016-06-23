@@ -67,6 +67,11 @@ static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 	video_toggle_fullscreen(-1);
 }
 
+static void emulator_overclock_callback(GtkWidget *widget, gpointer userdata)
+{
+	cpu_set_overclock(emu->cpu, -1, 1);
+}
+
 static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
 {
 	int is_fullscreen = fullscreen;
@@ -84,6 +89,32 @@ static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
 
 	g_signal_handlers_unblock_by_func(G_OBJECT(item),
 					G_CALLBACK(emulator_fullscreen_callback),
+					NULL);
+}
+
+static void update_overclock_toggle(GtkWidget *widget, gpointer user_data)
+{
+	int is_overclocked;
+	GtkWidget *item;
+
+	item = user_data;
+
+	if (!emu_loaded(emu)) {
+		is_overclocked = 0;
+		gtk_widget_set_sensitive(item, FALSE);
+	} else {
+		is_overclocked = cpu_get_overclock(emu->cpu);
+		gtk_widget_set_sensitive(item, TRUE);
+	}
+
+	g_signal_handlers_block_by_func(G_OBJECT(item),
+					G_CALLBACK(emulator_overclock_callback),
+					NULL);
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), is_overclocked);
+
+	g_signal_handlers_unblock_by_func(G_OBJECT(item),
+					G_CALLBACK(emulator_overclock_callback),
 					NULL);
 }
 
@@ -1385,6 +1416,13 @@ static GtkWidget *gui_build_emulator_menu(void)
 			 G_CALLBACK(emulator_fullscreen_callback), NULL);
 	g_signal_connect(G_OBJECT(menu), "show",
 			 G_CALLBACK(update_fullscreen_toggle), item);
+
+	item = gtk_check_menu_item_new_with_mnemonic("_Overclock CPU");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_overclock_callback), NULL);
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(update_overclock_toggle), item);
 
 	item = gtk_menu_item_new_with_mnemonic("_Window Size");
 	submenu = gui_build_window_size_menu();

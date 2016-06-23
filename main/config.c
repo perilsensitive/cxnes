@@ -821,6 +821,10 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_STRING(state_path, NULL),
 	CONFIG_BOOLEAN(db_enabled, 1),
 
+	CONFIG_BOOLEAN(overclock_enabled, 0),
+	CONFIG_INTEGER(frames_before_overclock, 360, 0, 600),
+	CONFIG_INTEGER(overclock_scanlines, 262, 0, 1000),
+
 #if GUI_ENABLED
 	CONFIG_BOOLEAN(default_to_rom_path, 0),
 #endif
@@ -843,6 +847,7 @@ struct binding_item default_modifiers[] = {
 struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
+	{ .name = "Keyboard F12", .value = "TOGGLE_OVERCLOCK" },
 	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },
 	{ .name = "Keyboard F6", .value = "DEVICE_SELECT_PORT1" },
 	{ .name = "[CTRL] Keyboard F7", .value = "DEVICE_CONNECT_PORT2" },

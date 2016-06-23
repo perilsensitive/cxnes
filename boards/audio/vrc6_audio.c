@@ -343,6 +343,9 @@ void vrc6_audio_run(struct vrc6_audio_state *audio, uint32_t cycles)
 
 	elapsed = cycles - audio->timestamp;
 
+	if (audio->emu->oc_paused)
+		return;
+
 	if (audio->halt) {
 		audio->timestamp = cycles;
 		return;

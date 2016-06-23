@@ -583,6 +583,9 @@ static void schedule_disk_interrupt(struct board *board, uint32_t cycles)
 
 static void fds_run(struct board *board, uint32_t cycles)
 {
+	if (board->emu->oc_paused)
+		return;
+
 	fds_audio_run(board->emu->fds_audio, cycles);
 
 	if (_next_clock == ~0)

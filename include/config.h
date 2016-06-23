@@ -211,6 +211,9 @@ struct config {
 	const char *preferred_console_type;
 	const char *rom_console_type;
 	const char *rom_vs_ppu_type;
+	int overclock_enabled;
+	int frames_before_overclock;
+	int overclock_scanlines;
 
 	const char *video_filter;
 

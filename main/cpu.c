@@ -49,6 +49,12 @@ enum {
 	DMC_DMA_STEP_XFER,
 };
 
+enum frame_state_values {
+	FRAME_STATE_VISIBLE,
+	FRAME_STATE_OVERCLOCK,
+	FRAME_STATE_POSTRENDER,
+};
+
 struct cpu_state {
 	uint8_t A;
 	uint8_t X;
@@ -59,6 +65,7 @@ struct cpu_state {
 	uint8_t data_bus;
 	uint16_t address_bus;
 	uint32_t cycles;
+	uint32_t backup_cycles;
 	uint32_t interrupt_times[IRQ_MAX + 1];
 	uint32_t dmc_dma_timestamp;
 	int dmc_dma_addr;
@@ -79,6 +86,13 @@ struct cpu_state {
 	uint8_t *read_pagetable[CPU_PAGE_COUNT];
 	uint8_t *write_pagetable[CPU_PAGE_COUNT];
 	uint32_t frame_cycles;
+	uint32_t actual_frame_cycles;
+	uint32_t visible_cycles;
+	uint32_t overclock_cycles;
+	int do_overclock;
+	int overclock_enabled;
+	enum frame_state_values frame_state;
+	int frames_before_overclock;
 	int type;
 	int cpu_clock_divider;
 	int debug;
@@ -143,8 +157,14 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 {
 	addr &= 0xffff;
 
-	if (cpu->dmc_dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dmc_dma_timestamp) {
+	if ((addr >= 0x4000) && (addr < 0x6000) && (cpu->frame_state == FRAME_STATE_OVERCLOCK)) {
+		printf("write to %x\n", addr);
+		return;
+	}
+
+	if ((cpu->dmc_dma_timestamp != ~0) &&
+	    (cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
+	    (cpu->cycles >= cpu->dmc_dma_timestamp)) {
 		write_dma_transfer(cpu, addr);	
 	}
 	cpu->cycles += cpu->cpu_clock_divider;
@@ -165,8 +185,14 @@ static inline void read_mem(struct cpu_state *cpu, int addr)
 
 	addr &= 0xffff;
 
-	if (cpu->dmc_dma_timestamp != ~0 &&
-	    cpu->cycles >= cpu->dmc_dma_timestamp) {
+	if ((addr >= 0x5000) && (addr < 0x6000) && (cpu->frame_state == FRAME_STATE_OVERCLOCK)) {
+		printf("read from %x\n", addr);
+		return;
+	}
+
+	if ((cpu->dmc_dma_timestamp != ~0) &&
+	    (cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
+	    (cpu->cycles >= cpu->dmc_dma_timestamp)) {
 		read_dma_transfer(cpu, addr);
 	}
 	
@@ -886,6 +912,7 @@ static void write_dma_transfer(struct cpu_state *cpu, int addr)
 		cpu->dmc_dma_step = DMC_DMA_STEP_XFER;
 		break;
 	case DMC_DMA_STEP_XFER:
+		printf("here: %d\n", cpu->oam_dma_step);
 		/* Shouldn't ever get here */
 		break;
 	}
@@ -936,13 +963,21 @@ static inline void calculate_step_cycles(struct cpu_state *cpu)
 	int i;
 	uint32_t next_time = cpu->frame_cycles;
 
-	for (i = IRQ_NMI; i < IRQ_MAX + 1; i++) {
-		if (cpu->interrupt_times[i] < next_time)
-			next_time = cpu->interrupt_times[i];
+	if (cpu->frame_state != FRAME_STATE_OVERCLOCK) {
+		for (i = IRQ_NMI; i < IRQ_MAX + 1; i++) {
+			if (cpu->interrupt_times[i] < next_time)
+				next_time = cpu->interrupt_times[i];
+		}
+
+		if (cpu->board_run_timestamp < next_time)
+			next_time = cpu->board_run_timestamp;
 	}
 
-	if (cpu->board_run_timestamp < next_time)
-		next_time = cpu->board_run_timestamp;
+	if (cpu->frame_state == FRAME_STATE_VISIBLE) {
+		if (cpu->visible_cycles < next_time) {
+			next_time = cpu->visible_cycles;
+		}
+	}
 
 	cpu->step_cycles = next_time;
 }
@@ -964,6 +999,11 @@ static inline void update_interrupt_status(struct cpu_state *cpu)
 	int recalc;
 
 	recalc = 0;
+
+	if (cpu->frame_state == FRAME_STATE_OVERCLOCK) {
+		calculate_step_cycles(cpu);
+		return;
+	}
 
 	for (i = IRQ_NMI; i < IRQ_MAX + 1; i++) {
 		if (cpu->cycles > cpu->interrupt_times[i]) {
@@ -1224,6 +1264,9 @@ static void brk(struct cpu_state *cpu)
 void cpu_reset(struct cpu_state *cpu, int hard)
 {
 	int i;
+	struct emu *emu;
+
+	emu = cpu->emu;
 
 	if (hard) {
 		cpu->A = 0;
@@ -1245,6 +1288,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		memset(cpu->interrupt_times, 0xff,
 		       sizeof(cpu->interrupt_times));
 	}
+
+	cpu->frames_before_overclock =
+		emu->config->frames_before_overclock;
 
 	for (i = 0; i <= IRQ_MAX; i++) {
 		if (cpu->interrupt_times[i] != ~0)
@@ -1361,6 +1407,9 @@ void cpu_set_type(struct cpu_state *cpu, int type)
 	}
 
 	cpu->frame_cycles = 0;
+	cpu->visible_cycles = 0;
+	cpu->overclock_cycles = 0;
+	cpu->frame_state = 0;
 	cpu->type = type;
 	cpu->emu->cpu_clock_divider = cpu->cpu_clock_divider;
 }
@@ -1382,6 +1431,7 @@ int cpu_init(struct emu *emu)
 	emu->cpu = cpu;
 	cpu->emu = emu;
 	cpu->type = -1;
+	cpu->overclock_enabled = cpu->emu->config->overclock_enabled;
 
 	for (addr = 0; addr < CPU_MEM_SIZE; addr++) {
 		cpu->read_handlers[addr] = NULL;
@@ -1401,8 +1451,17 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t cycles)
 {
 	if (cpu->frame_cycles != cycles) {
 		cpu->frame_cycles = cycles;
+		cpu->actual_frame_cycles = cycles;
+		cpu->visible_cycles = cycles;
 		calculate_step_cycles(cpu);
 	}
+}
+
+void cpu_set_visible_cycles(struct cpu_state *cpu, uint32_t cycles)
+{
+		cpu->visible_cycles = cycles;
+		//printf("visible_cycles = %d, cycles = %d\n", cycles, cpu->cycles);
+		calculate_step_cycles(cpu);
 }
 
 uint32_t cpu_run(struct cpu_state *cpu)
@@ -1447,7 +1506,8 @@ uint32_t cpu_run(struct cpu_state *cpu)
 			opcode = cpu->data_bus;
 
 			/* NMI, IRQ and RESET are all handled by the logic for BRK */
-			if (cpu->interrupts & cpu->interrupt_mask) {
+			if ((cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
+			    (cpu->interrupts & cpu->interrupt_mask)) {
 				opcode = 0x00;
 			} else {
 				cpu->PC++;
@@ -2224,12 +2284,43 @@ uint32_t cpu_run(struct cpu_state *cpu)
 			}
 		}
 
-		if (cpu->cycles >= cpu->board_run_timestamp) {
+		switch(cpu->frame_state) {
+		case FRAME_STATE_VISIBLE:
+			if (cpu->cycles >= cpu->visible_cycles) {
+				if (!cpu->frames_before_overclock && cpu->do_overclock) {
+					cpu->overclock_cycles = cpu->emu->config->overclock_scanlines;
+					cpu->overclock_cycles *= 341 * cpu->emu->ppu_clock_divider;
+					cpu->backup_cycles = cpu->cycles;
+					cpu->frame_state = FRAME_STATE_OVERCLOCK;
+					emu_oc_pause(cpu->emu, cpu->backup_cycles, 1);
+					cpu->frame_cycles = cpu->visible_cycles + cpu->overclock_cycles;
+				} else {
+					cpu->frame_state = 2;
+				}
+			}
+			calculate_step_cycles(cpu);
+			break;
+		case FRAME_STATE_OVERCLOCK:
+			if (cpu->cycles >= cpu->visible_cycles + cpu->overclock_cycles) {
+				cpu->frame_state = FRAME_STATE_POSTRENDER;
+				cpu->cycles = cpu->backup_cycles;
+				cpu->frame_cycles = cpu->actual_frame_cycles;
+				emu_oc_pause(cpu->emu, cpu->cycles, 0);
+			}
+			calculate_step_cycles(cpu);
+			break;
+		case FRAME_STATE_POSTRENDER:
+			break;
+		}
+
+		if ((cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
+		    (cpu->cycles >= cpu->board_run_timestamp)) {
 			cpu->board_run_timestamp = ~0;
 			board_run(cpu->emu->board, cpu->cycles);
 		}
 
 		update_interrupt_status(cpu);
+
 	}
 end_of_frame:
 
@@ -2240,6 +2331,10 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 {
 	int i;
 
+	cpu->frame_state = FRAME_STATE_VISIBLE;
+	if (cpu->frames_before_overclock)
+		cpu->frames_before_overclock--;
+	cpu->do_overclock = cpu->overclock_enabled;
 	update_interrupt_status(cpu);
 	for (i = 0; i < IRQ_MAX + 1; i++) {
 		if (cpu->interrupt_times[i] != ~0) {
@@ -2443,4 +2538,29 @@ uint8_t cpu_get_accumulator(struct cpu_state *cpu)
 int cpu_is_opcode_fetch(struct cpu_state *cpu)
 {
 	return cpu->is_opcode_fetch;
+}
+
+void cpu_disable_overclock_for_frame(struct cpu_state *cpu)
+{
+	if (cpu->frame_state == FRAME_STATE_VISIBLE)
+		cpu->do_overclock = 0;
+}
+
+int cpu_get_overclock(struct cpu_state *cpu)
+{
+	return cpu->overclock_enabled;
+}
+
+void cpu_set_overclock(struct cpu_state *cpu, int enabled, int display)
+{
+	if (enabled < 0)
+		enabled = !cpu->overclock_enabled;
+
+	if (cpu->overclock_enabled == enabled)
+		return;
+
+	cpu->overclock_enabled = enabled;
+	if (display) {
+		osdprintf("Overclocking %s\n", enabled ? "enabled" : "disabled");
+	}
 }

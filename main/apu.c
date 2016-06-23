@@ -152,6 +152,7 @@ struct apu_state {
 	uint8_t frame_counter_register;
 	uint32_t frame_counter_register_timestamp;
 	int apu_clock_divider;
+	int pcm_write_count;
 
 	struct emu *emu;
 };
@@ -812,6 +813,13 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 		   playback.
 		*/
 
+		if (apu->pcm_write_count < 10)
+			apu->pcm_write_count++;
+		else if (apu->pcm_write_count == 10) {
+			apu->pcm_write_count++;
+			cpu_disable_overclock_for_frame(apu->emu->cpu);
+		}
+
 		if (apu->raw_pcm_filter == 2 ||
 		    (apu->raw_pcm_filter &&(!dmc->empty || !dmc->silent))) {
 			return;
@@ -1023,6 +1031,8 @@ void apu_cleanup(struct apu_state *apu)
 
 void apu_reset(struct apu_state *apu, int hard)
 {
+	apu->pcm_write_count = 0;
+
 	if (!hard) {
 		apu->dmc_irq_flag = 0;
 		apu->pulse[0].enabled = 0;
@@ -1169,6 +1179,7 @@ static void set_frame_irq_flag(struct emu *emu)
 
 void apu_end_frame(struct apu_state *apu, uint32_t cycles)
 {
+	apu->pcm_write_count = 0;
 	apu->pulse[0].next_clock -= cycles;
 	apu->pulse[1].next_clock -= cycles;
 	apu->triangle.next_clock -= cycles;
@@ -1342,7 +1353,7 @@ static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
 
 void apu_run(struct apu_state *apu, uint32_t cycles)
 {
-	while (1) {
+	while (!apu->emu->oc_paused) {
 		uint32_t time = -1;
 //              uint32_t time = apu->next_frame_step;
 		/* if (time > cycles) */

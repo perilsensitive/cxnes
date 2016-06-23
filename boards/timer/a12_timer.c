@@ -1163,6 +1163,9 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 	cycles = timer->timestamp;
 	rendering = timer->ppu_mask_reg & RENDERING_MASK;
 
+	if (emu->oc_paused)
+		return;
+
 	ppu_cycles = ppu_get_cycles(emu->ppu, &ppu_scanline, &ppu_cycle,
 				    &odd_frame, &short_frame);
 

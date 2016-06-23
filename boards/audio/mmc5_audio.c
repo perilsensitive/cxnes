@@ -295,6 +295,9 @@ void mmc5_audio_run(struct mmc5_audio_state *audio, uint32_t cycles)
 {
 	uint32_t limit;
 
+	if (audio->emu->oc_paused)
+		return;
+
 	while (1) {
 		limit = ~0;
 		if (audio->mmc5_pulse[0].next_clock < limit)
