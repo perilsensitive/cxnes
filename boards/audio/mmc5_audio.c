@@ -69,6 +69,7 @@ struct mmc5_audio_state {
 	int pcm_read_mode;
 	int pcm;
 	int last_amplitude;
+	int pcm_write_count;
 
 	struct emu *emu;
 };
@@ -371,8 +372,10 @@ static void mmc5_pulse_write_handler(struct mmc5_audio_state *audio,
 static CPU_WRITE_HANDLER(mmc5_audio_write_handler)
 {
 	struct mmc5_audio_state *audio;
+	struct config *config;
 
 	audio = emu->mmc5_audio;
+	config = audio->emu->config;
 	mmc5_audio_run(audio, cycles);
 
 	switch (addr) {
@@ -392,6 +395,14 @@ static CPU_WRITE_HANDLER(mmc5_audio_write_handler)
 		break;
 	case 0x5011:
 		if (!audio->pcm_read_mode && value) {
+			if (audio->pcm_write_count <
+			    config->overclock_pcm_sample_threshold)
+				audio->pcm_write_count++;
+			else if (audio->pcm_write_count ==
+			         config->overclock_pcm_sample_threshold) {
+				cpu_disable_overclock_for_frame(audio->emu->cpu);
+			}
+
 			if (audio->pcm != value) {
 				audio->pcm = value;
 				mmc5_audio_update_amplitude(audio, cycles);
@@ -465,6 +476,8 @@ void mmc5_audio_cleanup(struct emu *emu)
 
 void mmc5_audio_reset(struct mmc5_audio_state *audio, int hard)
 {
+	audio->pcm_write_count = 0;
+
 	if (!hard) {
 		/*
 		audio->mmc5_pulse[0].enabled = 0;
@@ -512,6 +525,7 @@ void mmc5_audio_reset(struct mmc5_audio_state *audio, int hard)
 
 void mmc5_audio_end_frame(struct mmc5_audio_state *audio, uint32_t cycles)
 {
+	audio->pcm_write_count = 0;
 	audio->mmc5_pulse[0].next_clock -= cycles;
 	audio->mmc5_pulse[1].next_clock -= cycles;
 	audio->next_frame_clock -= cycles;
