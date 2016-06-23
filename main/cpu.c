@@ -157,11 +157,6 @@ static inline void write_mem(struct cpu_state *cpu, int addr, int value)
 {
 	addr &= 0xffff;
 
-	if ((addr >= 0x4000) && (addr < 0x6000) && (cpu->frame_state == FRAME_STATE_OVERCLOCK)) {
-		printf("write to %x\n", addr);
-		return;
-	}
-
 	if ((cpu->dmc_dma_timestamp != ~0) &&
 	    (cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
 	    (cpu->cycles >= cpu->dmc_dma_timestamp)) {
@@ -184,11 +179,6 @@ static inline void read_mem(struct cpu_state *cpu, int addr)
 	uint8_t value = cpu->data_bus;
 
 	addr &= 0xffff;
-
-	if ((addr >= 0x5000) && (addr < 0x6000) && (cpu->frame_state == FRAME_STATE_OVERCLOCK)) {
-		printf("read from %x\n", addr);
-		return;
-	}
 
 	if ((cpu->dmc_dma_timestamp != ~0) &&
 	    (cpu->frame_state != FRAME_STATE_OVERCLOCK) &&

@@ -1417,13 +1417,6 @@ static GtkWidget *gui_build_emulator_menu(void)
 	g_signal_connect(G_OBJECT(menu), "show",
 			 G_CALLBACK(update_fullscreen_toggle), item);
 
-	item = gtk_check_menu_item_new_with_mnemonic("_Overclock CPU");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(emulator_overclock_callback), NULL);
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(update_overclock_toggle), item);
-
 	item = gtk_menu_item_new_with_mnemonic("_Window Size");
 	submenu = gui_build_window_size_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
@@ -1463,6 +1456,13 @@ static GtkWidget *gui_build_emulator_menu(void)
 			  NULL, is_sensitive_if_fds);
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
 			  NULL, is_sensitive_if_fds);
+
+	item = gtk_check_menu_item_new_with_mnemonic("_Overclock CPU");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(emulator_overclock_callback), NULL);
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(update_overclock_toggle), item);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
