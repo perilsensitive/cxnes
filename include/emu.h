@@ -148,7 +148,7 @@ struct emu {
 
 	int quick_save_slot;
 
-	int oc_paused;
+	int overclocking;
 
 	struct rom *rom;
 	char *rom_path;
@@ -200,6 +200,6 @@ void emu_set_remember_system_type(struct emu *emu, int enabled);
 
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);
-void emu_oc_pause(struct emu *emu, uint32_t cycles, int pause);
+void emu_overclock(struct emu *emu, uint32_t cycles, int enabled);
 
 #endif				/* __EMU_H__ */

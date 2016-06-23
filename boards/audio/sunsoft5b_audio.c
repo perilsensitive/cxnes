@@ -319,7 +319,7 @@ void sunsoft5b_audio_run(struct sunsoft5b_audio_state *audio, uint32_t cycles)
 {
 	uint32_t limit;
 
-	if (audio->emu->oc_paused)
+	if (audio->emu->overclocking)
 		return;
 
 	while (1) {

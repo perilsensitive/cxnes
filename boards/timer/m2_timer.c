@@ -212,7 +212,7 @@ void m2_timer_run(struct m2_timer *timer, uint32_t cycles)
 	if (!timer)
 		return;
 
-	if (timer->emu->oc_paused)
+	if (timer->emu->overclocking)
 		return;
 
 	if (!timer->counter_enabled)

@@ -1436,21 +1436,15 @@ void cpu_cleanup(struct cpu_state *cpu)
 	free(cpu);
 }
 
-void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t cycles)
+void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
+                          uint32_t frame_cycles)
 {
-	if (cpu->frame_cycles != cycles) {
-		cpu->frame_cycles = cycles;
-		cpu->actual_frame_cycles = cycles;
-		cpu->visible_cycles = cycles;
+	if (cpu->frame_cycles != frame_cycles) {
+		cpu->frame_cycles = frame_cycles;
+		cpu->actual_frame_cycles = frame_cycles;
+		cpu->visible_cycles = visible_cycles;
 		calculate_step_cycles(cpu);
 	}
-}
-
-void cpu_set_visible_cycles(struct cpu_state *cpu, uint32_t cycles)
-{
-		cpu->visible_cycles = cycles;
-		//printf("visible_cycles = %d, cycles = %d\n", cycles, cpu->cycles);
-		calculate_step_cycles(cpu);
 }
 
 uint32_t cpu_run(struct cpu_state *cpu)
@@ -2281,20 +2275,21 @@ uint32_t cpu_run(struct cpu_state *cpu)
 					cpu->overclock_cycles *= 341 * cpu->emu->ppu_clock_divider;
 					cpu->backup_cycles = cpu->cycles;
 					cpu->frame_state = FRAME_STATE_OVERCLOCK;
-					emu_oc_pause(cpu->emu, cpu->backup_cycles, 1);
+					emu_overclock(cpu->emu, cpu->backup_cycles, 1);
 					cpu->frame_cycles = cpu->visible_cycles + cpu->overclock_cycles;
 				} else {
 					cpu->frame_state = FRAME_STATE_POSTRENDER;
 				}
+
+				calculate_step_cycles(cpu);
 			}
-			calculate_step_cycles(cpu);
 			break;
 		case FRAME_STATE_OVERCLOCK:
 			if (cpu->cycles >= cpu->visible_cycles + cpu->overclock_cycles) {
 				cpu->frame_state = FRAME_STATE_POSTRENDER;
 				cpu->cycles = cpu->backup_cycles;
 				cpu->frame_cycles = cpu->actual_frame_cycles;
-				emu_oc_pause(cpu->emu, cpu->cycles, 0);
+				emu_overclock(cpu->emu, cpu->cycles, 0);
 			}
 			calculate_step_cycles(cpu);
 			break;

@@ -144,7 +144,7 @@ static void update_amplitude(struct fds_audio_state *audio, uint32_t cycles);
 
 void fds_audio_run(struct fds_audio_state *audio, uint32_t cycles)
 {
-	if (audio->emu->oc_paused)
+	if (audio->emu->overclocking)
 		return;
 
 	modulator_run(audio, cycles);

@@ -1801,7 +1801,7 @@ int board_init(struct emu *emu, struct rom *rom)
 
 void board_run(struct board *board, uint32_t cycles)
 {
-	if (board->emu->oc_paused)
+	if (board->emu->overclocking)
 		return;
 
 	if (board->info->funcs && board->info->funcs->run)

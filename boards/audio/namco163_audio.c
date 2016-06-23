@@ -102,7 +102,7 @@ void namco163_audio_run(struct namco163_audio_state *audio,
 	int length;
 	int multiplier;
 
-	if (audio->emu->oc_paused)
+	if (audio->emu->overclocking)
 		return;
 
 	if (!audio->enabled) {

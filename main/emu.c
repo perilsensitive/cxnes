@@ -768,7 +768,7 @@ int emu_reset(struct emu *emu, int hard)
 		return 1;
 
 	emu->resetting = 1;
-	emu->oc_paused = 0;
+	emu->overclocking = 0;
 
 	if (hard)
 		memset(emu->ram, 0xff, SIZE_2K);
@@ -1385,15 +1385,15 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 	return 0;
 }
 
-void emu_oc_pause(struct emu *emu, uint32_t cycles, int pause)
+void emu_overclock(struct emu *emu, uint32_t cycles, int enabled)
 {
-	if (pause == emu->oc_paused)
+	if (enabled == emu->overclocking)
 		return;
 
-	if (pause) {
+	if (enabled) {
 		ppu_run(emu->ppu, cycles);
 		apu_run(emu->apu, cycles);
 		board_run(emu->board, cycles);
 	}
-	emu->oc_paused = pause;
+	emu->overclocking = enabled;
 }

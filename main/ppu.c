@@ -984,13 +984,13 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 		ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 				     ppu->vblank_scanlines -
 				     (ppu->scanline + 1)) * 341 -
-			ppu->scanline_cycle;
+		                    ppu->scanline_cycle;
+		ppu->visible_cycles = ppu->frame_cycles -
+		                      (ppu->vblank_scanlines +
+		                      ppu->post_render_scanlines) * 341 + 8;
 		cpu_set_frame_cycles(ppu->emu->cpu,
+		                     ppu->visible_cycles * ppu->ppu_clock_divider,
 				     ppu->frame_cycles * ppu->ppu_clock_divider);
-		cpu_set_visible_cycles(ppu->emu->cpu, (ppu->frame_cycles -
-		                       (ppu->vblank_scanlines +
-		                       ppu->post_render_scanlines) * 341 + 8) *
-		                       ppu->ppu_clock_divider);
 		return;
 	}
 
@@ -1027,12 +1027,12 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines - 1) * 341 - 1;
+	ppu->visible_cycles = ppu->frame_cycles -
+	                      (ppu->vblank_scanlines +
+	                      ppu->post_render_scanlines) * 341 + 8;
 	cpu_set_frame_cycles(ppu->emu->cpu,
+	                     ppu->visible_cycles * ppu->ppu_clock_divider,
 			     ppu->frame_cycles * ppu->ppu_clock_divider);
-	cpu_set_visible_cycles(ppu->emu->cpu, (ppu->frame_cycles -
-	                       (ppu->vblank_scanlines +
-	                       ppu->post_render_scanlines) * 341 + 8) *
-	                       ppu->ppu_clock_divider);
 
 	board_get_mapper_ram(ppu->emu->board, &ppu->exram, &exram_size);
 	board_get_chr_rom(ppu->emu->board, &ppu->chr_rom, &ppu->chr_rom_size);
@@ -1101,12 +1101,12 @@ uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 	tmp = ppu->frame_cycles * ppu->ppu_clock_divider;
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines) * 341;
-	cpu_set_frame_cycles(ppu->emu->cpu, ppu->frame_cycles *
-			     ppu->ppu_clock_divider);
-	cpu_set_visible_cycles(ppu->emu->cpu, (ppu->frame_cycles -
-	                       (ppu->vblank_scanlines +
-	                       ppu->post_render_scanlines) * 341 + 8) *
-	                       ppu->ppu_clock_divider);
+	ppu->visible_cycles = ppu->frame_cycles -
+	                      (ppu->vblank_scanlines +
+	                      ppu->post_render_scanlines) * 341 + 8;
+	cpu_set_frame_cycles(ppu->emu->cpu,
+	                     ppu->visible_cycles * ppu->ppu_clock_divider,
+			     ppu->frame_cycles * ppu->ppu_clock_divider);
 
 	return tmp;
 }
@@ -2157,13 +2157,12 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			if (ppu->scanline_cycle == 340) {
 				if ((ppu->scanline == -1) && ppu->odd_frame) {
 					ppu->frame_cycles--;
+					ppu->visible_cycles--;
 					cpu_set_frame_cycles(ppu->emu->cpu,
+							     ppu->visible_cycles *
+							     ppu->ppu_clock_divider,
 							     ppu->frame_cycles *
 							     ppu->ppu_clock_divider);
-					cpu_set_visible_cycles(ppu->emu->cpu, (ppu->frame_cycles -
-							       (ppu->vblank_scanlines +
-							       ppu->post_render_scanlines) * 341 + 8) *
-							       ppu->ppu_clock_divider);
 					ppu->burst_phase = (ppu->burst_phase + 2) % 3;
 //					printf("burst_phase = %d (short)\n", ppu->burst_phase);
 				} else {
@@ -2442,7 +2441,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 
 int ppu_run(struct ppu_state *ppu, int cycles)
 {
-	if (emu_resetting(ppu->emu) || ppu->catching_up || ppu->emu->oc_paused)
+	if (emu_resetting(ppu->emu) || ppu->catching_up || ppu->emu->overclocking)
 		return ppu->cycles * ppu->ppu_clock_divider;
 
 	ppu->catching_up = 1;

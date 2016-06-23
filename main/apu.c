@@ -1354,7 +1354,7 @@ static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
 
 void apu_run(struct apu_state *apu, uint32_t cycles)
 {
-	while (!apu->emu->oc_paused) {
+	while (!apu->emu->overclocking) {
 		uint32_t time = -1;
 //              uint32_t time = apu->next_frame_step;
 		/* if (time > cycles) */

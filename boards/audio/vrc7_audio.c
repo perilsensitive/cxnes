@@ -208,7 +208,7 @@ void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles)
 	elapsed = cycles - timestamp;
 	clocks = elapsed / (36 * audio->emu->apu_clock_divider);
 
-	if (audio->emu->oc_paused)
+	if (audio->emu->overclocking)
 		return;
 
 	while (clocks > 0) {
