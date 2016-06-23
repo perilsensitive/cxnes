@@ -19,3 +19,4 @@ cxnes
 *.exe
 *.dll
 share/*
+tmp/*
