@@ -700,6 +700,8 @@ int cheat_save_file(struct emu *emu, const char *filename)
 		remaining -= rc;
 	}
 
+	create_directory(filename, 1, 1);
+
 	rc = writefile(filename, (uint8_t *)buffer, size - remaining);
 	free(buffer);
 

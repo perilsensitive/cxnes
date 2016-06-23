@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 #include <errno.h>
 
+#include "file_io.h"
 #include "emu.h"
 #include "video.h"
 #include "gtkconfig.h"
@@ -282,6 +283,8 @@ static void save_callback(GtkButton *button, gpointer user_data)
 	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT, NULL, 1);
 	cheat_folder = g_file_new_for_path(cheat_path);
 	free(cheat_path);
+
+	create_directory(cheat_path, 1, 0);
 
 	parent = (GtkWindow *)user_data;
        
