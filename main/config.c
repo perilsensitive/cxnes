@@ -824,6 +824,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_BOOLEAN(overclock_enabled, 0),
 	CONFIG_INTEGER(frames_before_overclock, 360, 0, 600),
 	CONFIG_INTEGER(overclock_scanlines, 262, 0, 1000),
+	CONFIG_INTEGER(overclock_pcm_sample_threshold, 10, 1, 50),
 
 #if GUI_ENABLED
 	CONFIG_BOOLEAN(default_to_rom_path, 0),

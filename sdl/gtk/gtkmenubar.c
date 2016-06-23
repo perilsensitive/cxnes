@@ -49,6 +49,7 @@ extern void gui_palette_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_binding_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_audio_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_path_configuration_dialog(GtkWidget *, gpointer);
+extern void gui_overclocking_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_joystick_dialog(GtkWidget *, gpointer);
@@ -1525,6 +1526,9 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 			  NULL);
 	gui_add_menu_item(menu, "_Cheats...",
 			  gui_cheat_dialog, gtkwindow,
+			  NULL);
+	gui_add_menu_item(menu, "Overcloc_king Configuration...",
+			  gui_overclocking_configuration_dialog, gtkwindow,
 			  NULL);
 	gui_add_menu_item(menu, "_Misc Configuration...",
 			  gui_misc_configuration_dialog, gtkwindow,

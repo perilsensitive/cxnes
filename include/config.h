@@ -214,6 +214,7 @@ struct config {
 	int overclock_enabled;
 	int frames_before_overclock;
 	int overclock_scanlines;
+	int overclock_pcm_sample_threshold;
 
 	const char *video_filter;
 

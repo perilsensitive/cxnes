@@ -777,10 +777,12 @@ static CPU_WRITE_HANDLER(noise_write_handler)
 static CPU_WRITE_HANDLER(dmc_write_handler)
 {
 	struct dmc *dmc;
+	struct config *config;
 	struct apu_state *apu;
 	uint32_t new_dma;
 
 	apu = emu->apu;
+	config = emu->config;
 
 	apu_run(apu, cycles);
 
@@ -813,10 +815,9 @@ static CPU_WRITE_HANDLER(dmc_write_handler)
 		   playback.
 		*/
 
-		if (apu->pcm_write_count < 10)
+		if (apu->pcm_write_count < config->overclock_pcm_sample_threshold)
 			apu->pcm_write_count++;
-		else if (apu->pcm_write_count == 10) {
-			apu->pcm_write_count++;
+		else if (apu->pcm_write_count == config->overclock_pcm_sample_threshold) {
 			cpu_disable_overclock_for_frame(apu->emu->cpu);
 		}
 

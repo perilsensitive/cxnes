@@ -858,6 +858,45 @@ static void configuration_setup_volume(GtkWidget *dialog, struct config *config)
 	gtk_box_pack_start(GTK_BOX(box), volume_control_grid, TRUE, TRUE, 8);
 }
 
+static void configuration_setup_overclocking(GtkWidget *dialog, struct config *config)
+{
+	GtkWidget *dialog_box;
+	GtkWidget *box;
+	GtkWidget *hbox;
+	GtkWidget *tmp;
+	GtkWidget *label;
+	
+	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+	gtk_box_pack_start(GTK_BOX(dialog_box), box, FALSE, FALSE, 8);
+
+	tmp = config_checkbox(dialog, "_Enable overclocking by default", config,
+					     "overclock_enabled");
+	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 8);
+
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	label = gtk_label_new_with_mnemonic("Extra _scanlines to emulate:");
+	tmp = config_int_spinbutton(dialog, config, "overclock_scanlines");
+	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	label = gtk_label_new_with_mnemonic("Frames to emulate before overclocking:");
+	tmp = config_int_spinbutton(dialog, config, "frames_before_overclock");
+	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	label = gtk_label_new_with_mnemonic("Raw PCM sample threshold:");
+	tmp = config_int_spinbutton(dialog, config, "overclock_pcm_sample_threshold");
+	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+
+}
+
 static void configuration_setup_audio(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *combo_sample_rate;
@@ -1510,6 +1549,13 @@ void gui_audio_configuration_dialog(GtkWidget *widget, gpointer user_data)
 {
 	gui_configuration_dialog("Audio Configuration",
 				 configuration_setup_audio, 0,
+				 widget, user_data);
+}
+
+void gui_overclocking_configuration_dialog(GtkWidget *widget, gpointer user_data)
+{
+	gui_configuration_dialog("Overclocking Configuration",
+				 configuration_setup_overclocking, 0,
 				 widget, user_data);
 }
 
