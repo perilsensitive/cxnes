@@ -166,7 +166,7 @@ struct config {
 	int fds_auto_disk_change_enabled;
 	int fds_hide_license_screen;
 	int fds_hide_bios_title_screen;
-	int guess_region_from_filename;
+	int guess_system_type_from_filename;
 	int auto_wram;
 	int dip_switch[8];
 	int alternate_speed;

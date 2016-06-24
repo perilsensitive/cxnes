@@ -1271,7 +1271,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	check = config_checkbox(dialog,
 				"_Guess region/timing from ROM filename",
 				config,
-				"guess_region_from_filename");
+				"guess_system_type_from_filename");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
 	fds_frame = gtk_frame_new(NULL);

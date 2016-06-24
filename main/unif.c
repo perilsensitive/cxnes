@@ -241,6 +241,9 @@ int unif_load(struct emu *emu, struct rom *rom)
 		rom->info.system_type = EMU_SYSTEM_TYPE_NES;
 	}
 
+	if (emu->config->guess_system_type_from_filename)
+		rom_guess_system_type_from_filename(rom, 1);
+
 	rom->offset = 16;
 	rom_calculate_checksum(rom);
 	db_lookup(rom, NULL);

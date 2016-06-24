@@ -691,7 +691,7 @@ int ines_load(struct emu *emu, struct rom *rom)
 	rom->info.vram_size[1] = vram_size[1];
 
 	if (!header.vs_system && !header.playchoice &&
-	    emu->config->guess_region_from_filename) {
+	    emu->config->guess_system_type_from_filename) {
 		int trust_timing_info;
 
 		if ((header.version == 1) && (!header.tv_system))

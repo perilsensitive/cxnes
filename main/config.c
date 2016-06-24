@@ -790,7 +790,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_BOOLEAN(fds_auto_disk_change_enabled, 0),
 	CONFIG_BOOLEAN(fds_hide_bios_title_screen, 0),
 	CONFIG_BOOLEAN(fds_hide_license_screen, 0),
-	CONFIG_BOOLEAN(guess_region_from_filename, 1),
+	CONFIG_BOOLEAN(guess_system_type_from_filename, 1),
 	CONFIG_BOOLEAN(auto_wram, 1),
 
 	CONFIG_BOOLEAN(mask_opposite_directions, 1),
