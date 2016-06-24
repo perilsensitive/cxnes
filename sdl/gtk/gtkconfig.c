@@ -1256,7 +1256,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 
 	ines_frame = gtk_frame_new(NULL);
 	tmp = gtk_label_new_with_mnemonic(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>iNES ROM Options</b>");
+	gtk_label_set_markup(GTK_LABEL(tmp), "<b>ROM Options</b>");
 	gtk_frame_set_label_widget(GTK_FRAME(ines_frame), tmp);
 	gtk_frame_set_shadow_type(GTK_FRAME(ines_frame), GTK_SHADOW_NONE);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
@@ -1264,12 +1264,12 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_grid_attach(GTK_GRID(main_grid), ines_frame, 1, 1, 1, 1);
 	
 	check = config_checkbox(dialog,
-				"_Allocate 8KiB of SRAM at $6000-$7FFF (if possible)",
+				"_Allocate 8KiB WRAM at $6000 (if possible) (iNES only)",
 				config,
 				"auto_wram");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 	check = config_checkbox(dialog,
-				"_Guess region/timing from ROM filename",
+				"_Guess system type from ROM filename",
 				config,
 				"guess_system_type_from_filename");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
