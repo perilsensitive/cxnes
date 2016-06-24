@@ -96,4 +96,5 @@ extern void rom_get_info(struct rom *rom, struct text_buffer *tbuffer);
 
 extern struct rom *rom_alloc(const char *filename, uint8_t *buffer, size_t size);
 extern void rom_free(struct rom *);
+extern void rom_guess_system_type_from_filename(struct rom *rom, int trust_timing);
 #endif				/* __ROM_H__ */

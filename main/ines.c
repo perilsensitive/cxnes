@@ -77,46 +77,11 @@ static const char *garbage[] = {
 	NULL,
 };
 
-static const char *pal_filename_strings[] = {
-	"(Australia)",
-	"(Europe)",
-	"(France)",
-	"(Germany)",
-	"(Hong Kong)",
-	"(Italy)",
-	"(Netherlands)"
-	"(Spain)",
-	"(Sweden)",
-	"(PAL)",
-	"(A)",
-	"(D)",
-	"(E)",
-	"(F)",
-	"(G)",
-	"(Gr)",
-	"(HK)",
-	"(O)",
-	"(Nl)",
-	"(No)",
-	"(S)",
-	"(Sw)",
-	"(UK)",
-	NULL
-};
-
-static const char *japan_filename_strings[] = {
-	"(Japan)",
-	"(J)",
-	NULL
-};
-
 struct ines_board_map {
 	int mapper;
 	int submapper;
 	const char *board;
 };
-
-static int find_region_substring(const char *filename, const char **list);
 
 int fixup_header(uint32_t board_type, struct ines_header *header)
 {
@@ -642,29 +607,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 	else
 		system_type = EMU_SYSTEM_TYPE_NES;
 
-	if (!header.vs_system && !header.playchoice &&
-	    emu->config->guess_region_from_filename) {
-		if ((header.version == 1) && (!header.tv_system)) {
-			int found = find_region_substring(rom->filename,
-			                                  pal_filename_strings);
-
-			if (found) {
-				header.tv_system = 1;
-				system_type = EMU_SYSTEM_TYPE_PAL_NES;
-			} else {
-				system_type = EMU_SYSTEM_TYPE_NES;
-			}
-		}
-
-		if (!header.tv_system) {
-			int found = find_region_substring(rom->filename,
-			                                  japan_filename_strings);
-
-			if (found)
-				system_type = EMU_SYSTEM_TYPE_FAMICOM;
-		}
-	}
-
 	if (board_type == BOARD_TYPE_ExROM) {
 		if ((header.wram_size > SIZE_32K) ||
 		    (header.nv_wram_size > SIZE_32K)) {
@@ -748,6 +690,19 @@ int ines_load(struct emu *emu, struct rom *rom)
 	rom->info.vram_size[0] = vram_size[0];
 	rom->info.vram_size[1] = vram_size[1];
 
+	if (!header.vs_system && !header.playchoice &&
+	    emu->config->guess_region_from_filename) {
+		int trust_timing_info;
+
+		if ((header.version == 1) && (!header.tv_system))
+			trust_timing_info = 0;
+		else
+			trust_timing_info = 1;
+
+		rom_guess_system_type_from_filename(rom, trust_timing_info);
+	}
+
+
 	/* Try loading based on a database match first.  This way
 	   even if the header data is invalid (unknown mapper, incorrect
 	   size, etc.) the rom may still load.
@@ -808,29 +763,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	rom->offset = 16;
 	rom_calculate_checksum(rom);
-
-	return 0;
-}
-
-/* Looks for common substrings in the filename to guess at
-   the appropriate region/timing for the ROM. Returns 1 if
-   the game appears to match a valid region string in list,
-   zero otherwise;
-*/
-static int find_region_substring(const char *filename, const char **list)
-{
-	const char **p;
-	
-	p = list;
-	while (*p) {
-		if (strstr(filename, *p))
-			break;
-
-		p++;
-	}
-
-	if (p && *p)
-		return 1;
 
 	return 0;
 }

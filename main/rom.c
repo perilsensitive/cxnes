@@ -42,6 +42,39 @@
 #include "crc32.h"
 #include "sha1.h"
 
+static const char *pal_filename_strings[] = {
+	"(Australia)",
+	"(Europe)",
+	"(France)",
+	"(Germany)",
+	"(Hong Kong)",
+	"(Italy)",
+	"(Netherlands)"
+	"(Spain)",
+	"(Sweden)",
+	"(PAL)",
+	"(A)",
+	"(D)",
+	"(E)",
+	"(F)",
+	"(G)",
+	"(Gr)",
+	"(HK)",
+	"(O)",
+	"(Nl)",
+	"(No)",
+	"(S)",
+	"(Sw)",
+	"(UK)",
+	NULL
+};
+
+static const char *japan_filename_strings[] = {
+	"(Japan)",
+	"(J)",
+	NULL
+};
+
 int rom_apply_patches(struct rom *rom, int count,
 		      char **patchfiles, int from_archive);
 
@@ -1146,3 +1179,55 @@ void print_rom_info(struct rom *rom)
 	text_buffer_free(tbuffer);
 }
 
+/* Looks for common substrings in the filename to guess at
+   the appropriate region/timing for the ROM. Returns 1 if
+   the game appears to match a valid region string in list,
+   zero otherwise;
+*/
+static int find_region_substring(const char *filename, const char **list)
+{
+	const char **p;
+	
+	p = list;
+	while (*p) {
+		if (strstr(filename, *p))
+			break;
+
+		p++;
+	}
+
+	if (p && *p)
+		return 1;
+
+	return 0;
+}
+
+void rom_guess_system_type_from_filename(struct rom *rom, int trust_timing)
+{
+	int is_pal;
+
+	switch (rom->info.system_type) {
+	case EMU_SYSTEM_TYPE_PAL_NES:
+		is_pal = 1;
+		break;
+	default:
+		is_pal = 0;
+	}
+
+	if (!trust_timing) {
+		is_pal = find_region_substring(rom->filename,
+		                               pal_filename_strings);
+	}
+
+	if (!is_pal) {
+		int famicom = find_region_substring(rom->filename,
+		                                    japan_filename_strings);
+
+		if (famicom)
+			rom->info.system_type = EMU_SYSTEM_TYPE_FAMICOM;
+		else
+			rom->info.system_type = EMU_SYSTEM_TYPE_NES;
+	} else {
+		rom->info.system_type = EMU_SYSTEM_TYPE_PAL_NES;
+	}
+}
