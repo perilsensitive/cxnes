@@ -104,13 +104,19 @@ static const char *pal_filename_strings[] = {
 	NULL
 };
 
+static const char *japan_filename_strings[] = {
+	"(Japan)",
+	"(J)",
+	NULL
+};
+
 struct ines_board_map {
 	int mapper;
 	int submapper;
 	const char *board;
 };
 
-static int guess_region_from_filename(const char *filename);
+static int find_region_substring(const char *filename, const char **list);
 
 int fixup_header(uint32_t board_type, struct ines_header *header)
 {
@@ -471,18 +477,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return -1;
 	}
 
-	if (header.version == 1 && emu->config->guess_region_from_filename) {
-		int region = guess_region_from_filename(rom->filename);
-
-		/* If we couldn't guess the region, fall
-		   back to NTSC.
-		*/
-		if (region < 0)
-			region = 0;
-
-		header.tv_system = region;
-	}
-
 	mirroring = MIRROR_UNDEF;
 
 	wram_size[0] = wram_size[1] = 0;
@@ -648,6 +642,28 @@ int ines_load(struct emu *emu, struct rom *rom)
 	else
 		system_type = EMU_SYSTEM_TYPE_NES;
 
+	if (!header.vs_system && !header.playchoice &&
+	    emu->config->guess_region_from_filename) {
+		if (header.version == 1) {
+			int found = find_region_substring(rom->filename,
+			                                  pal_filename_strings);
+
+			header.tv_system = found;
+			if (found)
+				system_type = EMU_SYSTEM_TYPE_PAL_NES;
+			else
+				system_type = EMU_SYSTEM_TYPE_NES;
+		}
+
+		if (!header.tv_system) {
+			int found = find_region_substring(rom->filename,
+			                                  japan_filename_strings);
+
+			if (found)
+				system_type = EMU_SYSTEM_TYPE_FAMICOM;
+		}
+	}
+
 	if (board_type == BOARD_TYPE_ExROM) {
 		if ((header.wram_size > SIZE_32K) ||
 		    (header.nv_wram_size > SIZE_32K)) {
@@ -797,13 +813,14 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 /* Looks for common substrings in the filename to guess at
    the appropriate region/timing for the ROM. Returns 1 if
-   PAL, and -1 if it could not find a matching substring.
+   the game appears to match a valid region string in list,
+   zero otherwise;
 */
-static int guess_region_from_filename(const char *filename)
+static int find_region_substring(const char *filename, const char **list)
 {
 	const char **p;
 	
-	p = pal_filename_strings;
+	p = list;
 	while (*p) {
 		if (strstr(filename, *p))
 			break;
@@ -814,5 +831,5 @@ static int guess_region_from_filename(const char *filename)
 	if (p && *p)
 		return 1;
 
-	return -1;
+	return 0;
 }
