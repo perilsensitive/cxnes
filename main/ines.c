@@ -644,15 +644,16 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	if (!header.vs_system && !header.playchoice &&
 	    emu->config->guess_region_from_filename) {
-		if (header.version == 1) {
+		if ((header.version == 1) && (!header.tv_system)) {
 			int found = find_region_substring(rom->filename,
 			                                  pal_filename_strings);
 
-			header.tv_system = found;
-			if (found)
+			if (found) {
+				header.tv_system = 1;
 				system_type = EMU_SYSTEM_TYPE_PAL_NES;
-			else
+			} else {
 				system_type = EMU_SYSTEM_TYPE_NES;
+			}
 		}
 
 		if (!header.tv_system) {
