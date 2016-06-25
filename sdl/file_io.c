@@ -198,6 +198,7 @@ int writefile(const char *name, uint8_t *buf, uint32_t size)
 
 int process_file(const char *filename, void *data,
 		 void (*callback)(char *, int, void *),
+                 int skip_comments,
 		 int trim_leading_ws, int trim_trailing_ws)
 {
 	char *buffer;
@@ -248,7 +249,7 @@ int process_file(const char *filename, void *data,
 			}
 		}
 
-		if ((len == 0) || (*p == '#')) {
+		if ((len == 0) || ((*p == '#') && skip_comments)) {
 			line = end;
 			continue;
 		}

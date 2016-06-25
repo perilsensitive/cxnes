@@ -1849,7 +1849,7 @@ static int config_load_file(struct config *config, struct config_parameter *para
 	int rc;
 	void *ptr_list[2] = { config, parameters };
 
-	rc = process_file(filename, ptr_list, config_callback, 1, 1);
+	rc = process_file(filename, ptr_list, config_callback, 1, 1, 1);
 
 	return rc;
 }

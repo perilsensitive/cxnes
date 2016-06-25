@@ -658,7 +658,7 @@ int db_load_file(struct emu *emu, const char *filename)
 	    return 0;
 
 	rc = process_file(filename, &state,
-			  new_db_callback, 0, 1);
+			  new_db_callback, 1, 0, 1);
 
 	if (state.buffer_used)
 		process_field(&state);

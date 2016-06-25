@@ -243,12 +243,12 @@ int parse_raw_code(const char *code, int *a, int *v, int *c)
 	errno = 0;
 
 	addr = strtoul(code, &end, 16);
-	if (errno || !*end || (*end != ':') || (addr > 0xffff))
+	if (errno || !*end || ((*end != ':') && (*end != '-')) || (addr > 0xffff))
 		return 1;
 	*a = addr;
 
 	value = strtoul(end + 1, &end, 16);
-	if (errno || (*end && *end != ':') || (value > 0xff))
+	if (errno || (*end && (*end != ':') && (*end != '-')) || (value > 0xff))
 		return 1;
 	*v = value;
 
@@ -509,12 +509,18 @@ static void cheat_callback(char *line, int num, void *data)
 
 	end = 0;
 	description_start = 0;
-	sscanf(line, " %n%*s%n %n%*s \n",
+	sscanf(line, "#%*s %n%*s%n %n%*s \n",
 	       &start, &end, &description_start);
 
 	if ((!end || !description_start)) {
-		log_err("error parsing line %d\n", num);
-		return;
+		end = 0;
+		description_start = 0;
+		sscanf(line, " %n%*s%n %n%*s \n",
+		       &start, &end, &description_start);
+		if ((!end || !description_start)) {
+			log_err("error parsing line %d\n", num);
+			return;
+		}
 	}
 
 	line[end] = '\0';
@@ -576,7 +582,7 @@ int cheat_load_file(struct emu *emu, const char *filename)
 {
 	printf("filename: %s\n", filename);
 	return process_file(filename, emu->cheats,
-			    cheat_callback, 1, 1);
+			    cheat_callback, 0, 1, 1);
 }
 
 int cheat_save_file(struct emu *emu, const char *filename)
