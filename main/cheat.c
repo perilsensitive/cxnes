@@ -192,6 +192,47 @@ void insert_cheat(struct cheat_state *cheats, struct cheat *cheat)
 	cheat->next = NULL;
 }
 
+static int parse_fceux_code(const char *code, int *a, int *v, int *c, int *e)
+{
+	char *tmpcode;
+	int enabled;
+	int rc;
+
+	errno = 0;
+
+	tmpcode = (char *)code;
+
+	/* cxNES doesn't distinguish between "replacement" and "substitution"
+	   cheats, nor does it care about the 'Compare' flag; the code itself
+	   makes it clear that there is a compare value.  Skip up to the first
+	   two characters if they appear to be these flags.  Note that this
+	   allows upper or lower case characters, and supports the flags in
+	   either order.
+	 */
+	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's') ||
+	    (tmpcode[0] == 'C') || (tmpcode[0] == 'c'))
+		tmpcode++;
+
+	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's') ||
+	    (tmpcode[0] == 'C') || (tmpcode[0] == 'c'))
+		tmpcode++;
+
+	/* If a ':' is present, the code is disabled */
+	if (tmpcode[0] == ':') {
+		enabled = 0;
+		tmpcode++;
+	} else {
+		enabled = 1;
+	}
+
+	rc = parse_raw_code(tmpcode, a, v, c);
+
+	if (rc == 0)
+		*e = enabled;
+
+	return rc;
+}
+
 int parse_raw_code(const char *code, int *a, int *v, int *c)
 {
 	int addr, value, compare;
@@ -228,31 +269,35 @@ void decode_game_genie(const char *string, int *a, int *v, int *c)
 	int addr;
 	int value, compare;
 	int length;
-	int i;
+	int i, j;
 
 	length = strlen(string);
 
 	compare = -1;
 
-	for (i = 0; i < length; i++) {
+	j = 0;
+	for (i = 0; string[i]; i++) {
 		switch (toupper(string[i])) {
-		case 'A': code[i] = 0x0; break;
-		case 'P': code[i] = 0x1; break;
-		case 'Z': code[i] = 0x2; break;
-		case 'L': code[i] = 0x3; break;
-		case 'G': code[i] = 0x4; break;
-		case 'I': code[i] = 0x5; break;
-		case 'T': code[i] = 0x6; break;
-		case 'Y': code[i] = 0x7; break;
-		case 'E': code[i] = 0x8; break;
-		case 'O': code[i] = 0x9; break;
-		case 'X': code[i] = 0xa; break;
-		case 'U': code[i] = 0xb; break;
-		case 'K': code[i] = 0xc; break;
-		case 'S': code[i] = 0xd; break;
-		case 'V': code[i] = 0xe; break;
-		case 'N': code[i] = 0xf; break;
+		case 'A': code[j] = 0x0; break;
+		case 'P': code[j] = 0x1; break;
+		case 'Z': code[j] = 0x2; break;
+		case 'L': code[j] = 0x3; break;
+		case 'G': code[j] = 0x4; break;
+		case 'I': code[j] = 0x5; break;
+		case 'T': code[j] = 0x6; break;
+		case 'Y': code[j] = 0x7; break;
+		case 'E': code[j] = 0x8; break;
+		case 'O': code[j] = 0x9; break;
+		case 'X': code[j] = 0xa; break;
+		case 'U': code[j] = 0xb; break;
+		case 'K': code[j] = 0xc; break;
+		case 'S': code[j] = 0xd; break;
+		case 'V': code[j] = 0xe; break;
+		case 'N': code[j] = 0xf; break;
+		case '-': continue;
 		}
+
+		j++;
 	}
 
 	addr = ((code[3] & 7) << 12) |
@@ -281,18 +326,15 @@ void decode_game_genie(const char *string, int *a, int *v, int *c)
 
 int parse_game_genie_code(const char *code, int *a, int *v, int *c)
 {
-	int length;
 	int i, j;
 
 	if (!code || !*code)
 		return 0;
 
-	length = strlen(code);
+	for (i = 0; code[i]; i++) {
+		if (code[i] == '-')
+			continue;
 
-	if ((length != 6) && (length != 8))
-		return 1;
-
-	for (i = 0; i < length; i++) {
 		for (j = 0; j < 16; j++) {
 			if (toupper(code[i]) == game_genie_alphabet[j])
 				break;
@@ -302,7 +344,7 @@ int parse_game_genie_code(const char *code, int *a, int *v, int *c)
 			break;
 	}
 
-	if (i < length)
+	if (code[i])
 		return 1;
 
 	decode_game_genie(code, a, v, c);
@@ -448,84 +490,46 @@ static void cheat_callback(char *line, int num, void *data)
 {
 	struct cheat_state *cheats;
 	struct cheat *cheat;
-	char *raw, *gg, *rocky, *description;
-	/* char *code; */
-	int raw_start, raw_end;
-	int gg_start, gg_end;
-	int rocky_start, rocky_end;
+	char *description;
+	char *code;
+	int start, end;
 	int enabled;
 	int description_start;
 	int addr, value, compare;
+	int rc;
 
 	cheats = data;
 
-	rocky_end = 0;
-	raw_end = 0;
-	gg_end = 0;
+	end = 0;
 	description_start = 0;
-	enabled = -1;
-	sscanf(line, " %n%*s%n %n%*s%n %n%*s%n %d %n%*s \n",
-	       &raw_start, &raw_end, &gg_start, &gg_end,
-	       &rocky_start, &rocky_end,
-	       &enabled, &description_start);
+	sscanf(line, " %n%*s%n %n%*s \n",
+	       &start, &end, &description_start);
 
-	if ((!gg_end || !rocky_end || !raw_end || !description_start || (enabled < 0))) {
+	if ((!end || !description_start)) {
 		log_err("error parsing line %d\n", num);
 		return;
 	}
 
-	line[raw_end] = '\0';
-	line[gg_end] = '\0';
-	line[rocky_end] = '\0';
+	line[end] = '\0';
 
-	raw = line + raw_start;
-	gg = line + gg_start;
-	rocky = line + rocky_start;
+	code = line + start;
 	description = line + description_start;
+	enabled = 0;
 
-	/* If a raw code is present and valid, it is used and
-	   the appropriate Game Genie or Pro Action Rocky code
-	   is generated from it.
-
-	   If a valid raw code is not present but a Game Genie
-	   one is, it will be used and the raw and Pro Action
-	   Rocky codes generated from it instead.
-
-	   Finally, if only a Pro Action Rocky code  is available,
-	   it will be decoded and used to generate the other two.
-
-	   All three codes are present in the file mostly for
-	   informational purposes, and possibly as a sanity check.
-	   The emulator uses only the raw format internally, but
-	   retains the others for the user's convenience.
-
-	   If a code is not available in a particular format, or
-	   the code cannot be expressed in that format, a dash
-	   ('-') character must be used in place of a code for
-	   that field.
-
-	   The enabled field should be '0' if the code is not
-	   enabled, '1' if it is.
-
-	   The description can be any sequence of characters
-	   except newline.  Leading and trailing whitespace is
-	   removed, but all whitespace inside the string is
-	   left alone.  The description may be omitted.
-	*/
 	compare = -1;
-	/* code = raw; */
-	if (parse_raw_code(raw, &addr, &value, &compare) != 0) {
-		/* code = gg; */
-		if (parse_game_genie_code(gg, &addr, &value, &compare) != 0) {
-			/* code = rocky; */
-			if (parse_pro_action_rocky_code(rocky, &addr, &value,
-							&compare) != 0) {
+	rc = parse_fceux_code(code, &addr, &value, &compare, &enabled);
 
-				return;
-			}
-		}
+	if (rc != 0)
+		rc = parse_raw_code(code, &addr, &value, &compare);
 
-	}
+	if (rc != 0)
+		rc = parse_game_genie_code(code, &addr, &value, &compare);
+
+	if (rc != 0)
+		rc = parse_pro_action_rocky_code(code, &addr, &value, &compare);
+
+	if (rc != 0)
+		return;
 
 	cheat = malloc(sizeof(*cheat));
 	if (!cheat)
@@ -561,31 +565,6 @@ static void cheat_callback(char *line, int num, void *data)
 #endif
 }
 
-/*
- * Cheat file format:
- *
- * Blank lines and lines starting with '#' ignored
- * Witespace-separated fields:
- * raw gamegenie rocky enabled description
- * 
- * Description may contain spaces, no quoting necessary because
- * it's the last "field". It may also be omitted entirely.
- *
- * Raw codes must be in format addr:value or addr:value:compare.  If
- * 'compare' present, value stored at addr must be equal to compare
- * for 'value' to be returned.  Otherwise, the unmodified data is
- * returned.  All three of the above must be in hexadecimal format, and
- * may be preceeded by the prefix '0x'.
- *
- * Game Genie codes must be either 6 or 8 characters long and consist only
- * of the letters APZLGITYEOXUKSVN (either upper- or lower-case is fine).
- *
- * Pro Action Rocky codes are 32-bit integers in hexidecimal format. They
- * may use upper or lower case digits and may be prefixed with '0x'.
- *
- * The 'enabled' flag may be set to 0 to indicate that the code is not enabled
- * by default, or any non-zero value to indicate that it is enabled by default.
- */
 int cheat_load_file(struct emu *emu, const char *filename)
 {
 	printf("filename: %s\n", filename);
@@ -596,8 +575,6 @@ int cheat_load_file(struct emu *emu, const char *filename)
 int cheat_save_file(struct emu *emu, const char *filename)
 {
 	struct cheat *cheat;
-	char gg[9];
-	char rocky[9];
 	char *buffer, *p;
 	size_t size, remaining;
 	int rc;
@@ -611,29 +588,11 @@ int cheat_save_file(struct emu *emu, const char *filename)
 	size = 0;
 
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
-		/* raw code: address:value (4:2), 1 for : and 1 for ' ' */
-		size += 4 + 2 + 1 + 1;
+		/* raw code: address:value (4:2), 1 for :, 1 for ' ' and
+ 	           1 for 'S' (plus at most 1 for enabled) */
+		size += 4 + 2 + 1 + 1 + 1 + 1;
 		if (cheat->compare >= 0)
-			size += 2 + 1; /* compare value (2) and ':' */
-
-		/* gg code: 6 + 1 */
-		if (cheat->address >= 0x8000) {
-			size += 6 + 1;
-			if (cheat->compare >= 0)
-				size += 2; /* two extra letters for compare */
-		} else {
-			size += 1 + 1; /* '-' plus space */
-		}
-
-		if (cheat->address >= 0x8000 && cheat->compare >= 0) {
-			/* rocky code: 8 + 1 */
-			size += 8 + 1;
-		} else {
-			size += 1 + 1; /* '-' plus space */
-		}
-
-		/* enabled: 1*/
-		size += 1;
+			size += 2 + 1 + 1; /* compare value (2), ':' and 'C' flag*/
 
 		/* description: strlen(desc) + 2 (for line ending) */
 		if (cheat->description) {
@@ -653,22 +612,9 @@ int cheat_save_file(struct emu *emu, const char *filename)
 	remaining = size;
 	p = buffer;
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
-		raw_to_game_genie(cheat->address, cheat->value,
-				 cheat->compare, gg);
-		raw_to_pro_action_rocky(cheat->address, cheat->value,
-					cheat->compare, rocky);
-
-		if (!gg[0]) {
-			gg[0] = '-';
-			gg[1] = '\0';
-		}
-
-		if (!rocky[0]) {
-			rocky[0] = '-';
-			rocky[1] = '\0';
-		}
-
-		rc = snprintf(p, remaining, "%04X:%02X",
+		rc = snprintf(p, remaining, "S%s%s%04X:%02X",
+		              (cheat->compare >= 0 ? "C" : ""),
+		              (cheat->enabled ? "" : ":"),
 			      cheat->address, cheat->value);
 		p += rc;
 		remaining -= rc;
@@ -678,12 +624,6 @@ int cheat_save_file(struct emu *emu, const char *filename)
 			p += rc;
 			remaining -= rc;
 		}
-
-		rc = snprintf(p, remaining, " %s %s %d", gg, rocky,
-			      cheat->enabled ? 1 : 0);
-
-		p += rc;
-		remaining -= rc;
 
 		if (cheat->description) {
 			rc = snprintf(p, remaining, " %s", cheat->description);
@@ -760,7 +700,6 @@ int add_cheat(struct cheat_state *cheats, char *code)
 					  &compare) != 0) {
 			if (parse_pro_action_rocky_code(code, &addr, &value,
 							&compare) != 0) {
-				printf("returning\n");
 				return 1;
 			}
 		}
