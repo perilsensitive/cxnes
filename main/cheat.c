@@ -265,7 +265,7 @@ int parse_raw_code(const char *code, int *a, int *v, int *c)
 	return 0;
 }
 
-void decode_game_genie(const char *string, int *a, int *v, int *c)
+static int decode_game_genie(const char *string, int *a, int *v, int *c)
 {
 	uint8_t code[8];
 	int addr;
@@ -302,6 +302,9 @@ void decode_game_genie(const char *string, int *a, int *v, int *c)
 		j++;
 	}
 
+	if ((j != 6) && (j != 8))
+		return 1;
+
 	addr = ((code[3] & 7) << 12) |
 	    ((code[5] & 7) << 8) |
 	    ((code[4] & 8) << 8) |
@@ -324,6 +327,8 @@ void decode_game_genie(const char *string, int *a, int *v, int *c)
 	*a = addr;
 	*v = value;
 	*c = compare;
+
+	return 0;
 }
 
 int parse_game_genie_code(const char *code, int *a, int *v, int *c)
@@ -349,7 +354,7 @@ int parse_game_genie_code(const char *code, int *a, int *v, int *c)
 	if (code[i])
 		return 1;
 
-	decode_game_genie(code, a, v, c);
+	return decode_game_genie(code, a, v, c);
 	/* printf("parsed raw code\"%s\" to addr=0x%04x value=0x%02x " */
 	/*        "compare=0x%02x\n", code, *a, *v, *c); */
 
