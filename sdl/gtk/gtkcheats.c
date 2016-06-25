@@ -695,7 +695,7 @@ void gui_cheat_dialog(GtkWidget *widget, gpointer user_data)
 	cheat_window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_box_pack_start(GTK_BOX(dialog_box), cheat_window, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(dialog_box), button_box, FALSE, FALSE, 0);
-	gtk_widget_set_size_request(cheat_window, 700, 200);
+	gtk_widget_set_size_request(cheat_window, 800, 200);
 
 	cheat_tree = gtk_tree_view_new();
 	gtk_container_add(GTK_CONTAINER(cheat_window), cheat_tree);
