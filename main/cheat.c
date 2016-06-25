@@ -192,32 +192,68 @@ void insert_cheat(struct cheat_state *cheats, struct cheat *cheat)
 	cheat->next = NULL;
 }
 
-static int parse_fceux_code(const char *code, int *a, int *v, int *c, int *e)
+static int parse_virtuanes_code(const char *code, int *a, int *v, int *c, char **d, int *e)
+{
+	int desc_start;
+	unsigned int a1, v1, c1;
+	int has_compare;
+	int status;
+
+	desc_start = 0;
+	has_compare = 0;
+
+	sscanf(code, "#%d %x-%x-%x %n%*s \n", &status, &a1, &v1, &c1, &desc_start);
+	if (desc_start) {
+		has_compare = 1;
+	} else {
+		sscanf(code, "#%d %x-%x %n%*s \n", &status, &a1, &v1, &desc_start);
+	}
+
+	if (!desc_start)
+		return 1;
+
+	if ((a1 > 0xffff) || (v1 > 0xff) || (has_compare && (c1 > 0xff)))
+		return 1;
+
+	*a = a1;
+	*v = v1;
+	*d = (char *)code + desc_start;
+	if (has_compare)
+		*c = c1;
+
+	switch (status) {
+	case 0: *e = 0; break;
+	case 1: *e = 1; break;
+	case 2: *e = 0; break;
+	case 3: *e = 1; break;
+	default: *e = 0; break;
+	}
+
+	return 0;
+}
+
+static int parse_fceux_code(const char *code, int *a, int *v, int *c, char **d, int *e)
 {
 	char *tmpcode;
 	int enabled;
-	int rc;
+	int has_compare;
+	int desc_start;
+	unsigned int a1, v1, c1;
 
 	errno = 0;
+	has_compare = 0;
 
 	tmpcode = (char *)code;
 
 	/* cxNES doesn't distinguish between "replacement" and "substitution"
-	   cheats, nor does it care about the 'Compare' flag; the code itself
-	   makes it clear that there is a compare value.  Skip up to the first
-	   two characters if they appear to be these flags.  Note that this
-	   allows upper or lower case characters, and supports the flags in
-	   either order.
-	 */
-	if ((tmpcode[0] != 'S') && (tmpcode[0] != 's') &&
-	    (tmpcode[0] != 'C') && (tmpcode[0] != 'c')) {
-		return 1;
-	}
-	tmpcode++;
-
-	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's') ||
-	    (tmpcode[0] == 'C') || (tmpcode[0] == 'c'))
+	   cheats */
+	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's'))
 		tmpcode++;
+
+	if ((tmpcode[0] == 'C') || (tmpcode[0] == 'c')) {
+		has_compare = 1;
+		tmpcode++;
+	}
 
 	/* If a ':' is present, the code is disabled */
 	if (tmpcode[0] == ':') {
@@ -227,12 +263,36 @@ static int parse_fceux_code(const char *code, int *a, int *v, int *c, int *e)
 		enabled = 1;
 	}
 
-	rc = parse_raw_code(tmpcode, a, v, c);
+	if (tmpcode[0] == '+' || tmpcode[0] == '-')
+		return 1;
 
-	if (rc == 0)
-		*e = enabled;
+	desc_start = 0;
+	if (has_compare)
+		sscanf(tmpcode, "%x:%x:%x%n:%*s \n", &a1, &v1, &c1, &desc_start);
+	else
+		sscanf(tmpcode, "%x:%x%n:%*s \n", &a1, &v1, &desc_start);
 
-	return rc;
+	if (!desc_start)
+		return 1;
+
+	if (desc_start) {
+		if (tmpcode[desc_start] == ':')
+			desc_start++;
+		else if (tmpcode[desc_start])
+			return 1;
+	}
+
+	if ((a1 > 0xffff) || (v1 > 0xff) || (has_compare && (c1 > 0xff)))
+		return 1;
+
+	*a = a1;
+	*v = v1;
+	*e = enabled;
+	*d = tmpcode + desc_start;
+	if (has_compare)
+		*c = c1;
+
+	return 0;
 }
 
 int parse_raw_code(const char *code, int *a, int *v, int *c)
@@ -507,39 +567,53 @@ static void cheat_callback(char *line, int num, void *data)
 
 	cheats = data;
 
-	end = 0;
-	description_start = 0;
-	sscanf(line, "#%*s %n%*s%n %n%*s \n",
-	       &start, &end, &description_start);
+	enabled = 0;
 
-	if ((!end || !description_start)) {
+	compare = -1;
+	rc = parse_fceux_code(line, &addr, &value, &compare,
+	       	              &description, &enabled);
+
+	if (rc != 0) {
+		rc = parse_virtuanes_code(line, &addr, &value, &compare,
+					  &description, &enabled);
+	}
+
+	/* Fallback to handle simple "code+description" formats */
+	if (rc != 0) {
 		end = 0;
 		description_start = 0;
 		sscanf(line, " %n%*s%n %n%*s \n",
 		       &start, &end, &description_start);
+
 		if ((!end || !description_start)) {
 			log_err("error parsing line %d\n", num);
 			return;
 		}
+
+		line[end] = '\0';
+
+		code = line + start;
+		description = line + description_start;
+
+		if (code[0] == '+') {
+			enabled = 1;
+			code++;
+		} else if (code[0] == '-') {
+			enabled = 0;
+			code++;
+		} else {
+			enabled = 0;
+		}
+
+		if (rc != 0)
+			rc = parse_raw_code(code, &addr, &value, &compare);
+
+		if (rc != 0)
+			rc = parse_game_genie_code(code, &addr, &value, &compare);
+
+		if (rc != 0)
+			rc = parse_pro_action_rocky_code(code, &addr, &value, &compare);
 	}
-
-	line[end] = '\0';
-
-	code = line + start;
-	description = line + description_start;
-	enabled = 0;
-
-	compare = -1;
-	rc = parse_fceux_code(code, &addr, &value, &compare, &enabled);
-
-	if (rc != 0)
-		rc = parse_raw_code(code, &addr, &value, &compare);
-
-	if (rc != 0)
-		rc = parse_game_genie_code(code, &addr, &value, &compare);
-
-	if (rc != 0)
-		rc = parse_pro_action_rocky_code(code, &addr, &value, &compare);
 
 	if (rc != 0)
 		return;
@@ -602,10 +676,10 @@ int cheat_save_file(struct emu *emu, const char *filename)
 
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
 		/* raw code: address:value (4:2), 1 for :, 1 for ' ' and
- 	           1 for 'S' (plus at most 1 for enabled) */
-		size += 4 + 2 + 1 + 1 + 1 + 1;
+ 	           1 for enabled/disabled */
+		size += 4 + 2 + 1 + 1 + 1;
 		if (cheat->compare >= 0)
-			size += 2 + 1 + 1; /* compare value (2), ':' and 'C' flag*/
+			size += 2 + 1; /* compare value (2), ':' and 'C' flag*/
 
 		/* description: strlen(desc) + 2 (for line ending) */
 		if (cheat->description) {
@@ -625,9 +699,8 @@ int cheat_save_file(struct emu *emu, const char *filename)
 	remaining = size;
 	p = buffer;
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
-		rc = snprintf(p, remaining, "S%s%s%04X:%02X",
-		              (cheat->compare >= 0 ? "C" : ""),
-		              (cheat->enabled ? "" : ":"),
+		rc = snprintf(p, remaining, "%c%04X:%02X",
+		              (cheat->enabled ? '+' : '-'),
 			      cheat->address, cheat->value);
 		p += rc;
 		remaining -= rc;
