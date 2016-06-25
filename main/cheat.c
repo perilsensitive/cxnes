@@ -209,9 +209,11 @@ static int parse_fceux_code(const char *code, int *a, int *v, int *c, int *e)
 	   allows upper or lower case characters, and supports the flags in
 	   either order.
 	 */
-	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's') ||
-	    (tmpcode[0] == 'C') || (tmpcode[0] == 'c'))
-		tmpcode++;
+	if ((tmpcode[0] != 'S') && (tmpcode[0] != 's') &&
+	    (tmpcode[0] != 'C') && (tmpcode[0] != 'c')) {
+		return 1;
+	}
+	tmpcode++;
 
 	if ((tmpcode[0] == 'S') || (tmpcode[0] == 's') ||
 	    (tmpcode[0] == 'C') || (tmpcode[0] == 'c'))
