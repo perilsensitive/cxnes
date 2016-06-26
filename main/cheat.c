@@ -232,6 +232,44 @@ static int parse_virtuanes_code(const char *code, int *a, int *v, int *c, char *
 	return 0;
 }
 
+static int parse_cxnes_code(const char *code, int *a, int *v, int *c, char **d, int *e)
+{
+	int desc_start;
+	unsigned int a1, v1, c1;
+	int has_compare;
+	int status;
+
+	desc_start = 0;
+	has_compare = 0;
+
+	sscanf(code, "%d %x:%x:%x %n%*s \n", &status, &a1, &v1, &c1, &desc_start);
+	if (desc_start) {
+		has_compare = 1;
+	} else {
+		sscanf(code, "%d %x:%x %n%*s \n", &status, &a1, &v1, &desc_start);
+	}
+
+	if (!desc_start)
+		return 1;
+
+	if ((a1 > 0xffff) || (v1 > 0xff) || (has_compare && (c1 > 0xff)))
+		return 1;
+
+	*a = a1;
+	*v = v1;
+	*d = (char *)code + desc_start;
+	if (has_compare)
+		*c = c1;
+
+	switch (status) {
+	case 0: *e = 0; break;
+	case 1: *e = 1; break;
+	default: *e = 0; break;
+	}
+
+	return 0;
+}
+
 static int parse_fceux_code(const char *code, int *a, int *v, int *c, char **d, int *e)
 {
 	char *tmpcode;
@@ -262,9 +300,6 @@ static int parse_fceux_code(const char *code, int *a, int *v, int *c, char **d, 
 	} else {
 		enabled = 1;
 	}
-
-	if (tmpcode[0] == '+' || tmpcode[0] == '-')
-		return 1;
 
 	desc_start = 0;
 	if (has_compare)
@@ -570,8 +605,13 @@ static void cheat_callback(char *line, int num, void *data)
 	enabled = 0;
 
 	compare = -1;
-	rc = parse_fceux_code(line, &addr, &value, &compare,
+	rc = parse_cxnes_code(line, &addr, &value, &compare,
 	       	              &description, &enabled);
+
+	if (rc != 0) {
+		rc = parse_fceux_code(line, &addr, &value, &compare,
+				      &description, &enabled);
+	}
 
 	if (rc != 0) {
 		rc = parse_virtuanes_code(line, &addr, &value, &compare,
@@ -594,16 +634,6 @@ static void cheat_callback(char *line, int num, void *data)
 
 		code = line + start;
 		description = line + description_start;
-
-		if (code[0] == '+') {
-			enabled = 1;
-			code++;
-		} else if (code[0] == '-') {
-			enabled = 0;
-			code++;
-		} else {
-			enabled = 0;
-		}
 
 		if (rc != 0)
 			rc = parse_raw_code(code, &addr, &value, &compare);
@@ -676,10 +706,11 @@ int cheat_save_file(struct emu *emu, const char *filename)
 
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
 		/* raw code: address:value (4:2), 1 for :, 1 for ' ' and
- 	           1 for enabled/disabled */
-		size += 4 + 2 + 1 + 1 + 1;
+	           1 for enabled/disabled and 1 for another ' ' */
+		size += 1 + 1; /* status + separator */
+		size += 4 + 2 + 1 + 1; /* addr:value + separator */
 		if (cheat->compare >= 0)
-			size += 2 + 1; /* compare value (2), ':' and 'C' flag*/
+			size += 2 + 1; /* compare value (2), ':' */
 
 		/* description: strlen(desc) + 2 (for line ending) */
 		if (cheat->description) {
@@ -699,8 +730,8 @@ int cheat_save_file(struct emu *emu, const char *filename)
 	remaining = size;
 	p = buffer;
 	for (cheat = emu->cheats->cheat_list; cheat; cheat = cheat->next) {
-		rc = snprintf(p, remaining, "%c%04X:%02X",
-		              (cheat->enabled ? '+' : '-'),
+		rc = snprintf(p, remaining, "%d %04X:%02X",
+		              (cheat->enabled ? 1 : 0),
 			      cheat->address, cheat->value);
 		p += rc;
 		remaining -= rc;
