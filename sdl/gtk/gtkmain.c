@@ -644,6 +644,11 @@ char *file_dialog(GtkWidget *parent,
 						  suggested_name);
 	}
 
+	if (action == GTK_FILE_CHOOSER_ACTION_SAVE) {
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
+							       TRUE);
+	}
+
 	for (i = 0; shortcuts && shortcuts[i]; i++) {
 		gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(dialog),
 			shortcuts[i], NULL);

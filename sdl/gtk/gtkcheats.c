@@ -272,64 +272,34 @@ static void load_callback(GtkButton *button, gpointer user_data)
 
 static void save_callback(GtkButton *button, gpointer user_data)
 {
-	GtkWindow *parent;
-	GtkWidget *dialog;
-	GtkFileFilter *filter;
-	GFile *cheat_folder;
+	GtkWidget *parent;
 	char *cheat_path;
 	const char *default_cheat_file;
 
+	char *file;
+	char *shortcuts[] = { NULL, NULL };
+	char *filter_patterns[] = { "*.[cC][hH][tT]", NULL };
+
 	default_cheat_file = emu->cheat_file;
 	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT, NULL, 1);
-	cheat_folder = g_file_new_for_path(cheat_path);
-	free(cheat_path);
 
 	create_directory(cheat_path, 1, 0);
 
-	parent = (GtkWindow *)user_data;
+	parent = (GtkWidget *)user_data;
        
-	dialog = gtk_file_chooser_dialog_new("Save Cheat File",
-					     parent,
-					     GTK_FILE_CHOOSER_ACTION_SAVE,
-					     "_Save",
-					     GTK_RESPONSE_ACCEPT,
-					     "_Cancel",
-					     GTK_RESPONSE_CANCEL,
-					     NULL);
+	shortcuts[0] = cheat_path;
+	file = file_dialog(parent, "Save Cheat File",
+			   GTK_FILE_CHOOSER_ACTION_SAVE,
+			   "_Save", cheat_path, default_cheat_file,
+			   "Cheat Files", filter_patterns,
+			   shortcuts);
 
-	gtk_file_chooser_set_current_folder_file(GTK_FILE_CHOOSER(dialog),
-						 cheat_folder,
-						 NULL);
+	free(cheat_path);
 
-	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
-	                                               TRUE);
-
-	if (default_cheat_file) {
-		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog),
-						  default_cheat_file);
+	if (file) {
+		cheat_save_file(emu, file);
+		g_free(file);
 	}
-
-	g_object_unref(cheat_folder);
-
-	gtk_window_set_transient_for(GTK_WINDOW(dialog),
-				     GTK_WINDOW(parent));
-
-	filter = gtk_file_filter_new();
-
-	gtk_file_filter_set_name(filter, "Cheat Files");
-	gtk_file_filter_add_pattern(filter, "*.cht");
-
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		char *file;
-
-		file = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-                cheat_save_file(emu, file);
-                g_free(file);
-        }
-
-	gtk_widget_destroy(dialog);
 }
 
 static void modify_cheat_callback(GtkButton *button, gpointer user_data)
