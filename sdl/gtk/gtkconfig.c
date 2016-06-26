@@ -992,11 +992,11 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	GtkWidget *check;
 	GtkWidget *tmp;
 	GtkWidget *input_frame;
-	GtkWidget *emu_frame;
 	GtkWidget *combo;
 	GtkWidget *label;
 	GtkWidget *grid;
 #if 0
+	GtkWidget *emu_frame;
 	GtkWidget *button;
 	GtkWidget *entry;
 #endif
@@ -1016,18 +1016,25 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
 	gtk_box_pack_start(GTK_BOX(box), grid, FALSE, FALSE, 0);
 
-	if (emu_system_is_vs(emu)) {
-		label = gtk_label_new_with_mnemonic("_Vs. Controller Mode");
-		combo = config_combo_box(dialog, config, "vs_controller_mode");
-		gtk_label_set_mnemonic_widget(GTK_LABEL(label), combo);
-		gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
-		gtk_grid_attach(GTK_GRID(grid), combo, 1, 0, 1, 1);
+	label = gtk_label_new_with_mnemonic("_Vs. Controller Mode");
+	combo = config_combo_box(dialog, config, "vs_controller_mode");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(label), combo);
+	gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), combo, 1, 0, 1, 1);
+
+	if (!emu_system_is_vs(emu)) {
+		gtk_widget_set_sensitive(label, FALSE);
+		gtk_widget_set_sensitive(combo, FALSE);
 	}
 
-	check = config_checkbox(dialog, "_Swap A and B buttons", config,
+	check = config_checkbox(dialog, "_Swap Start and Select buttons", config,
+					     "swap_start_select");
+	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+	check = config_checkbox(dialog, "Swap _A and B buttons", config,
 					     "swap_a_b");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
+#if 0
 	emu_frame = gtk_frame_new(NULL);
 	tmp = gtk_label_new_with_mnemonic(NULL);
 	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Emulator Options</b>");
@@ -1042,7 +1049,6 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
 	gtk_box_pack_start(GTK_BOX(box), grid, FALSE, FALSE, 0);
 
-#if 0
 	label = gtk_label_new_with_mnemonic("_Periodic savestate path (defaults to slot 1):");
 	entry = config_entry(dialog, config, "periodic_savestate_path");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
