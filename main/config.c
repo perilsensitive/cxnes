@@ -156,6 +156,32 @@ static const char *valid_rom_console_type_names[] = {
 	"Dendy",
 };
 
+static const char *valid_rom_overclock_values[] = {
+	"default",
+	"disabled",
+	"post-render",
+	"vblank",
+};
+
+static const char *valid_rom_overclock_names[] = {
+	"Default",
+	"Disabled",
+	"Post-render",
+	"VBlank",
+};
+
+static const char *valid_default_overclock_mode_values[] = {
+	"disabled",
+	"post-render",
+	"vblank",
+};
+
+static const char *valid_default_overclock_mode_names[] = {
+	"Disabled",
+	"Post-render",
+	"VBlank",
+};
+
 static const char *valid_preferred_console_type_values[] = {
 	"auto", "famicom", "famicom_rgb", "nes", "nes_rgb",
 	"pal_nes", "dendy"
@@ -428,6 +454,10 @@ static const char *valid_scaling_modes[] = {
 #define CONFIG_END() { .name = NULL, .type = CONFIG_NONE }
 
 static struct config_parameter rom_config_parameters[] = {
+	CONFIG_STRING_LIST(overclock_mode, "default",
+	                   valid_rom_overclock_values,
+	                   valid_rom_overclock_names),
+	CONFIG_BOOLEAN(remember_overclock_mode, 0),
 	CONFIG_BOOLEAN(remember_input_devices, 0),
 	CONFIG_BOOLEAN(remember_system_type, 0),
 	CONFIG_STRING_LIST(rom_console_type, "preferred",
@@ -580,6 +610,9 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_UNSIGNED_INTEGER(osd_bg_rgba, 0x000064A0, 0, 0xffffffff),
 	CONFIG_INTEGER(osd_delay, 2, 0, 5),
 
+	CONFIG_STRING_LIST(default_overclock_mode, "disabled",
+			   valid_default_overclock_mode_values,
+			   valid_default_overclock_mode_names),
 	CONFIG_INTEGER_LIST(sample_rate, 48000, valid_sample_rates),
 	CONFIG_INTEGER(audio_buffer_size, 2048, 1024, 8192), /* FIXME min? max? */
 	CONFIG_BOOLEAN(dynamic_rate_adjustment_enabled, 1),
@@ -821,7 +854,6 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_STRING(state_path, NULL),
 	CONFIG_BOOLEAN(db_enabled, 1),
 
-	CONFIG_BOOLEAN(overclock_enabled, 0),
 	CONFIG_INTEGER(frames_before_overclock, 360, 0, 600),
 	CONFIG_INTEGER(overclock_scanlines, 262, 0, 1000),
 	CONFIG_INTEGER(overclock_pcm_sample_threshold, 10, 1, 50),
@@ -848,7 +880,10 @@ struct binding_item default_modifiers[] = {
 struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
-	{ .name = "Keyboard F12", .value = "TOGGLE_OVERCLOCK" },
+	{ .name = "Keyboard F12", .value = "OVERCLOCK_POST_RENDER" },
+	{ .name = "[CTRL] Keyboard F12", .value = "OVERCLOCK_DISABLED" },
+	{ .name = "[SHIFT] Keyboard F12", .value = "OVERCLOCK_VBLANK" },
+	{ .name = "[ALT] Keyboard F12", .value = "OVERCLOCK_DEFAULT" },
 	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },
 	{ .name = "Keyboard F6", .value = "DEVICE_SELECT_PORT1" },
 	{ .name = "[CTRL] Keyboard F7", .value = "DEVICE_CONNECT_PORT2" },
@@ -2073,91 +2108,18 @@ int config_load_main_config(struct config *config)
 
 int config_load_rom_config(struct config *config, char *filename)
 {
-	char *name, *path;
-	char *configpath;
-	char *p;
-	int len, tmp;
 	int skip;
 	int rc;
 
-	path = NULL;
-	configpath = NULL;
 	rc = 0;
 	skip = config->skip_romcfg;
 
-	len = strlen(filename) + 1 + 4; /* for .cfg extension */
+	printf("%s ROM config file %s\n",
+	       skip ? "Skipping" : "Loading", filename);
+	if (!skip)
+		rc = config_load_file(config, rom_config_parameters,
+				      filename);
 
-	name = strchr(filename, PATHSEP[0]);
-	if (!name)
-		name = filename;
-
-
-	p = (char *)config->romcfg_path;
-	if (p) 
-		goto done;
-
-	configpath = config_get_path(config, CONFIG_DATA_DIR_CONFIG,
-					 NULL, -1);
-
-	if (!configpath)
-		return 0;
-
-	tmp = strlen(name) + strlen(configpath) + 6;
-
-	if (tmp > len)
-		len = tmp;
-
-	path = malloc(len);
-	if (!path)
-		return -1;
-
-	/* Try /foo/bar/romname.cfg */
-	strncpy(path, filename, len);
-	p = strrchr(path, '.');
-	if (!p)
-		p = path + strlen(path);
-	strncpy(p, ".cfg", 5);
-
-	if (check_file_exists(path))
-		goto done;
-
-	/* Try /foo/bar/romname.nes.cfg */
-	snprintf(path, len, "%s.cfg", filename);
-	if (check_file_exists(path))
-		goto done;
-
-	/* Try ~/.cxnes/romcfg/romname.cfg */
-	snprintf(path, len, "%s" PATHSEP "%s", configpath, name);
-	p = strrchr(path, '.');
-	if (!p)
-		p = path + strlen(path);
-	strncpy(p, ".cfg", 5);
-	if (check_file_exists(path))
-		goto done;
-
-	/* Try ~/.cxnes/romcfg/romname.nes.cfg */
-	snprintf(path, len, "%s" PATHSEP "%s.cfg", configpath, name);
-	if (check_file_exists(path))
-		goto done;
-
-	free(configpath);
-	free(path);
-	return 0;
-
-done:
-
-	if (path) {
-		printf("%s ROM config file %s\n",
-		       skip ? "Skipping" : "Loading", path);
-		if (!skip)
-			rc = config_load_file(config, rom_config_parameters,
-					      path);
-
-		free(path);
-	}
-
-	if (configpath)
-		free(configpath);
 	return rc;
 }
 

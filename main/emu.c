@@ -176,7 +176,7 @@ extern void gui_enable_event_timer(void);
 #endif
 
 void emu_deinit(struct emu *emu);
-static char *emu_generate_rom_config_path(struct emu *emu, int save);
+char *emu_generate_rom_config_path(struct emu *emu, int save);
 static int emu_set_rom_file(struct emu *emu, const char *rom_file);
 static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 			       int patch_count, char **patchfiles);
@@ -388,6 +388,35 @@ int emu_set_framerate(struct emu *emu, int framerate)
 	}
 
 	return 0;
+}
+
+void emu_set_remember_overclock_mode(struct emu *emu, int enabled)
+{
+	struct config *config;
+	const char *mode;
+
+	config = emu->config;
+
+	if (enabled == config->remember_overclock_mode)
+		return;
+
+	if (enabled) {
+		mode = cpu_get_overclock(emu->cpu);
+		rom_config_set(config, "overclock_mode", mode);
+	} else {
+		rom_config_set(config, "overclock_mode", "default");
+	}
+
+	config->remember_overclock_mode = enabled;
+
+	if (emu->loaded) {
+		char *path;
+		path = emu_generate_rom_config_path(emu, 1);
+		if (path) {
+			config_save_rom_config(emu->config, path);
+			free(path);
+		}
+	}
 }
 
 void emu_set_remember_system_type(struct emu *emu, int enabled)
@@ -1142,7 +1171,7 @@ int emu_system_is_vs(struct emu *emu)
 	return 0;
 }
 
-static char *emu_generate_rom_config_path(struct emu *emu, int save)
+char *emu_generate_rom_config_path(struct emu *emu, int save)
 {
 	char *romdir_cfg_file, *default_cfg_file, *buffer;
 	int len;

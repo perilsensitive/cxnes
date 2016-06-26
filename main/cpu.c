@@ -50,9 +50,9 @@ enum {
 };
 
 enum frame_state_values {
-	FRAME_STATE_VISIBLE,
+	FRAME_STATE_PRE_OVERCLOCK,
 	FRAME_STATE_OVERCLOCK,
-	FRAME_STATE_POSTRENDER,
+	FRAME_STATE_POST_OVERCLOCK,
 };
 
 struct cpu_state {
@@ -88,9 +88,11 @@ struct cpu_state {
 	uint32_t frame_cycles;
 	uint32_t actual_frame_cycles;
 	uint32_t visible_cycles;
+	uint32_t pre_overclock_cycles;
 	uint32_t overclock_cycles;
 	int do_overclock;
-	int overclock_enabled;
+	int selected_overclock_mode;
+	int overclock_mode;
 	enum frame_state_values frame_state;
 	int frames_before_overclock;
 	int type;
@@ -962,9 +964,9 @@ static inline void calculate_step_cycles(struct cpu_state *cpu)
 			next_time = cpu->board_run_timestamp;
 	}
 
-	if (cpu->frame_state == FRAME_STATE_VISIBLE) {
-		if (cpu->visible_cycles < next_time) {
-			next_time = cpu->visible_cycles;
+	if (cpu->frame_state == FRAME_STATE_PRE_OVERCLOCK) {
+		if (cpu->pre_overclock_cycles < next_time) {
+			next_time = cpu->pre_overclock_cycles;
 		}
 	}
 
@@ -1256,6 +1258,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	struct emu *emu;
 
 	emu = cpu->emu;
+	cpu->selected_overclock_mode = -1;
+	cpu->overclock_mode = -1;
+	cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
 
 	if (hard) {
 		cpu->A = 0;
@@ -1278,7 +1283,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		       sizeof(cpu->interrupt_times));
 	}
 
-	cpu->frame_state = FRAME_STATE_VISIBLE;
+	cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
 	cpu->frames_before_overclock =
 		emu->config->frames_before_overclock;
 
@@ -1307,6 +1312,10 @@ void cpu_set_trace(struct cpu_state *cpu, int enabled)
 int cpu_apply_config(struct cpu_state *cpu)
 {
 	cpu->debug = cpu->emu->config->cpu_trace_enabled;
+	if (cpu->emu->loaded &&
+	    (cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT)) {
+		cpu_set_overclock(cpu, "default", 0);
+	}
 
 	return 0;
 }
@@ -1399,6 +1408,7 @@ void cpu_set_type(struct cpu_state *cpu, int type)
 	cpu->frame_cycles = 0;
 	cpu->visible_cycles = 0;
 	cpu->overclock_cycles = 0;
+	cpu->pre_overclock_cycles = 0;
 	cpu->type = type;
 	cpu->emu->cpu_clock_divider = cpu->cpu_clock_divider;
 }
@@ -1420,7 +1430,6 @@ int cpu_init(struct emu *emu)
 	emu->cpu = cpu;
 	cpu->emu = emu;
 	cpu->type = -1;
-	cpu->overclock_enabled = cpu->emu->config->overclock_enabled;
 
 	for (addr = 0; addr < CPU_MEM_SIZE; addr++) {
 		cpu->read_handlers[addr] = NULL;
@@ -1443,6 +1452,12 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
 		cpu->frame_cycles = frame_cycles;
 		cpu->actual_frame_cycles = frame_cycles;
 		cpu->visible_cycles = visible_cycles;
+		if (cpu->overclock_mode != OVERCLOCK_MODE_VBLANK) {
+			cpu->pre_overclock_cycles = visible_cycles;
+		} else {
+			cpu->pre_overclock_cycles = frame_cycles -
+			    (341 * cpu->emu->ppu_clock_divider);
+		}
 		calculate_step_cycles(cpu);
 	}
 }
@@ -2268,32 +2283,40 @@ uint32_t cpu_run(struct cpu_state *cpu)
 		}
 
 		switch(cpu->frame_state) {
-		case FRAME_STATE_VISIBLE:
-			if (cpu->cycles >= cpu->visible_cycles) {
-				if (!cpu->frames_before_overclock && cpu->do_overclock) {
+		case FRAME_STATE_PRE_OVERCLOCK:
+			if (cpu->cycles >= cpu->pre_overclock_cycles) {
+				if (!cpu->frames_before_overclock &&
+				    (cpu->overclock_mode != OVERCLOCK_MODE_NONE)) {
 					cpu->overclock_cycles = cpu->emu->config->overclock_scanlines;
 					cpu->overclock_cycles *= 341 * cpu->emu->ppu_clock_divider;
 					cpu->backup_cycles = cpu->cycles;
 					cpu->frame_state = FRAME_STATE_OVERCLOCK;
 					emu_overclock(cpu->emu, cpu->backup_cycles, 1);
-					cpu->frame_cycles = cpu->visible_cycles + cpu->overclock_cycles;
+					if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER) {
+						cpu->frame_cycles = cpu->pre_overclock_cycles +
+						                    cpu->overclock_cycles;
+					} else {
+						cpu->frame_cycles = cpu->pre_overclock_cycles +
+						                    cpu->overclock_cycles -
+						                    (341 * cpu->emu->ppu_clock_divider);
+					}
 				} else {
-					cpu->frame_state = FRAME_STATE_POSTRENDER;
+					cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
 				}
 
 				calculate_step_cycles(cpu);
 			}
 			break;
 		case FRAME_STATE_OVERCLOCK:
-			if (cpu->cycles >= cpu->visible_cycles + cpu->overclock_cycles) {
-				cpu->frame_state = FRAME_STATE_POSTRENDER;
+			if (cpu->cycles >= cpu->frame_cycles) {
+				cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
 				cpu->cycles = cpu->backup_cycles;
 				cpu->frame_cycles = cpu->actual_frame_cycles;
 				emu_overclock(cpu->emu, cpu->cycles, 0);
 			}
 			calculate_step_cycles(cpu);
 			break;
-		case FRAME_STATE_POSTRENDER:
+		case FRAME_STATE_POST_OVERCLOCK:
 			break;
 		}
 
@@ -2314,10 +2337,10 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 {
 	int i;
 
-	cpu->frame_state = FRAME_STATE_VISIBLE;
+	cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
 	if (cpu->frames_before_overclock)
 		cpu->frames_before_overclock--;
-	cpu->do_overclock = cpu->overclock_enabled;
+	cpu->do_overclock = (cpu->overclock_mode != OVERCLOCK_MODE_NONE);
 	update_interrupt_status(cpu);
 	for (i = 0; i < IRQ_MAX + 1; i++) {
 		if (cpu->interrupt_times[i] != ~0) {
@@ -2525,25 +2548,100 @@ int cpu_is_opcode_fetch(struct cpu_state *cpu)
 
 void cpu_disable_overclock_for_frame(struct cpu_state *cpu)
 {
-	if (cpu->frame_state == FRAME_STATE_VISIBLE)
+	if (cpu->frame_state == FRAME_STATE_PRE_OVERCLOCK)
 		cpu->do_overclock = 0;
 }
 
-int cpu_get_overclock(struct cpu_state *cpu)
+const char *cpu_get_overclock(struct cpu_state *cpu)
 {
-	return cpu->overclock_enabled;
+	const char *name;
+
+	switch(cpu->selected_overclock_mode) {
+	case OVERCLOCK_MODE_DEFAULT:
+		name = "default";
+		break;
+	case OVERCLOCK_MODE_NONE:
+		name = "disabled";
+		break;
+	case OVERCLOCK_MODE_POST_RENDER:
+		name = "post-render";
+		break;
+	case OVERCLOCK_MODE_VBLANK:
+		name = "vblank";
+		break;
+	}
+
+	return name;
 }
 
-void cpu_set_overclock(struct cpu_state *cpu, int enabled, int display)
+void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 {
-	if (enabled < 0)
-		enabled = !cpu->overclock_enabled;
+	struct emu *emu;
+	int oc_mode;
+	char *mode_string;
 
-	if (cpu->overclock_enabled == enabled)
+	emu = cpu->emu;
+
+	if (mode == NULL)
+		oc_mode = (cpu->selected_overclock_mode + 1) % OVERCLOCK_NUM_MODES;
+	else if (strcasecmp(mode, "default") == 0)
+		oc_mode = OVERCLOCK_MODE_DEFAULT;
+	else if (strcasecmp(mode, "disabled") == 0)
+		oc_mode = OVERCLOCK_MODE_NONE;
+	else if (strcasecmp(mode, "post-render") == 0)
+		oc_mode = OVERCLOCK_MODE_POST_RENDER;
+	else if (strcasecmp(mode, "vblank") == 0)
+		oc_mode = OVERCLOCK_MODE_VBLANK;
+	else
 		return;
 
-	cpu->overclock_enabled = enabled;
+	cpu->selected_overclock_mode = oc_mode;
+
+	if (oc_mode == OVERCLOCK_MODE_DEFAULT) {
+		const char *default_mode = emu->config->default_overclock_mode;
+		if (strcasecmp(default_mode, "disabled") == 0)
+			oc_mode = OVERCLOCK_MODE_NONE;
+		else if (strcasecmp(default_mode, "post-render") == 0)
+			oc_mode = OVERCLOCK_MODE_POST_RENDER;
+		else if (strcasecmp(default_mode, "vblank") == 0)
+			oc_mode = OVERCLOCK_MODE_VBLANK;
+	}
+
+	cpu->overclock_mode = oc_mode;
+
 	if (display) {
-		osdprintf("Overclocking %s\n", enabled ? "enabled" : "disabled");
+		switch (oc_mode) {
+		case OVERCLOCK_MODE_NONE:
+			mode_string = "Disabled";
+			break;
+		case OVERCLOCK_MODE_POST_RENDER:
+			mode_string = "Post-render";
+			break;
+		case OVERCLOCK_MODE_VBLANK:
+			mode_string = "VBlank";
+			break;
+		}
+
+		if (cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT) {
+			osdprintf("Overclock mode: Default [%s]\n", mode_string);
+		} else {
+			osdprintf("Overclock mode: %s\n", mode_string);
+		}
+	}
+
+	if ((cpu->selected_overclock_mode == oc_mode) ||
+	    ((cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT) &&
+	    (cpu->overclock_mode == oc_mode))) {
+		return;
+	}
+
+	if (emu->config->remember_overclock_mode && emu->loaded) {
+		char *path;
+		rom_config_set(emu->config, "overclock_mode", mode);
+		path = emu_generate_rom_config_path(emu, 1);
+		if (path) {
+			config_save_rom_config(emu->config, path);
+			free(path);
+		}
 	}
 }

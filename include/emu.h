@@ -197,9 +197,11 @@ void emu_save_rom_config(struct emu *emu);
 int emu_set_framerate(struct emu *emu, int framerate);
 
 void emu_set_remember_system_type(struct emu *emu, int enabled);
+void emu_set_remember_overclock_mode(struct emu *emu, int enabled);
 
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);
 void emu_overclock(struct emu *emu, uint32_t cycles, int enabled);
+char *emu_generate_rom_config_path(struct emu *emu, int save);
 
 #endif				/* __EMU_H__ */

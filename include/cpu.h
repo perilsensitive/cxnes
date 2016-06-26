@@ -53,6 +53,14 @@
 #define CPU_WRITE_HANDLER(_handler) void _handler(struct emu *emu, int addr, uint8_t value, uint32_t cycles)
 #define CPU_READ_HANDLER(_handler) uint8_t _handler(struct emu *emu, int addr, uint8_t value, uint32_t cycles)
 
+enum overclock_mode {
+	OVERCLOCK_MODE_DEFAULT,
+	OVERCLOCK_MODE_NONE,
+	OVERCLOCK_MODE_POST_RENDER,
+	OVERCLOCK_MODE_VBLANK,
+	OVERCLOCK_NUM_MODES
+};
+
 typedef void (cpu_write_handler_t) (struct emu *, int, uint8_t, uint32_t);
 typedef uint8_t(cpu_read_handler_t) (struct emu *, int, uint8_t, uint32_t);
 
@@ -108,6 +116,6 @@ uint8_t cpu_get_accumulator(struct cpu_state *cpu);
 void cpu_set_accumulator(struct cpu_state *cpu, uint8_t value);
 void cpu_set_x_register(struct cpu_state *cpu, uint8_t value);
 void cpu_disable_overclock_for_frame(struct cpu_state *cpu);
-void cpu_set_overclock(struct cpu_state *cpu, int enabled, int display);
-int cpu_get_overclock(struct cpu_state *cpu);
+void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display);
+const char *cpu_get_overclock(struct cpu_state *cpu);
 #endif				/* __CPU_H__ */

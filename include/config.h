@@ -61,6 +61,7 @@ struct config {
 	const char *sprite_limit_mode;
 	int remember_system_type;
 	int remember_input_devices;
+	int remember_overclock_mode;
 
 	int fps_display_enabled;
 	int scanline_renderer_enabled;
@@ -211,7 +212,8 @@ struct config {
 	const char *preferred_console_type;
 	const char *rom_console_type;
 	const char *rom_vs_ppu_type;
-	int overclock_enabled;
+	const char *overclock_mode;
+	const char *default_overclock_mode;
 	int frames_before_overclock;
 	int overclock_scanlines;
 	int overclock_pcm_sample_threshold;

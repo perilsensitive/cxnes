@@ -870,9 +870,12 @@ static void configuration_setup_overclocking(GtkWidget *dialog, struct config *c
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
 	gtk_box_pack_start(GTK_BOX(dialog_box), box, FALSE, FALSE, 8);
 
-	tmp = config_checkbox(dialog, "_Enable overclocking by default", config,
-					     "overclock_enabled");
-	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 8);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	label = gtk_label_new_with_mnemonic("Default _overclock mode:");
+	tmp = config_combo_box(dialog, config, "default_overclock_mode");
+	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	label = gtk_label_new_with_mnemonic("Extra _scanlines to emulate:");

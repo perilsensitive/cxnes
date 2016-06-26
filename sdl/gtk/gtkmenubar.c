@@ -36,6 +36,8 @@ extern int running;
 extern int fullscreen;
 extern struct emu *emu;
 
+static void remember_overclock_mode_callback(GtkRadioMenuItem *widget,
+					     gpointer user_data);
 static void remember_input_devices_callback(GtkRadioMenuItem *widget,
 					    gpointer user_data);
 static void input_port_connect_callback(GtkWidget *widget, gpointer user_data);
@@ -68,9 +70,9 @@ static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 	video_toggle_fullscreen(-1);
 }
 
-static void emulator_overclock_callback(GtkWidget *widget, gpointer userdata)
+static void overclock_mode_callback(GtkWidget *widget, gpointer userdata)
 {
-	cpu_set_overclock(emu->cpu, -1, 1);
+	cpu_set_overclock(emu->cpu, (const char *)userdata, 0);
 }
 
 static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
@@ -90,32 +92,6 @@ static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
 
 	g_signal_handlers_unblock_by_func(G_OBJECT(item),
 					G_CALLBACK(emulator_fullscreen_callback),
-					NULL);
-}
-
-static void update_overclock_toggle(GtkWidget *widget, gpointer user_data)
-{
-	int is_overclocked;
-	GtkWidget *item;
-
-	item = user_data;
-
-	if (!emu_loaded(emu)) {
-		is_overclocked = 0;
-		gtk_widget_set_sensitive(item, FALSE);
-	} else {
-		is_overclocked = cpu_get_overclock(emu->cpu);
-		gtk_widget_set_sensitive(item, TRUE);
-	}
-
-	g_signal_handlers_block_by_func(G_OBJECT(item),
-					G_CALLBACK(emulator_overclock_callback),
-					NULL);
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), is_overclocked);
-
-	g_signal_handlers_unblock_by_func(G_OBJECT(item),
-					G_CALLBACK(emulator_overclock_callback),
 					NULL);
 }
 
@@ -609,6 +585,69 @@ static void fourplayer_mode_callback(GtkRadioMenuItem *widget,
 	io_set_four_player_mode(emu->io, mode, 0);
 }
 
+static void overclock_menu_show_callback(GtkWidget *widget, gpointer user_data)
+{
+	GtkRadioMenuItem *item;
+	GSList *group;
+	char buffer[80];
+	const char *mode;
+
+	group = user_data;
+
+	if (!group)
+		return;
+
+	while (group) {
+		item = group->data;
+		group = group->next;
+
+		mode = g_object_get_data(G_OBJECT(item), "mode");
+		if (strcasecmp(mode, "default") == 0) {
+			const char *name;
+			const char *default_mode = emu->config->default_overclock_mode;
+
+			if (strcasecmp(default_mode, "disabled") == 0)
+				name = "Disabled";
+			else if (strcasecmp(default_mode, "post-render") == 0)
+				name = "Post-render";
+			else if (strcasecmp(default_mode, "vblank") == 0)
+				name = "VBlank";
+			else
+				return;
+
+			snprintf(buffer, sizeof(buffer), "_Default [%s]", name);
+			gtk_menu_item_set_label(GTK_MENU_ITEM(item), buffer);
+		}
+
+		if (strcasecmp(mode, cpu_get_overclock(emu->cpu)))
+			continue;
+
+		g_signal_handlers_block_by_func(G_OBJECT(item),
+						G_CALLBACK(overclock_mode_callback),
+						NULL);
+
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
+
+		g_signal_handlers_unblock_by_func(G_OBJECT(item),
+						  G_CALLBACK(overclock_mode_callback),
+						  NULL);
+	}
+
+	item = g_object_get_data(G_OBJECT(widget), "remember");
+
+
+	g_signal_handlers_block_by_func(G_OBJECT(item),
+					G_CALLBACK(remember_overclock_mode_callback),
+					NULL);
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item),
+				       emu->config->remember_overclock_mode);
+
+	g_signal_handlers_unblock_by_func(G_OBJECT(item),
+					  G_CALLBACK(remember_overclock_mode_callback),
+					  NULL);
+}
+
 static void port_menu_show_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkRadioMenuItem *item;
@@ -1005,6 +1044,18 @@ static GtkWidget *gui_build_file_menu(void)
 
 /* Emulator Menu */
 
+static void remember_overclock_mode_callback(GtkRadioMenuItem *widget,
+					     gpointer user_data)
+{
+	int active;
+
+	active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
+
+	if (active != emu->config->remember_overclock_mode) {
+		emu_set_remember_overclock_mode(emu, active);
+	}
+}
+
 static void remember_system_type_callback(GtkRadioMenuItem *widget,
 					  gpointer user_data)
 {
@@ -1144,6 +1195,59 @@ static void system_type_menu_show_callback(GtkWidget *menu, gpointer user_data)
 		snprintf(buffer, sizeof(buffer), "Auto [%s]", label);
 		gtk_menu_item_set_label(GTK_MENU_ITEM(auto_item), buffer);
 	}
+}
+
+static GtkWidget *gui_build_overclock_mode_menu(void)
+{
+	GtkWidget *menu,*item;
+	GSList *group;
+
+	menu = gtk_menu_new();
+
+	group = NULL;
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_Default");
+	g_object_set_data(G_OBJECT(item), "mode", "default");
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(overclock_mode_callback),
+			 "default");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "Di_sabled");
+	g_object_set_data(G_OBJECT(item), "mode", "disabled");
+	g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(overclock_mode_callback),
+			 "disabled");
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_Post-Render");
+	g_object_set_data(G_OBJECT(item), "mode", "post-render");
+	g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(overclock_mode_callback),
+			 "post-render");
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	item = gtk_radio_menu_item_new_with_mnemonic(group, "_VBlank");
+	g_object_set_data(G_OBJECT(item), "mode", "vblank");
+	g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(overclock_mode_callback),
+			 "vblank");
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
+	item = gtk_check_menu_item_new_with_mnemonic("_Remember Overclock Mode");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_object_set_data(G_OBJECT(menu), "remember", item);
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(remember_overclock_mode_callback), NULL);
+
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(overclock_menu_show_callback),
+			 group);
+
+	return menu;
 }
 
 static GtkWidget *gui_build_system_type_menu(int value)
@@ -1458,12 +1562,11 @@ static GtkWidget *gui_build_emulator_menu(void)
 	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
 			  NULL, is_sensitive_if_fds);
 
-	item = gtk_check_menu_item_new_with_mnemonic("_Overclock CPU");
+	item = gui_add_menu_item(menu, "_Overclock Mode", NULL, NULL,
+	                         is_sensitive_if_loaded);
+	submenu = gui_build_overclock_mode_menu();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(emulator_overclock_callback), NULL);
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(update_overclock_toggle), item);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());

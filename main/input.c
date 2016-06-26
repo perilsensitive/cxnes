@@ -92,7 +92,10 @@ struct emu_action *input_insert_emu_action(uint32_t emu_action);
 }
 
 struct emu_action_id_map emu_action_id_map[] = {
-	EMU_ACTION_ID_MAP(TOGGLE_OVERCLOCK, EMULATOR, "Overclock Toggle"),
+	EMU_ACTION_ID_MAP(OVERCLOCK_DEFAULT, EMULATOR, "Overclock Mode (Default)"),
+	EMU_ACTION_ID_MAP(OVERCLOCK_DISABLED, EMULATOR, "Overclock Mode (Disabled)"),
+	EMU_ACTION_ID_MAP(OVERCLOCK_POST_RENDER, EMULATOR, "Overclock (Post-render)"),
+	EMU_ACTION_ID_MAP(OVERCLOCK_VBLANK, EMULATOR, "Overclock (VBlank)"),
 	EMU_ACTION_ID_MAP(ALT_SPEED, EMULATOR, "Alternate Speed"),
 	EMU_ACTION_ID_MAP(TOGGLE_CPU_TRACE, EMULATOR, "CPU Trace Toggle"),
 	EMU_ACTION_ID_MAP(SWITCH_FOUR_PLAYER_MODE, MISC, "Four-Player Mode Switch"),
@@ -1300,9 +1303,21 @@ static int misc_buttons(void *data, uint32_t pressed, uint32_t button)
 	int state_index;
 
 	switch (button) {
-	case ACTION_TOGGLE_OVERCLOCK:
+	case ACTION_OVERCLOCK_DEFAULT:
 		if (pressed)
-			cpu_set_overclock(emu->cpu, -1, 1);
+			cpu_set_overclock(emu->cpu, "default", 1);
+		break;
+	case ACTION_OVERCLOCK_DISABLED:
+		if (pressed)
+			cpu_set_overclock(emu->cpu, "disabled", 1);
+		break;
+	case ACTION_OVERCLOCK_POST_RENDER:
+		if (pressed)
+			cpu_set_overclock(emu->cpu, "post-render", 1);
+		break;
+	case ACTION_OVERCLOCK_VBLANK:
+		if (pressed)
+			cpu_set_overclock(emu->cpu, "vblank", 1);
 		break;
 	case ACTION_ALT_SPEED:
 		if (pressed)
@@ -1536,7 +1551,10 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 }
 
 static struct input_event_handler misc_handlers[] = {
-	{ ACTION_TOGGLE_OVERCLOCK, misc_buttons },
+	{ ACTION_OVERCLOCK_DEFAULT, misc_buttons },
+	{ ACTION_OVERCLOCK_DISABLED, misc_buttons },
+	{ ACTION_OVERCLOCK_POST_RENDER, misc_buttons },
+	{ ACTION_OVERCLOCK_VBLANK, misc_buttons },
 	{ ACTION_ALT_SPEED, misc_buttons },
 	{ ACTION_STATE_LOAD_NEWEST, misc_buttons },
 	{ ACTION_STATE_LOAD_0, misc_buttons },
