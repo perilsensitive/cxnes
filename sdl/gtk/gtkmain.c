@@ -592,10 +592,10 @@ char *file_dialog(GtkWidget *parent,
 	dialog = gtk_file_chooser_dialog_new(title,
 					     GTK_WINDOW(parent),
 					     action,
-					     "_Cancel",
-					     GTK_RESPONSE_CANCEL,
 					     ok_text,
 					     GTK_RESPONSE_ACCEPT,
+					     "_Cancel",
+					     GTK_RESPONSE_CANCEL,
 					     NULL);
 
 	if (filter_name && filter_patterns &&

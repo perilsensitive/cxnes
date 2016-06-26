@@ -291,15 +291,18 @@ static void save_callback(GtkButton *button, gpointer user_data)
 	dialog = gtk_file_chooser_dialog_new("Save Cheat File",
 					     parent,
 					     GTK_FILE_CHOOSER_ACTION_SAVE,
+					     "_Save",
+					     GTK_RESPONSE_ACCEPT,
 					     "_Cancel",
 					     GTK_RESPONSE_CANCEL,
-					     "_Open",
-					     GTK_RESPONSE_ACCEPT,
 					     NULL);
 
 	gtk_file_chooser_set_current_folder_file(GTK_FILE_CHOOSER(dialog),
 						 cheat_folder,
 						 NULL);
+
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
+	                                               TRUE);
 
 	if (default_cheat_file) {
 		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog),

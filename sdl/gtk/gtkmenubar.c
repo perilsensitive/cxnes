@@ -978,7 +978,7 @@ static GtkWidget *gui_build_file_menu(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 			      gtk_separator_menu_item_new());
 
-	gui_add_menu_item(menu, "Apply _Patch", apply_patch_callback, NULL,
+	gui_add_menu_item(menu, "Apply _Patch...", apply_patch_callback, NULL,
 			  is_sensitive_if_loaded);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
