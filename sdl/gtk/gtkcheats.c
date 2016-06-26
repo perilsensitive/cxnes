@@ -242,7 +242,8 @@ static void load_callback(GtkButton *button, gpointer user_data)
 
 	char *file;
 	char *shortcuts[] = { NULL, NULL };
-	char *filter_patterns[] = { "*.[cC][hH][tT]", NULL };
+	char *filter_patterns[] = { "*.[cC][hH][tT]", "*.[vV][cC][tT]",
+	                            "*.[gG][eE][nN]", NULL };
 
 	store = (GtkTreeStore *)user_data;
 	parent = g_object_get_data(G_OBJECT(button), "parent");
