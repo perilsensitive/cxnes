@@ -224,6 +224,7 @@ struct config {
 	int turbo_speed;
 	int scanline_intensity;
 	int scanlines_enabled;
+	int swap_ppu_emphasis;
 
 	int gamecontroller;
 };

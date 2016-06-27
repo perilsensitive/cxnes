@@ -998,8 +998,8 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	GtkWidget *combo;
 	GtkWidget *label;
 	GtkWidget *grid;
-#if 0
 	GtkWidget *emu_frame;
+#if 0
 	GtkWidget *button;
 	GtkWidget *entry;
 #endif
@@ -1037,7 +1037,6 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 					     "swap_a_b");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
-#if 0
 	emu_frame = gtk_frame_new(NULL);
 	tmp = gtk_label_new_with_mnemonic(NULL);
 	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Emulator Options</b>");
@@ -1047,6 +1046,15 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_container_add(GTK_CONTAINER(emu_frame), box);
 	gtk_box_pack_start(GTK_BOX(dialog_box), emu_frame, FALSE, FALSE, 16);
 
+	check = config_checkbox(dialog, "_Swap pulse channel duty cycles", config,
+					     "swap_start_select");
+	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+
+	check = config_checkbox(dialog, "Swap red/green _PPU color emphasis bits", config,
+					     "swap_ppu_emphasis");
+	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+
+#if 0
 	grid = gtk_grid_new();
 	gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
