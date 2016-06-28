@@ -546,6 +546,10 @@ static void process_field(struct db_parser_state *state)
 		parse_boolean_list(value, boolean_list, 1);
 		if (boolean_list[0])
 			state->current->flags |= ROM_FLAG_PLAYCHOICE;
+	} else if (!strcasecmp(key, "dual-pal-ntsc")) {
+		parse_boolean_list(value, boolean_list, 1);
+		if (boolean_list[0])
+			state->current->flags |= ROM_FLAG_PAL_NTSC;
 	} else if (!strcasecmp(key, "system")) {
 		state->current->system_type = parse_system_type(value);
 	} else if (!strcasecmp(key, "board")) {
