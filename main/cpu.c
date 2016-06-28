@@ -1258,9 +1258,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	struct emu *emu;
 
 	emu = cpu->emu;
-	cpu->selected_overclock_mode = -1;
-	cpu->overclock_mode = -1;
-	cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
+
+	if (cpu->selected_overclock_mode < 0)
+		cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
 
 	if (hard) {
 		cpu->A = 0;
@@ -1434,6 +1434,9 @@ int cpu_init(struct emu *emu)
 		cpu->read_handlers[addr] = NULL;
 		cpu->write_handlers[addr] = NULL;
 	}
+
+	cpu->selected_overclock_mode = -1;
+	cpu->overclock_mode = -1;
 
 	return 1;
 }
