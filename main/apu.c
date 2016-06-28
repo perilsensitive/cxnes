@@ -1033,6 +1033,8 @@ void apu_cleanup(struct apu_state *apu)
 void apu_reset(struct apu_state *apu, int hard)
 {
 	apu->pcm_write_count = 0;
+	apu->odd_cycle = 0;
+	apu->last_time = 0;
 
 	if (!hard) {
 		apu->dmc_irq_flag = 0;
@@ -1049,6 +1051,7 @@ void apu_reset(struct apu_state *apu, int hard)
 		 */
 		apu->dmc.empty = 1;
 		apu->dmc.silent = 1;
+		apu->dmc.shift_bits = 8;
 		apu->dmc.next_clock = 0;
 
 		/* not sure about these either */
@@ -1082,10 +1085,7 @@ void apu_reset(struct apu_state *apu, int hard)
 	memset(&apu->noise, 0, sizeof(apu->noise));
 	memset(&apu->dmc, 0, sizeof(apu->dmc));
 
-	apu->odd_cycle = 0;
-
 	apu->next_frame_step = 0;
-	apu->last_time = 0;
 	apu->next_frame_irq = 0;
 	apu->dmc_irq_flag = 0;
 	apu->last_amplitude = 0;
@@ -1095,6 +1095,11 @@ void apu_reset(struct apu_state *apu, int hard)
 	apu->dmc.bytes_remaining = 0;
 	apu->dmc.loop = 0;
 	apu->dmc.irq = 0;
+	apu->dmc.period = apu->dmc_rate_table[0];
+	apu->dmc.empty = 1;
+	apu->dmc.silent = 1;
+	apu->dmc.shift_bits = 8;
+	apu->dmc.dma_timestamp = ~0;
 
 	apu->pulse[0].sweep.parent_period = &apu->pulse[0].period;
 	apu->pulse[1].sweep.parent_period = &apu->pulse[1].period;
@@ -1110,12 +1115,6 @@ void apu_reset(struct apu_state *apu, int hard)
 	apu->pulse[1].sweep.period = 1;
 	apu->pulse[0].sweep.delay = 1;
 	apu->pulse[1].sweep.delay = 1;
-	apu->dmc.period = apu->dmc_rate_table[0];
-	apu->dmc.empty = 1;
-	apu->dmc.silent = 1;
-	apu->dmc.shift_bits = 8;
-	apu->dmc_irq_flag = 0;
-	apu->dmc.dma_timestamp = ~0;
 
 	apu->frame_counter_step = 0;
 	apu->frame_irq_flag = 0;
