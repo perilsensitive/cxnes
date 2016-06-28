@@ -125,6 +125,7 @@ static struct state_item cpu_state_items[] = {
 	STATE_16BIT(cpu_state, oam_dma_step),
 	STATE_32BIT(cpu_state, frame_cycles),
 	STATE_16BIT(cpu_state, oam_dma_addr),
+	STATE_16BIT(cpu_state, frames_before_overclock),
 	STATE_ITEM_END(),
 };
 
@@ -1284,8 +1285,12 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	}
 
 	cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
-	cpu->frames_before_overclock =
-		emu->config->frames_before_overclock;
+	if (emu->rom->info.flags & ROM_FLAG_PAL_NTSC) {
+		cpu->frames_before_overclock =
+			emu->config->frames_before_overclock;
+	} else {
+		cpu->frames_before_overclock = 0;
+	}
 
 	for (i = 0; i <= IRQ_MAX; i++) {
 		if (cpu->interrupt_times[i] != ~0)
