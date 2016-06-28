@@ -607,6 +607,11 @@ int ines_load(struct emu *emu, struct rom *rom)
 	else
 		system_type = EMU_SYSTEM_TYPE_NES;
 
+	if (header.tv_system > 1) {
+		system_type = EMU_SYSTEM_TYPE_NES;
+		rom->info.flags |= ROM_FLAG_PAL_NTSC;
+	}
+
 	if (board_type == BOARD_TYPE_ExROM) {
 		if ((header.wram_size > SIZE_32K) ||
 		    (header.nv_wram_size > SIZE_32K)) {
