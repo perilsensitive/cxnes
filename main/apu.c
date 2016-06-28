@@ -1501,7 +1501,7 @@ void apu_set_type(struct apu_state *apu, int type)
 		apu->noise_period_table = pal_noise_period_table;
 		apu->dmc_rate_table = pal_dmc_rate_table;
 		apu->frame_step_delay = 8312;
-		apu->apu_clock_divider = 15;
+		apu->apu_clock_divider = 16;
 	} else if (type == APU_TYPE_DENDY) {
 		apu->noise_period_table = ntsc_noise_period_table;
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
