@@ -819,8 +819,8 @@ static void read_dma_transfer(struct cpu_state *cpu, int addr)
 #if 1
 	if (cpu->cycles > cpu->dmc_dma_timestamp) {
 		log_err("DEBUG read_mem: cycles should never be greater "
-			"than dma timestamp (%d vs %d)\n", cpu->cycles,
-			cpu->dmc_dma_timestamp);
+			"than dma timestamp (%d vs %d) %d\n", cpu->cycles,
+			cpu->dmc_dma_timestamp, cpu->oam_dma_step);
 	}
 #endif
 
@@ -1312,9 +1312,8 @@ void cpu_set_trace(struct cpu_state *cpu, int enabled)
 int cpu_apply_config(struct cpu_state *cpu)
 {
 	cpu->debug = cpu->emu->config->cpu_trace_enabled;
-	if (cpu->emu->loaded &&
-	    (cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT)) {
-		cpu_set_overclock(cpu, "default", 0);
+	if (cpu->emu->loaded) {
+		cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
 	}
 
 	return 0;
@@ -2629,11 +2628,13 @@ void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 		}
 	}
 
+/*
 	if ((cpu->selected_overclock_mode == oc_mode) ||
 	    ((cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT) &&
 	    (cpu->overclock_mode == oc_mode))) {
 		return;
 	}
+*/
 
 	if (emu->config->remember_overclock_mode && emu->loaded) {
 		char *path;

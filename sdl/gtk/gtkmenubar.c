@@ -72,7 +72,9 @@ static void emulator_fullscreen_callback(GtkWidget *widget, gpointer userdata)
 
 static void overclock_mode_callback(GtkWidget *widget, gpointer userdata)
 {
-	cpu_set_overclock(emu->cpu, (const char *)userdata, 0);
+	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget))) {
+		cpu_set_overclock(emu->cpu, (const char *)userdata, 0);
+	}
 }
 
 static void update_fullscreen_toggle(GtkWidget *widget, gpointer user_data)
