@@ -3264,6 +3264,12 @@ int ppu_load_state(struct ppu_state *ppu, struct save_state *state)
 		}
 	}
 
+	ppu->visible_cycles = ppu->frame_cycles -
+	                      (ppu->vblank_scanlines +
+	                      ppu->post_render_scanlines) * 341 + 8;
+	cpu_set_frame_cycles(ppu->emu->cpu,
+	                     ppu->visible_cycles * ppu->ppu_clock_divider,
+			     ppu->frame_cycles * ppu->ppu_clock_divider);
 	return 0;
 }
 

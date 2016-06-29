@@ -1455,7 +1455,6 @@ void cpu_cleanup(struct cpu_state *cpu)
 void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
                           uint32_t frame_cycles)
 {
-	if (cpu->frame_cycles != frame_cycles) {
 		cpu->frame_cycles = frame_cycles;
 		cpu->actual_frame_cycles = frame_cycles;
 		cpu->visible_cycles = visible_cycles;
@@ -1466,15 +1465,12 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
 			    (341 * cpu->emu->ppu_clock_divider);
 		}
 		calculate_step_cycles(cpu);
-	}
 }
 
 uint32_t cpu_run(struct cpu_state *cpu)
 {
 	while (cpu->cycles < cpu->frame_cycles) {
 		calculate_step_cycles(cpu);
-		/* printf("ni: %d, cycles: %d\n", */
-		/*        cpu->step_cycles, cpu->cycles); */
 
 		while (cpu->cycles <= cpu->step_cycles) {
 			uint8_t opcode;
@@ -2375,6 +2371,7 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 	}
 
 	cpu->cycles -= frame_cycles;
+
 }
 
 int cpu_get_pc(struct cpu_state *cpu)

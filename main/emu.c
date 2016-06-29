@@ -1137,6 +1137,7 @@ int emu_load_state(struct emu *emu, const char *filename)
 	if (save_state_read(state, filename) < 0)
 		return -1;
 
+	/* CPU state must be loaded first */
 	cpu_load_state(emu->cpu, state);
 	ppu_load_state(emu->ppu, state);
 	apu_load_state(emu->apu, state);
