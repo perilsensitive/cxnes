@@ -86,5 +86,7 @@ int ppu_save_state(struct ppu_state *ppu, struct save_state *state);
 int ppu_load_state(struct ppu_state *ppu, struct save_state *state);
 uint8_t ppu_peek(struct ppu_state *ppu, int addr);
 void ppu_poke(struct ppu_state *ppu, int address, uint8_t value);
+void ppu_set_overclock_mode(struct ppu_state *ppu, int mode, int scanlines);
+void ppu_end_overclock(struct ppu_state *ppu, int cycles);
 
 #endif				/* __PPU_H__ */

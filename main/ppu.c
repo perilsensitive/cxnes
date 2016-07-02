@@ -228,6 +228,11 @@ static const uint8_t xflip_lookup[256] = {
 };
 
 struct ppu_state {
+	int overclocking;
+	int overclock_start_timestamp;
+	int overclock_end_timestamp;
+	int overclock_mode;
+	int overclock_scanlines;
 	int cycles;
 	int frame_cycles;
 	int visible_cycles;
@@ -963,6 +968,8 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 		a12_timer_reset_hook(ppu->emu, ppu->cycles);
 	}
 
+	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+
 	if (!hard && !ppu->reset_connected) {
 		/* If the reset line isn't connected, the PPU just
 		   continues running from whatever state it's in.
@@ -986,8 +993,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 				     (ppu->scanline + 1)) * 341 -
 		                    ppu->scanline_cycle;
 		ppu->visible_cycles = ppu->frame_cycles -
-		                      (ppu->vblank_scanlines +
-		                      ppu->post_render_scanlines) * 341 + 8;
+		                      (ppu->vblank_scanlines) * 341;
 		cpu_set_frame_cycles(ppu->emu->cpu,
 		                     ppu->visible_cycles * ppu->ppu_clock_divider,
 				     ppu->frame_cycles * ppu->ppu_clock_divider);
@@ -1028,8 +1034,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines - 1) * 341 - 1;
 	ppu->visible_cycles = ppu->frame_cycles -
-	                      (ppu->vblank_scanlines +
-	                      ppu->post_render_scanlines) * 341 + 8;
+	                      (ppu->vblank_scanlines) * 341;
 	cpu_set_frame_cycles(ppu->emu->cpu,
 	                     ppu->visible_cycles * ppu->ppu_clock_divider,
 			     ppu->frame_cycles * ppu->ppu_clock_divider);
@@ -1083,7 +1088,7 @@ uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 
 	ppu_run(ppu, cycles);
 
-	//printf("end frame: %d,%d %d\n", ppu->scanline, ppu->scanline_cycle, ppu->cycles * 4);
+	printf("end frame: %d,%d %d %d\n", ppu->scanline, ppu->scanline_cycle, ppu->cycles * 4, cycles);
 
 	ppu->cycles -= ppu->frame_cycles;
 	if (ppu->ctrl_reg & CTRL_REG_NMI_ENABLE) {
@@ -1102,8 +1107,7 @@ uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines) * 341;
 	ppu->visible_cycles = ppu->frame_cycles -
-	                      (ppu->vblank_scanlines +
-	                      ppu->post_render_scanlines) * 341 + 8;
+	                      (ppu->vblank_scanlines) * 341;
 	cpu_set_frame_cycles(ppu->emu->cpu,
 	                     ppu->visible_cycles * ppu->ppu_clock_divider,
 			     ppu->frame_cycles * ppu->ppu_clock_divider);
@@ -2441,7 +2445,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 
 int ppu_run(struct ppu_state *ppu, int cycles)
 {
-	if (emu_resetting(ppu->emu) || ppu->catching_up || ppu->emu->overclocking)
+	if (emu_resetting(ppu->emu) || ppu->catching_up || ppu->overclocking)
 		return ppu->cycles * ppu->ppu_clock_divider;
 
 	ppu->catching_up = 1;
@@ -2509,6 +2513,20 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 			ppu->scanline_cycle += needed;
 			ppu->scanline += ppu->scanline_cycle / 341;
 			ppu->scanline_cycle %= 341;
+
+			if ((ppu->overclock_mode == OVERCLOCK_MODE_POST_RENDER) &&
+			    (ppu->scanline == 240 + ppu->post_render_scanlines) &&
+			    (ppu->scanline_cycle == 0)) {
+				ppu->overclock_start_timestamp =
+				    ppu->cycles * ppu->ppu_clock_divider;
+				ppu->overclock_end_timestamp = ppu->overclock_start_timestamp + (ppu->overclock_scanlines * 341 * ppu->ppu_clock_divider);
+				ppu->overclocking = 1;
+				ppu->scanline--;
+				ppu->scanline_cycle = 340;
+				printf("stopping at %d, (%d)\n", ppu->cycles * 4, ppu->overclock_end_timestamp);
+				goto end;
+			}
+
 			if (ppu->cycles >= cycles)
 				goto end;
 		}
@@ -2571,6 +2589,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				/* if (ppu->a12_timer_enabled) */
 				/* 	a12_timer_run(ppu->emu->a12_timer, ppu->cycles); */
 			}
+
 			if (ppu->cycles >= cycles)
 				goto end;
 		}
@@ -3265,8 +3284,7 @@ int ppu_load_state(struct ppu_state *ppu, struct save_state *state)
 	}
 
 	ppu->visible_cycles = ppu->frame_cycles -
-	                      (ppu->vblank_scanlines +
-	                      ppu->post_render_scanlines) * 341 + 8;
+	                      (ppu->vblank_scanlines) * 341;
 	cpu_set_frame_cycles(ppu->emu->cpu,
 	                     ppu->visible_cycles * ppu->ppu_clock_divider,
 			     ppu->frame_cycles * ppu->ppu_clock_divider);
@@ -3282,4 +3300,29 @@ int ppu_get_burst_phase(struct ppu_state *ppu)
 		phase = 0;
 
 	return phase;
+}
+
+void ppu_end_overclock(struct ppu_state *ppu, int cycles)
+{
+	if (!ppu->overclocking)
+		return;
+
+	if (cycles < ppu->overclock_end_timestamp)
+		return;
+
+	ppu->overclocking = 0;
+	ppu->scanline++;
+	ppu->scanline_cycle = 0;
+	cycles -= ppu->overclock_end_timestamp;
+	cycles += ppu->cycles * ppu->ppu_clock_divider;
+	printf("here: %d\n", cycles);
+	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+	ppu_run(ppu, cycles);
+}
+
+void ppu_set_overclock_mode(struct ppu_state *ppu, int mode, int scanlines)
+{
+	ppu->overclocking = 0;
+	ppu->overclock_mode = mode;
+	ppu->overclock_scanlines = scanlines;
 }

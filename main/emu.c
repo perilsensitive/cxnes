@@ -1424,6 +1424,8 @@ void emu_overclock(struct emu *emu, uint32_t cycles, int enabled)
 		ppu_run(emu->ppu, cycles);
 		apu_run(emu->apu, cycles);
 		board_run(emu->board, cycles);
+	} else {
+		ppu_end_overclock(emu->ppu, cycles);
 	}
 	emu->overclocking = enabled;
 }
