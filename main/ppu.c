@@ -1088,8 +1088,6 @@ uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 
 	ppu_run(ppu, cycles);
 
-	printf("end frame: %d,%d %d %d\n", ppu->scanline, ppu->scanline_cycle, ppu->cycles * 4, cycles);
-
 	ppu->cycles -= ppu->frame_cycles;
 	if (ppu->ctrl_reg & CTRL_REG_NMI_ENABLE) {
 		cpu_interrupt_schedule(ppu->emu->cpu, IRQ_NMI,
@@ -2523,7 +2521,6 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				ppu->overclocking = 1;
 				ppu->scanline--;
 				ppu->scanline_cycle = 340;
-				printf("stopping at %d, (%d)\n", ppu->cycles * 4, ppu->overclock_end_timestamp);
 				goto end;
 			}
 
@@ -2569,6 +2566,20 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 
 			if (ppu->scanline == 240 + ppu->post_render_scanlines +
 			    ppu->vblank_scanlines) {
+				if (ppu->overclock_mode == OVERCLOCK_MODE_VBLANK) {
+					ppu->overclock_start_timestamp =
+					    ppu->frame_cycles *
+					    ppu->ppu_clock_divider;
+					ppu->overclock_end_timestamp =
+					    ppu->overclock_start_timestamp +
+					    (ppu->overclock_scanlines * 341 *
+					     ppu->ppu_clock_divider);
+					ppu->overclocking = 1;
+					ppu->scanline--;
+					ppu->scanline_cycle = 340;
+					goto end;
+				}
+
 				ppu->scanline = -1;
 				if (RENDERING_ENABLED())
 					ppu->rendering = 1;
@@ -3315,7 +3326,6 @@ void ppu_end_overclock(struct ppu_state *ppu, int cycles)
 	ppu->scanline_cycle = 0;
 	cycles -= ppu->overclock_end_timestamp;
 	cycles += ppu->cycles * ppu->ppu_clock_divider;
-	printf("here: %d\n", cycles);
 	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
 	ppu_run(ppu, cycles);
 }

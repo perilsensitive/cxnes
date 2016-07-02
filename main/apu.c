@@ -1408,6 +1408,7 @@ void apu_run(struct apu_state *apu, uint32_t cycles)
 
 	}
 
+//	printf("apu: ran to %d (%d)\n", apu->last_time, apu->odd_cycle);
 //      printf("done\n");
 }
 
@@ -1658,4 +1659,10 @@ int apu_load_state(struct apu_state *apu, struct save_state *state)
 	buf += unpack_state(&apu->dmc, dmc_state_items, buf);
 
 	return 0;
+}
+
+int apu_is_odd(struct apu_state *apu, uint32_t cycles)
+{
+	apu_run(apu, cycles);
+	return apu->odd_cycle;
 }
