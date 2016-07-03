@@ -257,7 +257,7 @@ struct rom *rom_load_file(struct emu *emu, const char *filename)
 	*/
 	if ((rom->info.board_type != BOARD_TYPE_FDS) &&
 	    (rom->info.board_type != BOARD_TYPE_NSF)) {
-		ines_generate_header(rom, 2);
+		ines_generate_header(rom, -1);
 	}
 
 	return rom;
@@ -308,7 +308,7 @@ struct rom *rom_reload_file(struct emu *emu, struct rom *rom)
 	*/
 	if ((rom->info.board_type != BOARD_TYPE_FDS) &&
 	    (rom->info.board_type != BOARD_TYPE_NSF)) {
-		ines_generate_header(rom, 2);
+		ines_generate_header(rom, -1);
 
 	}
 

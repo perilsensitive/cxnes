@@ -361,21 +361,26 @@ int ines_generate_header(struct rom *rom, int version)
 		header.tv_system = 0x01;
 	}
 
+	if ((rom->info.flags & ROM_FLAG_PAL_NTSC) && (version == 2))
+		header.tv_system |= 0x02;
+
 	header.mapper = BOARD_TYPE_TO_INES_MAPPER(rom->info.board_type);
 	header.submapper = BOARD_TYPE_TO_INES_SUBMAPPER(rom->info.board_type);
 	header.vs_protection =
 		BOARD_TYPE_TO_INES_VS_PROTECTION(rom->info.board_type);
 
-	if ((header.prg_rom_banks > 0xff) ||
-	    (header.chr_rom_banks > 0xff) ||
-	    (header.mapper > 0xff) ||
-	    (header.vs_protection > 0x00) ||
-	    (header.tv_system) ||
-	    (header.vs_system) ||
-	    (header.submapper > 0x00)) {
-		version = 2;
-	} else {
-		version = 1;
+	if (version < 1) {
+		if ((header.prg_rom_banks > 0xff) ||
+		    (header.chr_rom_banks > 0xff) ||
+		    (header.mapper > 0xff) ||
+		    (header.vs_protection > 0x00) ||
+		    (header.tv_system) ||
+		    (header.vs_system) ||
+		    (header.submapper > 0x00)) {
+			version = 2;
+		} else {
+			version = 1;
+		}
 	}
 	
 
