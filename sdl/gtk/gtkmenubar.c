@@ -1567,7 +1567,6 @@ static GtkWidget *gui_build_emulator_menu(void)
 	item = gui_add_menu_item(menu, "_Overclock Mode", NULL, NULL,
 	                         is_sensitive_if_loaded);
 	submenu = gui_build_overclock_mode_menu();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
