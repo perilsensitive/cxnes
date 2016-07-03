@@ -1373,7 +1373,8 @@ void cpu_set_trace(struct cpu_state *cpu, int enabled)
 int cpu_apply_config(struct cpu_state *cpu)
 {
 	cpu->debug = cpu->emu->config->cpu_trace_enabled;
-	if (cpu->emu->loaded) {
+	if ((cpu->emu->loaded) &&
+	    (cpu->selected_overclock_mode <= OVERCLOCK_MODE_DEFAULT)) {
 		cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
 	}
 
@@ -1528,10 +1529,17 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
 
 uint32_t cpu_run(struct cpu_state *cpu)
 {
-	ppu_set_overclock_mode(cpu->emu->ppu, cpu->overclock_mode,
+	int oc_mode;
+
+	if (cpu->frames_before_overclock)
+		oc_mode = OVERCLOCK_MODE_NONE;
+	else
+		oc_mode = cpu->overclock_mode;
+
+	ppu_set_overclock_mode(cpu->emu->ppu, oc_mode,
 	                       cpu->emu->config->overclock_scanlines);
 
-	if (cpu->overclock_mode != OVERCLOCK_MODE_NONE)
+	if (oc_mode != OVERCLOCK_MODE_NONE)
 		cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
 	else
 		cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
@@ -2683,6 +2691,9 @@ void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 		return;
 	}
 */
+
+	ppu_set_overclock_mode(cpu->emu->ppu, cpu->overclock_mode,
+	                       cpu->emu->config->overclock_scanlines);
 
 	if (emu->config->remember_overclock_mode && emu->loaded) {
 		char *path;

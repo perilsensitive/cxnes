@@ -885,7 +885,7 @@ static void configuration_setup_overclocking(GtkWidget *dialog, struct config *c
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-	label = gtk_label_new_with_mnemonic("Frames to emulate before overclocking:");
+	label = gtk_label_new_with_mnemonic("_Frames to emulate before overclocking:");
 	tmp = config_int_spinbutton(dialog, config, "frames_before_overclock");
 	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 8);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
