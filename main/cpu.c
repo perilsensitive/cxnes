@@ -1513,19 +1513,19 @@ void cpu_cleanup(struct cpu_state *cpu)
 void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
                           uint32_t frame_cycles)
 {
-		cpu->frame_cycles = frame_cycles;
-		cpu->visible_cycles = visible_cycles;
+	cpu->frame_cycles = frame_cycles;
+	cpu->visible_cycles = visible_cycles;
 
-		if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)
-			cpu->overclock_timestamp = cpu->visible_cycles;
-		else if (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)
-			cpu->overclock_timestamp = frame_cycles;
-		else
-			cpu->overclock_timestamp = ~0;
+	if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)
+		cpu->overclock_timestamp = cpu->visible_cycles;
+	else if (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)
+		cpu->overclock_timestamp = frame_cycles;
+	else
+		cpu->overclock_timestamp = ~0;
 
-		recalc_cycle_operation_timestamp(cpu);
+	recalc_cycle_operation_timestamp(cpu);
 
-		calculate_step_cycles(cpu);
+	calculate_step_cycles(cpu);
 }
 
 uint32_t cpu_run(struct cpu_state *cpu)
