@@ -21,6 +21,7 @@
 #define __ARCHIVE_H__
 
 #include <stdint.h>
+#include <sys/types.h>
 
 struct archive;
 

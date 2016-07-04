@@ -1,6 +1,6 @@
 AM_CFLAGS = -I ./include -Wall -Werror=format-security \
             -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
-            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"' -std=c99
+            -DDEFAULT_OSD_FONT='"PressStart2P.ttf"' -std=gnu99
 AM_LDFLAGS = -lm
 
 .rc.o:
