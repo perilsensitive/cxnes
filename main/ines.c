@@ -361,8 +361,10 @@ int ines_generate_header(struct rom *rom, int version)
 		header.tv_system = 0x01;
 	}
 
-	if ((rom->info.flags & ROM_FLAG_PAL_NTSC) && (version == 2))
+	if (((rom->info.flags & ROM_FLAG_TIMING_MASK) == ROM_FLAG_TIMING_PAL_NTSC) &&
+	    (version == 2)) {
 		header.tv_system |= 0x02;
+	}
 
 	header.mapper = BOARD_TYPE_TO_INES_MAPPER(rom->info.board_type);
 	header.submapper = BOARD_TYPE_TO_INES_SUBMAPPER(rom->info.board_type);
@@ -614,7 +616,7 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	if (header.tv_system > 1) {
 		system_type = EMU_SYSTEM_TYPE_NES;
-		rom->info.flags |= ROM_FLAG_PAL_NTSC;
+		rom->info.flags |= ROM_FLAG_TIMING_PAL_NTSC;
 	}
 
 	if (board_type == BOARD_TYPE_ExROM) {

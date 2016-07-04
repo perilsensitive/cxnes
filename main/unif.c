@@ -233,7 +233,7 @@ int unif_load(struct emu *emu, struct rom *rom)
 		break;
 	case 2:
 		rom->info.system_type = EMU_SYSTEM_TYPE_NES;
-		rom->info.flags |= ROM_FLAG_PAL_NTSC;
+		rom->info.flags |= ROM_FLAG_TIMING_PAL_NTSC;
 		break;
 	case 1:
 		rom->info.system_type = EMU_SYSTEM_TYPE_PAL_NES;

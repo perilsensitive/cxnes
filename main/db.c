@@ -474,7 +474,7 @@ static void process_field(struct db_parser_state *state)
 		state->current->auto_device_id[4] = IO_DEVICE_NONE;
 	}
 
-	if (!strcasecmp(key, "prg crc")) {
+	if (!strcasecmp(key, "prg-crc")) {
 		int count = parse_int_list(value,
 					   state->current->prg_crc, MAX_PRG_ROMS, 16);
 		if (count > 0)
@@ -488,20 +488,20 @@ static void process_field(struct db_parser_state *state)
 			state->current->prg_size_count = count;
 		else
 			state->current->prg_size_count = 0;
-	} else if (!strcasecmp(key, "chr crc")) {
+	} else if (!strcasecmp(key, "chr-crc")) {
 		int count = parse_int_list(value,
 					   state->current->chr_crc, MAX_CHR_ROMS, 16);
 		if (count > 0)
 			state->current->chr_crc_count = count;
 		else
 			state->current->chr_crc_count = 0;
-	} else if (!strcasecmp(key, "prg sha1")) {
+	} else if (!strcasecmp(key, "prg-sha1")) {
 		int count = parse_sha1_list(value, &state->current->prg_sha1[0], MAX_PRG_ROMS);
 		if (count > 0)
 			state->current->prg_sha1_count = count;
 		else
 			state->current->prg_sha1_count = 0;
-	} else if (!strcasecmp(key, "chr sha1")) {
+	} else if (!strcasecmp(key, "chr-sha1")) {
 		int count = parse_sha1_list(value, &state->current->chr_sha1[0], MAX_CHR_ROMS);
 		if (count > 0)
 			state->current->chr_sha1_count = count;
@@ -546,12 +546,26 @@ static void process_field(struct db_parser_state *state)
 		parse_boolean_list(value, boolean_list, 1);
 		if (boolean_list[0])
 			state->current->flags |= ROM_FLAG_PLAYCHOICE;
-	} else if (!strcasecmp(key, "dual-pal-ntsc")) {
+	} else if (!strcasecmp(key, "ntsc-timing")) {
 		parse_boolean_list(value, boolean_list, 1);
 		if (boolean_list[0])
-			state->current->flags |= ROM_FLAG_PAL_NTSC;
+			state->current->flags |= ROM_FLAG_TIMING_NTSC;
+	} else if (!strcasecmp(key, "pal-timing")) {
+		parse_boolean_list(value, boolean_list, 1);
+		if (boolean_list[0])
+			state->current->flags |= ROM_FLAG_TIMING_PAL;
+	} else if (!strcasecmp(key, "dendy-timing")) {
+		parse_boolean_list(value, boolean_list, 1);
+		if (boolean_list[0])
+			state->current->flags |= ROM_FLAG_TIMING_DENDY;
 	} else if (!strcasecmp(key, "system")) {
 		state->current->system_type = parse_system_type(value);
+		if (state->current->system_type == EMU_SYSTEM_TYPE_PAL_NES)
+			state->current->flags |= ROM_FLAG_TIMING_PAL;
+		else if (state->current->system_type == EMU_SYSTEM_TYPE_DENDY)
+			state->current->flags |= ROM_FLAG_TIMING_DENDY;
+		else
+			state->current->flags |= ROM_FLAG_TIMING_NTSC;
 	} else if (!strcasecmp(key, "board")) {
 		state->current->board_type = board_find_type_by_name(value);
 	} else if (!strcasecmp(key, "mirroring")) {

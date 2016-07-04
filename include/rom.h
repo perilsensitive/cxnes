@@ -42,7 +42,12 @@ struct board_info;
 		      ROM_FLAG_VRAM1_NV|ROM_FLAG_MAPPER_NV)
 #define ROM_FLAG_HAS_CRC   128
 #define ROM_FLAG_HAS_SHA1  256
-#define ROM_FLAG_PAL_NTSC  512
+#define ROM_FLAG_TIMING_NTSC  512
+#define ROM_FLAG_TIMING_PAL   1024
+#define ROM_FLAG_TIMING_DENDY 2048
+#define ROM_FLAG_TIMING_MASK (512|1024|2048)
+#define ROM_FLAG_TIMING_ALL (512|1024|2048)
+#define ROM_FLAG_TIMING_PAL_NTSC (512|1024)
 
 struct rom_info {
 	/* char *title; */
