@@ -969,6 +969,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 	}
 
 	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+	ppu->overclocking = 0;
 
 	if (!hard && !ppu->reset_connected) {
 		/* If the reset line isn't connected, the PPU just
