@@ -1359,7 +1359,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 	cpu->resetting = 1;
 	cpu->dmc_dma_timestamp = ~0;
 	cpu->dmc_dma_step = DMC_DMA_STEP_NONE;
+	cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
 
+	calculate_step_cycles(cpu);
 	recalc_cycle_operation_timestamp(cpu);
 }
 
@@ -2416,7 +2418,6 @@ void cpu_end_frame(struct cpu_state *cpu, uint32_t frame_cycles)
 	recalc_cycle_operation_timestamp(cpu);
 
 	cpu->cycles -= frame_cycles;
-
 }
 
 int cpu_get_pc(struct cpu_state *cpu)
@@ -2603,7 +2604,7 @@ void cpu_disable_overclock_for_frame(struct cpu_state *cpu)
 		return;
 
 	cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
-	cpu->overclock_cycles = ~0;
+	cpu->overclock_timestamp = ~0;
 	recalc_cycle_operation_timestamp(cpu);
 	ppu_set_overclock_mode(cpu->emu->ppu, OVERCLOCK_MODE_NONE, 0);
 }
