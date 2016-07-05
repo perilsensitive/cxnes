@@ -1521,7 +1521,7 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
 	if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)
 		cpu->overclock_timestamp = cpu->visible_cycles;
 	else if (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)
-		cpu->overclock_timestamp = frame_cycles;
+		cpu->overclock_timestamp = cpu->frame_cycles;
 	else
 		cpu->overclock_timestamp = ~0;
 
@@ -1546,6 +1546,8 @@ uint32_t cpu_run(struct cpu_state *cpu)
 		cpu->frame_state = FRAME_STATE_PRE_OVERCLOCK;
 	else
 		cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
+
+	cpu_set_frame_cycles(cpu, cpu->visible_cycles, cpu->frame_cycles);
 
 	while ((cpu->cycles < cpu->frame_cycles)|| 
 	       (cpu->frame_state == FRAME_STATE_OVERCLOCK)) {
