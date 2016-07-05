@@ -1568,6 +1568,7 @@ uint32_t cpu_run(struct cpu_state *cpu)
 
 			if (cpu->jammed) {
 				cpu->cycles = cpu->frame_cycles;
+				cpu->frame_state = FRAME_STATE_POST_OVERCLOCK;
 				break;
 			}
 
