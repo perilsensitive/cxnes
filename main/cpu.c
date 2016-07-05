@@ -2697,9 +2697,6 @@ void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 	}
 */
 
-	ppu_set_overclock_mode(cpu->emu->ppu, cpu->overclock_mode,
-	                       cpu->emu->config->overclock_scanlines);
-
 	if (emu->config->remember_overclock_mode && emu->loaded) {
 		char *path;
 		rom_config_set(emu->config, "overclock_mode", mode);
