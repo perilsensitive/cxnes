@@ -330,8 +330,8 @@
 #define ACTION_MOUSE_4_LEFTBUTTON       0x00060032
 #define ACTION_MOUSE_4_RIGHTBUTTON      0x00060034
 
-#define ACTION_HARD_RESET           0x00ffff01
-#define ACTION_SOFT_RESET           0x00ffff02
+#define ACTION_HARD_RESET           0x80ffff01
+#define ACTION_SOFT_RESET           0x80ffff02
 #define ACTION_VS_COIN_SWITCH_1     0x00ffff03
 #define ACTION_VS_COIN_SWITCH_2     0x00ffff04
 #define ACTION_VS_SERVICE_SWITCH    0x00ffff05
