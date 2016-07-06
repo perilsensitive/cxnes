@@ -20,7 +20,6 @@
 #include "emu.h"
 #include "actions.h"
 #include "input.h"
-#include "controller.h"
 
 static int mat_connect(struct io_device *dev);
 static void mat_disconnect(struct io_device *dev);
