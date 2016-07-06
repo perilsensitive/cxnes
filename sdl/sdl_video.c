@@ -17,6 +17,10 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#if _WIN32
+#define _WIN32_WINNT 0x0601
+#endif
+
 #include <errno.h>
 #include <unistd.h>
 #include <SDL.h>
@@ -29,6 +33,11 @@
 #include <math.h>
 #ifdef __unix__
 #include <signal.h>
+#endif
+
+#if _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
 
 #include "emu.h"
@@ -80,6 +89,11 @@ struct SDL_Window
 };
 
 typedef struct SDL_Window SDL_Window;
+#endif
+
+#if _WIN32
+HANDLE disable_screensaver_request;
+POWER_REQUEST_CONTEXT disable_screensaver_request_context;
 #endif
 
 /* FIXME use getters/setters for these? */
@@ -1027,6 +1041,17 @@ int video_init(struct emu *emu)
 		video_toggle_fullscreen(1);
 	}
 
+#if _WIN32
+	disable_screensaver_request_context.Version =
+	    POWER_REQUEST_CONTEXT_VERSION;
+	disable_screensaver_request_context.Flags =
+	    POWER_REQUEST_CONTEXT_SIMPLE_STRING;
+	disable_screensaver_request_context.Reason.SimpleReasonString =
+	    L"emulation active";
+	disable_screensaver_request =
+	    PowerCreateRequest(&disable_screensaver_request_context);
+#endif
+
 	//video_show_cursor(0);
 
 	return 0;
@@ -1793,8 +1818,17 @@ int video_save_screenshot(const char *filename)
 
 void video_set_screensaver_enabled(int enabled)
 {
-	if (enabled)
+	if (enabled) {
 		SDL_EnableScreenSaver();
-	else
+#if _WIN32
+		PowerClearRequest(disable_screensaver_request,
+		                  PowerRequestDisplayRequired);
+#endif
+	} else {
 		SDL_DisableScreenSaver();
+#if _WIN32
+		PowerSetRequest(disable_screensaver_request,
+		                PowerRequestDisplayRequired);
+#endif
+	}
 }
