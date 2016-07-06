@@ -2629,6 +2629,8 @@ const char *cpu_get_overclock(struct cpu_state *cpu)
 	case OVERCLOCK_MODE_VBLANK:
 		name = "vblank";
 		break;
+	default:
+		name = "default";
 	}
 
 	return name;
@@ -2680,6 +2682,9 @@ void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 		case OVERCLOCK_MODE_VBLANK:
 			mode_string = "VBlank";
 			break;
+		case OVERCLOCK_MODE_DEFAULT:
+		default:
+			mode_string = "";
 		}
 
 		if (cpu->selected_overclock_mode == OVERCLOCK_MODE_DEFAULT) {
