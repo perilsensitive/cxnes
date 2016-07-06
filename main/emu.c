@@ -915,14 +915,14 @@ void emu_toggle_cheats(struct emu *emu)
 void emu_pause(struct emu *emu, int pause)
 {
 	if (emu->loaded) {
-	emu->paused = pause;
-	audio_pause(pause);
+		emu->paused = pause;
+		audio_pause(pause);
 #if GUI_ENABLED
-	if (pause)
-		gui_enable_event_timer();
+		if (pause)
+			gui_enable_event_timer();
 #endif
-	video_set_screensaver_enabled(pause);
-	video_show_cursor(emu->paused);
+		video_set_screensaver_enabled(pause);
+		video_show_cursor(emu->paused);
 	}
 }
 
