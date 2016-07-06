@@ -41,6 +41,7 @@ static struct priority_info priority_info[] = {
 };
 
 /* Taken from SDL2's SDL_log.c */
+#if _WIN32
 static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
     NULL,
     "VERBOSE",
@@ -51,7 +52,6 @@ static const char *priority_prefixes[SDL_NUM_LOG_PRIORITIES] = {
     "CRITICAL"
 };
 
-#if _WIN32
 static void console_output(void *userdata, int category, SDL_LogPriority priority,
                            const char *message)
 {
