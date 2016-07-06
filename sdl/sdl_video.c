@@ -1279,6 +1279,10 @@ int video_shutdown(void)
 #endif	
 		SDL_DestroyWindow(window);
 
+#if _WIN32
+	CloseHandle(disable_screensaver_request);
+#endif
+
 	return 0;
 }
 
