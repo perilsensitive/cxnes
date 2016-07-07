@@ -127,10 +127,10 @@ struct io_device controller4_device = {
 	.removable = 1,
 };
 
-struct io_device bandai_hypershot_controller_device = {
+struct io_device bandai_hyper_shot_controller_device = {
 	.name = "Bandai HyperShot Controller",
-	.id = IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER,
-	.config_id = "bandai_hypershot_controller",
+	.id = IO_DEVICE_BANDAI_HYPER_SHOT_CONTROLLER,
+	.config_id = "bandai_hyper_shot_controller",
 	.connect = controller_connect,
 	.disconnect = controller_disconnect,
 	.read = controller_read,
@@ -293,7 +293,7 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 					state->latch |= tmp;
 				}
 			}
-		} else if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER) {
+		} else if (dev->id == IO_DEVICE_BANDAI_HYPER_SHOT_CONTROLLER) {
 			int tmp = state->common_state->port_mapping[0];
 
 			if (tmp < 0)
@@ -345,7 +345,7 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 
 	state = dev->private;
 
-	if ((dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER) && port)
+	if ((dev->id == IO_DEVICE_BANDAI_HYPER_SHOT_CONTROLLER) && port)
 		return 0;
 
 	data = state->latch & 0x01;
@@ -358,7 +358,7 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 			state->latch |= (1 << 7);
 	}
 
-	if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER)
+	if (dev->id == IO_DEVICE_BANDAI_HYPER_SHOT_CONTROLLER)
 		data <<= 1;
 
 	return data;

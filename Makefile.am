@@ -51,6 +51,7 @@ cxnes_SOURCES = \
 	input/mat.c \
 	input/snes_mouse.c \
 	input/microphone.c \
+	input/konami_hyper_shot.c \
 	main/archive.c \
 	main/archive_null.c \
 	main/archive_7zip.c \

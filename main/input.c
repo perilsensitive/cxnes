@@ -61,6 +61,7 @@ const char *category_names[] = {
 	"Arkanoid (Port 2)",
 	"Power Pad (Port 1)",
 	"Power Pad (Port 2) / Family Trainer",
+	"Konami Hyper Shot",
 	"Zapper (Port 1)",
 	"Zapper (Port 2)",
 	"Mouse (Port 1)",
@@ -122,6 +123,11 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(DEVICE_SELECT_EXP, INPUT, "Expansion Port Device Select"),
 	EMU_ACTION_ID_MAP(DEVICE_CONNECT_EXP, INPUT, "Expansion Port Device Connect"),
 	EMU_ACTION_ID_MAP(PAUSE, EMULATOR, "Pause/Resume Emulation"),
+
+	EMU_ACTION_ID_MAP(KONAMI_HYPER_SHOT_P1_JUMP, KONAMI_HYPER_SHOT, "P1 Jump"),
+	EMU_ACTION_ID_MAP(KONAMI_HYPER_SHOT_P1_RUN, KONAMI_HYPER_SHOT, "P1 Run"),
+	EMU_ACTION_ID_MAP(KONAMI_HYPER_SHOT_P2_JUMP, KONAMI_HYPER_SHOT, "P2 Jump"),
+	EMU_ACTION_ID_MAP(KONAMI_HYPER_SHOT_P2_RUN, KONAMI_HYPER_SHOT, "P2 Run"),
 
 	EMU_ACTION_ID_MAP(ARKANOID_1_DIAL_MOUSE, ARKANOID1, "Dial (Mouse)"),
 	EMU_ACTION_ID_MAP(ARKANOID_1_DIAL, ARKANOID1, "Dial"),

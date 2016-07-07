@@ -47,8 +47,9 @@ extern struct io_device snes_mouse4_device;
 extern struct io_device arkanoid_fc_device;
 extern struct io_device arkanoidII_device;
 extern struct io_device vs_zapper_device;
-extern struct io_device bandai_hypershot_device;
-extern struct io_device bandai_hypershot_controller_device;
+extern struct io_device bandai_hyper_shot_device;
+extern struct io_device bandai_hyper_shot_controller_device;
+extern struct io_device konami_hyper_shot_device;
 extern struct io_device keyboard_device;
 extern struct io_device subor_keyboard_device;
 extern struct io_device vs_unisystem_device;
@@ -521,8 +522,9 @@ void io_reset(struct io_state *io, int hard)
 			io_register_device(io, &arkanoid_fc_device, -1);
 			io_register_device(io, &arkanoidII_device, -1);
 			io_register_device(io, &microphone_device, -1);
-			io_register_device(io, &bandai_hypershot_controller_device, -1);
-			io_register_device(io, &bandai_hypershot_device, -1);
+			io_register_device(io, &bandai_hyper_shot_controller_device, -1);
+			io_register_device(io, &bandai_hyper_shot_device, -1);
+			io_register_device(io, &konami_hyper_shot_device, -1);
 
 			
 			device = io_register_device(io,

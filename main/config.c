@@ -328,12 +328,13 @@ static const char *exp_device_names[] = {
 	"Family Trainer (Side A)",
 	"Family Trainer (Side B)",
 	"Bandai Hyper Shot",
+	"Konami Hyper Shot",
 };
 
 static const char *valid_exp_devices[] = {
 	"auto", "none", "arkanoid_fc", "arkanoid2", "vs_zapper",
 	"familykeyboard", "suborkeyboard", "ftrainer_a", "ftrainer_b",
-	"bandai_hypershot",
+	"bandai_hyper_shot", "konami_hyper_shot",
 };
 
 static const int valid_sample_rates[] = {
@@ -1129,6 +1130,14 @@ struct binding_item default_bindings[] = {
 	{ .name = "Keyboard ,", .value = "MAT_2_10" },
 	{ .name = "Keyboard .", .value = "MAT_2_11" },
 	{ .name = "Keyboard /", .value = "MAT_2_12" },
+
+	/* Konami Hyper Shot bindings */
+	{ .name = "Keyboard d", .value = "KONAMI_HYPER_SHOT_P1_JUMP" },
+	{ .name = "Keyboard f", .value = "KONAMI_HYPER_SHOT_P1_RUN" },
+	{ .name = "Joystick 0 X", .value = "KONAMI_HYPER_SHOT_P1_JUMP" },
+	{ .name = "Joystick 0 A", .value = "KONAMI_HYPER_SHOT_P1_RUN" },
+	{ .name = "Joystick 1 X", .value = "KONAMI_HYPER_SHOT_P2_JUMP" },
+	{ .name = "Joystick 1 A", .value = "KONAMI_HYPER_SHOT_P2_RUN" },
 
 	{ .name = "Mouse",
 	  .value = "ZAPPER_2_UPDATE_LOCATION,MOUSE_2_UPDATE_LOCATION,"

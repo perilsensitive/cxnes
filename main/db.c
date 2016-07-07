@@ -304,9 +304,13 @@ static void set_auto_device(struct rom_info *node, int port, const char *dev_str
 		} else if (port == 1) {
 			device = IO_DEVICE_ZAPPER_2;
 		}
-	} else if (!strcasecmp(dev_string, "bandai_hypershot")) {
+	} else if (!strcasecmp(dev_string, "bandai_hyper_shot")) {
 		if (port == 4) {
-			device = IO_DEVICE_BANDAI_HYPERSHOT;
+			device = IO_DEVICE_BANDAI_HYPER_SHOT;
+		}
+	} else if (!strcasecmp(dev_string, "konami_hyper_shot")) {
+		if (port == 4) {
+			device = IO_DEVICE_KONAMI_HYPER_SHOT;
 		}
 	} else if (!strcasecmp(dev_string, "powerpad_a")) {
 		if (port == 0) {

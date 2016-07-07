@@ -534,7 +534,8 @@ struct input_device expansion_port_input_devices[] = {
 	{ "Arkanoid Controller (Famicom)", IO_DEVICE_ARKANOID_FC },
 	{ "Arkanoid II Controller", IO_DEVICE_ARKANOID_II },
 	{ "VS. Zapper", IO_DEVICE_VS_ZAPPER },
-	{ "Bandai Hyper Shot", IO_DEVICE_BANDAI_HYPERSHOT },
+	{ "Bandai Hyper Shot", IO_DEVICE_BANDAI_HYPER_SHOT },
+	{ "Konami Hyper Shot", IO_DEVICE_KONAMI_HYPER_SHOT },
 	{ NULL },
 };
 
