@@ -487,8 +487,8 @@ struct input_device port2_input_devices[] = {
 	{ "SNES Controller 3", IO_DEVICE_SNES_CONTROLLER_3 },
 	{ "SNES Controller 4", IO_DEVICE_SNES_CONTROLLER_4 },
 	{ "_Zapper", IO_DEVICE_ZAPPER_2 },
-	{ "_Power Pad Side A", IO_DEVICE_POWERPAD_A2, },
-	{ "_Power Pad Side B", IO_DEVICE_POWERPAD_B2, },
+	{ "Power Pad Side A", IO_DEVICE_POWERPAD_A2, },
+	{ "Power Pad Side B", IO_DEVICE_POWERPAD_B2, },
 	{ "_Arkanoid Controller (NES)", IO_DEVICE_ARKANOID_NES_2 },
 	{ "_SNES Mouse", IO_DEVICE_SNES_MOUSE_2 },
 	{ NULL },
@@ -534,6 +534,7 @@ struct input_device expansion_port_input_devices[] = {
 	{ "_Arkanoid Controller (Famicom)", IO_DEVICE_ARKANOID_FC },
 	{ "A_rkanoid II Controller", IO_DEVICE_ARKANOID_II },
 	{ "_VS. Zapper", IO_DEVICE_VS_ZAPPER },
+	{ "_Bandai Hyper Shot", IO_DEVICE_BANDAI_HYPERSHOT },
 	{ NULL },
 };
 

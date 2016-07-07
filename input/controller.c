@@ -127,6 +127,21 @@ struct io_device controller4_device = {
 	.removable = 1,
 };
 
+struct io_device bandai_hypershot_controller_device = {
+	.name = "Bandai HyperShot Controller",
+	.id = IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER,
+	.config_id = "bandai_hypershot_controller",
+	.connect = controller_connect,
+	.disconnect = controller_disconnect,
+	.read = controller_read,
+	.write = controller_write,
+	/* .save_state = controller_save_state, */
+	/* .load_state = controller_load_state, */
+	.apply_config = controller_apply_config,
+	.port = PORT_EXP,
+	.removable = 1,
+};
+
 struct io_device snes_controller1_device = {
 	.name = "SNES Controller 1",
 	.id = IO_DEVICE_SNES_CONTROLLER_1,
@@ -278,6 +293,13 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 					state->latch |= tmp;
 				}
 			}
+		} else if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER) {
+			int tmp = state->common_state->port_mapping[0];
+
+			if (tmp < 0)
+				tmp = 0;
+
+			state->latch = state->common_state->current_state[tmp];
 		}
 
 		if (dev->emu->config->swap_a_b) {
@@ -323,6 +345,9 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 
 	state = dev->private;
 
+	if ((dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER) && port)
+		return 0;
+
 	data = state->latch & 0x01;
 	state->latch >>= 1;
 
@@ -332,6 +357,9 @@ static uint8_t controller_read(struct io_device *dev, int port, int mode,
 		else
 			state->latch |= (1 << 7);
 	}
+
+	if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT_CONTROLLER)
+		data <<= 1;
 
 	return data;
 }

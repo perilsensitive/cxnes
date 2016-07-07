@@ -29,6 +29,8 @@
 #define TRIGGER         2
 #define TRIGGER_OFFSCREEN 4
 
+extern struct io_device bandai_hypershot_controller_device;
+
 static int zapper_connect(struct io_device *);
 static void zapper_disconnect(struct io_device *);
 static void zapper_reset(struct io_device *, int hard);
@@ -94,7 +96,22 @@ struct io_device vs_zapper_device = {
 	.removable = 1,
 };
 
+struct io_device bandai_hypershot_device = {
+	.name = "Bandai HyperShot",
+	.id = IO_DEVICE_BANDAI_HYPERSHOT,
+	.config_id = "bandai_hypershot",
+	.handlers = zapper2_handlers,
+	.connect = zapper_connect,
+	.disconnect = zapper_disconnect,
+	.reset = zapper_reset,
+	.end_frame = zapper_end_frame,
+	.read = zapper_read,
+	.port = PORT_EXP,
+	.removable = 1,
+};
+
 struct zapper_state {
+	int hypershot_trigger;
 	int trigger_counter;
 	int away_from_screen;
 	int light;
@@ -161,7 +178,7 @@ static uint8_t zapper_read(struct io_device *dev, int port,
 
 	data = (!light) << 3;
 
-	if (state->trigger_counter >= 0)
+	if ((state->trigger_counter >= 0) || state->hypershot_trigger)
 		data |= (1 << 4);
 
 	return data;
@@ -220,6 +237,13 @@ static void zapper_disconnect(struct io_device *dev)
 	if (dev->private)
 		free(dev->private);
 	dev->private = NULL;
+
+	if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT) {
+		struct io_device *d =
+		    io_register_device(dev->emu->io,
+		                       &bandai_hypershot_controller_device, -1);
+		io_disconnect_device(d);
+	}
 }
 
 static int zapper_connect(struct io_device *dev)
@@ -234,6 +258,7 @@ static int zapper_connect(struct io_device *dev)
 
 	video_show_cursor(1);
 	memset(state, 0, sizeof(*state));
+	state->hypershot_trigger = 0;
 	state->trigger_counter = -1;
 	state->trigger_counter = -1;
 
@@ -254,6 +279,13 @@ static int zapper_connect(struct io_device *dev)
 	video_show_cursor(1);
 	video_enable_crosshairs(1);
 
+	if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT) {
+		struct io_device *d =
+		    io_register_device(dev->emu->io,
+		                       &bandai_hypershot_controller_device, -1);
+		io_connect_device(d);
+	}
+
 	return 0;
 }
 
@@ -263,14 +295,17 @@ int zapper_set_trigger(void *data, uint32_t value, uint32_t button)
 	struct zapper_state *state;
 	struct io_device *dev;
 
-	if (!value)
-		return 0;
-
 	/* This is a bit hacky.  io_register_device() will return
 	   a pointer to the device if it already exists.
 	 */
 	dev = data;
 	state = dev->private;
+
+	if (dev->id != IO_DEVICE_BANDAI_HYPERSHOT) {
+		if (!value)
+			return 0;
+
+	}
 
 	offscreen = 0;
 	switch (button & 0xf) {
@@ -280,13 +315,19 @@ int zapper_set_trigger(void *data, uint32_t value, uint32_t button)
 		break;
 	case TRIGGER:
 		offscreen = 0;
+		if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT) {
+			state->hypershot_trigger = value;
+		}
 		break;
 	case TRIGGER_OFFSCREEN:
 		offscreen = 1;
+		if (dev->id == IO_DEVICE_BANDAI_HYPERSHOT) {
+			state->hypershot_trigger = value;
+		}
 		break;
 	}
 
-	if (state->trigger_counter >= 0)
+	if ((dev->id != IO_DEVICE_BANDAI_HYPERSHOT) && (state->trigger_counter >= 0))
 		return 0;
 
 	state->away_from_screen = offscreen;

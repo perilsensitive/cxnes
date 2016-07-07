@@ -304,6 +304,10 @@ static void set_auto_device(struct rom_info *node, int port, const char *dev_str
 		} else if (port == 1) {
 			device = IO_DEVICE_ZAPPER_2;
 		}
+	} else if (!strcasecmp(dev_string, "bandai_hypershot")) {
+		if (port == 4) {
+			device = IO_DEVICE_BANDAI_HYPERSHOT;
+		}
 	} else if (!strcasecmp(dev_string, "powerpad_a")) {
 		if (port == 0) {
 			device = IO_DEVICE_POWERPAD_A1;

@@ -327,11 +327,13 @@ static const char *exp_device_names[] = {
 	"VS. Zapper", "Family BASIC Keyboard",
 	"Family Trainer (Side A)",
 	"Family Trainer (Side B)",
+	"Bandai Hyper Shot",
 };
 
 static const char *valid_exp_devices[] = {
 	"auto", "none", "arkanoid_fc", "arkanoid2", "vs_zapper",
-	"familykeyboard", "suborkeyboard", "ftrainer_a", "ftrainer_b"
+	"familykeyboard", "suborkeyboard", "ftrainer_a", "ftrainer_b",
+	"bandai_hypershot",
 };
 
 static const int valid_sample_rates[] = {
