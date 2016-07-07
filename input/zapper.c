@@ -97,7 +97,7 @@ struct io_device vs_zapper_device = {
 };
 
 struct io_device bandai_hypershot_device = {
-	.name = "Bandai HyperShot",
+	.name = "Bandai Hyper Shot",
 	.id = IO_DEVICE_BANDAI_HYPERSHOT,
 	.config_id = "bandai_hypershot",
 	.handlers = zapper2_handlers,
