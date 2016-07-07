@@ -409,6 +409,7 @@ static int controller_connect(struct io_device *dev)
 		state->is_snes = 0;
 		break;
 	default:
+		state->is_snes = 0;
 		state->index = -1;
 	}
 
