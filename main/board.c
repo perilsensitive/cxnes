@@ -205,7 +205,10 @@ extern struct board_info board_tengen800032;
 extern struct board_info board_tengen800037;
 extern struct board_info board_acclaim_mc_acc;
 extern struct board_info board_bandai_fcg;
+extern struct board_info board_bandai_fcg_compat;
 extern struct board_info board_bandai_lz93d50;
+extern struct board_info board_bandai_lz93d50_24c01;
+extern struct board_info board_bandai_lz93d50_24c02;
 extern struct board_info board_bandai_jump2;
 extern struct board_info board_ines36;
 extern struct board_info board_inlnsf;
@@ -379,7 +382,10 @@ static struct board_info *board_info_list[] = {
 	&board_tengen800037,
 	&board_acclaim_mc_acc,
 	&board_bandai_fcg,
+	&board_bandai_fcg_compat,
 	&board_bandai_lz93d50,
+	&board_bandai_lz93d50_24c01,
+	&board_bandai_lz93d50_24c02,
 	&board_bandai_jump2,
 	&board_ines36,
 	&board_inlnsf,

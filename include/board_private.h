@@ -214,7 +214,7 @@ struct board {
 	uint32_t irq_counter_reload;
 	uint32_t irq_counter_timestamp;
 
-	uint8_t data[16];
+	uint8_t data[32];
 
 	/* Misc. timestamps for IRQs, that sort of thing. */
 	uint32_t timestamps[8];

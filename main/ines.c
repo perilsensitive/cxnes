@@ -633,6 +633,12 @@ int ines_load(struct emu *emu, struct rom *rom)
 			/* No NV RAM specified, size of RAM <= 32K */
 			wram_size[0] = header.wram_size;
 		}
+	} else if ((board_type == BOARD_TYPE_BANDAI_FCG_COMPAT) ||
+	           (board_type == BOARD_TYPE_BANDAI_LZ93D50)) {
+		   if (header.nv_wram_size == 128)
+			board_type = BOARD_TYPE_BANDAI_LZ93D50_24C01;
+		   else if (header.nv_wram_size == 256)
+			board_type = BOARD_TYPE_BANDAI_LZ93D50_24C02;
 	} else if (board_type == BOARD_TYPE_NAMCO_163) {
 		/* Namco 163 has 128 bytes of internal RAM for the
 		   audio chip that can also be battery-backed.  If the
