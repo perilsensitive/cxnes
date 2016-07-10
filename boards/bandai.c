@@ -388,11 +388,33 @@ static void i2c_update_sda(struct board *board, int chip, int sda)
 static CPU_READ_HANDLER(bandai_eeprom_read_handler)
 {
 	struct board *board;
+	uint8_t eeprom_output;
+	int size0;
+	int size1;
+	int chips_present;
 
 	board = emu->board;
 
-	//value = (_x24c0x_output[0] | _x24c0x_output[1]);
-	value = _x24c0x_output[0];
+	size0 = board->wram[0].size;
+	size1 = board->wram[1].size;
+	chips_present = 0;
+
+	eeprom_output = 0;
+
+	if ((size0 == 128) || (size0 == 256)) {
+		chips_present = 1;
+		eeprom_output |= _x24c0x_output[0];
+	}
+
+	if ((size1 == 128) || (size1 == 256)) {
+		chips_present = 1;
+		eeprom_output |= _x24c0x_output[1];
+	}
+
+	if (chips_present) {
+		value &= ~0x10;
+		value |= eeprom_output;
+	}
 
 	return value;
 }
@@ -416,7 +438,7 @@ static CPU_WRITE_HANDLER(bandai_write_handler)
 			}
 			break;
 		}
-		//i2c_update_scl(board, 1, (value & 0x08) >> 3);
+		i2c_update_scl(board, 1, (value & 0x08) >> 3);
 	case 0x04:
 	case 0x05:
 	case 0x06:
@@ -445,7 +467,7 @@ static CPU_WRITE_HANDLER(bandai_write_handler)
 		/* FIXME 0x80 is read-protect? */
 		i2c_update_scl_sda(board, 0, (value & 0x20) >> 5,
 		                   (value & 0x40) >> 6);
-		//i2c_update_sda(board, 1, (value & 0x40) >> 6);
+		i2c_update_sda(board, 1, (value & 0x40) >> 6);
 		break;
 	}
 }
