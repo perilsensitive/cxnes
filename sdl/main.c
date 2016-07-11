@@ -86,6 +86,9 @@ extern uint32_t nes_pixel_screen[];
 
 #if __unix__
 static struct timespec prev_clock;
+#elif _WIN32
+static LARGE_INTEGER frequency;
+static LARGE_INTEGER prev_clock;
 #else
 static uint32_t prev_clock;
 #endif
@@ -101,6 +104,8 @@ static int savestate_counter;
 
 int total_frame_time;
 #if __unix__
+const int time_base = 1000000000;
+#elif _WIN32
 const int time_base = 1000000000;
 #else
 const int time_base = 1000;
@@ -169,6 +174,18 @@ void update_clock(void)
 
 	total_frame_time -= frame_times[frame_index];
 	frame_times[frame_index] = ticks;
+#elif _WIN32
+	LARGE_INTEGER ticks, elapsed;
+
+	QueryPerformanceCounter(&ticks);
+	elapsed.QuadPart = ticks.QuadPart - prev_clock.QuadPart;
+	elapsed.QuadPart *= 1000000000;
+	elapsed.QuadPart /= frequency.QuadPart;
+
+	total_frame_time -= frame_times[frame_index];
+	frame_times[frame_index] = elapsed.QuadPart;
+
+	prev_clock.QuadPart = ticks.QuadPart;
 #else
 	int ticks = SDL_GetTicks();
 
@@ -207,6 +224,9 @@ static void throttle(int draw_frame)
 	int rc;
 	long ns;
 	struct timespec sleep_time;
+#elif _WIN32
+	LARGE_INTEGER clock;
+	LARGE_INTEGER elapsed;
 #else
 	uint32_t clock;
 #endif
@@ -234,6 +254,18 @@ static void throttle(int draw_frame)
 		log_err("clock_nanosleep() failed: %s\n",
 			strerror(errno));
 	}
+#elif _WIN32
+	QueryPerformanceCounter(&clock);
+	elapsed.QuadPart = clock.QuadPart - prev_clock.QuadPart;
+	elapsed.QuadPart *= 1000;
+	elapsed.QuadPart /= frequency.QuadPart;
+
+	int fdelay = elapsed.QuadPart;
+	if (fdelay > 16)
+		fdelay = 0;
+
+	//printf("delay: %d\n", delay_ns / 1000000 - fdelay);
+	SDL_Delay((emu->current_delay_ns / 1000000) - fdelay);
 #else
 	clock = SDL_GetTicks();
 	//frame_times[frame_index] = clock - prev_clock;
@@ -384,6 +416,9 @@ static int main_loop(struct emu *emu)
 		log_err("clock_gettime() failed\n");
 		return -1;
 	}
+#elif _WIN32
+	QueryPerformanceCounter(&prev_clock);
+	QueryPerformanceFrequency(&frequency);
 #else
 	prev_clock = SDL_GetTicks();
 #endif
