@@ -485,6 +485,8 @@ static void bandai_reset(struct board *board, int hard)
 		}
 	}
 
+	m2_timer_set_flags(board->emu->m2_timer, M2_TIMER_FLAG_RELOAD, 0);
+
 	_x24c0x_scl[0] = 0;
 	_x24c0x_scl[1] = 0;
 	_x24c0x_sda[0] = 0;
