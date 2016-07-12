@@ -65,7 +65,7 @@ static SDL_cond *audiobuf_cond;
 extern struct emu *emu;
 
 static void audio_callback(void* unused, uint8_t* out, int byte_count);
-extern void update_clock(void);
+extern void update_clock(int);
 
 void audio_add_delta(unsigned time, int delta)
 {
@@ -332,7 +332,7 @@ int audio_buffer_check(void)
 			buffer_remaining = audio_buffer_size - samples;
 		}
 		SDL_UnlockMutex(audiobuf_lock);
-		update_clock();
+		update_clock(1);
 		return 1;
 	}
 

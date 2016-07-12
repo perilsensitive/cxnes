@@ -614,7 +614,7 @@ int ines_load(struct emu *emu, struct rom *rom)
 	else
 		system_type = EMU_SYSTEM_TYPE_NES;
 
-	if (header.tv_system > 1) {
+	if (header.tv_system_both) {
 		system_type = EMU_SYSTEM_TYPE_NES;
 		rom->info.flags |= ROM_FLAG_TIMING_PAL_NTSC;
 	}

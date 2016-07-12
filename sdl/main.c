@@ -163,7 +163,7 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0 },
 };
 
-void update_clock(void)
+void update_clock(int same_frame)
 {
 #if __unix__
 	long ticks = prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec;
@@ -172,8 +172,12 @@ void update_clock(void)
 	}
 	ticks = (prev_clock.tv_sec * 1000000000 + prev_clock.tv_nsec) - ticks;
 
-	total_frame_time -= frame_times[frame_index];
-	frame_times[frame_index] = ticks;
+	if (!same_frame) {
+		total_frame_time -= frame_times[frame_index];
+		frame_times[frame_index] = ticks;
+	} else {
+		frame_times[frame_index] += ticks - prev_clock;
+	}
 #elif _WIN32
 	LARGE_INTEGER ticks, elapsed;
 
@@ -182,20 +186,30 @@ void update_clock(void)
 	elapsed.QuadPart *= 1000000000;
 	elapsed.QuadPart /= frequency.QuadPart;
 
-	total_frame_time -= frame_times[frame_index];
-	frame_times[frame_index] = elapsed.QuadPart;
+	if (!same_frame) {
+		total_frame_time -= frame_times[frame_index];
+		frame_times[frame_index] = elapsed.QuadPart;
+	} else {
+		frame_times[frame_index] += ticks.QuadPart - prev_clock.QuadPart;
+	}
 
 	prev_clock.QuadPart = ticks.QuadPart;
 #else
 	int ticks = SDL_GetTicks();
 
-	total_frame_time -= frame_times[frame_index];
-	frame_times[frame_index] = ticks - prev_clock;
+	if (!same_frame) {
+		total_frame_time -= frame_times[frame_index];
+		frame_times[frame_index] = ticks - prev_clock;
+	} else {
+		frame_times[frame_index] += ticks - prev_clock;
+	}
 
 	prev_clock = ticks;
 #endif
-	total_frame_time += frame_times[frame_index];
-	frame_index = (frame_index + 1) % 60;
+	if (!same_frame) {
+		total_frame_time += frame_times[frame_index];
+		frame_index = (frame_index + 1) % 60;
+	}
 }
 
 #if __unix__
@@ -231,7 +245,7 @@ static void throttle(int draw_frame)
 	uint32_t clock;
 #endif
 
-	update_clock();
+	update_clock(0);
 
 	if ((!window_minimized && emu->config->vsync) ||
 	    !draw_frame) {
