@@ -232,7 +232,7 @@ static void deactivate_screensaver(void)
 }
 #endif
 
-static void throttle(int draw_frame)
+static void throttle(int draw_frame, int was_skip)
 {
 #if __unix__
 	int rc;
@@ -245,7 +245,8 @@ static void throttle(int draw_frame)
 	uint32_t clock;
 #endif
 
-	update_clock(0);
+	if (!was_skip)
+		update_clock(0);
 
 	if ((!window_minimized && emu->config->vsync) ||
 	    !draw_frame) {
@@ -408,6 +409,7 @@ int save_screenshot(void)
 
 static int main_loop(struct emu *emu)
 {
+	int last_audio_buffer_check = 1;
 #if __unix__
 	if (screensaver_deactivate_delay) {
 		screensaver_counter = emu->current_framerate *
@@ -522,9 +524,10 @@ static int main_loop(struct emu *emu)
 			video_warp_mouse(center_x, center_y);
 		}
 
-		throttle(emu->draw_frame);
+		throttle(emu->draw_frame, !last_audio_buffer_check);
 
-		emu->draw_frame = audio_buffer_check();
+		last_audio_buffer_check = audio_buffer_check();
+		emu->draw_frame = last_audio_buffer_check;
 
 #if __unix__
 		if ((screensaver_counter > 0) && !SDL_IsScreenSaverEnabled()) {
