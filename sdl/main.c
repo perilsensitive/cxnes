@@ -15,7 +15,10 @@
   You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+#*/
+
+#define _WIN32_WINNT 0x0601
+#define _WINMM_
 
 #include <stdio.h>
 #include <errno.h>
@@ -35,6 +38,9 @@
 #include <math.h>
 #ifdef __unix__
 #include <signal.h>
+#elif _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <mmsystem.h>
 #endif
 
 #include "log.h"
@@ -163,6 +169,32 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0 },
 };
 
+#if _WIN32
+static void hybrid_nanosleep(int64_t ticks)
+{
+	TIMECAPS tc;
+	int64_t time1, time2, freq;
+	int ms;
+
+	time1 = 0;
+	time2 = 0;
+
+	timeGetDevCaps(&tc, sizeof(tc));
+	QueryPerformanceCounter((LARGE_INTEGER *)&time1);
+	ms = ticks / 1000000;
+	if (ms > tc.wPeriodMin) {
+		ms -= tc.wPeriodMin;
+		Sleep(ms);
+	}
+
+	QueryPerformanceFrequency((LARGE_INTEGER *)&freq);
+
+	do {
+		QueryPerformanceCounter((LARGE_INTEGER *)&time2);
+	} while ((time2 - time1) < (ticks * freq / 1000000000));
+}
+#endif
+
 void update_clock(int same_frame)
 {
 #if __unix__
@@ -189,6 +221,7 @@ void update_clock(int same_frame)
 	if (!same_frame) {
 		total_frame_time -= frame_times[frame_index];
 		frame_times[frame_index] = elapsed.QuadPart;
+		printf("ticks = %llu\n", elapsed.QuadPart);
 	} else {
 		frame_times[frame_index] += ticks.QuadPart - prev_clock.QuadPart;
 	}
@@ -241,16 +274,15 @@ static void throttle(int draw_frame, int was_skip)
 #elif _WIN32
 	LARGE_INTEGER clock;
 	LARGE_INTEGER elapsed;
+	int delay;
 #else
 	uint32_t clock;
+	int delay;
 #endif
 
-	if (!was_skip)
-		update_clock(0);
-
 	if ((!window_minimized && emu->config->vsync) ||
-	    !draw_frame) {
-		return;
+	    (!draw_frame && was_skip)) {
+		goto no_sleep;
 	}
 	
 #if __unix__
@@ -272,26 +304,27 @@ static void throttle(int draw_frame, int was_skip)
 #elif _WIN32
 	QueryPerformanceCounter(&clock);
 	elapsed.QuadPart = clock.QuadPart - prev_clock.QuadPart;
-	elapsed.QuadPart *= 1000;
+	elapsed.QuadPart *= 1000000000;
 	elapsed.QuadPart /= frequency.QuadPart;
 
-	int fdelay = elapsed.QuadPart;
-	if (fdelay > 16)
-		fdelay = 0;
+	delay = emu->current_delay_ns - elapsed.QuadPart;
 
-	//printf("delay: %d\n", delay_ns / 1000000 - fdelay);
-	SDL_Delay((emu->current_delay_ns / 1000000) - fdelay);
+	if (delay > 0)
+		hybrid_nanosleep(delay);
 #else
 	clock = SDL_GetTicks();
 	//frame_times[frame_index] = clock - prev_clock;
 
-	int fdelay = clock - prev_clock;
-	if (fdelay > 16)
-		fdelay = 0;
+	delay = emu->current_delay_ns / 1000000 - (clock - prev_clock);
 
-	//printf("delay: %d\n", delay_ns / 1000000 - fdelay);
-	SDL_Delay((emu->current_delay_ns / 1000000) - fdelay);
+	//printf("delay: %d\n", delay_ns / 1000000 - delay);
+	if (delay > 0)
+		SDL_Delay(delay);
 #endif
+no_sleep:
+	if (!was_skip)
+		update_clock(0);
+
 }
 
 extern int input_process_event(SDL_Event *event);

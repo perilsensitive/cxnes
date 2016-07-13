@@ -377,7 +377,7 @@ void audio_fill_buffer(uint32_t cycles)
 		new_samples = blip_samples_avail(blip);
 		sample_count = new_samples - old_samples;
 		tmp = sample_count;
-		if (emu->config->vsync && emu->frame_timer_reload) {
+		if (emu->frame_timer_reload) {
 			if (emu->user_framerate < emu->display_framerate) {
 				if (tmp < samples_per_display_frame) {
 					int diff = samples_per_display_frame - tmp;
@@ -395,7 +395,7 @@ void audio_fill_buffer(uint32_t cycles)
 //		printf("adding %d samples %f (%d) (%d s %d)\n", tmp, adjusted_sample_rate, samples_per_display_frame, sample_count, samples_per_nes_frame);
 		sample_reserve += sample_count - tmp;
 	} else {
-		if (emu->config->vsync && emu->frame_timer_reload) {
+		if (emu->frame_timer_reload) {
 			if (emu->user_framerate < emu->display_framerate) {
 				/* if (sample_reserve > samples_per_display_frame) { */
 				/* 	samples_available += samples_per_display_frame; */

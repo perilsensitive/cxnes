@@ -19,7 +19,7 @@ case $host_os in
 		pkgdatadir=""
 		
 		CFLAGS="$CFLAGS -mwindows -D__USE_MINGW_ANSI_STDIO=1"
-		LIBS="$LIBS -lshlwapi"
+		LIBS="$LIBS -lshlwapi -lwinmm"
 		if test $host_cpu = x86_64
 		then
 				CC_LIST="x86_64-w64-mingw32-gcc i686-w64-mingw32-gcc"

@@ -819,7 +819,7 @@ int emu_run_frame(struct emu *emu, uint32_t *buffer, uint32_t *nes_buffer)
 {
 	int cycles;
 
-	if (emu->config->vsync && emu->frame_timer_reload) {
+	if (emu->frame_timer_reload) {
 		int old_frame_timer = emu->frame_timer;
 
 		if (emu->user_framerate > emu->display_framerate) {
