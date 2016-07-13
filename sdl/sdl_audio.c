@@ -143,6 +143,7 @@ static int audio_setup(struct emu *emu)
 		sdl_audio_device = SDL_OpenAudioDevice(NULL, 0, &wanted, &returned,
 						       flags );
 		if (sdl_audio_device <= 0) {
+			sdl_audio_device = -1;
 			log_err("failed to open SDL audio: %s\n",
 		                SDL_GetError());
 			return 0;
@@ -151,10 +152,13 @@ static int audio_setup(struct emu *emu)
 
 	driver_name = SDL_GetCurrentAudioDriver();
 
-	if (strcmp(driver_name, "dummy") == 0)
-		return 0;
-
 	log_dbg("Using SDL audio driver %s\n", driver_name);
+
+	if (strcmp(driver_name, "dummy") == 0) {
+		SDL_CloseAudioDevice(sdl_audio_device);
+		sdl_audio_device = -1;
+		return 0;
+	}
 
 	sample_rate = returned.freq;
 	adjusted_sample_rate = returned.freq;
