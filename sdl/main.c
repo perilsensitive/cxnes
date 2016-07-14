@@ -208,7 +208,7 @@ void update_clock(int same_frame)
 		total_frame_time -= frame_times[frame_index];
 		frame_times[frame_index] = ticks;
 	} else {
-		frame_times[frame_index] += ticks - prev_clock;
+		frame_times[frame_index] += ticks;
 	}
 #elif _WIN32
 	LARGE_INTEGER ticks, elapsed;
