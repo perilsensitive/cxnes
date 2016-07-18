@@ -424,5 +424,11 @@
 #define ACTION_OVERCLOCK_DISABLED      0x80ffff56
 #define ACTION_OVERCLOCK_POST_RENDER   0x80ffff57
 #define ACTION_OVERCLOCK_VBLANK        0x80ffff58
+#define ACTION_PLAY_MOVIE              0x80ffff59
+#define ACTION_STOP_MOVIE              0x80ffff5a
+#define ACTION_RECORD_MOVIE            0x80ffff5b
+#define ACTION_LOAD_MOVIE              0x80ffff5c
+#define ACTION_SAVE_MOVIE              0x80ffff5d
+#define ACTION_CLOSE_MOVIE             0x80ffff5e
 
 #endif

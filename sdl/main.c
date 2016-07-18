@@ -221,7 +221,6 @@ void update_clock(int same_frame)
 	if (!same_frame) {
 		total_frame_time -= frame_times[frame_index];
 		frame_times[frame_index] = elapsed.QuadPart;
-		printf("ticks = %llu\n", elapsed.QuadPart);
 	} else {
 		frame_times[frame_index] += ticks.QuadPart - prev_clock.QuadPart;
 	}
@@ -957,7 +956,7 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 					   emu->state_file, 1);
 		printf("path is %s\n", path);
 		if (check_file_exists(path)) {
-			if (emu_load_state(emu, path) == 0)
+			if (emu_load_state_from_file(emu, path) == 0)
 				osdprintf("State autoloaded\n");
 			else
 				osdprintf("State autoload failed\n");

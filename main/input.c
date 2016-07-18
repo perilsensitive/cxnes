@@ -93,6 +93,11 @@ struct emu_action *input_insert_emu_action(uint32_t emu_action);
 }
 
 struct emu_action_id_map emu_action_id_map[] = {
+	EMU_ACTION_ID_MAP(PLAY_MOVIE, EMULATOR, "Play Movie"),
+	EMU_ACTION_ID_MAP(STOP_MOVIE, EMULATOR, "Stop Movie"),
+	EMU_ACTION_ID_MAP(RECORD_MOVIE, EMULATOR, "Record Movie"),
+	EMU_ACTION_ID_MAP(LOAD_MOVIE, EMULATOR, "Load Movie"),
+	EMU_ACTION_ID_MAP(SAVE_MOVIE, EMULATOR, "Save Movie"),
 	EMU_ACTION_ID_MAP(OVERCLOCK_DEFAULT, EMULATOR, "Overclock Mode (Default)"),
 	EMU_ACTION_ID_MAP(OVERCLOCK_DISABLED, EMULATOR, "Overclock Mode (Disabled)"),
 	EMU_ACTION_ID_MAP(OVERCLOCK_POST_RENDER, EMULATOR, "Overclock (Post-render)"),
@@ -1309,6 +1314,30 @@ static int misc_buttons(void *data, uint32_t pressed, uint32_t button)
 	int state_index;
 
 	switch (button) {
+	case ACTION_PLAY_MOVIE:
+		if (pressed)
+			emu_play_movie(emu);
+		break;
+	case ACTION_RECORD_MOVIE:
+		if (pressed)
+			emu_record_movie(emu);
+		break;
+	case ACTION_STOP_MOVIE:
+		if (pressed)
+			emu_stop_movie(emu);
+		break;
+	case ACTION_SAVE_MOVIE:
+		if (pressed)
+			emu_save_movie(emu, "test.cxm");
+		break;
+	case ACTION_LOAD_MOVIE:
+		if (pressed)
+			emu_load_movie(emu, "test.cxm");
+		break;
+	case ACTION_CLOSE_MOVIE:
+		if (pressed)
+			emu_close_movie(emu);
+		break;
 	case ACTION_OVERCLOCK_DEFAULT:
 		if (pressed)
 			cpu_set_overclock(emu->cpu, "default", 1);
@@ -1557,6 +1586,12 @@ int input_disconnect_handlers(const struct input_event_handler *handlers)
 }
 
 static struct input_event_handler misc_handlers[] = {
+	{ ACTION_LOAD_MOVIE, misc_buttons },
+	{ ACTION_SAVE_MOVIE, misc_buttons },
+	{ ACTION_CLOSE_MOVIE, misc_buttons },
+	{ ACTION_STOP_MOVIE, misc_buttons },
+	{ ACTION_PLAY_MOVIE, misc_buttons },
+	{ ACTION_RECORD_MOVIE, misc_buttons },
 	{ ACTION_OVERCLOCK_DEFAULT, misc_buttons },
 	{ ACTION_OVERCLOCK_DISABLED, misc_buttons },
 	{ ACTION_OVERCLOCK_POST_RENDER, misc_buttons },

@@ -379,7 +379,7 @@ static void load_state(GtkWidget *widget, gpointer user_data)
 		emu_pause(emu, 0);
 
 	if (file) {
-		emu_load_state(emu, file);
+		emu_load_state_from_file(emu, file);
 		free(file);
 	}
 

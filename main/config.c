@@ -884,6 +884,8 @@ struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
 	{ .name = "Keyboard F12", .value = "OVERCLOCK_POST_RENDER" },
+	{ .name = "Keyboard F4", .value = "RECORD_MOVIE" },
+	{ .name = "[CTRL] Keyboard F4", .value = "SAVE_MOVIE" },
 	{ .name = "[CTRL] Keyboard F12", .value = "OVERCLOCK_DISABLED" },
 	{ .name = "[SHIFT] Keyboard F12", .value = "OVERCLOCK_VBLANK" },
 	{ .name = "[ALT] Keyboard F12", .value = "OVERCLOCK_DEFAULT" },

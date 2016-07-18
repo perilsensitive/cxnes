@@ -157,6 +157,13 @@ struct emu {
 	char *cfg_file;
 	char *cheat_file;
 	char *state_file;
+
+	struct save_state *movie_save_state;
+	uint8_t *movie_buffer[2];
+	size_t movie_size[2];
+	int movie_offset[2];
+	int playing_movie;
+	int recording_movie;
 };
 
 #define emu_paused(_e) (_e->paused)
@@ -178,7 +185,8 @@ void emu_toggle_sprites(struct emu *emu);
 void emu_toggle_bg(struct emu *emu);
 void emu_toggle_cheats(struct emu *emu);
 void emu_pause(struct emu *emu, int pause);
-int emu_load_state(struct emu *emu, const char *filename);
+int emu_load_state(struct emu *emu, int is_movie, struct save_state *state);
+int emu_load_state_from_file(struct emu *emu, const char *filename);
 int emu_save_state(struct emu *emu, const char *filename);
 void emu_set_quick_save_slot(struct emu *emu, int slot, int display);
 int emu_get_quick_save_slot(struct emu *emu);
@@ -203,5 +211,14 @@ void emu_set_remember_overclock_mode(struct emu *emu, int enabled);
 int osdprintf(const char *format, ...);
 void emu_overclock(struct emu *emu, uint32_t cycles, int enabled);
 char *emu_generate_rom_config_path(struct emu *emu, int save);
+void emu_movie_add_input(struct emu *emu, int port, int data);
+int emu_movie_get_input(struct emu *emu, int port);
+
+int emu_load_movie(struct emu *emu, char *filename);
+int emu_save_movie(struct emu *emu, char *filename);
+int emu_record_movie(struct emu *emu);
+int emu_play_movie(struct emu *emu);
+void emu_stop_movie(struct emu *emu);
+void emu_close_movie(struct emu *emu);
 
 #endif				/* __EMU_H__ */

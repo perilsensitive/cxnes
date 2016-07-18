@@ -115,6 +115,10 @@ struct io_device {
 	int (*apply_config) (struct io_device *);
 	int (*save_state) (struct io_device *, int, struct save_state *);
 	int (*load_state) (struct io_device *, int, struct save_state *);
+	void (*play_movie) (struct io_device *);
+	void (*record_movie) (struct io_device *);
+	int (*save_movie) (struct io_device *);
+	void (*close_movie) (struct io_device *);
 	struct input_event_handler *handlers;
 	const char *name;
 	const char *config_id;
@@ -162,5 +166,10 @@ void io_set_remember_input_devices(struct io_state *io, int enabled);
 
 int io_save_state(struct io_state *io, struct save_state *state);
 int io_load_state(struct io_state *io, struct save_state *state);
+int io_save_movie(struct io_state *io);
+void io_play_movie(struct io_state *io);
+void io_record_movie(struct io_state *io);
+void io_close_movie(struct io_state *io);
+
 
 #endif				/* __IO_H__ */

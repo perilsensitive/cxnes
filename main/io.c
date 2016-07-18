@@ -196,6 +196,9 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	int four_player_mode;
 	struct io_state *io;
 
+	if (emu->playing_movie)
+		return;
+
 	io = emu->io;
 	four_player_mode = emu->io->four_player_mode;
 
@@ -232,6 +235,71 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	}
 }
 
+int io_save_movie(struct io_state *io)
+{
+	int port;
+	struct io_device *device;
+	int rc;
+
+	rc = 0;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->save_movie) {
+				int result;
+				result = device->save_movie(device);
+
+				if (result)
+					rc = -1;
+			}
+		}
+	}
+
+	return rc;
+}
+
+void io_close_movie(struct io_state *io)
+{
+	int port;
+	struct io_device *device;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->close_movie) {
+				device->close_movie(device);
+			}
+		}
+	}
+}
+
+void io_play_movie(struct io_state *io)
+{
+	int port;
+	struct io_device *device;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->play_movie) {
+				device->play_movie(device);
+			}
+		}
+	}
+}
+
+void io_record_movie(struct io_state *io)
+{
+	int port;
+	struct io_device *device;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->record_movie) {
+				device->record_movie(device);
+			}
+		}
+	}
+}
+
 static CPU_READ_HANDLER(io_read_handler)
 {
 	struct io_device *device;
@@ -262,6 +330,11 @@ static CPU_READ_HANDLER(io_read_handler)
 	}
 
 	result = 0;
+
+	if (emu->playing_movie) {
+		result = emu_movie_get_input(emu, port);
+		goto done;
+	}
 
 	/* Read from standard controller port */
 	for (device = io->port[port]; device; device = device->next) {
@@ -301,6 +374,12 @@ static CPU_READ_HANDLER(io_read_handler)
 			}
 		}
 	}
+
+	if (emu->recording_movie) {
+		printf("adding %x for %d\n", result, port);
+		emu_movie_add_input(emu, port, result);
+	}
+done:
 
 	io->last_read[port] = cycles;
 
