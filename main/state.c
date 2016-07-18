@@ -202,8 +202,6 @@ int save_state_find_chunk(struct save_state *state, const char *id,
 		size |= ptr[6] << 16;
 		size |= ptr[7] << 24;
 
-		printf("%c%c%c%c\n", ptr[0], ptr[1], ptr[2], ptr[3]);
-
 		if (memcmp(ptr, id, 4) == 0) {
 			*bufp = ptr + 8;
 			*sizep = size;
@@ -288,8 +286,6 @@ int save_state_read(struct save_state *state, const char *filename)
 
 	state->data = buf;
 	state->size = size;
-
-	printf("read %d bytes\n", size);
 
 	return 0;
 }

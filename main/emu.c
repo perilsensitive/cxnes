@@ -216,8 +216,6 @@ int emu_init(struct emu *emu)
 	io_init(emu);
 
 	emu->movie_save_state = NULL;
-	emu->movie_buffer[0] = NULL;
-	emu->movie_buffer[1] = NULL;
 	emu_close_movie(emu);
 
 	cpu_set_pagetable_entry(emu->cpu, 0x0000, SIZE_2K, emu->ram,
@@ -723,6 +721,8 @@ int emu_load_rom(struct emu *emu, char *filename, int patch_count,
 
 void emu_deinit(struct emu *emu)
 {
+	emu_close_movie(emu);
+
 	if (emu->board)
 		board_cleanup(emu->board);
 
@@ -776,7 +776,6 @@ void emu_deinit(struct emu *emu)
 	emu->save_file = NULL;
 	emu->state_file = NULL;
 	video_set_window_title(NULL);
-	emu_close_movie(emu);
 }
 
 int emu_apply_config(struct emu *emu)
@@ -1146,13 +1145,14 @@ int emu_play_movie(struct emu *emu)
 {
 	int rc;
 
-	rc = emu_load_state(emu, 1, emu->movie_save_state);
+	rc = emu_load_state(emu, emu->movie_save_state);
 	if (rc < 0)
 		return -1;
 
-	emu->playing_movie = 1;
+	emu->playing_movie = 0;
 	emu->recording_movie = 0;
 
+	io_play_movie(emu->io);
 	osdprintf("Playing movie");
 
 	return 0;
@@ -1160,6 +1160,10 @@ int emu_play_movie(struct emu *emu)
 
 void emu_stop_movie(struct emu *emu)
 {
+	io_stop_movie(emu->io);
+
+	osdprintf("Movie %s stopped\n", emu->recording_movie ?
+	          "recording" : "playback");
 	emu->playing_movie = 0;
 	emu->recording_movie = 0;
 }
@@ -1168,19 +1172,6 @@ void emu_close_movie(struct emu *emu)
 {
 	if (emu->movie_save_state)
 		destroy_save_state(emu->movie_save_state);
-
-	if (emu->movie_buffer[0])
-		free(emu->movie_buffer[0]);
-
-	if (emu->movie_buffer[1])
-		free(emu->movie_buffer[1]);
-
-	emu->movie_buffer[0] = NULL;
-	emu->movie_buffer[1] = NULL;
-	emu->movie_offset[0] = 0;
-	emu->movie_offset[1] = 0;
-	emu->movie_size[0] = 0;
-	emu->movie_size[1] = 0;
 }
 
 int emu_record_movie(struct emu *emu)
@@ -1195,6 +1186,7 @@ int emu_record_movie(struct emu *emu)
 	emu->playing_movie = 0;
 	emu->recording_movie = 1;
 
+	io_record_movie(emu->io);
 	osdprintf("Recording movie");
 
 	return 0;
@@ -1207,10 +1199,7 @@ int emu_save_movie(struct emu *emu, char *filename)
 
 	state = emu->movie_save_state;
 
-	rc = save_state_add_chunk(state, "RAW0", emu->movie_buffer[0],
-	                          emu->movie_offset[0]);
-	rc = save_state_add_chunk(state, "RAW1", emu->movie_buffer[1],
-	                          emu->movie_offset[1]);
+	rc = io_save_movie(emu->io);
 
 	rc = save_state_write(state, filename);
 
@@ -1218,7 +1207,7 @@ int emu_save_movie(struct emu *emu, char *filename)
 	return rc;
 }
 
-int emu_load_state(struct emu *emu, int is_movie, struct save_state *state)
+int emu_load_state(struct emu *emu, struct save_state *state)
 {
 	uint8_t *buf;
 	size_t size;
@@ -1241,21 +1230,6 @@ int emu_load_state(struct emu *emu, int is_movie, struct save_state *state)
 	board_load_state(emu->board, state);
 	io_load_state(emu->io, state);
 
-	if (is_movie) {
-		int rc;
-		rc = save_state_find_chunk(state, "RAW0", &(emu->movie_buffer[0]),
-	                                   &(emu->movie_size[0]));
-		int rc2 = save_state_find_chunk(state, "RAW1", &(emu->movie_buffer[1]),
-	                                       &(emu->movie_size[1]));
-
-		printf("rc: %d rc2: %d\n", rc, rc2);
-
-		printf("%x %x %x %x\n", emu->movie_buffer[0][0], emu->movie_buffer[0][1],		emu->movie_buffer[0][2], emu->movie_buffer[0][3]);
-
-		emu->movie_offset[0] = 0;
-		emu->movie_offset[1] = 0;
-	}
-	
 	return 0;
 }
 
@@ -1272,7 +1246,7 @@ int emu_load_state_from_file(struct emu *emu, const char *filename)
 		return -1;
 	}
 
-	if (emu_load_state(emu, 0, state) < 0) {
+	if (emu_load_state(emu, state) < 0) {
 		destroy_save_state(state);
 		return -1;
 	}
@@ -1555,71 +1529,6 @@ void emu_overclock(struct emu *emu, uint32_t cycles, int enabled)
 	emu->overclocking = enabled;
 }
 
-void emu_movie_add_input(struct emu *emu, int port, int data)
-{
-	int available;
-
-	available = emu->movie_size[port] -
-	            emu->movie_offset[port];
-
-	if (emu->movie_size[port] && emu->movie_offset[port]) {
-		uint8_t last;
-		uint8_t count;
-
-		last = emu->movie_buffer[port][emu->movie_offset[port] - 2];
-		count = emu->movie_buffer[port][emu->movie_offset[port] - 1];
-
-		if ((data == last) && (count < 255)) {
-			count++;
-			emu->movie_buffer[port][emu->movie_offset[port] - 1] = count;
-			return;
-		}
-	}
-
-	if (!available) {
-		uint8_t *tmp;
-		int new_size;
-
-		new_size = emu->movie_size[port] + 1024;
-		tmp = realloc(emu->movie_buffer[port], new_size);
-		if (!tmp)
-			return;
-
-		emu->movie_buffer[port] = tmp;
-		emu->movie_size[port] = new_size;
-	}
-
-	emu->movie_buffer[port][emu->movie_offset[port]] = data;
-	emu->movie_buffer[port][emu->movie_offset[port] + 1] = 0;
-	emu->movie_offset[port] += 2;
-}
-
-int emu_movie_get_input(struct emu *emu, int port)
-{
-	uint8_t *buffer;
-	int value;
-	int count;
-	int offset;
-
-	buffer = emu->movie_buffer[port];
-	offset = emu->movie_offset[port];
-
-	if (buffer) {
-		value = buffer[offset];
-		count = buffer[offset + 1];
-
-		if (count > 0) {
-			count--;
-			buffer[offset + 1] = count;
-		} else {
-			offset += 2;
-			emu->movie_offset[port] = offset;
-		}
-	}
-
-	return value;
-}
-
 int emu_load_movie(struct emu *emu, char *filename)
 {
 	int rc;
@@ -1635,4 +1544,16 @@ int emu_load_movie(struct emu *emu, char *filename)
 	osdprintf("Loading movie");
 
 	return 0;
+}
+
+void emu_increment_movie_chunk_count(struct emu *emu)
+{
+	emu->playing_movie++;
+}
+
+void emu_decrement_movie_chunk_count(struct emu *emu)
+{
+	emu->playing_movie--;
+	if (emu->playing_movie <= 0)
+		emu_stop_movie(emu);
 }

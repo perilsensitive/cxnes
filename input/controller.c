@@ -55,8 +55,12 @@ static int controller_load_state(struct io_device *dev, int port,
 				 struct save_state *state);
 static int controller_movie_get_latch(struct io_device *dev);
 static void controller_close_movie(struct io_device *dev);
-static void controller_play_record_movie(struct io_device *dev);
+static void controller_play_movie(struct io_device *dev);
+static void controller_stop_movie(struct io_device *dev);
+static void controller_record_movie(struct io_device *dev);
 static int controller_save_movie(struct io_device *dev);
+static void controller_movie_add_data(struct io_device *dev, int data);
+static void controller_movie_encode_latch(struct io_device *dev);
 
 struct controller_state {
 	int latch;
@@ -70,6 +74,8 @@ struct controller_state {
 	uint8_t *movie_buffer;
 	size_t movie_size;
 	int movie_offset;
+	int movie_latch_data;
+	int movie_latch_count;
 };
 
 static struct state_item controller_state_items[] = {
@@ -90,8 +96,9 @@ struct io_device controller1_device = {
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.end_frame = controller_end_frame,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_1,
@@ -110,8 +117,9 @@ struct io_device controller2_device = {
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.end_frame = controller_end_frame,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_2,
@@ -130,8 +138,9 @@ struct io_device controller3_device = {
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.end_frame = controller_end_frame,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_3,
@@ -150,8 +159,9 @@ struct io_device controller4_device = {
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.end_frame = controller_end_frame,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_4,
@@ -186,8 +196,9 @@ struct io_device snes_controller1_device = {
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
 	.end_frame = controller_end_frame,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_1,
@@ -205,8 +216,9 @@ struct io_device snes_controller2_device = {
 	.save_state = controller_save_state,
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_2,
@@ -224,8 +236,9 @@ struct io_device snes_controller3_device = {
 	.save_state = controller_save_state,
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_3,
@@ -243,15 +256,75 @@ struct io_device snes_controller4_device = {
 	.save_state = controller_save_state,
 	.load_state = controller_load_state,
 	.apply_config = controller_apply_config,
-	.record_movie = controller_play_record_movie,
-	.play_movie = controller_play_record_movie,
+	.record_movie = controller_record_movie,
+	.play_movie = controller_play_movie,
+	.stop_movie = controller_stop_movie,
 	.save_movie = controller_save_movie,
 	.close_movie = controller_close_movie,
 	.port = PORT_4,
 	.removable = 1,
 };
 
-static void controller_play_record_movie(struct io_device *dev)
+static int controller_load_movie(struct io_device *dev)
+{
+	int rc;
+	struct controller_state *state;
+	char *id;
+	uint8_t *buffer;
+	size_t size;
+
+	state = dev->private;
+
+	if ((dev->port < PORT_1) || (dev->port > PORT_4))
+		return -1;
+
+	switch (dev->port) {
+	case PORT_1:
+		id = "PDM0";
+		break;
+	case PORT_2:
+		id = "PDM1";
+		break;
+	case PORT_3:
+		id = "PDM2";
+		break;
+	case PORT_4:
+		id = "PDM3";
+		break;
+	}
+
+	rc = save_state_find_chunk(dev->emu->movie_save_state, id,
+	                           &buffer, &size);
+
+	if (size) {
+		state->movie_buffer = malloc(size);
+		if (!state->movie_buffer)
+			return -1;
+
+		memcpy(state->movie_buffer, buffer, size);
+		state->movie_size = size;
+
+		emu_increment_movie_chunk_count(dev->emu);
+	}
+
+	if (rc < 0)
+		return -1;
+
+	return 0;
+}
+
+static void controller_play_movie(struct io_device *dev)
+{
+	struct controller_state *state;
+
+	state = dev->private;
+
+	controller_load_movie(dev);
+
+	state->movie_offset = 0;
+}
+
+static void controller_record_movie(struct io_device *dev)
 {
 	struct controller_state *state;
 
@@ -259,6 +332,7 @@ static void controller_play_record_movie(struct io_device *dev)
 
 	state->movie_offset = 0;
 }
+
 
 static void controller_close_movie(struct io_device *dev)
 {
@@ -272,16 +346,44 @@ static void controller_close_movie(struct io_device *dev)
 	state->movie_buffer = NULL;
 	state->movie_size = 0;
 	state->movie_offset = 0;
+	state->movie_latch_data = 0;
+	state->movie_latch_count = 0;
+}
+
+static void controller_stop_movie(struct io_device *dev)
+{
+	if (dev->emu->recording_movie)
+		controller_movie_encode_latch(dev);
 }
 
 static int controller_save_movie(struct io_device *dev)
 {
 	struct controller_state *state;
 	int rc;
+	char *id;
 
 	state = dev->private;
+
+	if ((dev->port < PORT_1) || (dev->port > PORT_4))
+		return -1;
+
+	switch (dev->port) {
+	case PORT_1:
+		id = "PDM0";
+		break;
+	case PORT_2:
+		id = "PDM1";
+		break;
+	case PORT_3:
+		id = "PDM2";
+		break;
+	case PORT_4:
+		id = "PDM3";
+		break;
+	}
+
 	
-	rc = save_state_add_chunk(dev->emu->movie_save_state, "MCL0",
+	rc = save_state_add_chunk(dev->emu->movie_save_state, id,
 	                          state->movie_buffer,
 	                          state->movie_offset);
 
@@ -313,8 +415,13 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 		state->strobe = 0;
 
 		if (dev->emu->playing_movie) {
-			state->latch = controller_movie_get_latch(dev);
-			return;
+			if (!state->latched) {
+				state->latch = controller_movie_get_latch(dev);
+				state->old_latch = state->latch;
+			} else {
+				state->latch = state->old_latch;
+			}
+			goto done;
 		}
 
 		if (state->common_state)
@@ -421,6 +528,8 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 			}
 		}
 
+done:
+
 		if (state->is_snes) {
 			state->latch &= 0x0fff;
 		} else {
@@ -434,16 +543,8 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 			}
 		}
 
-		if (!state->latched && !controller &&
-		    ((state->latch & 0xff) != state->old_latch)) {
-			if (dev->emu->recording_movie) {
-				//controller_add_movie_data(dev, state->old_latch,
-				 //                         state->runlength);
-			}
-			state->runlength = 1;
-			state->old_latch = state->latch & 0xff;
-		} else if (!state->latched && !controller) {
-			state->runlength++;
+		if (dev->emu->recording_movie && !state->latched) {
+			controller_movie_add_data(dev, state->latch);
 		}
 
 		state->latched = 1;
@@ -451,18 +552,21 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 
 }
 
-int controller_movie_get_latch(struct io_device *dev)
+static int controller_movie_get_latch(struct io_device *dev)
 {
 	struct controller_state *state;
 	uint8_t *buffer;
-	int value;
-	int count;
+	uint8_t value;
+	uint8_t count;
 	int offset;
 
 	state = dev->private;
 
 	buffer = state->movie_buffer;
 	offset = state->movie_offset;
+
+	if (offset == state->movie_size)
+		return 0;
 
 	if (buffer) {
 		value = buffer[offset];
@@ -475,51 +579,70 @@ int controller_movie_get_latch(struct io_device *dev)
 			offset += 2;
 			state->movie_offset = offset;
 		}
+
+		if (offset == state->movie_size)
+			emu_decrement_movie_chunk_count(dev->emu);
 	}
 
 	return value;
 }
 
-void controller_movie_add_data(struct io_device *dev, int data, int length)
+static void controller_movie_encode_latch(struct io_device *dev)
 {
 	struct controller_state *state;
+	uint8_t data;
 	int available;
+	int count;
 
 	state = dev->private;
+	data = state->movie_latch_data;
+	count = state->movie_latch_count;
 
-	available = state->movie_size - state->movie_offset;
+	while (count) {
+		int c;
 
-	if (state->movie_size && state->movie_offset) {
-		uint8_t last;
-		uint8_t count;
+		available = state->movie_size - state->movie_offset;
 
-		last = state->movie_buffer[state->movie_offset - 2];
-		count = state->movie_buffer[state->movie_offset - 1];
+		if (!available) {
+			uint8_t *tmp;
+			int new_size;
 
-		if ((data == last) && (count < 255)) {
-			count++;
-			state->movie_buffer[state->movie_offset - 1] = count;
-			return;
+			new_size = state->movie_size + 1024;
+			tmp = realloc(state->movie_buffer, new_size);
+			if (!tmp)
+				return;
+
+			state->movie_buffer = tmp;
+			state->movie_size = new_size;
 		}
+
+		if (count > 256)
+			c = 256;
+		else
+			c = count;
+
+		count -= c;
+
+		state->movie_buffer[state->movie_offset] = data;
+		state->movie_buffer[state->movie_offset + 1] = c - 1;
+		state->movie_offset += 2;
 	}
+}
 
-	if (!available) {
-		uint8_t *tmp;
-		int new_size;
+static void controller_movie_add_data(struct io_device *dev, int data)
+{
+	struct controller_state *state;
 
-		new_size = state->movie_size + 1024;
-		tmp = realloc(state->movie_buffer, new_size);
-		if (!tmp)
-			return;
+	state = dev->private;
+	data &= 0xff;
 
-		state->movie_buffer = tmp;
-		state->movie_size = new_size;
+	if ((data != state->movie_latch_data) || (!state->movie_latch_count)) {
+		controller_movie_encode_latch(dev);
+		state->movie_latch_data = data;
+		state->movie_latch_count = 1;
+	} else {
+		state->movie_latch_count++;
 	}
-
-	state->movie_buffer[state->movie_offset] = data;
-	state->movie_buffer[state->movie_offset + 1] = 0;
-	state->movie_offset += 2;
-
 }
 
 static uint8_t controller_read(struct io_device *dev, int port, int mode,
@@ -597,6 +720,10 @@ static int controller_connect(struct io_device *dev)
 		state->is_snes = 0;
 		state->index = -1;
 	}
+
+	state->movie_buffer = NULL;
+	state->movie_size = 0;
+	state->movie_offset = 0;
 
 	state->common_state =
 		io_get_controller_common_state(dev->emu->io);

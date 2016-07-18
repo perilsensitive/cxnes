@@ -69,6 +69,9 @@ static void controller_common_disconnect(struct io_device *dev);
 static void controller_common_end_frame(struct io_device *dev, uint32_t cycles);
 static int controller_common_set_button(void *data, uint32_t pressed, uint32_t button);
 static int controller_common_apply_config(struct io_device *dev);
+static int io_movie_get_raw_input(struct io_state *io, int port);
+static void io_movie_add_raw_input(struct io_state *io, int port, int data);
+
 
 #define BUTTON_A 1
 #define BUTTON_B 2
@@ -145,6 +148,9 @@ struct io_state {
 	 */
 	uint32_t last_read[2];
 	struct emu *emu;
+	uint8_t *movie_buffer[2];
+	size_t movie_size[2];
+	int movie_offset[2];
 };
 
 struct io_device *io_register_device(struct io_state *io,
@@ -196,9 +202,6 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	int four_player_mode;
 	struct io_state *io;
 
-	if (emu->playing_movie)
-		return;
-
 	io = emu->io;
 	four_player_mode = emu->io->four_player_mode;
 
@@ -235,6 +238,29 @@ static CPU_WRITE_HANDLER(io_write_handler)
 	}
 }
 
+int io_load_movie(struct io_state *io)
+{
+	int port;
+	struct io_device *device;
+	int rc;
+
+	rc = 0;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->load_movie) {
+				int result;
+				result = device->load_movie(device);
+
+				if (result)
+					rc = -1;
+			}
+		}
+	}
+
+	return rc;
+}
+
 int io_save_movie(struct io_state *io)
 {
 	int port;
@@ -242,6 +268,19 @@ int io_save_movie(struct io_state *io)
 	int rc;
 
 	rc = 0;
+
+	if (io->movie_buffer[0]) {
+		rc = save_state_add_chunk(io->emu->movie_save_state,"RWM0",
+		                          io->movie_buffer[0],
+					  io->movie_offset[0]);
+	}
+
+
+	if (io->movie_buffer[1]) {
+		rc = save_state_add_chunk(io->emu->movie_save_state, "RWM1",
+		                          io->movie_buffer[1],
+	                                  io->movie_offset[1]);
+	}
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {
 		for (device = io->port[port]; device; device = device->next) {
@@ -270,20 +309,61 @@ void io_close_movie(struct io_state *io)
 			}
 		}
 	}
+
+	if (io->movie_buffer[0])
+		free(io->movie_buffer[0]);
+
+	if (io->movie_buffer[1])
+		free(io->movie_buffer[1]);
+
+	io->movie_buffer[0] = NULL;
+	io->movie_buffer[1] = NULL;
+	io->movie_offset[0] = 0;
+	io->movie_offset[1] = 0;
+	io->movie_size[0] = 0;
+	io->movie_size[1] = 0;
+}
+
+void io_stop_movie(struct io_state *io)
+{
+	int port;
+	int rc;
+
+	for (port = PORT_1; port <= PORT_EXP; port++) {
+		struct io_device *device;
+		for (device = io->port[port]; device; device = device->next) {
+			if (device->connected && device->stop_movie) {
+				device->stop_movie(device);
+			}
+		}
+	}
 }
 
 void io_play_movie(struct io_state *io)
 {
 	int port;
-	struct io_device *device;
+	int rc;
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {
+		struct io_device *device;
 		for (device = io->port[port]; device; device = device->next) {
 			if (device->connected && device->play_movie) {
 				device->play_movie(device);
 			}
 		}
 	}
+
+	rc = save_state_find_chunk(io->emu->movie_save_state,
+	                           "RWM0",
+	                           &(io->movie_buffer[0]),
+	                                  &(io->movie_size[0]));
+	rc = save_state_find_chunk(io->emu->movie_save_state,
+	                           "RWM1",
+	                           &(io->movie_buffer[1]),
+                                  &(io->movie_size[1]));
+
+	io->movie_offset[0] = 0;
+	io->movie_offset[1] = 0;
 }
 
 void io_record_movie(struct io_state *io)
@@ -305,12 +385,15 @@ static CPU_READ_HANDLER(io_read_handler)
 	struct io_device *device;
 	struct io_state *io;
 	uint8_t result;
+	uint8_t raw_result;
 	int port;
 	int mask;
 	int four_player_mode;
+	int devices_without_movie_support;
 
 	io = emu->io;
 	four_player_mode = io->four_player_mode;
+	devices_without_movie_support = 0;
 
 	if (four_player_mode == FOUR_PLAYER_MODE_AUTO)
 		four_player_mode = io->auto_four_player_mode;
@@ -330,29 +413,55 @@ static CPU_READ_HANDLER(io_read_handler)
 	}
 
 	result = 0;
-
-	if (emu->playing_movie) {
-		result = emu_movie_get_input(emu, port);
-		goto done;
-	}
+	raw_result = 0;
 
 	/* Read from standard controller port */
 	for (device = io->port[port]; device; device = device->next) {
 		if (device->connected && device->read) {
+			uint8_t tmp_result;
+
 			mask = 0x19;
-			result |= device->read(device, port,
-					       four_player_mode,
-					       cycles) & mask;
+
+			if (emu->playing_movie && !device->play_movie) {
+				devices_without_movie_support++;
+				continue;
+			}
+
+			tmp_result = device->read(device, port,
+					          four_player_mode,
+					          cycles) & mask;
+
+			if (emu->recording_movie && !device->save_movie) {
+				devices_without_movie_support++;
+				raw_result |= tmp_result;
+			}
+
+			result |= tmp_result;
 		}
 	}
 
 	/* Read from expansion port */
 	for (device = io->port[PORT_EXP]; device; device = device->next) {
 		if (device->connected && device->read) {
+			uint8_t tmp_result;
+
 			mask = io->read_mask;
-			result |= (device->read(device, port,
-						four_player_mode,
-						cycles) & mask);
+
+			if (emu->playing_movie && !device->play_movie) {
+				devices_without_movie_support++;
+				continue;
+			}
+
+			tmp_result = (device->read(device, port,
+						   four_player_mode,
+						   cycles) & mask);
+
+			if (emu->recording_movie && !device->save_movie) {
+				devices_without_movie_support++;
+				raw_result |= tmp_result;
+			}
+
+			result |= tmp_result;
 		}
 	}
 
@@ -366,20 +475,35 @@ static CPU_READ_HANDLER(io_read_handler)
 		for (device = io->port[port + 2]; device;
 		     device = device->next) {
 			if (device->connected && device->read) {
+				uint8_t tmp_result;
+
 				mask = 0x01;
-				result |= (device->read(device, port,
-							four_player_mode,
-							cycles)
-					   & mask) << shift;
+
+				if (emu->playing_movie && !device->play_movie) {
+					devices_without_movie_support++;
+					continue;
+				}
+
+				tmp_result = (device->read(device, port,
+							   four_player_mode,
+							   cycles)
+					      & mask) << shift;
+
+				if (emu->recording_movie &&
+				    !device->save_movie) {
+					devices_without_movie_support++;
+					raw_result |= tmp_result;
+				}
 			}
 		}
 	}
 
-	if (emu->recording_movie) {
-		printf("adding %x for %d\n", result, port);
-		emu_movie_add_input(emu, port, result);
+	if (devices_without_movie_support) {
+		if (emu->playing_movie)
+			result |= io_movie_get_raw_input(io, port);
+		else if (emu->recording_movie)
+			io_movie_add_raw_input(io, port, raw_result);
 	}
-done:
 
 	io->last_read[port] = cycles;
 
@@ -432,6 +556,10 @@ int io_init(struct emu *emu)
 
 	io->initialized = 0;
 
+	io->movie_buffer[0] = NULL;
+	io->movie_buffer[1] = NULL;
+	io_close_movie(io);
+
 	io->selected_device[0] = NULL;
 	io->selected_device[1] = NULL;
 	io->selected_device[2] = NULL;
@@ -458,6 +586,8 @@ void io_cleanup(struct io_state *io)
 {
 	struct io_device **dev, *tmp;
 	int port;
+
+	io_close_movie(io);
 
 	for (port = 0; port < 5; port++) {
 		dev = &io->port[port];
@@ -1429,3 +1559,69 @@ int io_load_state(struct io_state *io, struct save_state *state)
 
 	return 0;
 }
+
+static void io_movie_add_raw_input(struct io_state *io, int port, int data)
+{
+	int available;
+
+	available = io->movie_size[port] -
+	            io->movie_offset[port];
+
+	if (io->movie_size[port] && io->movie_offset[port]) {
+		uint8_t last;
+		uint8_t count;
+
+		last = io->movie_buffer[port][io->movie_offset[port] - 2];
+		count = io->movie_buffer[port][io->movie_offset[port] - 1];
+
+		if ((data == last) && (count < 255)) {
+			count++;
+			io->movie_buffer[port][io->movie_offset[port] - 1] = count;
+			return;
+		}
+	}
+
+	if (!available) {
+		uint8_t *tmp;
+		int new_size;
+
+		new_size = io->movie_size[port] + 1024;
+		tmp = realloc(io->movie_buffer[port], new_size);
+		if (!tmp)
+			return;
+
+		io->movie_buffer[port] = tmp;
+		io->movie_size[port] = new_size;
+	}
+
+	io->movie_buffer[port][io->movie_offset[port]] = data;
+	io->movie_buffer[port][io->movie_offset[port] + 1] = 0;
+	io->movie_offset[port] += 2;
+}
+
+static int io_movie_get_raw_input(struct io_state *io, int port)
+{
+	uint8_t *buffer;
+	int value;
+	int count;
+	int offset;
+
+	buffer = io->movie_buffer[port];
+	offset = io->movie_offset[port];
+
+	if (buffer) {
+		value = buffer[offset];
+		count = buffer[offset + 1];
+
+		if (count > 0) {
+			count--;
+			buffer[offset + 1] = count;
+		} else {
+			offset += 2;
+			io->movie_offset[port] = offset;
+		}
+	}
+
+	return value;
+}
+
