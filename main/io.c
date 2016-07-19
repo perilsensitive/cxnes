@@ -69,8 +69,9 @@ static void controller_common_disconnect(struct io_device *dev);
 static void controller_common_end_frame(struct io_device *dev, uint32_t cycles);
 static int controller_common_set_button(void *data, uint32_t pressed, uint32_t button);
 static int controller_common_apply_config(struct io_device *dev);
-static int io_movie_get_raw_input(struct io_state *io, int port);
-static void io_movie_add_raw_input(struct io_state *io, int port, int data);
+static int io_movie_get_raw_data(struct io_state *io, int port);
+static void io_movie_add_raw_data(struct io_state *io, int port, int data);
+static void io_movie_encode_data(struct io_state *io, int port);
 
 
 #define BUTTON_A 1
@@ -152,6 +153,8 @@ struct io_state {
 	size_t movie_size[2];
 	size_t movie_length[2];
 	int movie_offset[2];
+	uint8_t movie_raw_data[2];
+	int movie_raw_count[2];
 };
 
 struct io_device *io_register_device(struct io_state *io,
@@ -325,6 +328,10 @@ void io_close_movie(struct io_state *io)
 	io->movie_size[1] = 0;
 	io->movie_length[0] = 0;
 	io->movie_length[1] = 0;
+	io->movie_raw_data[0] = 0;
+	io->movie_raw_data[1] = 0;
+	io->movie_raw_count[0] = 0;
+	io->movie_raw_count[1] = 0;
 }
 
 void io_stop_movie(struct io_state *io)
@@ -332,6 +339,8 @@ void io_stop_movie(struct io_state *io)
 	int port;
 
 	if (io->emu->recording_movie) {
+		io_movie_encode_data(io, 0);
+		io_movie_encode_data(io, 1);
 		io->movie_length[0] = io->movie_offset[0];
 		io->movie_length[1] = io->movie_offset[1];
 	}
@@ -515,9 +524,9 @@ static CPU_READ_HANDLER(io_read_handler)
 
 	if (devices_without_movie_support) {
 		if (emu->playing_movie)
-			result |= io_movie_get_raw_input(io, port);
+			result |= io_movie_get_raw_data(io, port);
 		else if (emu->recording_movie)
-			io_movie_add_raw_input(io, port, raw_result);
+			io_movie_add_raw_data(io, port, raw_result);
 	}
 
 	io->last_read[port] = cycles;
@@ -1575,75 +1584,156 @@ int io_load_state(struct io_state *io, struct save_state *state)
 	return 0;
 }
 
-static void io_movie_add_raw_input(struct io_state *io, int port, int data)
-{
-	int available;
-
-	available = io->movie_size[port] -
-	            io->movie_offset[port];
-
-	if (io->movie_size[port] && io->movie_offset[port]) {
-		uint8_t last;
-		uint8_t count;
-
-		last = io->movie_buffer[port][io->movie_offset[port] - 2];
-		count = io->movie_buffer[port][io->movie_offset[port] - 1];
-
-		if ((data == last) && (count < 255)) {
-			count++;
-			io->movie_buffer[port][io->movie_offset[port] - 1] = count;
-			return;
-		}
-	}
-
-	if (!available) {
-		uint8_t *tmp;
-		int new_size;
-
-		new_size = io->movie_size[port] + 1024;
-		tmp = realloc(io->movie_buffer[port], new_size);
-		if (!tmp)
-			return;
-
-		io->movie_buffer[port] = tmp;
-		io->movie_size[port] = new_size;
-	}
-
-	io->movie_buffer[port][io->movie_offset[port]] = data;
-	io->movie_buffer[port][io->movie_offset[port] + 1] = 0;
-	io->movie_offset[port] += 2;
-}
-
-static int io_movie_get_raw_input(struct io_state *io, int port)
+static void io_movie_decode_data(struct io_state *io, int port)
 {
 	uint8_t *buffer;
-	int value;
-	int count;
 	int offset;
 
 	buffer = io->movie_buffer[port];
 	offset = io->movie_offset[port];
 
-	if (io->movie_size[port] == io->movie_length[port])
-		return 0;
+	if (buffer && (offset < io->movie_length[port])) {
+		int magic;
 
-	if (buffer) {
-		value = buffer[offset];
-		count = buffer[offset + 1];
+		if ((buffer[offset] == 0xff) || (buffer[offset] == 0xfe)) {
+			magic = buffer[offset];
+			offset++;
+			io->movie_raw_data[port] = buffer[offset];
+			offset++;
+			io->movie_raw_count[port] = buffer[offset];
+			offset++;
+			io->movie_raw_count[port] |= (buffer[offset] << 8);
+			offset++;
 
-		if (count > 0) {
-			count--;
-			buffer[offset + 1] = count;
-		} else {
-			offset += 2;
+			if (magic == 0xff) {
+				io->movie_raw_count[port] |= (buffer[offset] << 16);
+				offset++;
+			}
+
+			io->movie_raw_count[port]++;
 			io->movie_offset[port] = offset;
+		} else {
+			io->movie_raw_data[port] = buffer[offset];
+			io->movie_raw_count[port] = buffer[offset + 1] + 1;
+			io->movie_offset[port] += 2;
 		}
+	} else {
+		io->movie_raw_data[port] = 0;
+		io->movie_raw_count[port] = 0;
+	}
+}
 
-		if (io->movie_offset[port] == io->movie_length[port]) {
-			emu_decrement_movie_chunk_count(io->emu);
-		}
+static int io_movie_get_raw_data(struct io_state *io, int port)
+{
+	uint8_t value;
+
+	value = 0;
+
+	if (io->movie_raw_count[port] <= 0)
+		io_movie_decode_data(io, port);
+
+	if (io->movie_raw_count[port] > 0) {
+		io->movie_raw_count[port]--;
+		value = io->movie_raw_data[port];
+	}
+
+	if ((io->movie_offset[port] == io->movie_length[port]) &&
+	    !io->movie_raw_count[port]) {
+		emu_decrement_movie_chunk_count(io->emu);
 	}
 
 	return value;
 }
 
+static void io_movie_encode_data(struct io_state *io, int port)
+{
+	uint8_t data;
+	int available;
+	int count;
+	int needed;
+	int max;
+	uint8_t magic;
+
+	data = io->movie_raw_data[port] & 0xff;
+	count = io->movie_raw_count[port];
+
+	if (count > 65536) {
+		needed = 5;
+		max = 1 << 24;
+		magic = 0xff;
+	} else if (count > 512) {
+		needed = 4;
+		max = 1 << 16;
+		magic = 0xfe;
+	} else if ((data & 0xf0) == 0xf0) {
+		needed = 4;
+		max = 1 << 16;
+		magic = 0xfe;
+	} else {
+		needed = 2;
+		max = 256;
+		magic = 0x00;
+	}
+
+	while (count) {
+		int c;
+
+		available = io->movie_size[port] - io->movie_offset[port];
+
+		if (available < needed) {
+			uint8_t *tmp;
+			int new_size;
+
+			new_size = io->movie_size[port] + 1024;
+			tmp = realloc(io->movie_buffer[port], new_size);
+			if (!tmp)
+				return;
+
+			io->movie_buffer[port] = tmp;
+			io->movie_size[port] = new_size;
+		}
+
+		if (count > max)
+			c = max - 1;
+		else
+			c = count - 1;
+			   
+		if (magic) {
+			io->movie_buffer[port][io->movie_offset[port]] = magic;
+			io->movie_offset[port]++;
+		}
+
+		io->movie_buffer[port][io->movie_offset[port]] = data;
+		io->movie_offset[port]++;
+		io->movie_buffer[port][io->movie_offset[port]] = c & 0xff; 
+		io->movie_offset[port]++;
+
+		if (needed >= 4) {
+			io->movie_buffer[port][io->movie_offset[port]] =
+			    (c >> 8) & 0xff; 
+			io->movie_offset[port]++;
+		}
+
+		if (needed == 5) {
+			io->movie_buffer[port][io->movie_offset[port]] =
+			    (c >> 16) & 0xff; 
+			io->movie_offset[port]++;
+		}
+
+		count -= (c + 1);
+	}
+}
+
+static void io_movie_add_raw_data(struct io_state *io, int port, int data)
+{
+	data &= 0xff;
+
+
+	if ((data != io->movie_raw_data[port]) || (!io->movie_raw_count[port])) {
+		io_movie_encode_data(io, port);
+		io->movie_raw_data[port] = data;
+		io->movie_raw_count[port] = 1;
+	} else {
+		io->movie_raw_count[port]++;
+	}
+}
