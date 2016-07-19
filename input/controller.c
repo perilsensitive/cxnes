@@ -61,6 +61,7 @@ static void controller_record_movie(struct io_device *dev);
 static int controller_save_movie(struct io_device *dev);
 static void controller_movie_add_data(struct io_device *dev, int data);
 static void controller_movie_encode_latch(struct io_device *dev);
+static void controller_movie_decode_latch(struct io_device *dev);
 
 struct controller_state {
 	int latch;
@@ -74,6 +75,7 @@ struct controller_state {
 	uint8_t *movie_buffer;
 	size_t movie_size;
 	int movie_offset;
+	int movie_length;
 	int movie_latch_data;
 	int movie_latch_count;
 };
@@ -293,22 +295,26 @@ static int controller_load_movie(struct io_device *dev)
 		break;
 	}
 
-	rc = save_state_find_chunk(dev->emu->movie_save_state, id,
-	                           &buffer, &size);
+	if (!state->movie_size) {
+		rc = save_state_find_chunk(dev->emu->movie_save_state, id,
+					   &buffer, &size);
 
-	if (size) {
-		state->movie_buffer = malloc(size);
-		if (!state->movie_buffer)
-			return -1;
+		/* Chunk not present, but that's not necessarily a problem. */
+		if (rc < 0)
+			return 0;
 
-		memcpy(state->movie_buffer, buffer, size);
-		state->movie_size = size;
+		if (size) {
+			state->movie_buffer = malloc(size);
+			if (!state->movie_buffer)
+				return -1;
 
-		emu_increment_movie_chunk_count(dev->emu);
+			memcpy(state->movie_buffer, buffer, size);
+			state->movie_size = size;
+			state->movie_length = size;
+		}
 	}
 
-	if (rc < 0)
-		return -1;
+	emu_increment_movie_chunk_count(dev->emu);
 
 	return 0;
 }
@@ -345,6 +351,7 @@ static void controller_close_movie(struct io_device *dev)
 
 	state->movie_buffer = NULL;
 	state->movie_size = 0;
+	state->movie_length = 0;
 	state->movie_offset = 0;
 	state->movie_latch_data = 0;
 	state->movie_latch_count = 0;
@@ -352,8 +359,14 @@ static void controller_close_movie(struct io_device *dev)
 
 static void controller_stop_movie(struct io_device *dev)
 {
-	if (dev->emu->recording_movie)
+	struct controller_state *state;
+
+	if (dev->emu->recording_movie) {
 		controller_movie_encode_latch(dev);
+		state = dev->private;
+
+		state->movie_length = state->movie_offset;
+	}
 }
 
 static int controller_save_movie(struct io_device *dev)
@@ -552,12 +565,10 @@ done:
 
 }
 
-static int controller_movie_get_latch(struct io_device *dev)
+static void controller_movie_decode_latch(struct io_device *dev)
 {
 	struct controller_state *state;
 	uint8_t *buffer;
-	uint8_t value;
-	uint8_t count;
 	int offset;
 
 	state = dev->private;
@@ -565,23 +576,56 @@ static int controller_movie_get_latch(struct io_device *dev)
 	buffer = state->movie_buffer;
 	offset = state->movie_offset;
 
-	if (offset == state->movie_size)
-		return 0;
+	if (buffer && (offset < state->movie_length)) {
+		int magic;
 
-	if (buffer) {
-		value = buffer[offset];
-		count = buffer[offset + 1];
+		if ((buffer[offset] == 0xff) || (buffer[offset] == 0xfe)) {
+			magic = buffer[offset];
+			offset++;
+			state->movie_latch_data = buffer[offset];
+			offset++;
+			state->movie_latch_count = buffer[offset];
+			offset++;
+			state->movie_latch_count |= (buffer[offset] << 8);
+			offset++;
 
-		if (count > 0) {
-			count--;
-			buffer[offset + 1] = count;
-		} else {
-			offset += 2;
+			if (magic == 0xff) {
+				state->movie_latch_count |= (buffer[offset] << 16);
+				offset++;
+			}
+
+			state->movie_latch_count++;
 			state->movie_offset = offset;
+		} else {
+			state->movie_latch_data = buffer[offset];
+			state->movie_latch_count = buffer[offset + 1] + 1;
+			state->movie_offset += 2;
 		}
+	} else {
+		state->movie_latch_data = 0;
+		state->movie_latch_count = 0;
+	}
+}
 
-		if (offset == state->movie_size)
-			emu_decrement_movie_chunk_count(dev->emu);
+static int controller_movie_get_latch(struct io_device *dev)
+{
+	struct controller_state *state;
+	uint8_t value;
+
+	state = dev->private;
+	value = 0;
+
+	if (state->movie_latch_count <= 0)
+		controller_movie_decode_latch(dev);
+
+	if (state->movie_latch_count > 0) {
+		state->movie_latch_count--;
+		value = state->movie_latch_data;
+	}
+
+	if ((state->movie_offset == state->movie_length) &&
+	    !state->movie_latch_count) {
+		emu_decrement_movie_chunk_count(dev->emu);
 	}
 
 	return value;
@@ -593,17 +637,38 @@ static void controller_movie_encode_latch(struct io_device *dev)
 	uint8_t data;
 	int available;
 	int count;
+	int needed;
+	int max;
+	uint8_t magic;
 
 	state = dev->private;
-	data = state->movie_latch_data;
+	data = state->movie_latch_data & 0xff;
 	count = state->movie_latch_count;
+
+	if (count > 65536) {
+		needed = 5;
+		max = 1 << 24;
+		magic = 0xff;
+	} else if (count > 512) {
+		needed = 4;
+		max = 1 << 16;
+		magic = 0xfe;
+	} else if ((data & 0xf0) == 0xf0) {
+		needed = 4;
+		max = 1 << 16;
+		magic = 0xfe;
+	} else {
+		needed = 2;
+		max = 256;
+		magic = 0x00;
+	}
 
 	while (count) {
 		int c;
 
 		available = state->movie_size - state->movie_offset;
 
-		if (!available) {
+		if (available < needed) {
 			uint8_t *tmp;
 			int new_size;
 
@@ -616,16 +681,34 @@ static void controller_movie_encode_latch(struct io_device *dev)
 			state->movie_size = new_size;
 		}
 
-		if (count > 256)
-			c = 256;
+		if (count > max)
+			c = max - 1;
 		else
-			c = count;
-
-		count -= c;
+			c = count - 1;
+			   
+		if (magic) {
+			state->movie_buffer[state->movie_offset] = magic;
+			state->movie_offset++;
+		}
 
 		state->movie_buffer[state->movie_offset] = data;
-		state->movie_buffer[state->movie_offset + 1] = c - 1;
-		state->movie_offset += 2;
+		state->movie_offset++;
+		state->movie_buffer[state->movie_offset] = c & 0xff; 
+		state->movie_offset++;
+
+		if (needed >= 4) {
+			state->movie_buffer[state->movie_offset] =
+			    (c >> 8) & 0xff; 
+			state->movie_offset++;
+		}
+
+		if (needed == 5) {
+			state->movie_buffer[state->movie_offset] =
+			    (c >> 16) & 0xff; 
+			state->movie_offset++;
+		}
+
+		count -= (c + 1);
 	}
 }
 
@@ -723,7 +806,10 @@ static int controller_connect(struct io_device *dev)
 
 	state->movie_buffer = NULL;
 	state->movie_size = 0;
+	state->movie_length = 0;
 	state->movie_offset = 0;
+	state->movie_latch_data = 0;
+	state->movie_latch_count = 0;
 
 	state->common_state =
 		io_get_controller_common_state(dev->emu->io);

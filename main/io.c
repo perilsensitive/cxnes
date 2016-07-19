@@ -150,6 +150,7 @@ struct io_state {
 	struct emu *emu;
 	uint8_t *movie_buffer[2];
 	size_t movie_size[2];
+	size_t movie_length[2];
 	int movie_offset[2];
 };
 
@@ -322,12 +323,18 @@ void io_close_movie(struct io_state *io)
 	io->movie_offset[1] = 0;
 	io->movie_size[0] = 0;
 	io->movie_size[1] = 0;
+	io->movie_length[0] = 0;
+	io->movie_length[1] = 0;
 }
 
 void io_stop_movie(struct io_state *io)
 {
 	int port;
-	int rc;
+
+	if (io->emu->recording_movie) {
+		io->movie_length[0] = io->movie_offset[0];
+		io->movie_length[1] = io->movie_offset[1];
+	}
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {
 		struct io_device *device;
@@ -357,13 +364,21 @@ void io_play_movie(struct io_state *io)
 	                           "RWM0",
 	                           &(io->movie_buffer[0]),
 	                                  &(io->movie_size[0]));
+	if (!rc)
+		emu_increment_movie_chunk_count(io->emu);
+
 	rc = save_state_find_chunk(io->emu->movie_save_state,
 	                           "RWM1",
 	                           &(io->movie_buffer[1]),
                                   &(io->movie_size[1]));
 
+	if (!rc)
+		emu_increment_movie_chunk_count(io->emu);
+
 	io->movie_offset[0] = 0;
 	io->movie_offset[1] = 0;
+	io->movie_length[0] = io->movie_size[0];
+	io->movie_length[1] = io->movie_size[1];
 }
 
 void io_record_movie(struct io_state *io)
@@ -1609,6 +1624,9 @@ static int io_movie_get_raw_input(struct io_state *io, int port)
 	buffer = io->movie_buffer[port];
 	offset = io->movie_offset[port];
 
+	if (io->movie_size[port] == io->movie_length[port])
+		return 0;
+
 	if (buffer) {
 		value = buffer[offset];
 		count = buffer[offset + 1];
@@ -1619,6 +1637,10 @@ static int io_movie_get_raw_input(struct io_state *io, int port)
 		} else {
 			offset += 2;
 			io->movie_offset[port] = offset;
+		}
+
+		if (io->movie_offset[port] == io->movie_length[port]) {
+			emu_decrement_movie_chunk_count(io->emu);
 		}
 	}
 
