@@ -72,6 +72,13 @@ static int controller_common_apply_config(struct io_device *dev);
 static int io_movie_get_raw_data(struct io_state *io, int port);
 static void io_movie_add_raw_data(struct io_state *io, int port, int data);
 static void io_movie_encode_data(struct io_state *io, int port);
+static int fourscore_save_state(struct io_device *dev, int port,
+				 struct save_state *state);
+static int fourscore_load_state(struct io_device *dev, int port,
+                                struct save_state *state);
+
+int stub_save_movie(struct io_device *dev);
+void stub_play_movie(struct io_device *dev);
 
 
 #define BUTTON_A 1
@@ -90,6 +97,12 @@ static uint8_t turbo_speeds[] = { 1, 10, 8, 6, 5, 4, 3, 2 };
 struct fourscore_state {
 	int latch[2];
 	int strobe;
+};
+
+static struct state_item fourscore_state_items[] = {
+	STATE_32BIT_ARRAY(fourscore_state, latch),
+	STATE_8BIT(fourscore_state, strobe), /* BOOLEAN */
+	STATE_ITEM_END(),
 };
 
 static struct input_event_handler controller_common_handlers[] = {
@@ -127,6 +140,10 @@ static struct io_device fourscore_device = {
 	.read = fourscore_read,
 	.write = fourscore_write,
 	.port = PORT_EXP,
+	.save_state = fourscore_save_state,
+	.load_state = fourscore_load_state,
+	.play_movie = stub_play_movie,
+	.save_movie = stub_save_movie,
 	.removable = 0,
 };
 
@@ -1752,4 +1769,66 @@ static void io_movie_add_raw_data(struct io_state *io, int port, int data)
 	} else {
 		io->movie_raw_count[port]++;
 	}
+}
+
+static int fourscore_load_state(struct io_device *dev, int port,
+                                struct save_state *state)
+{
+	struct fourscore_state *fourscore_state;
+	uint8_t *buf;
+	size_t size;
+
+	if (port != PORT_EXP)
+		return -1;
+
+	fourscore_state = dev->private;
+
+	if (save_state_find_chunk(state, "FOUR", &buf, &size) < 0) {
+		log_warn("Missing state chunk %s\n", "FOUR");
+		return 0;
+	}
+
+	buf += unpack_state(fourscore_state, fourscore_state_items, buf);
+
+	return 0;
+}
+
+static int fourscore_save_state(struct io_device *dev, int port,
+				 struct save_state *state)
+{
+	struct fourscore_state *fourscore_state;
+	uint8_t *buf, *ptr;
+	size_t size;
+	int rc;
+
+	if (port != PORT_EXP)
+		return -1;
+
+	fourscore_state = dev->private;
+
+	size = pack_state(fourscore_state, fourscore_state_items, NULL);
+
+	buf = malloc(size);
+	if (!buf)
+		return -1;
+
+	ptr = buf;
+	ptr += pack_state(fourscore_state, fourscore_state_items, ptr);
+
+	rc = save_state_add_chunk(state, "FOUR", buf, size);
+	free(buf);
+
+	if (rc < 0)
+		return -1;
+
+	return 0;
+}
+
+int stub_save_movie(struct io_device *dev)
+{
+	return 0;
+}
+
+void stub_play_movie(struct io_device *dev)
+{
 }
