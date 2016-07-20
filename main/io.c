@@ -369,25 +369,41 @@ void io_play_movie(struct io_state *io)
 		}
 	}
 
-	rc = save_state_find_chunk(io->emu->movie_save_state,
-	                           "RWM0",
-	                           &(io->movie_buffer[0]),
-	                                  &(io->movie_size[0]));
-	if (!rc)
+	if (!io->movie_buffer[0]) {
+		rc = save_state_find_chunk(io->emu->movie_save_state,
+					   "RWM0",
+					   &(io->movie_buffer[0]),
+					   &(io->movie_size[0]));
+
+		if (!rc)
+			io->movie_length[0] = io->movie_size[0];
+		else
+			io->movie_length[0] = 0;
+	}
+
+	if (io->movie_length[0])
 		emu_increment_movie_chunk_count(io->emu);
 
-	rc = save_state_find_chunk(io->emu->movie_save_state,
-	                           "RWM1",
-	                           &(io->movie_buffer[1]),
-                                  &(io->movie_size[1]));
+	if (!io->movie_buffer[1]) {
+		rc = save_state_find_chunk(io->emu->movie_save_state,
+					   "RWM1",
+					   &(io->movie_buffer[1]),
+					   &(io->movie_size[1]));
 
-	if (!rc)
+		if (!rc)
+			io->movie_length[1] = io->movie_size[1];
+		else
+			io->movie_length[1] = 0;
+	}
+
+	if (io->movie_length[1])
 		emu_increment_movie_chunk_count(io->emu);
+
 
 	io->movie_offset[0] = 0;
 	io->movie_offset[1] = 0;
-	io->movie_length[0] = io->movie_size[0];
-	io->movie_length[1] = io->movie_size[1];
+	io->movie_raw_count[0] = 0;
+	io->movie_raw_count[1] = 0;
 }
 
 void io_record_movie(struct io_state *io)

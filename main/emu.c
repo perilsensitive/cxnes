@@ -1178,6 +1178,11 @@ int emu_record_movie(struct emu *emu)
 {
 	int rc;
 
+	if (emu->movie_save_state) {
+		destroy_save_state(emu->movie_save_state);
+		emu->movie_save_state = NULL;
+	}
+
 	rc = emu_create_save_state(emu, &(emu->movie_save_state));
 	
 	if (rc < 0)

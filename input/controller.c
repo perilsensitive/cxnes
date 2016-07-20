@@ -328,6 +328,7 @@ static void controller_play_movie(struct io_device *dev)
 	controller_load_movie(dev);
 
 	state->movie_offset = 0;
+	state->movie_latch_count = 0;
 }
 
 static void controller_record_movie(struct io_device *dev)
