@@ -282,16 +282,28 @@ static int controller_load_movie(struct io_device *dev)
 
 	switch (dev->port) {
 	case PORT_1:
-		id = "PDM0";
+		if (state->is_snes)
+			id = "PSM0";
+		else
+			id = "PDM0";
 		break;
 	case PORT_2:
-		id = "PDM1";
+		if (state->is_snes)
+			id = "PSM1";
+		else
+			id = "PDM1";
 		break;
 	case PORT_3:
-		id = "PDM2";
+		if (state->is_snes)
+			id = "PSM2";
+		else
+			id = "PDM2";
 		break;
 	case PORT_4:
-		id = "PDM3";
+		if (state->is_snes)
+			id = "PSM3";
+		else
+			id = "PDM3";
 		break;
 	}
 
@@ -383,19 +395,30 @@ static int controller_save_movie(struct io_device *dev)
 
 	switch (dev->port) {
 	case PORT_1:
-		id = "PDM0";
+		if (state->is_snes)
+			id = "PSM0";
+		else
+			id = "PDM0";
 		break;
 	case PORT_2:
-		id = "PDM1";
+		if (state->is_snes)
+			id = "PSM1";
+		else
+			id = "PDM1";
 		break;
 	case PORT_3:
-		id = "PDM2";
+		if (state->is_snes)
+			id = "PSM2";
+		else
+			id = "PDM2";
 		break;
 	case PORT_4:
-		id = "PDM3";
+		if (state->is_snes)
+			id = "PSM3";
+		else
+			id = "PDM3";
 		break;
 	}
-
 	
 	rc = save_state_add_chunk(dev->emu->movie_save_state, id,
 	                          state->movie_buffer,
@@ -585,6 +608,12 @@ static void controller_movie_decode_latch(struct io_device *dev)
 			offset++;
 			state->movie_latch_data = buffer[offset];
 			offset++;
+
+			if (state->is_snes) {
+				state->movie_latch_data |= buffer[offset] << 8;
+				offset++;
+			}
+
 			state->movie_latch_count = buffer[offset];
 			offset++;
 			state->movie_latch_count |= (buffer[offset] << 8);
@@ -599,8 +628,17 @@ static void controller_movie_decode_latch(struct io_device *dev)
 			state->movie_offset = offset;
 		} else {
 			state->movie_latch_data = buffer[offset];
-			state->movie_latch_count = buffer[offset + 1] + 1;
-			state->movie_offset += 2;
+			offset++;
+
+			if (state->is_snes) {
+				state->movie_latch_data |= buffer[offset] << 8;
+				offset++;
+			}
+
+			state->movie_latch_count = buffer[offset] + 1;
+			offset++;
+
+			state->movie_offset = offset;
 		}
 	} else {
 		state->movie_latch_data = 0;
@@ -643,7 +681,11 @@ static void controller_movie_encode_latch(struct io_device *dev)
 	uint8_t magic;
 
 	state = dev->private;
-	data = state->movie_latch_data & 0xff;
+	if (state->is_snes)
+		data = state->movie_latch_data & 0x0fff;
+	else
+		data = state->movie_latch_data & 0x00ff;
+
 	count = state->movie_latch_count;
 
 	if (count > 65536) {
@@ -663,6 +705,9 @@ static void controller_movie_encode_latch(struct io_device *dev)
 		max = 256;
 		magic = 0x00;
 	}
+
+	if (state->is_snes)
+		needed++;
 
 	while (count) {
 		int c;
@@ -692,8 +737,14 @@ static void controller_movie_encode_latch(struct io_device *dev)
 			state->movie_offset++;
 		}
 
-		state->movie_buffer[state->movie_offset] = data;
+		state->movie_buffer[state->movie_offset] = data & 0xff;
 		state->movie_offset++;
+
+		if (state->is_snes) {
+			state->movie_buffer[state->movie_offset] = (data >> 8) & 0xff;
+			state->movie_offset++;
+		}
+
 		state->movie_buffer[state->movie_offset] = c & 0xff; 
 		state->movie_offset++;
 
@@ -718,7 +769,10 @@ static void controller_movie_add_data(struct io_device *dev, int data)
 	struct controller_state *state;
 
 	state = dev->private;
-	data &= 0xff;
+	if (state->is_snes)
+		data &= 0xfff;
+	else
+		data &= 0xff;
 
 	if ((data != state->movie_latch_data) || (!state->movie_latch_count)) {
 		controller_movie_encode_latch(dev);
