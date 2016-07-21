@@ -291,16 +291,16 @@ int io_save_movie(struct io_state *io)
 	rc = 0;
 
 	if (io->movie_buffer[0]) {
-		rc = save_state_add_chunk(io->emu->movie_save_state,"RWM0",
-		                          io->movie_buffer[0],
-					  io->movie_length[0]);
+		rc = save_state_replace_chunk(io->emu->movie_save_state,"RWM0",
+		                              io->movie_buffer[0],
+					      io->movie_length[0]);
 	}
 
 
 	if (io->movie_buffer[1]) {
-		rc = save_state_add_chunk(io->emu->movie_save_state, "RWM1",
-		                          io->movie_buffer[1],
-	                                  io->movie_length[1]);
+		rc = save_state_replace_chunk(io->emu->movie_save_state, "RWM1",
+		                              io->movie_buffer[1],
+	                                      io->movie_length[1]);
 	}
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {

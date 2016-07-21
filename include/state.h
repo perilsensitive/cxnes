@@ -66,6 +66,8 @@ size_t pack_state(void *data, struct state_item *items, uint8_t *buf);
 size_t unpack_state(void *data, struct state_item *items, uint8_t *buffer);
 int save_state_add_chunk(struct save_state *state, const char *id,
 			 uint8_t *buf, size_t size);
+int save_state_replace_chunk(struct save_state *state, const char *id,
+			     uint8_t *buf, size_t size);
 int save_state_find_chunk(struct save_state *state, const char *id,
 			  uint8_t **bufp, size_t *sizep);
 

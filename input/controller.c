@@ -415,9 +415,9 @@ static int controller_save_movie(struct io_device *dev)
 		break;
 	}
 	
-	rc = save_state_add_chunk(dev->emu->movie_save_state, id,
-	                          state->movie_buffer,
-	                          state->movie_length);
+	rc = save_state_replace_chunk(dev->emu->movie_save_state, id,
+	                              state->movie_buffer,
+	                              state->movie_length);
 
 	return rc;
 }

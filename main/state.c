@@ -185,6 +185,29 @@ void destroy_save_state(struct save_state *state)
 	free(state);
 }
 
+int save_state_replace_chunk(struct save_state *state, const char *id,
+                             uint8_t *buf, size_t size)
+{
+	uint8_t *buffer;
+	size_t buffer_size;
+	int rc;
+
+	rc = save_state_find_chunk(state, id, &buffer, &buffer_size);
+
+	/* Chunk found; remove it and add new chunk */
+	if (rc >= 0) {
+		buffer -= 8; /* Point to start of chunk */
+		buffer_size += 8; /* Add 8 bytes for chunk header */
+		memmove(buffer, buffer + buffer_size, state->size -
+		        (buffer + buffer_size - state->data));
+		state->size -= buffer_size;
+	}
+
+	rc = save_state_add_chunk(state, id, buf, size);
+
+	return rc;
+}
+
 int save_state_find_chunk(struct save_state *state, const char *id,
 			  uint8_t **bufp, size_t *sizep)
 {
