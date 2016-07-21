@@ -372,13 +372,8 @@ static void controller_close_movie(struct io_device *dev)
 
 static void controller_stop_movie(struct io_device *dev)
 {
-	struct controller_state *state;
-
 	if (dev->emu->recording_movie) {
 		controller_movie_encode_latch(dev);
-		state = dev->private;
-
-		state->movie_length = state->movie_offset;
 	}
 }
 
@@ -422,7 +417,7 @@ static int controller_save_movie(struct io_device *dev)
 	
 	rc = save_state_add_chunk(dev->emu->movie_save_state, id,
 	                          state->movie_buffer,
-	                          state->movie_offset);
+	                          state->movie_length);
 
 	return rc;
 }
@@ -762,6 +757,8 @@ static void controller_movie_encode_latch(struct io_device *dev)
 
 		count -= (c + 1);
 	}
+
+	state->movie_length = state->movie_offset;
 }
 
 static void controller_movie_add_data(struct io_device *dev, int data)

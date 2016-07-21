@@ -293,14 +293,14 @@ int io_save_movie(struct io_state *io)
 	if (io->movie_buffer[0]) {
 		rc = save_state_add_chunk(io->emu->movie_save_state,"RWM0",
 		                          io->movie_buffer[0],
-					  io->movie_offset[0]);
+					  io->movie_length[0]);
 	}
 
 
 	if (io->movie_buffer[1]) {
 		rc = save_state_add_chunk(io->emu->movie_save_state, "RWM1",
 		                          io->movie_buffer[1],
-	                                  io->movie_offset[1]);
+	                                  io->movie_length[1]);
 	}
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {
@@ -358,8 +358,6 @@ void io_stop_movie(struct io_state *io)
 	if (io->emu->recording_movie) {
 		io_movie_encode_data(io, 0);
 		io_movie_encode_data(io, 1);
-		io->movie_length[0] = io->movie_offset[0];
-		io->movie_length[1] = io->movie_offset[1];
 	}
 
 	for (port = PORT_1; port <= PORT_EXP; port++) {
@@ -1755,6 +1753,8 @@ static void io_movie_encode_data(struct io_state *io, int port)
 
 		count -= (c + 1);
 	}
+
+	io->movie_length[port] = io->movie_offset[port];
 }
 
 static void io_movie_add_raw_data(struct io_state *io, int port, int data)
