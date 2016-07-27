@@ -221,7 +221,6 @@ void update_clock(int same_frame)
 	if (!same_frame) {
 		total_frame_time -= frame_times[frame_index];
 		frame_times[frame_index] = elapsed.QuadPart;
-		printf("ticks = %llu\n", elapsed.QuadPart);
 	} else {
 		frame_times[frame_index] += ticks.QuadPart - prev_clock.QuadPart;
 	}
