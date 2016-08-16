@@ -75,6 +75,13 @@ static const char *japan_filename_strings[] = {
 	NULL
 };
 
+static const char *russia_filename_strings[] = {
+	"(Russia)",
+	"(Rus)",
+	"(R)",
+	NULL
+};
+
 int rom_apply_patches(struct rom *rom, int count,
 		      char **patchfiles, int from_archive);
 
@@ -1223,8 +1230,13 @@ void rom_guess_system_type_from_filename(struct rom *rom, int trust_timing)
 		int famicom = find_region_substring(rom->filename,
 		                                    japan_filename_strings);
 
+		int dendy = find_region_substring(rom->filename,
+		                                   russia_filename_strings);
+
 		if (famicom)
 			rom->info.system_type = EMU_SYSTEM_TYPE_FAMICOM;
+		else if (dendy)
+			rom->info.system_type = EMU_SYSTEM_TYPE_DENDY;
 		else
 			rom->info.system_type = EMU_SYSTEM_TYPE_NES;
 	} else {
