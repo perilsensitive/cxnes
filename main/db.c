@@ -689,8 +689,9 @@ int db_load_file(struct emu *emu, const char *filename)
 	if (state.buffer_used)
 		process_field(&state);
 
-	if (state.current)
-		insert_rom(state.current);
+	if (state.current) {
+		fixup_entry(state.current);
+	}
 
 	state.current = NULL;
 
