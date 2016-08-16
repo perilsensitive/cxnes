@@ -116,6 +116,7 @@ cxnes_SOURCES = \
 	boards/jycompany.c \
 	boards/waixing_sgzlz.c \
 	boards/bmc_110in1.c \
+	boards/rcm.c \
 	boards/35in1.c \
 	boards/22in1.c \
 	boards/1200in1.c \
