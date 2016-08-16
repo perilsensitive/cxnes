@@ -277,7 +277,6 @@
 #define BOARD_TYPE_BMC_110_IN_1            INES_TO_BOARD_TYPE(255,  0, 0, 0)
 #define BOARD_TYPE_INES36                  INES_TO_BOARD_TYPE( 36,  0, 0, 0)
 #define BOARD_TYPE_1200_IN_1               INES_TO_BOARD_TYPE(200,  0, 0, 0)
-#define BOARD_TYPE_20_IN_1                 INES_TO_BOARD_TYPE( 61,  0, 0, 0)
 #define BOARD_TYPE_20_IN_1_INES231         INES_TO_BOARD_TYPE(231,  0, 0, 0)
 #define BOARD_TYPE_15_IN_1                 INES_TO_BOARD_TYPE(205,  0, 0, 0)
 #define BOARD_TYPE_22_IN_1                 INES_TO_BOARD_TYPE(230,  0, 0, 0)
@@ -293,6 +292,7 @@
 #define BOARD_TYPE_SUBOR_B                 INES_TO_BOARD_TYPE(166,  0, 0, 0)
 #define BOARD_TYPE_SUBOR_A                 INES_TO_BOARD_TYPE(167,  0, 0, 0)
 #define BOARD_TYPE_RCM_GS2015              INES_TO_BOARD_TYPE(216,  0, 0, 0)
+#define BOARD_TYPE_RCM_TETRISFAMILY        INES_TO_BOARD_TYPE( 61,  0, 0, 0)
 
 #define BOARD_TYPE_CNE_SHLZ                INES_TO_BOARD_TYPE(240,  0, 0, 0)
 #define BOARD_TYPE_TXC_TW                  INES_TO_BOARD_TYPE(189,  0, 0, 0)
