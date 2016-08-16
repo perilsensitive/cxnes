@@ -73,10 +73,9 @@ void log_set_loglevel(enum log_priority priority)
 }
 
 
-void log_message(enum log_priority priority, const char *fmt, ...)
+static void va_log_message(enum log_priority priority, const char *fmt, va_list args)
 {
 	SDL_LogPriority sdl_priority;
-	va_list args;
 	int size;
 	char *buffer;
 
@@ -85,11 +84,7 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 
 	sdl_priority = priority_info[priority].sdl_priority;
 
-	va_start(args, fmt);
-
 	size = vsnprintf(NULL, 0, fmt, args);
-
-	va_end(args);
 
 	buffer = NULL;
 
@@ -100,11 +95,13 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 			return;
 	}
 
-	va_start(args, fmt);
-
 	vsnprintf(buffer, size, fmt, args);
 
-	va_end(args);
+#if GUI_ENABLED
+	if (gui_enabled && (priority == LOG_PRIORITY_ERROR)) {
+		gui_error(buffer);
+	}
+#endif
 
 	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, sdl_priority, buffer);
 
@@ -112,22 +109,22 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 
 }
 
-void err_message(const char*fmt, ...)
+void log_message(enum log_priority priority, const char *fmt, ...)
 {
-	char buffer[256];
 	va_list args;
 
 	va_start(args, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, args);
-
+	va_log_message(priority, fmt, args);
 	va_end(args);
-#if GUI_ENABLED
-	if (gui_enabled) {
-		gui_error(buffer);
-	}
-#endif
+}
 
-	log_message(SDL_LOG_PRIORITY_ERROR, buffer);
+void err_message(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	va_log_message(LOG_PRIORITY_ERROR, fmt, args);
+	va_end(args);
 }
 
 void log_init(void)
