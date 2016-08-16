@@ -1508,7 +1508,7 @@ void apu_set_type(struct apu_state *apu, int type)
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
 		apu->frame_step_delay = 7456;
 		apu->swap_duty_cycles = 1;
-		apu->apu_clock_divider = 16;
+		apu->apu_clock_divider = 15;
 	} else {
 		apu->noise_period_table = ntsc_noise_period_table;
 		apu->dmc_rate_table = ntsc_dmc_rate_table;
