@@ -173,6 +173,7 @@ extern struct board_info board_camerica_bf9093;
 extern struct board_info board_camerica_bf9096;
 extern struct board_info board_camerica_bf9097;
 extern struct board_info board_camerica_aladdin;
+extern struct board_info board_camerica_goldenfive;
 extern struct board_info board_nina03_06;
 extern struct board_info board_vs_unisystem;
 extern struct board_info board_vs_pinball;
@@ -352,6 +353,7 @@ static struct board_info *board_info_list[] = {
 	&board_camerica_bf9096,
 	&board_camerica_bf9097,
 	&board_camerica_aladdin,
+	&board_camerica_goldenfive,
 	&board_nina03_06,
 	&board_vs_unisystem,
 	&board_vs_pinball,

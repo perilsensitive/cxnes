@@ -39,6 +39,26 @@ static CPU_WRITE_HANDLER(aladdin_write_handler)
 	}
 }
 
+static CPU_WRITE_HANDLER(goldenfive_write_handler)
+{
+	if (addr < 0xc000) {
+		if (value & 0x08) {
+			emu->board->prg_or = (value << 4) & 0x70;
+			board_prg_sync(emu->board);
+		}
+	} else {
+		update_prg_bank(emu->board, 1, value);
+	}
+}
+
+static void goldenfive_reset(struct board *board, int hard)
+{
+	if (hard) {
+		board->prg_and = 0x0f;
+		board->prg_or = 0x00;
+	}
+}
+
 static void bf9096_reset(struct board *board, int hard)
 {
 	if (hard) {
@@ -51,8 +71,17 @@ static struct board_funcs camerica_bf9096_funcs = {
 	.reset = bf9096_reset,
 };
 
+static struct board_funcs camerica_goldenfive_funcs = {
+	.reset = goldenfive_reset,
+};
+
 static struct board_write_handler camerica_bf9093_write_handlers[] = {
 	{simple_prg_no_conflict_write_handler, 0xc000, SIZE_16K, 0},
+	{NULL},
+};
+
+static struct board_write_handler camerica_goldenfive_write_handlers[] = {
+	{goldenfive_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
@@ -72,6 +101,18 @@ static struct board_write_handler camerica_aladdin_write_handlers[] = {
 	{aladdin_write_handler, 0x8000, SIZE_16K, 0},
 	{simple_prg_no_conflict_write_handler, 0xc000, SIZE_16K, 0},
 	{NULL},
+};
+
+struct board_info board_camerica_goldenfive = {
+	.board_type = BOARD_TYPE_CAMERICA_GOLDENFIVE,
+	.name = "CAMERICA-GOLDENFIVE",
+	.funcs = &camerica_goldenfive_funcs,
+	.init_prg = std_prg_16k,
+	.init_chr0 = std_chr_8k,
+	.write_handlers = camerica_goldenfive_write_handlers,
+	.max_prg_rom_size = SIZE_2048K,
+	.max_chr_rom_size = SIZE_8K,
+	.max_wram_size = {SIZE_8K, 0},
 };
 
 struct board_info board_camerica_bf9093 = {
