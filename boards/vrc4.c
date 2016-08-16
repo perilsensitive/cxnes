@@ -102,7 +102,7 @@ struct board_info board_vrc4a = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -116,7 +116,7 @@ struct board_info board_vrc4b = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_4K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -130,7 +130,7 @@ struct board_info board_vrc4c = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -144,7 +144,7 @@ struct board_info board_vrc4d = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_4K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -158,7 +158,7 @@ struct board_info board_vrc4e = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_4K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -172,7 +172,7 @@ struct board_info board_vrc4f = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_4K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -186,7 +186,7 @@ struct board_info board_vrc4e_compat = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -200,7 +200,7 @@ struct board_info board_vrc4ac = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -214,7 +214,7 @@ struct board_info board_vrc4bd = {
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_1k,
 	.max_prg_rom_size = SIZE_256K,
-	.max_chr_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_512K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M |
 	         BOARD_INFO_FLAG_M2_TIMER,
@@ -426,7 +426,7 @@ static void vrc4_reset(struct board *board, int hard)
 	}
 
 	board->prg_and = 0xff;
-	board->chr_and = 0xff;
+	board->chr_and = 0x1ff;
 	board->prg_mode = 0;
 }
 
