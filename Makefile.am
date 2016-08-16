@@ -115,7 +115,7 @@ cxnes_SOURCES = \
 	boards/cne_psb.c \
 	boards/jycompany.c \
 	boards/waixing_sgzlz.c \
-	boards/ines225.c \
+	boards/bmc_110in1.c \
 	boards/35in1.c \
 	boards/22in1.c \
 	boards/1200in1.c \

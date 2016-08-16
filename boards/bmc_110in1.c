@@ -19,35 +19,37 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(ines225_write_handler);
-static void ines225_reset(struct board *board, int);
+static CPU_WRITE_HANDLER(bmc_110in1_write_handler);
+static void bmc_110in1_reset(struct board *board, int);
 
-static struct board_funcs ines225_funcs = {
-	.reset = ines225_reset,
+static struct board_funcs bmc_110in1_funcs = {
+	.reset = bmc_110in1_reset,
 };
 
-static struct board_write_handler ines225_write_handlers[] = {
-	{ines225_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler bmc_110in1_write_handlers[] = {
+	{bmc_110in1_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct board_info board_ines225 = {
-	.board_type = BOARD_TYPE_INES225,
-	.name = "BMC 58/64/72-IN-1",
-	.funcs = &ines225_funcs,
+struct board_info board_bmc_110in1 = {
+	.board_type = BOARD_TYPE_BMC_110_IN_1,
+	.name = "BMC 58/64/72/110-IN-1",
+	.funcs = &bmc_110in1_funcs,
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = ines225_write_handlers,
+	.write_handlers = bmc_110in1_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
-	.max_chr_rom_size = SIZE_512K,
+	.max_chr_rom_size = SIZE_1024K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_hv,
 };
 
-static CPU_WRITE_HANDLER(ines225_write_handler)
+static CPU_WRITE_HANDLER(bmc_110in1_write_handler)
 {
 	struct board *board;
 	int chr_bank;
 	int prg_bank;
+	int mode;
 
 	board = emu->board;
 
@@ -56,27 +58,23 @@ static CPU_WRITE_HANDLER(ines225_write_handler)
 
 	board->chr_banks0[0].bank = chr_bank;
 
-	board_set_ppu_mirroring(board, (addr & 0x2000) ?
-				MIRROR_H : MIRROR_V);
+	standard_mirroring_handler(emu, addr, (addr >> 13) & 1, cycles);
 
 	prg_bank  = (addr & 0x0fc0) >> 6;
 	prg_bank |= (addr & 0x4000) >> 8;
 
-	if (!(addr & 0x1000)) {
-		board->prg_banks[1].bank = prg_bank & 0x1e;
-		board->prg_banks[2].bank = prg_bank | 0x01;
-	} else {
-		board->prg_banks[1].bank = prg_bank;
-		board->prg_banks[2].bank = prg_bank;
-	}
+	mode = (~addr >> 12) & 0x01;
+
+	board->prg_banks[1].bank = prg_bank & ~mode;
+	board->prg_banks[2].bank = prg_bank | mode;
 
 	board_prg_sync(board);
 	board_chr_sync(board, 0);
 }
 
-static void ines225_reset(struct board *board, int hard)
+static void bmc_110in1_reset(struct board *board, int hard)
 {
 	if (hard) {
-		/* Act as if 0x00 was written to $8000 */
+		bmc_110in1_write_handler(board->emu, 0x8000, 0x00, 0);
 	}
 }

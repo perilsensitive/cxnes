@@ -506,6 +506,9 @@ int ines_load(struct emu *emu, struct rom *rom)
 		if (!header.submapper)
 			header.submapper = 1;
 		break;
+	case 225:
+			header.mapper = 255;
+		break;
 	}
 
 	if (header.vs_system)
