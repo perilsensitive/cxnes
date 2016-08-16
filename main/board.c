@@ -217,7 +217,7 @@ extern struct board_info board_unrom512;
 extern struct board_info board_unrom512_flash;
 extern struct board_info board_1200in1;
 extern struct board_info board_rcm_tetrisfamily;
-extern struct board_info board_20in1_ines231;
+extern struct board_info board_20in1;
 extern struct board_info board_waixing_type_a;
 extern struct board_info board_waixing_type_c;
 extern struct board_info board_waixing_type_h;
@@ -395,7 +395,7 @@ static struct board_info *board_info_list[] = {
 	&board_unrom512_flash,
 	&board_1200in1,
 	&board_rcm_tetrisfamily,
-	&board_20in1_ines231,
+	&board_20in1,
 	&board_waixing_type_a,
 	&board_waixing_type_c,
 	&board_waixing_type_h,

@@ -277,7 +277,7 @@
 #define BOARD_TYPE_BMC_110_IN_1            INES_TO_BOARD_TYPE(255,  0, 0, 0)
 #define BOARD_TYPE_INES36                  INES_TO_BOARD_TYPE( 36,  0, 0, 0)
 #define BOARD_TYPE_1200_IN_1               INES_TO_BOARD_TYPE(200,  0, 0, 0)
-#define BOARD_TYPE_20_IN_1_INES231         INES_TO_BOARD_TYPE(231,  0, 0, 0)
+#define BOARD_TYPE_BMC_20_IN_1             INES_TO_BOARD_TYPE(231,  0, 0, 0)
 #define BOARD_TYPE_15_IN_1                 INES_TO_BOARD_TYPE(205,  0, 0, 0)
 #define BOARD_TYPE_22_IN_1                 INES_TO_BOARD_TYPE(230,  0, 0, 0)
 #define BOARD_TYPE_35_IN_1                 INES_TO_BOARD_TYPE(203,  0, 0, 0)

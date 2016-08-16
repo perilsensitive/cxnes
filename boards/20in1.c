@@ -19,19 +19,19 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(m20in1_ines231_write_handler);
+static CPU_WRITE_HANDLER(bmc20in1_write_handler);
 
-static struct board_write_handler m20in1_ines231_write_handlers[] = {
-	{m20in1_ines231_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler bmc20in1_write_handlers[] = {
+	{bmc20in1_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct board_info board_20in1_ines231 = {
-	.board_type = BOARD_TYPE_20_IN_1_INES231,
-	.name = "BMC 20-IN-1",
+struct board_info board_20in1 = {
+	.board_type = BOARD_TYPE_BMC_20_IN_1,
+	.name = "BMC-20IN1",
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = m20in1_ines231_write_handlers,
+	.write_handlers = bmc20in1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
@@ -40,7 +40,7 @@ struct board_info board_20in1_ines231 = {
 	.mirroring_shift = 7,
 };
 
-static CPU_WRITE_HANDLER(m20in1_ines231_write_handler)
+static CPU_WRITE_HANDLER(bmc20in1_write_handler)
 {
 	struct board *board = emu->board;
 
