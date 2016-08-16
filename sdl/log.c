@@ -77,6 +77,8 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 {
 	SDL_LogPriority sdl_priority;
 	va_list args;
+	int size;
+	char *buffer;
 
 	if (priority >= LOG_PRIORITY_NUM_PRIORITIES)
 		priority = LOG_PRIORITY_INFO;
@@ -85,10 +87,29 @@ void log_message(enum log_priority priority, const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, sdl_priority,
-	                fmt, args);
+	size = vsnprintf(NULL, 0, fmt, args);
 
 	va_end(args);
+
+	buffer = NULL;
+
+	if (size) {
+		buffer = malloc(size);
+
+		if (!buffer)
+			return;
+	}
+
+	va_start(args, fmt);
+
+	vsnprintf(buffer, size, fmt, args);
+
+	va_end(args);
+
+	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, sdl_priority, buffer);
+
+	free(buffer);
+
 }
 
 void err_message(const char*fmt, ...)
