@@ -46,6 +46,7 @@ struct board_fixup {
 };
 
 extern int running;
+extern struct board_info board_btl_smb2a;
 extern struct board_info board_rcm_gs2015;
 extern struct board_info board_subor_b;
 extern struct board_info board_subor_a;
@@ -225,6 +226,7 @@ extern struct board_info board_waixing_type_h;
 extern struct board_info board_waixing_sgzlz;
 
 static struct board_info *board_info_list[] = {
+	&board_btl_smb2a,
 	&board_rcm_gs2015,
 	&board_subor_b,
 	&board_subor_a,

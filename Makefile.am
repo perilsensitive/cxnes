@@ -104,6 +104,7 @@ cxnes_SOURCES = \
 	main/7z/Bra86.c \
 	main/7z/Lzma2Dec.c \
 	main/7z/Ppmd7.c \
+	boards/btl_smb2a.c \
 	boards/subor.c \
 	boards/76in1.c \
 	boards/cufrom.c \
