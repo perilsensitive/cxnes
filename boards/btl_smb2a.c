@@ -20,8 +20,6 @@
 #include "board_private.h"
 #include "m2_timer.h"
 
-#define _cart_mode board->data[0]
-
 static CPU_WRITE_HANDLER(btl_smb2a_write_handler);
 static void btl_smb2a_reset(struct board *board, int);
 
