@@ -19,29 +19,34 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(m35in1_write_handler);
+static CPU_WRITE_HANDLER(m1200in1_write_handler);
 
-static struct board_write_handler m35in1_write_handlers[] = {
-	{m35in1_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler m1200in1_write_handlers[] = {
+	{m1200in1_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct board_info board_35in1 = {
-	.board_type = BOARD_TYPE_35_IN_1,
-	.name = "BMC 35-IN-1",
+struct board_info board_1200in1 = {
+	.board_type = BOARD_TYPE_BMC_1200_IN_1,
+	.name = "BMC 1200/36-IN-1",
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = m35in1_write_handlers,
-	.max_prg_rom_size = SIZE_2048K,
-	.max_chr_rom_size = SIZE_32K,
+	.write_handlers = m1200in1_write_handlers,
+	.max_prg_rom_size = SIZE_512K,
+	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
 };
 
-static CPU_WRITE_HANDLER(m35in1_write_handler)
+static CPU_WRITE_HANDLER(m1200in1_write_handler)
 {
 	struct board *board = emu->board;
 
-	update_prg_bank(board, 1, (value >> 2));
-	update_prg_bank(board, 2, (value >> 2));
-	update_chr0_bank(board, 0, (value & 0x03));
+	board->prg_banks[1].bank = addr & 0x07;
+	board->prg_banks[2].bank = addr & 0x07;
+	board->chr_banks0[0].bank = addr & 0x07;
+	board_set_ppu_mirroring(board, addr & 0x08 ? MIRROR_H : MIRROR_V);
+
+	board_prg_sync(board);
+	board_chr_sync(board, 0);
 }

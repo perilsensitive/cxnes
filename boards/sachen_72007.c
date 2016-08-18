@@ -44,7 +44,7 @@ struct board_info board_sachen_72007 = {
 
 struct board_info board_sachen_sa0036 = {
 	.board_type = BOARD_TYPE_SACHEN_SA0036,
-	.name = "UNL-SA-SA0036",
+	.name = "UNL-SA-0036",
 	.init_prg = std_prg_32k,
 	.init_chr0 = std_chr_8k,
 	.write_handlers = sachen_sa0036_write_handlers,

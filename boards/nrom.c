@@ -41,7 +41,7 @@ struct board_funcs resetbased_4_in_1_funcs = {
 
 struct board_info board_resetbased_4_in_1 = {
 	.board_type = BOARD_TYPE_RESETBASED_4_IN_1,
-	.name = "BMC RESETBASED 4-IN-1",
+	.name = "BMC-RESETBASED-4IN1",
 	.funcs = &resetbased_4_in_1_funcs,
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,

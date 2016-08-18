@@ -56,23 +56,23 @@ extern struct board_info board_btl_smb2a;
 extern struct board_info board_btl_smb2b;
 extern struct board_info board_btl_smb2c;
 extern struct board_info board_rcm_gs2015;
-extern struct board_info board_subor_b;
-extern struct board_info board_subor_a;
+extern struct board_info board_subor_1;
+extern struct board_info board_subor_0;
 extern struct board_info board_76in1;
 extern struct board_info board_cufrom;
-extern struct board_info board_m150in1;
+extern struct board_info board_bmc_150in1;
 extern struct board_info board_magicseries;
 extern struct board_info board_unl_mortalkombat2;
-extern struct board_info board_super700in1;
+extern struct board_info board_bmc_super700in1;
 extern struct board_info board_gamestar_b;
-extern struct board_info board_superhik_4in1;
-extern struct board_info board_superbig_7in1;
+extern struct board_info board_bmc_superhik_4in1;
+extern struct board_info board_bmc_superbig_7in1;
 extern struct board_info board_resetbased_4_in_1;
 extern struct board_info board_hosenkan_electronics;
 extern struct board_info board_jycompany_a;
 extern struct board_info board_jycompany_b;
 extern struct board_info board_jycompany_c;
-extern struct board_info board_35in1;
+extern struct board_info board_bmc_35in1;
 extern struct board_info board_cne_psb;
 extern struct board_info board_txc_tw;
 extern struct board_info board_cne_shlz;
@@ -80,7 +80,7 @@ extern struct board_info board_sachen_74x374b;
 extern struct board_info board_kasing;
 extern struct board_info board_rumblestation_15_in_1;
 extern struct board_info board_22_in_1;
-extern struct board_info board_15_in_1;
+extern struct board_info board_bmc_15_in_1;
 extern struct board_info board_familybasic;
 extern struct board_info board_namco_cnrom_wram;
 extern struct board_info board_bmc_110in1;
@@ -244,23 +244,23 @@ static struct board_info *board_info_list[] = {
 	&board_btl_smb2b,
 	&board_btl_smb2c,
 	&board_rcm_gs2015,
-	&board_subor_b,
-	&board_subor_a,
+	&board_subor_1,
+	&board_subor_0,
 	&board_76in1,
 	&board_cufrom,
-	&board_m150in1,
+	&board_bmc_150in1,
 	&board_magicseries,
 	&board_unl_mortalkombat2,
-	&board_super700in1,
+	&board_bmc_super700in1,
 	&board_gamestar_b,
-	&board_superhik_4in1,
-	&board_superbig_7in1,
+	&board_bmc_superhik_4in1,
+	&board_bmc_superbig_7in1,
 	&board_resetbased_4_in_1,
 	&board_hosenkan_electronics,
 	&board_jycompany_a,
 	&board_jycompany_b,
 	&board_jycompany_c,
-	&board_35in1,
+	&board_bmc_35in1,
 	&board_cne_psb,
 	&board_txc_tw,
 	&board_cne_shlz,
@@ -268,7 +268,7 @@ static struct board_info *board_info_list[] = {
 	&board_kasing,
 	&board_rumblestation_15_in_1,
 	&board_22_in_1,
-	&board_15_in_1,
+	&board_bmc_15_in_1,
 	&board_familybasic,
 	&board_bmc_110in1,
 	&board_sachen_tcu01,
@@ -445,6 +445,8 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "BANDAI-PT-554", BOARD_TYPE_CNROM },
 	{ "BMC-72IN1", BOARD_TYPE_BMC_110_IN_1 },
 	{ "BMC-110IN1", BOARD_TYPE_BMC_110_IN_1 },
+	{ "BMC-1200IN1", BOARD_TYPE_BMC_1200_IN_1 },
+	{ "BMC-36IN1", BOARD_TYPE_BMC_1200_IN_1 },
 	{ "BMC 76-IN-1", BOARD_TYPE_76_IN_1 },
 	{ "BMC SUPER 42-IN-1", BOARD_TYPE_76_IN_1 },
 	{ "CAMERICA-ALGN", BOARD_TYPE_CAMERICA_BF9093 },

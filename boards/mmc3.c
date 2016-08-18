@@ -32,8 +32,8 @@
 
 static CPU_WRITE_HANDLER(mmc3_write_handler);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
-static CPU_WRITE_HANDLER(superbig7in1_write_handler);
-static CPU_WRITE_HANDLER(superhik4in1_write_handler);
+static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
+static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler);
 static CPU_READ_HANDLER(mmc6_wram_read_handler);
 static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
@@ -104,10 +104,10 @@ static struct board_write_handler mmc3_write_handlers[] = {
 	{NULL}
 };
 
-static struct board_write_handler superbig7in1_write_handlers[] = {
+static struct board_write_handler bmc_superbig7in1_write_handlers[] = {
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{superbig7in1_write_handler, 0xa001, SIZE_8K, 0xa001},
+	{bmc_superbig7in1_write_handler, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
@@ -115,8 +115,8 @@ static struct board_write_handler superbig7in1_write_handlers[] = {
 	{NULL}
 };
 
-static struct board_write_handler superhik4in1_write_handlers[] = {
-	{superhik4in1_write_handler, 0x6000, SIZE_8K, 0},
+static struct board_write_handler bmc_superhik4in1_write_handlers[] = {
+	{bmc_superhik4in1_write_handler, 0x6000, SIZE_8K, 0},
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
@@ -376,9 +376,9 @@ struct board_info board_tengen800037 = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-struct board_info board_15_in_1 = {
-	.board_type = BOARD_TYPE_15_IN_1,
-	.name = "BMC 15/3-IN-1",
+struct board_info board_bmc_15_in_1 = {
+	.board_type = BOARD_TYPE_BMC_15_IN_1,
+	.name = "BMC-15IN1",
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
@@ -392,7 +392,7 @@ struct board_info board_15_in_1 = {
 
 struct board_info board_waixing_type_a = {
 	.board_type = BOARD_TYPE_WAIXING_TYPE_A,
-	.name = "WAIXING (a)",
+	.name = "WAIXING-A",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
@@ -408,7 +408,7 @@ struct board_info board_waixing_type_a = {
 
 struct board_info board_waixing_type_c = {
 	.board_type = BOARD_TYPE_WAIXING_TYPE_C,
-	.name = "WAIXING (c)",
+	.name = "WAIXING-C",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
@@ -437,7 +437,7 @@ struct board_info board_kasing = {
 
 struct board_info board_waixing_type_h = {
 	.board_type = BOARD_TYPE_WAIXING_TYPE_H,
-	.name = "WAIXING (h)",
+	.name = "WAIXING-H",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
@@ -463,8 +463,8 @@ struct board_info board_txc_tw = {
 };
 
 struct board_info board_hosenkan_electronics = {
-	.board_type = BOARD_TYPE_HOSENKAN,
-	.name = "HOSENKAN ELECTRONICS",
+	.board_type = BOARD_TYPE_UNL_HOSENKAN,
+	.name = "UNL-HOSENKAN",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
@@ -476,13 +476,13 @@ struct board_info board_hosenkan_electronics = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-struct board_info board_superbig_7in1 = {
-	.board_type = BOARD_TYPE_SUPERBIG_7_IN_1,
-	.name = "BMC SUPERBIG 7-IN-1",
+struct board_info board_bmc_superbig_7in1 = {
+	.board_type = BOARD_TYPE_BMC_SUPERBIG_7_IN_1,
+	.name = "BMC-SUPERBIG-7IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
-	.write_handlers = superbig7in1_write_handlers,
+	.write_handlers = bmc_superbig7in1_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
 	.max_chr_rom_size = SIZE_1024K,
 	.max_wram_size = {SIZE_8K, 0},
@@ -490,13 +490,13 @@ struct board_info board_superbig_7in1 = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-struct board_info board_superhik_4in1 = {
-	.board_type = BOARD_TYPE_SUPERHIK_4_IN_1,
-	.name = "BMC SUPERHIK 4-IN-1",
+struct board_info board_bmc_superhik_4in1 = {
+	.board_type = BOARD_TYPE_BMC_SUPERHIK_4_IN_1,
+	.name = "BMC-SUPERHIK-4IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = std_chr_2k_1k,
-	.write_handlers = superhik4in1_write_handlers,
+	.write_handlers = bmc_superhik4in1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_512K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -623,7 +623,7 @@ static void mmc3_reset(struct board *board, int hard)
 		board->chr_or = 0;
 
 		switch (board->info->board_type) {
-		case BOARD_TYPE_SUPERHIK_4_IN_1:
+		case BOARD_TYPE_BMC_SUPERHIK_4_IN_1:
 			board->prg_and = 0x0f;
 			board->chr_and = 0x7f;
 			board->prg_or = 0x00;
@@ -631,13 +631,13 @@ static void mmc3_reset(struct board *board, int hard)
 			board->prg_banks[5].size = SIZE_32K;
 			board->prg_banks[5].bank = 0;
 			break;
-		case BOARD_TYPE_SUPERBIG_7_IN_1:
+		case BOARD_TYPE_BMC_SUPERBIG_7_IN_1:
 			board->prg_and = 0x0f;
 			board->prg_or = 0x00;
 			board->chr_and = 0x7f;
 			board->chr_or = 0x000;
 			break;
-		case BOARD_TYPE_15_IN_1:
+		case BOARD_TYPE_BMC_15_IN_1:
 			board->prg_and = 0x1f;
 			board->prg_or = 0x00;
 			board->chr_and = 0xff;
@@ -874,7 +874,7 @@ static CPU_WRITE_HANDLER(hosenkan_write_handler)
 	}
 }
 
-static CPU_WRITE_HANDLER(superbig7in1_write_handler)
+static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler)
 {
 	struct board *board;
 	int bank;
@@ -1087,7 +1087,7 @@ static CPU_WRITE_HANDLER(rambo1_irq_enable)
 		a12_timer_set_irq_enabled(emu->a12_timer, 1, cycles);
 }
 
-static CPU_WRITE_HANDLER(superhik4in1_write_handler)
+static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler)
 {
 	struct board *board;
 	size_t size;

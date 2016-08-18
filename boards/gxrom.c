@@ -49,7 +49,7 @@ struct board_info board_gxrom = {
 
 struct board_info board_cne_shlz = {
 	.board_type = BOARD_TYPE_CNE_SHLZ,
-	.name = "CNE SHLZ",
+	.name = "CNE-SHLZ",
 	.init_prg = std_prg_32k,
 	.init_chr0 = std_chr_8k,
 	.write_handlers = cne_shlz_write_handlers,

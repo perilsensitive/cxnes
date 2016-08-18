@@ -19,32 +19,32 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(m150in1_write_handler);
-static void m150in1_reset(struct board *board, int);
+static CPU_WRITE_HANDLER(bmc_150in1_write_handler);
+static void bmc_150in1_reset(struct board *board, int);
 
-static struct board_write_handler m150in1_write_handlers[] = {
-	{m150in1_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler bmc_150in1_write_handlers[] = {
+	{bmc_150in1_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-static struct board_funcs m150in1_funcs = {
-	.reset = m150in1_reset,
+static struct board_funcs bmc_150in1_funcs = {
+	.reset = bmc_150in1_reset,
 };
 
-struct board_info board_m150in1 = {
-	.board_type = BOARD_TYPE_150_IN_1,
-	.name = "BMC 150-IN-1",
-	.funcs = &m150in1_funcs,
+struct board_info board_bmc_150in1 = {
+	.board_type = BOARD_TYPE_BMC_150_IN_1,
+	.name = "BMC-150IN1",
+	.funcs = &bmc_150in1_funcs,
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = m150in1_write_handlers,
+	.write_handlers = bmc_150in1_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_64K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
 	.mirroring_values = std_mirroring_vh,
 };
 
-static CPU_WRITE_HANDLER(m150in1_write_handler)
+static CPU_WRITE_HANDLER(bmc_150in1_write_handler)
 {
 	struct board *board = emu->board;
 	int bank;
@@ -66,8 +66,8 @@ static CPU_WRITE_HANDLER(m150in1_write_handler)
 	standard_mirroring_handler(emu, addr, addr, cycles);
 }
 
-static void m150in1_reset(struct board *board, int hard)
+static void bmc_150in1_reset(struct board *board, int hard)
 {
 	if (hard)
-		m150in1_write_handler(board->emu, 0x8000, 0, 0);
+		bmc_150in1_write_handler(board->emu, 0x8000, 0, 0);
 }

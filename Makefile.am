@@ -116,19 +116,19 @@ cxnes_SOURCES = \
 	boards/subor.c \
 	boards/76in1.c \
 	boards/cufrom.c \
-	boards/150in1.c \
+	boards/bmc_150in1.c \
 	boards/magicseries.c \
 	boards/mortalkombat2.c \
-	boards/super700in1.c \
+	boards/bmc_super700in1.c \
 	boards/gamestar.c \
 	boards/cne_psb.c \
 	boards/jycompany.c \
 	boards/waixing_sgzlz.c \
 	boards/bmc_110in1.c \
 	boards/rcm.c \
-	boards/35in1.c \
+	boards/bmc_35in1.c \
 	boards/22in1.c \
-	boards/1200in1.c \
+	boards/bmc_1200in1.c \
 	boards/20in1.c \
 	boards/sachen_tcu01.c \
 	boards/sachen_72007.c \

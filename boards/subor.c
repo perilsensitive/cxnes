@@ -31,24 +31,24 @@ static struct board_write_handler subor_write_handlers[] = {
 	{NULL},
 };
 
-static struct bank subor_b_init_prg[] = {
+static struct bank subor_1_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_RAM0},
 	{0, 0, SIZE_16K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{7, 0, SIZE_16K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 
-static struct bank subor_a_init_prg[] = {
+static struct bank subor_0_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_RAM0},
 	{0, 0, SIZE_16K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{0x20, 0, SIZE_16K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 
-struct board_info board_subor_b = {
-	.board_type = BOARD_TYPE_SUBOR_B,
-	.name = "SUBOR (b)",
-	.init_prg = subor_b_init_prg,
+struct board_info board_subor_1 = {
+	.board_type = BOARD_TYPE_SUBOR_BOARD_1,
+	.name = "SUBOR-BOARD-1",
+	.init_prg = subor_1_init_prg,
 	.init_chr0 = std_chr_8k,
 	.write_handlers = subor_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
@@ -56,10 +56,10 @@ struct board_info board_subor_b = {
 	.max_wram_size = {SIZE_8K, 0},
 };
 
-struct board_info board_subor_a = {
-	.board_type = BOARD_TYPE_SUBOR_A,
-	.name = "SUBOR (a)",
-	.init_prg = subor_a_init_prg,
+struct board_info board_subor_0 = {
+	.board_type = BOARD_TYPE_SUBOR_BOARD_0,
+	.name = "SUBOR-BOARD-0",
+	.init_prg = subor_0_init_prg,
 	.init_chr0 = std_chr_8k,
 	.write_handlers = subor_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
@@ -100,7 +100,7 @@ static CPU_WRITE_HANDLER(subor_write_handler)
 	switch (board->prg_mode & 0x0c) {
 	case 0x00:
 		board->prg_banks[1].bank = bank;
-		if (type == BOARD_TYPE_SUBOR_B) {
+		if (type == BOARD_TYPE_SUBOR_BOARD_1) {
 			board->prg_banks[2].bank = 0x07;
 		} else {
 			board->prg_banks[2].bank = 0x20;
@@ -113,7 +113,7 @@ static CPU_WRITE_HANDLER(subor_write_handler)
 	case 0x08:
 	case 0x0c:
 		bank &= 0xfe;
-		if (type == BOARD_TYPE_SUBOR_B) {
+		if (type == BOARD_TYPE_SUBOR_BOARD_1) {
 			board->prg_banks[1].bank = bank;
 			board->prg_banks[2].bank = bank | 1;
 		} else {

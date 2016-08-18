@@ -19,25 +19,25 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(super700in1_write_handler);
-static void super700in1_reset(struct board *board, int);
+static CPU_WRITE_HANDLER(bmc_super700in1_write_handler);
+static void bmc_super700in1_reset(struct board *board, int);
 
-static struct board_write_handler super700in1_write_handlers[] = {
-	{super700in1_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler bmc_super700in1_write_handlers[] = {
+	{bmc_super700in1_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-static struct board_funcs super700in1_funcs = {
-	.reset = super700in1_reset,
+static struct board_funcs bmc_super700in1_funcs = {
+	.reset = bmc_super700in1_reset,
 };
 
-struct board_info board_super700in1 = {
-	.board_type = BOARD_TYPE_SUPER700IN1,
-	.name = "BMC SUPER 700-IN-1",
-	.funcs = &super700in1_funcs,
+struct board_info board_bmc_super700in1 = {
+	.board_type = BOARD_TYPE_BMC_SUPER700IN1,
+	.name = "BMC-SUPER700IN1",
+	.funcs = &bmc_super700in1_funcs,
 	.init_prg = std_prg_16k,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = super700in1_write_handlers,
+	.write_handlers = bmc_super700in1_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_128K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -45,7 +45,7 @@ struct board_info board_super700in1 = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-static CPU_WRITE_HANDLER(super700in1_write_handler)
+static CPU_WRITE_HANDLER(bmc_super700in1_write_handler)
 {
 	struct board *board = emu->board;
 	int prg, chr;
@@ -66,8 +66,8 @@ static CPU_WRITE_HANDLER(super700in1_write_handler)
 	standard_mirroring_handler(emu, addr, addr, cycles);
 }
 
-static void super700in1_reset(struct board *board, int hard)
+static void bmc_super700in1_reset(struct board *board, int hard)
 {
 	if (hard)
-		super700in1_write_handler(board->emu, 0x8000, 0, 0);
+		bmc_super700in1_write_handler(board->emu, 0x8000, 0, 0);
 }
