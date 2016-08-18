@@ -92,5 +92,4 @@ static void unl_smb2j_reset(struct board *board, int hard)
  		                   M2_TIMER_FLAG_AUTO_IRQ_DISABLE, 0);
 		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
 	}
-
 }
