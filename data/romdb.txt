@@ -44688,6 +44688,7 @@ VRAM0: 8k
 Name: Bubble Bobble (Asia, FDS conversion, Alt PCB)
 System: Famicom
 Board: WHIRLWIND-2706
+Mirroring: Horizontal
 PRG: 128k
 PRG-CRC: AF799590
 PRG-SHA1: 71511ECB1E5D99F38A04EC9291B1ABD4B512C42D
