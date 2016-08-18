@@ -46,6 +46,7 @@ struct board_fixup {
 };
 
 extern int running;
+extern struct board_info board_unl_lh32;
 extern struct board_info board_whirlwind_2706;
 extern struct board_info board_btl_smb2a;
 extern struct board_info board_btl_smb2b;
@@ -229,6 +230,7 @@ extern struct board_info board_waixing_type_h;
 extern struct board_info board_waixing_sgzlz;
 
 static struct board_info *board_info_list[] = {
+	&board_unl_lh32,
 	&board_whirlwind_2706,
 	&board_btl_smb2a,
 	&board_btl_smb2b,
