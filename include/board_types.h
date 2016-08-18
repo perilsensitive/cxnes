@@ -292,6 +292,7 @@
 #define BOARD_TYPE_BTL_SMB2C               INES_TO_BOARD_TYPE( 43,  0, 0, 0)
 #define BOARD_TYPE_WHIRLWIND_2706          INES_TO_BOARD_TYPE(108,  0, 0, 0)
 #define BOARD_TYPE_UNL_LH32                0x1e000
+#define BOARD_TYPE_UNL_BB                  0x1e001
 #define BOARD_TYPE_MAGICSERIES             INES_TO_BOARD_TYPE(107,  0, 0, 0)
 #define BOARD_TYPE_150_IN_1                INES_TO_BOARD_TYPE(202,  0, 0, 0)
 #define BOARD_TYPE_76_IN_1                 INES_TO_BOARD_TYPE(226,  0, 0, 0)

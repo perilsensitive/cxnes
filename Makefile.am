@@ -109,6 +109,7 @@ cxnes_SOURCES = \
 	boards/btl_smb2c.c \
 	boards/whirlwind.c \
 	boards/unl_lh32.c \
+	boards/unl_bb.c \
 	boards/subor.c \
 	boards/76in1.c \
 	boards/cufrom.c \
