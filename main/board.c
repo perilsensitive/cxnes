@@ -48,6 +48,7 @@ struct board_fixup {
 extern int running;
 extern struct board_info board_unl_smb2j;
 extern struct board_info board_unl_ac08;
+extern struct board_info board_unl_cc_21;
 extern struct board_info board_unl_bb;
 extern struct board_info board_unl_lh32;
 extern struct board_info board_whirlwind_2706;
@@ -235,6 +236,7 @@ extern struct board_info board_waixing_sgzlz;
 static struct board_info *board_info_list[] = {
 	&board_unl_smb2j,
 	&board_unl_ac08,
+	&board_unl_cc_21,
 	&board_unl_bb,
 	&board_unl_lh32,
 	&board_whirlwind_2706,

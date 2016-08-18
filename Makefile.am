@@ -105,6 +105,7 @@ cxnes_SOURCES = \
 	main/7z/Lzma2Dec.c \
 	main/7z/Ppmd7.c \
 	boards/unl_ac08.c \
+	boards/unl_cc_21.c \
 	boards/unl_smb2j.c \
 	boards/btl_smb2a.c \
 	boards/btl_smb2b.c \

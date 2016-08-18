@@ -19,37 +19,35 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(unl_bb_write_handler);
+static CPU_WRITE_HANDLER(unl_cc_21_write_handler);
 
-static struct bank unl_bb_init_prg[] = {
-	{ 3, 0, SIZE_8K, 0x6000, MAP_PERM_READ, MAP_TYPE_ROM},
+static struct bank unl_cc_21_init_prg[] = {
 	{-1, 0, SIZE_32K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 
-static struct board_write_handler unl_bb_write_handlers[] = {
-	{unl_bb_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler unl_cc_21_write_handlers[] = {
+	{unl_cc_21_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct board_info board_unl_bb = {
-	.board_type = BOARD_TYPE_UNL_BB,
-	.name = "UNL-BB",
-	.init_prg = unl_bb_init_prg,
-	.init_chr0 = std_chr_8k,
-	.write_handlers = unl_bb_write_handlers,
-	.max_prg_rom_size = SIZE_64K,
-	.max_chr_rom_size = SIZE_32K,
+struct board_info board_unl_cc_21 = {
+	.board_type = BOARD_TYPE_UNL_CC_21,
+	.name = "UNL-CC-21",
+	.init_prg = unl_cc_21_init_prg,
+	.init_chr0 = std_chr_4k,
+	.write_handlers = unl_cc_21_write_handlers,
+	.max_prg_rom_size = SIZE_32K,
+	.max_chr_rom_size = SIZE_16K,
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_01,
+	.mirroring_shift = 1,
 };
 
-static CPU_WRITE_HANDLER(unl_bb_write_handler)
+static CPU_WRITE_HANDLER(unl_cc_21_write_handler)
 {
 	struct board *board = emu->board;
 
-	if  ((addr & 0x9000) == 0x8000) {
-		update_prg_bank(board, 0, value & 0x03);
-		update_chr0_bank(board, 0, value & 0x03);
-	} else {
-		update_chr0_bank(board, 0, value & 0x01);
-	}
+	standard_mirroring_handler(emu, addr, addr, cycles);
+	update_chr0_bank(board, 0, addr);
 }
