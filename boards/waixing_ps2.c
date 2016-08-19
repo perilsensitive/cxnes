@@ -19,9 +19,9 @@
 
 #include "board_private.h"
 
-static CPU_WRITE_HANDLER(contra_100in1_write_handler);
+static CPU_WRITE_HANDLER(waixing_ps2_write_handler);
 
-static struct bank contra_100in1_init_prg[] = {
+static struct bank waixing_ps2_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 0, SIZE_8K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{1, 0, SIZE_8K, 0xa000, MAP_PERM_READ, MAP_TYPE_ROM},
@@ -30,17 +30,17 @@ static struct bank contra_100in1_init_prg[] = {
 	{.type = MAP_TYPE_END}
 };
 
-static struct board_write_handler contra_100in1_write_handlers[] = {
-	{contra_100in1_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler waixing_ps2_write_handlers[] = {
+	{waixing_ps2_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct board_info board_contra_100in1 = {
-	.board_type = BOARD_TYPE_CONTRA_100_IN_1,
-	.name = "WAIXING / BMC CONTRA 100-IN-1",
-	.init_prg = contra_100in1_init_prg,
+struct board_info board_waixing_ps2 = {
+	.board_type = BOARD_TYPE_WAIXING_PS2,
+	.name = "WAIXING-PS2",
+	.init_prg = waixing_ps2_init_prg,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = contra_100in1_write_handlers,
+	.write_handlers = waixing_ps2_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_8K,
 	.max_wram_size = {SIZE_8K, 0},
@@ -49,7 +49,7 @@ struct board_info board_contra_100in1 = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-static CPU_WRITE_HANDLER(contra_100in1_write_handler)
+static CPU_WRITE_HANDLER(waixing_ps2_write_handler)
 {
 	struct board *board = emu->board;
 

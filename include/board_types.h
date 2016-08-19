@@ -239,6 +239,7 @@
 #define BOARD_TYPE_WAIXING_TYPE_C          INES_TO_BOARD_TYPE(192,  0, 0, 0)
 #define BOARD_TYPE_WAIXING_TYPE_H          INES_TO_BOARD_TYPE(245,  0, 0, 0)
 #define BOARD_TYPE_WAIXING_SGZLZ           INES_TO_BOARD_TYPE(178,  0, 0, 0)
+#define BOARD_TYPE_WAIXING_PS2             INES_TO_BOARD_TYPE( 15,  0, 0, 0)
 
 /* JY Company */
 #define BOARD_TYPE_JYCOMPANY_A             INES_TO_BOARD_TYPE( 90,  0, 0, 0)
@@ -260,7 +261,6 @@
 #define BOARD_TYPE_FDS  0x1fffe
 #define BOARD_TYPE_NSF  0x1ffff
 
-#define BOARD_TYPE_CONTRA_100_IN_1         INES_TO_BOARD_TYPE( 15,  0, 0, 0)
 #define BOARD_TYPE_CALTRON_6_IN_1          INES_TO_BOARD_TYPE( 41,  0, 0, 0)
 #define BOARD_TYPE_NTDEC_193               INES_TO_BOARD_TYPE(193,  0, 0, 0)
 #define BOARD_TYPE_COLORDREAMS             INES_TO_BOARD_TYPE( 11,  0, 0, 0)

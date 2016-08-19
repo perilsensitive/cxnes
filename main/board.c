@@ -96,7 +96,7 @@ extern struct board_info board_sachen_8259c;
 extern struct board_info board_sachen_8259d;
 extern struct board_info board_action52;
 extern struct board_info board_caltron_6in1;
-extern struct board_info board_contra_100in1;
+extern struct board_info board_waixing_ps2;
 extern struct board_info board_cnrom;
 extern struct board_info board_cnrom_no_conflict;
 extern struct board_info board_cnrom_security;
@@ -283,7 +283,7 @@ static struct board_info *board_info_list[] = {
 	&board_sachen_8259d,
 	&board_action52,
 	&board_caltron_6in1,
-	&board_contra_100in1,
+	&board_waixing_ps2,
 	&board_cnrom,
 	&board_cnrom_no_conflict,
 	&board_cnrom_security,

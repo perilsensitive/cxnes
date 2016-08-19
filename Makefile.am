@@ -194,7 +194,7 @@ cxnes_SOURCES = \
 	boards/cnrom.c \
 	boards/sunsoft2.c \
 	boards/colordreams.c \
-	boards/contra_100in1.c \
+	boards/waixing_ps2.c \
 	boards/vrc1.c \
 	boards/axrom.c \
 	boards/fds.c \
