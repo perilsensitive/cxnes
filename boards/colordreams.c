@@ -85,9 +85,9 @@ struct board_info board_colordreams = {
 	.max_wram_size = {SIZE_8K, 0},
 };
 
-struct board_info board_rumblestation_15_in_1 = {
-	.board_type = BOARD_TYPE_RUMBLESTATION_15_IN_1,
-	.name = "RUMBLESTATION 15-IN-1",
+struct board_info board_rumblestation = {
+	.board_type = BOARD_TYPE_RUMBLESTATION,
+	.name = "RUMBLESTATION",
 	.funcs = &rumblestation_funcs,
 	.init_prg = std_prg_32k,
 	.init_chr0 = std_chr_8k,

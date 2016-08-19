@@ -32,7 +32,7 @@ static struct board_write_handler waixing_sgzlz_write_handlers[] = {
 
 struct board_info board_waixing_sgzlz = {
 	.board_type = BOARD_TYPE_WAIXING_SGZLZ,
-	.name = "WAIXING SAN GUO ZHONG LIE ZHUAN",
+	.name = "WAIXING-SGZLZ",
 	.init_prg = std_prg_32k,
 	.init_chr0 = std_chr_8k,
 	.write_handlers = waixing_sgzlz_write_handlers,

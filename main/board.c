@@ -78,7 +78,7 @@ extern struct board_info board_txc_tw;
 extern struct board_info board_cne_shlz;
 extern struct board_info board_sachen_74x374b;
 extern struct board_info board_kasing;
-extern struct board_info board_rumblestation_15_in_1;
+extern struct board_info board_rumblestation;
 extern struct board_info board_22_in_1;
 extern struct board_info board_bmc_15_in_1;
 extern struct board_info board_familybasic;
@@ -266,7 +266,7 @@ static struct board_info *board_info_list[] = {
 	&board_cne_shlz,
 	&board_sachen_74x374b,
 	&board_kasing,
-	&board_rumblestation_15_in_1,
+	&board_rumblestation,
 	&board_22_in_1,
 	&board_bmc_15_in_1,
 	&board_familybasic,
@@ -443,6 +443,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "BANDAI-NROM-128", BOARD_TYPE_NROM },
 	{ "BANDAI-NROM-256", BOARD_TYPE_NROM },
 	{ "BANDAI-PT-554", BOARD_TYPE_CNROM },
+	{ "BMC-64IN1", BOARD_TYPE_BMC_110_IN_1 },
 	{ "BMC-72IN1", BOARD_TYPE_BMC_110_IN_1 },
 	{ "BMC-110IN1", BOARD_TYPE_BMC_110_IN_1 },
 	{ "BMC-1200IN1", BOARD_TYPE_BMC_1200_IN_1 },

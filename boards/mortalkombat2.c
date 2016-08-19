@@ -44,7 +44,7 @@ static struct board_funcs mortalkombat2_funcs = {
 
 struct board_info board_unl_mortalkombat2 = {
 	.board_type = BOARD_TYPE_UNL_MORTALKOMBAT2,
-	.name = "UNL MK2/SF3/SMKR",
+	.name = "UNL-MK2",
 	.funcs = &mortalkombat2_funcs,
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_2k,

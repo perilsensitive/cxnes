@@ -28,7 +28,7 @@ static struct board_write_handler cne_psb_write_handlers[] = {
 
 struct board_info board_cne_psb = {
 	.board_type = BOARD_TYPE_CNE_PSB,
-	.name = "CNE PHONE SERM BERM",
+	.name = "CNE-PSB",
 	.init_prg = std_prg_8k,
 	.init_chr0 = std_chr_2k,
 	.write_handlers = cne_psb_write_handlers,

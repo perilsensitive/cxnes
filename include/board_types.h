@@ -232,7 +232,7 @@
 #define BOARD_TYPE_TENGEN_800004           INES_TO_BOARD_TYPE(206,  0, 0, 0)
 
 /* Wisdom Tree */		
-#define BOARD_TYPE_RUMBLESTATION_15_IN_1   INES_TO_BOARD_TYPE( 46,  0, 0, 0)
+#define BOARD_TYPE_RUMBLESTATION           INES_TO_BOARD_TYPE( 46,  0, 0, 0)
 
 /* Waixing */
 #define BOARD_TYPE_WAIXING_TYPE_A          INES_TO_BOARD_TYPE( 74,  0, 0, 0)
