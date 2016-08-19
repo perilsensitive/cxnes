@@ -22,35 +22,35 @@
 #define _register_select board->data[0]
 #define _counter board->data[1]
 
-static CPU_READ_HANDLER(sachen_74x374b_read_handler);
-static CPU_WRITE_HANDLER(sachen_74x374b_write_handler);
-static void sachen_74x374b_reset(struct board *board, int);
+static CPU_READ_HANDLER(sachen_74ls374n_read_handler);
+static CPU_WRITE_HANDLER(sachen_74ls374n_write_handler);
+static void sachen_74ls374n_reset(struct board *board, int);
 
-static struct board_funcs sachen_74x374b_funcs = {
-	.reset = sachen_74x374b_reset,
+static struct board_funcs sachen_74ls374n_funcs = {
+	.reset = sachen_74ls374n_reset,
 };
 
 static uint8_t mirroring_values[4] = { MIRROR_H, MIRROR_V, 0x54, MIRROR_1A };
 
-static struct board_write_handler sachen_74x374b_write_handlers[] = {
-	{sachen_74x374b_write_handler, 0x4100, 2048, 0xc101},
-	{sachen_74x374b_write_handler, 0x4101, 2048, 0xc101},
+static struct board_write_handler sachen_74ls374n_write_handlers[] = {
+	{sachen_74ls374n_write_handler, 0x4100, 2048, 0xc101},
+	{sachen_74ls374n_write_handler, 0x4101, 2048, 0xc101},
 	{NULL},
 };
 
-static struct board_read_handler sachen_74x374b_read_handlers[] = {
-	{sachen_74x374b_read_handler, 0x4100, 0x1e00, 0},
+static struct board_read_handler sachen_74ls374n_read_handlers[] = {
+	{sachen_74ls374n_read_handler, 0x4100, 0x1e00, 0},
 	{NULL},
 };
 
-struct board_info board_sachen_74x374b = {
-	.board_type = BOARD_TYPE_SACHEN_74_374B,
-	.name = "SACHEN-74*374 (b)",
+struct board_info board_sachen_74ls374n = {
+	.board_type = BOARD_TYPE_SACHEN_74LS374N,
+	.name = "UNL-SACHEN-74LS374N",
 	.init_prg = std_prg_32k,
 	.init_chr0 = std_chr_8k,
-	.funcs = &sachen_74x374b_funcs,
-	.read_handlers = sachen_74x374b_read_handlers,
-	.write_handlers = sachen_74x374b_write_handlers,
+	.funcs = &sachen_74ls374n_funcs,
+	.read_handlers = sachen_74ls374n_read_handlers,
+	.write_handlers = sachen_74ls374n_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_128K,
 	.min_wram_size = { SIZE_8K, 0 },
@@ -60,7 +60,7 @@ struct board_info board_sachen_74x374b = {
 	.mirroring_shift = 1,
 };
 
-static CPU_READ_HANDLER(sachen_74x374b_read_handler)
+static CPU_READ_HANDLER(sachen_74ls374n_read_handler)
 {
 	struct board *board;
 
@@ -71,7 +71,7 @@ static CPU_READ_HANDLER(sachen_74x374b_read_handler)
 	return value;
 }
 
-static CPU_WRITE_HANDLER(sachen_74x374b_write_handler)
+static CPU_WRITE_HANDLER(sachen_74ls374n_write_handler)
 {
 	struct board *board = emu->board;
 
@@ -113,7 +113,7 @@ static CPU_WRITE_HANDLER(sachen_74x374b_write_handler)
 	}
 }
 
-static void sachen_74x374b_reset(struct board *board, int hard)
+static void sachen_74ls374n_reset(struct board *board, int hard)
 {
 	/* printf("here reset\n"); */
 	/* if (!hard) */

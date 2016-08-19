@@ -76,7 +76,7 @@ extern struct board_info board_bmc_35in1;
 extern struct board_info board_cne_psb;
 extern struct board_info board_txc_tw;
 extern struct board_info board_cne_shlz;
-extern struct board_info board_sachen_74x374b;
+extern struct board_info board_sachen_74ls374n;
 extern struct board_info board_kasing;
 extern struct board_info board_rumblestation;
 extern struct board_info board_22_in_1;
@@ -264,7 +264,7 @@ static struct board_info *board_info_list[] = {
 	&board_cne_psb,
 	&board_txc_tw,
 	&board_cne_shlz,
-	&board_sachen_74x374b,
+	&board_sachen_74ls374n,
 	&board_kasing,
 	&board_rumblestation,
 	&board_22_in_1,
@@ -658,7 +658,6 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "UNL-SACHEN-8259B", BOARD_TYPE_SACHEN_8259B },
 	{ "UNL-SACHEN-8259C", BOARD_TYPE_SACHEN_8259C },
 	{ "UNL-SACHEN-8259D", BOARD_TYPE_SACHEN_8259D },
-	{ "UNL-SACHEN-74LS374N", BOARD_TYPE_SACHEN_74_374B },
 	{ "UNL-SA-016-1M", BOARD_TYPE_NINA_03_06 },
 	{ "UNL-SA-0036", BOARD_TYPE_SACHEN_SA0036 },
 	{ "UNROM-512-8", BOARD_TYPE_UNROM_512_8 },
