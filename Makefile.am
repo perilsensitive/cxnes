@@ -104,6 +104,7 @@ cxnes_SOURCES = \
 	main/7z/Bra86.c \
 	main/7z/Lzma2Dec.c \
 	main/7z/Ppmd7.c \
+	boards/unl_ks7037.c \
 	boards/unl_ks7057.c \
 	boards/unl_ac08.c \
 	boards/unl_cc_21.c \

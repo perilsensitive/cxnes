@@ -296,7 +296,8 @@
 #define BOARD_TYPE_UNL_SMB2J               0x1e002
 #define BOARD_TYPE_UNL_AC08                0x1e003
 #define BOARD_TYPE_UNL_CC_21               0x1e004
-#define BOARD_TYPE_UNL_KS7057              0x1e005
+#define BOARD_TYPE_UNL_KS7037              0x1e005
+#define BOARD_TYPE_UNL_KS7057              0x1e006
 #define BOARD_TYPE_MAGICSERIES             INES_TO_BOARD_TYPE(107,  0, 0, 0)
 #define BOARD_TYPE_BMC_150_IN_1            INES_TO_BOARD_TYPE(202,  0, 0, 0)
 #define BOARD_TYPE_76_IN_1                 INES_TO_BOARD_TYPE(226,  0, 0, 0)
