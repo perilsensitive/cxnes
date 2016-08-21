@@ -48,6 +48,7 @@ struct board_info board_unl_ks7037 = {
 	.init_chr0 = std_chr_8k,
 	.write_handlers = unl_ks7037_write_handlers,
 	.max_wram_size = { SIZE_8K, 0 },
+	.min_wram_size = { SIZE_8K, 0 },
 	.max_prg_rom_size = SIZE_128K,
 	.max_chr_rom_size = SIZE_8K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
