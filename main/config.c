@@ -40,6 +40,7 @@
 #define DEFAULT_NSF_ROM "nsf.rom"
 #define DEFAULT_GAMECONTROLLER_DB "gamecontrollerdb.txt"
 #define DEFAULT_ROM_DB "romdb.txt"
+#define DEFAULT_CHEAT_DB "cheatdb"
 #define DEFAULT_CHEAT_PATH "cheat"
 #define DEFAULT_SAVE_PATH "save"
 #define DEFAULT_PATCH_PATH "patch"
@@ -1359,6 +1360,9 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 		config_value = config->cheat_path;
 		default_path = DEFAULT_CHEAT_PATH;
 		break;
+	case CONFIG_DATA_DIR_CHEAT_DB:
+		default_path = DEFAULT_CHEAT_DB;
+		break;
 	case CONFIG_DATA_DIR_SCREENSHOT:
 		config_value = config->screenshot_path;
 		default_path = DEFAULT_SCREENSHOT_PATH;
@@ -1411,16 +1415,23 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 	if (user > 0 && limit)
 		limit = 1;
 
-	for (i = (user ? 0 : 1); i < limit; i++) {
+	if (user == 1)
+		i = 0;
+	else
+		i = 1;
+
+	for (; i < limit; i++) {
 		int len = strlen(data_path_list->paths[i]);
 		snprintf(buffer, length, "%s%s%s%s%s",
 			 data_path_list->paths[i],
-			 (data_path_list->paths[i][len-1] == PATHSEP[0]) ? "" : "/",
+			 (data_path_list->paths[i][len-1] == PATHSEP[0]) ? "" : PATHSEP,
 			 default_path,
 			 filename[0] ? PATHSEP: "", filename);
 
-		if ((user > 0) || check_file_exists(buffer))
+		if (user || check_file_exists(buffer) ||
+		    check_directory_exists(buffer)) {
 			break;
+		}
 	}
 
 	if (i == limit) {

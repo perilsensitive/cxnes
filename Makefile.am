@@ -219,6 +219,15 @@ if ZIP_ENABLED
 cxnes_SOURCES += main/unzip.c main/ioapi.c
 endif
 
+install-data-local:
+	@$(NORMAL_INSTALL)
+	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)/cheatdb
+	$(INSTALL_DATA) data/cheatdb/* $(DESTDIR)$(pkgdatadir)/cheatdb
+
+uninstall-local:
+	@$(NORMAL_UNINSTALL)
+	rm -rf $(DESTDIR)$(pkgdatadir)/cheatdb
+
 if HAVE_WINDRES
 cxnes_SOURCES += sdl/gtk/windows_resources.rc
 
@@ -239,6 +248,7 @@ install-data-hook:
 	mv $(DESTDIR)$(pkgdatadir)/gamecontrollerdb.txt $(DESTDIR)$(pkgdatadir)/data
 	mv $(DESTDIR)$(pkgdatadir)/nsf.rom $(DESTDIR)$(pkgdatadir)/data
 	mv $(DESTDIR)$(pkgdatadir)/*.ttf $(DESTDIR)$(pkgdatadir)/data
+	mv $(DESTDIR)$(pkgdatadir)/cheatdb $(DESTDIR)$(pkgdatadir)/data
 	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/data/romdb.txt && \
 	  rm -f $(DESTDIR)$(pkgdatadir)/data/romdb.txt.bak
 	sed -i.bak 's/$$/\r/' $(DESTDIR)$(pkgdatadir)/data/gamecontrollerdb.txt && \

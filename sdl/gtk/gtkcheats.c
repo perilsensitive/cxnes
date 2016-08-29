@@ -271,6 +271,46 @@ static void load_callback(GtkButton *button, gpointer user_data)
 	}
 }
 
+static void import_from_db_callback(GtkButton *button, gpointer user_data)
+{
+	struct cheat **last;
+	GtkTreeStore *store;
+	GtkWidget *parent;
+	char *cheat_path;
+	const char *default_cheat_file;
+
+	char *file;
+	char *shortcuts[] = { NULL, NULL };
+	char *filter_patterns[] = { "*.[cC][hH][tT]", "*.[vV][cC][tT]",
+	                            "*.[gG][eE][nN]", NULL };
+
+	store = (GtkTreeStore *)user_data;
+	parent = g_object_get_data(G_OBJECT(button), "parent");
+
+	default_cheat_file = emu->cheat_file;
+	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT_DB, default_cheat_file, -1);
+
+	shortcuts[0] = cheat_path;
+	file = file_dialog(parent, "Select Cheat File",
+			   GTK_FILE_CHOOSER_ACTION_OPEN,
+			   "_Load", cheat_path, NULL,
+			   "Cheat Files", filter_patterns,
+			   shortcuts);
+
+	free(cheat_path);
+
+	last = &emu->cheats->cheat_list;
+	while (*last) {
+		last = &((*last)->next);
+	}
+
+	if (file) {
+		cheat_load_file(emu, file);
+		sync_cheat_tree(store, *last);
+		g_free(file);
+	}
+}
+
 static void save_callback(GtkButton *button, gpointer user_data)
 {
 	GtkWidget *parent;
@@ -777,6 +817,12 @@ void gui_cheat_dialog(GtkWidget *widget, gpointer user_data)
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(load_callback), cheat_store);
+	g_object_set_data(G_OBJECT(button), "parent", dialog);
+
+	button = gtk_button_new_with_mnemonic("_Import from Database...");
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(import_from_db_callback), cheat_store);
 	g_object_set_data(G_OBJECT(button), "parent", dialog);
 
 	button = gtk_button_new_with_mnemonic("_Save...");
