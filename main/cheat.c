@@ -293,12 +293,11 @@ static int parse_fceux_code(const char *code, int *a, int *v, int *c, char **d, 
 		tmpcode++;
 	}
 
+
+	enabled = 0;
 	/* If a ':' is present, the code is disabled */
 	if (tmpcode[0] == ':') {
-		enabled = 0;
 		tmpcode++;
-	} else {
-		enabled = 1;
 	}
 
 	desc_start = 0;
