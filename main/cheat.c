@@ -183,8 +183,22 @@ void insert_cheat(struct cheat_state *cheats, struct cheat *cheat)
 		cheats->cheat_list = cheat;
 	} else {
 		p = cheats->cheat_list;
-		while (p->next)
+
+		while (1) {
+			if ((cheat->address == p->address) &&
+			    (cheat->value == p->value) &&
+			    (cheat->compare == p->compare) &&
+			    (cheat->description && p->description) &&
+			    !strcmp(p->description, cheat->description)) {
+				free(cheat);
+				return;
+			}
+
+			if (!p->next)
+				break;
+
 			p = p->next;
+		}
 
 		p->next = cheat;
 	}
@@ -683,7 +697,6 @@ static void cheat_callback(char *line, int num, void *data)
 
 int cheat_load_file(struct emu *emu, const char *filename)
 {
-	printf("filename: %s\n", filename);
 	return process_file(filename, emu->cheats,
 			    cheat_callback, 0, 1, 1);
 }

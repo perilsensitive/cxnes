@@ -1415,12 +1415,7 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 	if (user > 0 && limit)
 		limit = 1;
 
-	if (user == 1)
-		i = 0;
-	else
-		i = 1;
-
-	for (; i < limit; i++) {
+	for (i = (user ? 0 : 1); i < limit; i++) {
 		int len = strlen(data_path_list->paths[i]);
 		snprintf(buffer, length, "%s%s%s%s%s",
 			 data_path_list->paths[i],
@@ -1428,7 +1423,7 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 			 default_path,
 			 filename[0] ? PATHSEP: "", filename);
 
-		if (user || check_file_exists(buffer) ||
+		if ((user > 0) || check_file_exists(buffer) ||
 		    check_directory_exists(buffer)) {
 			break;
 		}

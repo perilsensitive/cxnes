@@ -288,7 +288,9 @@ static void import_from_db_callback(GtkButton *button, gpointer user_data)
 	parent = g_object_get_data(G_OBJECT(button), "parent");
 
 	default_cheat_file = emu->cheat_file;
-	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT_DB, default_cheat_file, -1);
+	cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT_DB, default_cheat_file, 0);
+	if (!cheat_path)
+		cheat_path = config_get_path(emu->config, CONFIG_DATA_DIR_CHEAT_DB, NULL, 0);
 
 	shortcuts[0] = cheat_path;
 	file = file_dialog(parent, "Select Cheat File",
