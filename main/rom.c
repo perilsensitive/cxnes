@@ -150,6 +150,16 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 		memset(buffer, 0, INES_HEADER_SIZE + remainder);
 		rom->offset = INES_HEADER_SIZE + remainder;
 
+		if (!rom->info.name) {
+			char *tmp;
+			rom->info.name = strdup(rom->filename);
+
+			tmp = strrchr(rom->info.name, '.');
+			if (tmp)
+				*tmp = '\0';
+
+		}
+
 		*romptr = rom;
 	} else {
 		rom_free(rom);
@@ -800,6 +810,9 @@ void rom_free(struct rom *rom)
 	if (!rom)
 		return;
 
+	if (rom->info.name)
+		free(rom->info.name);
+
 	if (rom->filename)
 		free(rom->filename);
 
@@ -1058,6 +1071,9 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 	text_buffer_append(tbuffer, "---------------\n");
 	if (rom->filename)
 		text_buffer_append(tbuffer, "Filename: %s\n", rom->filename);
+
+	if (rom->info.name)
+		text_buffer_append(tbuffer, "Name: %s\n", rom->info.name);
 
 	text_buffer_append(tbuffer, "Board Type: %s\n",
 			   board_info_get_name(rom->board_info));

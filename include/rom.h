@@ -51,6 +51,7 @@ struct board_info;
 
 struct rom_info {
 	/* char *title; */
+	char *name;
 	size_t total_prg_size;
 	size_t total_chr_size;
 	uint32_t wram_size[2];

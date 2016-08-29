@@ -439,6 +439,8 @@ static void fixup_entry(struct rom_info *info)
 	}
 
 	if (!info->prg_crc_count && !(info->flags & (ROM_FLAG_HAS_CRC))) {
+		if (info->name)
+			free(info->name);
 		free(info);
 	} else {
 		insert_rom(info);
@@ -589,6 +591,8 @@ static void process_field(struct db_parser_state *state)
 		if (count == 1)
 			state->current->flags |= ROM_FLAG_HAS_SHA1;
 	} else if (!strcasecmp(key, "name")) {
+		if (!state->current->name)
+			state->current->name = strdup(value);
 		/* printf("title: %s\n", value); */
 	} else if (!strcasecmp(key, "port-1")) {
 		set_auto_device(state->current, 0, value);
@@ -706,6 +710,8 @@ void db_cleanup(void)
 
 	while (head) {
 		tmp = head->next;
+		if (head->name)
+			free(head->name);
 		free(head);
 		head = tmp;
 	}
@@ -983,6 +989,7 @@ struct rom_info *db_lookup(struct rom *rom, struct rom_info *junk)
 		    (rom->info.flags & ROM_FLAG_PLAYCHOICE)) {
 			rom->info.system_type = EMU_SYSTEM_TYPE_PLAYCHOICE;
 		}
+		rom->info.name = strdup(info->name);
 	}
 
 	rom_calculate_checksum(rom);

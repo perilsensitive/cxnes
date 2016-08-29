@@ -195,6 +195,11 @@ int split_rom_load(struct emu *emu, const char *filename, struct rom **romptr)
 
 		buffer = NULL;
 		memcpy(&rom->info, rom_info, sizeof(*rom_info));
+		if (rom_info->name)
+			rom->info.name = strdup(rom_info->name);
+		else
+			rom->info.name = NULL;
+
 		rom->offset = INES_HEADER_SIZE;
 		rom_calculate_checksum(rom);
 
