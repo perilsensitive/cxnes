@@ -276,8 +276,8 @@ static void import_from_db_callback(GtkButton *button, gpointer user_data)
 	struct cheat **last;
 	GtkTreeStore *store;
 	GtkWidget *parent;
-	char *cheat_path;
-	char *default_cheat_file;
+	char *cheat_db_path;
+	char *cheat_db_file;
 	int length;
 
 	char *file;
@@ -288,36 +288,36 @@ static void import_from_db_callback(GtkButton *button, gpointer user_data)
 	store = (GtkTreeStore *)user_data;
 	parent = g_object_get_data(G_OBJECT(button), "parent");
 
-	default_cheat_file = NULL;
+	cheat_db_path = config_get_path(emu->config,
+			CONFIG_DATA_DIR_CHEAT_DB,
+			NULL, 0);
 
-	length = strlen(emu->rom->info.name) + 4;
-	default_cheat_file = malloc(length + 1);
-	if (!default_cheat_file)
+	if (!cheat_db_path)
 		return;
 
-	snprintf(default_cheat_file, length + 4, "%s.cht",
-		 emu->rom->info.name);
-	cheat_path = config_get_path(emu->config,
-			CONFIG_DATA_DIR_CHEAT_DB,
-			default_cheat_file, 0);
+	length = strlen(cheat_db_path) + 1 +
+		 strlen(emu->rom->info.name) + 4;
 
-	if (!cheat_path) {
-		cheat_path = config_get_path(emu->config,
-				CONFIG_DATA_DIR_CHEAT_DB,
-				NULL, 0);
+	cheat_db_file = malloc(length + 1);
+
+	if (cheat_db_file) {
+		snprintf(cheat_db_file, length + 1,
+			 "%s%s%s.cht", cheat_db_path, PATHSEP,
+			 emu->rom->info.name);
 	}
 
-	shortcuts[0] = cheat_path;
+	shortcuts[0] = cheat_db_path;
+
 	file = file_dialog(parent, "Select Cheat File",
 			   GTK_FILE_CHOOSER_ACTION_OPEN,
-			   "_Load", cheat_path, NULL,
+			   "_Load", cheat_db_file, NULL,
 			   "Cheat Files", filter_patterns,
 			   shortcuts);
 
-	free(default_cheat_file);
+	free(cheat_db_file);
 
-	if (cheat_path)
-		free(cheat_path);
+	if (cheat_db_path)
+		free(cheat_db_path);
 
 	last = &emu->cheats->cheat_list;
 	while (*last) {
