@@ -235,13 +235,8 @@ static int parse_virtuanes_code(const char *code, int *a, int *v, int *c, char *
 	if (has_compare)
 		*c = c1;
 
-	switch (status) {
-	case 0: *e = 0; break;
-	case 1: *e = 1; break;
-	case 2: *e = 0; break;
-	case 3: *e = 1; break;
-	default: *e = 0; break;
-	}
+	/* Imported cheats always start as disabled */
+	*e = 0;
 
 	return 0;
 }
