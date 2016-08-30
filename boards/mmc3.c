@@ -39,6 +39,7 @@ static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
 static CPU_WRITE_HANDLER(m15_in_1_write_handler);
 static CPU_WRITE_HANDLER(txc_tw_write_handler);
+static CPU_WRITE_HANDLER(bmc_marioparty7in1_write_handler);
 static CPU_WRITE_HANDLER(rambo1_irq_latch);
 static CPU_WRITE_HANDLER(rambo1_irq_reload);
 static CPU_WRITE_HANDLER(rambo1_irq_disable);
@@ -218,6 +219,18 @@ static struct board_write_handler txc_tw_write_handlers[] = {
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
 	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
 	{txc_tw_write_handler, 0x4120, SIZE_16K - 0x0120, 0},
+	{NULL}
+};
+
+static struct board_write_handler bmc_marioparty7in1_write_handlers[] = {
+	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{bmc_marioparty7in1_write_handler, 0x6000, SIZE_8K, 0},
 	{NULL}
 };
 
@@ -462,6 +475,19 @@ struct board_info board_txc_tw = {
 	.mirroring_values = std_mirroring_vh,
 };
 
+struct board_info board_bmc_marioparty7in1 = {
+	.board_type = BOARD_TYPE_BMC_MARIOPARTY_7_IN_1,
+	.name = "BMC-MARIOPARTY-7IN1",
+	.funcs = &mmc3_funcs,
+	.init_prg = mmc3_init_prg,
+	.init_chr0 = std_chr_2k_1k,
+	.write_handlers = bmc_marioparty7in1_write_handlers,
+	.max_prg_rom_size = SIZE_2048K,
+	.max_chr_rom_size = SIZE_2048K,
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_vh,
+};
+
 struct board_info board_hosenkan_electronics = {
 	.board_type = BOARD_TYPE_UNL_HOSENKAN,
 	.name = "UNL-HOSENKAN",
@@ -623,6 +649,12 @@ static void mmc3_reset(struct board *board, int hard)
 		board->chr_or = 0;
 
 		switch (board->info->board_type) {
+		case BOARD_TYPE_BMC_MARIOPARTY_7_IN_1:
+			board->prg_and = 0x1f;
+			board->chr_and = 0xff;
+			board->prg_or = 0x00;
+			board->chr_or = 0x000;
+			break;
 		case BOARD_TYPE_BMC_SUPERHIK_4_IN_1:
 			board->prg_and = 0x0f;
 			board->chr_and = 0x7f;
@@ -1111,6 +1143,35 @@ static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler)
 	}
 
 	board->prg_banks[5].size = size;
+
+	board_prg_sync(board);
+	board_chr_sync(board, 0);
+}
+
+static CPU_WRITE_HANDLER(bmc_marioparty7in1_write_handler)
+{
+	struct board *board;
+
+	board = emu->board;
+
+
+	if (board->prg_banks[0].perms != MAP_PERM_READWRITE)
+		return;
+
+	board->prg_or = (value & 0x07) << 4;
+	board->prg_and = 0x0f;
+	board->chr_or = ((value & 0x30) << 3) | ((value & 0x04) << 7);
+	board->chr_and = 0x7f;
+
+	if (!(value & 0x08)) {
+		board->prg_and |= 0x10;
+		board->prg_or &= 0x60;
+	}
+
+	if (!(value & 0x40)) {
+		board->chr_and = 0xff;
+		board->chr_or &= 0x300;;
+	}
 
 	board_prg_sync(board);
 	board_chr_sync(board, 0);
