@@ -30,10 +30,13 @@
 #define _has_alt_mirroring board->data[7]
 #define _cpu_cycle_irq_enable board->data[8]
 
+#define _ext_regs (board->data + 9)
+
 static CPU_WRITE_HANDLER(mmc3_write_handler);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
 static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler);
+static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler);
 static CPU_READ_HANDLER(mmc6_wram_read_handler);
 static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
@@ -82,17 +85,27 @@ static struct bank mmc3_init_prg[] = {
 	{.type = MAP_TYPE_END},
 };
 
-static struct bank rambo1_init_chr0[] = {
-	{0, 1, SIZE_2K, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
-	{2, 1, SIZE_2K, 0x0800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+static struct bank new_init_chr0[] = {
+	/* These first four banks are used for 2K mode */
+	/* Kept separate so that chr_or affects both halves of
+	 * the 2K bank. */
+	{0, 0, SIZE_1K, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+	{1, 0, SIZE_1K, 0x0400, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+	{2, 0, SIZE_1K, 0x0800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+	{3, 0, SIZE_1K, 0x0c00, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{4, 0, SIZE_1K, 0x1000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{5, 0, SIZE_1K, 0x1400, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{6, 0, SIZE_1K, 0x1800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{7, 0, SIZE_1K, 0x1c00, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+
+	/* These last four banks are used for 1K mode */
+	{0, 0, 0, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 0, 0, 0x0400, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
+	{0, 0, 0, 0x0800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 0, 0, 0x0c00, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{.type = MAP_TYPE_END},
 };
+
 
 static struct board_write_handler mmc3_write_handlers[] = {
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
@@ -118,6 +131,18 @@ static struct board_write_handler bmc_superbig7in1_write_handlers[] = {
 
 static struct board_write_handler bmc_superhik4in1_write_handlers[] = {
 	{bmc_superhik4in1_write_handler, 0x6000, SIZE_8K, 0},
+	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{NULL}
+};
+
+static struct board_write_handler bmc_superhik8in1_write_handlers[] = {
+	{bmc_superhik8in1_write_handler, 0x6000, SIZE_8K, 0},
 	{mmc3_write_handler, 0x8000, SIZE_8K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{mmc3_write_handler, 0xa001, SIZE_8K, 0xa001},
@@ -240,7 +265,7 @@ struct board_info board_txrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -255,7 +280,7 @@ struct board_info board_acclaim_mc_acc = {
 	.mapper_name = "MC-ACC",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -270,7 +295,7 @@ struct board_info board_txrom_mmc3a = {
 	.mapper_name = "MMC3A",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -285,7 +310,7 @@ struct board_info board_txsrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = txsrom_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -300,7 +325,7 @@ struct board_info board_tqrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_64K,
@@ -317,7 +342,7 @@ struct board_info board_hkrom = {
 	.mapper_name = "MMC6",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.read_handlers = hkrom_read_handlers,
 	.write_handlers = hkrom_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
@@ -335,7 +360,7 @@ struct board_info board_nes_qj = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -349,7 +374,7 @@ struct board_info board_pal_zz = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_256K,
@@ -363,7 +388,7 @@ struct board_info board_tengen800032 = {
 	.mapper_name = "RAMBO-1",
 	.funcs = &rambo1_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = rambo1_init_chr0,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = rambo1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -379,7 +404,7 @@ struct board_info board_tengen800037 = {
 	.mapper_name = "RAMBO-1",
 	.funcs = &rambo1_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = rambo1_init_chr0,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = tengen800037_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -395,7 +420,7 @@ struct board_info board_bmc_15_in_1 = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = m15_in_1_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_512K,
@@ -408,7 +433,7 @@ struct board_info board_waixing_type_a = {
 	.name = "WAIXING-A",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -424,7 +449,7 @@ struct board_info board_waixing_type_c = {
 	.name = "WAIXING-C",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -440,7 +465,7 @@ struct board_info board_kasing = {
 	.name = "KASING",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -453,7 +478,7 @@ struct board_info board_waixing_type_h = {
 	.name = "WAIXING-H",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -467,7 +492,7 @@ struct board_info board_txc_tw = {
 	.name = "TXC-TW",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = txc_tw_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -480,7 +505,7 @@ struct board_info board_bmc_marioparty7in1 = {
 	.name = "BMC-MARIOPARTY-7IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = bmc_marioparty7in1_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_2048K,
@@ -493,7 +518,7 @@ struct board_info board_hosenkan_electronics = {
 	.name = "UNL-HOSENKAN",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = hosenkan_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -507,7 +532,7 @@ struct board_info board_bmc_superbig_7in1 = {
 	.name = "BMC-SUPERBIG-7IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = bmc_superbig7in1_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
 	.max_chr_rom_size = SIZE_1024K,
@@ -521,8 +546,21 @@ struct board_info board_bmc_superhik_4in1 = {
 	.name = "BMC-SUPERHIK-4IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = std_chr_2k_1k,
+	.init_chr0 = new_init_chr0,
 	.write_handlers = bmc_superhik4in1_write_handlers,
+	.max_prg_rom_size = SIZE_512K,
+	.max_chr_rom_size = SIZE_512K,
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_vh,
+};
+
+struct board_info board_bmc_superhik_8in1 = {
+	.board_type = BOARD_TYPE_BMC_SUPERHIK_8_IN_1,
+	.name = "BMC-SUPERHIK8IN1",
+	.funcs = &mmc3_funcs,
+	.init_prg = mmc3_init_prg,
+	.init_chr0 = new_init_chr0,
+	.write_handlers = bmc_superhik8in1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_512K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -654,6 +692,15 @@ static void mmc3_reset(struct board *board, int hard)
 			board->chr_and = 0xff;
 			board->prg_or = 0x00;
 			board->chr_or = 0x000;
+			break;
+		case BOARD_TYPE_BMC_SUPERHIK_8_IN_1:
+			_ext_regs[4] = 0;
+			_ext_regs[3] &= 0x3f;
+			board->prg_or = 0x00;
+			board->chr_or = 0x00;
+			/* FIXME these may not be correct */
+			board->prg_and = 0xff;
+			board->chr_and = 0xff;
 			break;
 		case BOARD_TYPE_BMC_SUPERHIK_4_IN_1:
 			board->prg_and = 0x0f;
@@ -832,37 +879,49 @@ static void mmc3_update_chr(struct board *board)
 	if (!(board->chr_mode & 0x80)) {
 		board->chr_banks0[0].address &= 0x0fff;
 		board->chr_banks0[1].address &= 0x0fff;
-		board->chr_banks0[2].address |= 0x1000;
-		board->chr_banks0[3].address |= 0x1000;
+		board->chr_banks0[2].address &= 0x0fff;
+		board->chr_banks0[3].address &= 0x0fff;
 		board->chr_banks0[4].address |= 0x1000;
 		board->chr_banks0[5].address |= 0x1000;
-		board->chr_banks0[6].address &= 0x0fff;
-		board->chr_banks0[7].address &= 0x0fff;
+		board->chr_banks0[6].address |= 0x1000;
+		board->chr_banks0[7].address |= 0x1000;
+		board->chr_banks0[8].address &= 0x0fff;
+		board->chr_banks0[9].address &= 0x0fff;
+		board->chr_banks0[10].address &= 0x0fff;
+		board->chr_banks0[11].address &= 0x0fff;
 	} else {
 		board->chr_banks0[0].address |= 0x1000;
 		board->chr_banks0[1].address |= 0x1000;
-		board->chr_banks0[2].address &= 0x0fff;
-		board->chr_banks0[3].address &= 0x0fff;
+		board->chr_banks0[2].address |= 0x1000;
+		board->chr_banks0[3].address |= 0x1000;
 		board->chr_banks0[4].address &= 0x0fff;
 		board->chr_banks0[5].address &= 0x0fff;
-		board->chr_banks0[6].address |= 0x1000;
-		board->chr_banks0[7].address |= 0x1000;
+		board->chr_banks0[6].address &= 0x0fff;
+		board->chr_banks0[7].address &= 0x0fff;
+		board->chr_banks0[8].address |= 0x1000;
+		board->chr_banks0[9].address |= 0x1000;
+		board->chr_banks0[10].address |= 0x1000;
+		board->chr_banks0[11].address |= 0x1000;
 	}
 
 	if (!(board->chr_mode & 0x20)) {
-		board->chr_banks0[0].size = SIZE_2K;
-		board->chr_banks0[1].size = SIZE_2K;
-		board->chr_banks0[6].size = 0;
-		board->chr_banks0[7].size = 0;
-		board->chr_banks0[0].shift = 1;
-		board->chr_banks0[1].shift = 1;
-	} else {
 		board->chr_banks0[0].size = SIZE_1K;
 		board->chr_banks0[1].size = SIZE_1K;
-		board->chr_banks0[6].size = SIZE_1K;
-		board->chr_banks0[7].size = SIZE_1K;
-		board->chr_banks0[0].shift = 0;
-		board->chr_banks0[1].shift = 0;
+		board->chr_banks0[2].size = SIZE_1K;
+		board->chr_banks0[3].size = SIZE_1K;
+		board->chr_banks0[8].size = 0;
+		board->chr_banks0[9].size = 0;
+		board->chr_banks0[10].size = 0;
+		board->chr_banks0[11].size = 0;
+	} else {
+		board->chr_banks0[0].size = 0;
+		board->chr_banks0[1].size = 0;
+		board->chr_banks0[2].size = 0;
+		board->chr_banks0[3].size = 0;
+		board->chr_banks0[8].size = SIZE_1K;
+		board->chr_banks0[9].size = SIZE_1K;
+		board->chr_banks0[10].size = SIZE_1K;
+		board->chr_banks0[11].size = SIZE_1K;
 	}
 
 //      if (board->info->board_type == BOARD_TYPE_TxSROM) {
@@ -937,6 +996,7 @@ static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler)
 static CPU_WRITE_HANDLER(mmc3_write_handler)
 {
 	struct board *board = emu->board;
+	int type;
 	int perms;
 	int bank;
 	int old;
@@ -991,15 +1051,29 @@ static CPU_WRITE_HANDLER(mmc3_write_handler)
 		case 3:
 		case 4:
 		case 5:
+			type = MAP_TYPE_AUTO;
+
 			if (board->info->board_type == BOARD_TYPE_TQROM) {
-				int type = MAP_TYPE_AUTO;
 				if (value & 0x40) {
 					value &= 0x3f;
 					type = MAP_TYPE_RAM0;
 				}
-				board->chr_banks0[bank].type = type;
-			} else if ((board->info->board_type == BOARD_TYPE_WAIXING_TYPE_A) ||
-				   (board->info->board_type == BOARD_TYPE_WAIXING_TYPE_C)) {
+			}
+
+			if (bank < 2) {
+				board->chr_banks0[bank * 2 + 8].bank = value;
+				board->chr_banks0[bank * 2 + 8].type = type;
+				board->chr_banks0[bank * 2].bank = value & 0xfe;
+				board->chr_banks0[bank * 2].type = type;
+				board->chr_banks0[bank * 2 + 1].bank = value | 0x01;
+				board->chr_banks0[bank * 2 + 1].type = type;
+			} else {
+				board->chr_banks0[bank + 2].bank = value;
+				board->chr_banks0[bank + 2].type = type;
+			}
+
+			if ((board->info->board_type == BOARD_TYPE_WAIXING_TYPE_A) ||
+			    (board->info->board_type == BOARD_TYPE_WAIXING_TYPE_C)) {
 				int type = MAP_TYPE_AUTO;
 				int max = 0x0b;
 
@@ -1016,15 +1090,16 @@ static CPU_WRITE_HANDLER(mmc3_write_handler)
 				board->prg_or = (value & 0x02) << 5;
 			}
 
-			board->chr_banks0[bank].bank = value;
 			break;
 		case 6:
 		case 7:
 			board->prg_banks[bank - 0x05].bank = value;
 			break;
 		case 8:
+			board->chr_banks0[9].bank = value;
+			break;
 		case 9:
-			board->chr_banks0[bank - 2].bank = value;
+			board->chr_banks0[11].bank = value;
 			break;
 		case 15:
 			board->prg_banks[3].bank = value;
@@ -1145,6 +1220,55 @@ static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler)
 	board->prg_banks[5].size = size;
 
 	board_prg_sync(board);
+	board_chr_sync(board, 0);
+}
+
+static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler)
+{
+	struct board *board;
+	int next_reg;
+
+	board = emu->board;
+
+	if (_ext_regs[3] & 0x40) {
+		if (board->prg_banks[0].perms == MAP_PERM_WRITE) {
+			if (board->wram[0].size) {
+				addr -= 0x6000;
+				addr %= board->wram[0].size;
+				board->wram[0].data[addr] = value;
+			}
+		}
+
+		return;
+	}
+
+	next_reg = _ext_regs[4];
+	_ext_regs[next_reg] = value;
+
+	switch (next_reg) {
+	case 1:
+		board->prg_or = value;
+		board_prg_sync(board);
+		break;
+	case 3:
+		board->prg_and = value ^ 0x3f;
+		board_prg_sync(board);
+		break;
+	}
+
+	next_reg = (next_reg + 1) & 0x03;
+	_ext_regs[4] = next_reg;
+
+	board->chr_or = ((_ext_regs[2] << 4) & 0xf00) | _ext_regs[0];
+
+	if (_ext_regs[2] & 0x08)
+		board->chr_and = (1 << ((_ext_regs[2] & 0x07) + 1)) - 1;
+	else if (_ext_regs[2] & 0x07)
+		board->chr_and = 0x00;
+	else {
+		board->chr_and = 0xff;
+	}
+
 	board_chr_sync(board, 0);
 }
 

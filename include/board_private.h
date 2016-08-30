@@ -199,8 +199,8 @@ struct board {
 	uint8_t irq_control;
 
 	struct bank prg_banks[12];
-	struct bank chr_banks0[10];
-	struct bank chr_banks1[10];
+	struct bank chr_banks0[12];
+	struct bank chr_banks1[12];
 	struct nmt_bank nmt_banks[4];
 
 	unsigned int prg_and;

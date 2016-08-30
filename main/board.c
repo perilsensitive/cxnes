@@ -69,6 +69,7 @@ extern struct board_info board_unl_mortalkombat2;
 extern struct board_info board_bmc_super700in1;
 extern struct board_info board_gamestar_b;
 extern struct board_info board_bmc_superhik_4in1;
+extern struct board_info board_bmc_superhik_8in1;
 extern struct board_info board_bmc_superbig_7in1;
 extern struct board_info board_resetbased_4_in_1;
 extern struct board_info board_hosenkan_electronics;
@@ -260,6 +261,7 @@ static struct board_info *board_info_list[] = {
 	&board_bmc_super700in1,
 	&board_gamestar_b,
 	&board_bmc_superhik_4in1,
+	&board_bmc_superhik_8in1,
 	&board_bmc_superbig_7in1,
 	&board_resetbased_4_in_1,
 	&board_hosenkan_electronics,
@@ -2341,10 +2343,13 @@ void board_chr_sync(struct board *board, int set)
 	int i;
 	struct bank *b;
 	uint32_t cycles;
+	int chr_entries;
 
 	cycles = cpu_get_cycles(board->emu->cpu);
+	chr_entries = sizeof(board->chr_banks0) /
+		sizeof(board->chr_banks0[0]);
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < chr_entries; i++) {
 		uint32_t and;
 		uint32_t or;
 		uint32_t bank;
