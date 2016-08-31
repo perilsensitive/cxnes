@@ -189,6 +189,7 @@ cxnes_SOURCES = \
 	boards/mmc3.c \
 	boards/rambo1.c \
 	boards/tqrom.c \
+	boards/txsrom.c \
 	boards/mmc6.c \
 	boards/mmc1.c \
 	boards/namco163.c \
