@@ -38,6 +38,7 @@ static CPU_WRITE_HANDLER(mmc3_bank_data);
 static CPU_WRITE_HANDLER(waixing_bank_data);
 static CPU_WRITE_HANDLER(tqrom_bank_data);
 static CPU_WRITE_HANDLER(hkrom_bank_select);
+static CPU_WRITE_HANDLER(hkrom_wram_protect);
 static CPU_WRITE_HANDLER(rambo1_bank_select);
 static CPU_WRITE_HANDLER(rambo1_bank_data);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
@@ -58,7 +59,6 @@ static int mmc3_init(struct board *board);
 static void mmc3_cleanup(struct board *board);
 static void mmc3_reset(struct board *board, int);
 static void mmc3_end_frame(struct board *board, uint32_t cycles);
-static void mmc3_update_prg(struct board *board);
 static void mmc3_update_chr(struct board *board);
 static void rambo1_update_chr(struct board *board);
 static int mmc3_save_state(struct board *board, struct save_state *state);
@@ -242,7 +242,7 @@ static struct board_write_handler hkrom_write_handlers[] = {
 	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
 	{mmc6_wram_write_handler, 0x7000, SIZE_4K, 0},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
+	{hkrom_wram_protect, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
@@ -876,37 +876,18 @@ static CPU_WRITE_HANDLER(multicart_bank_switch)
 			}
 
 			board->prg_banks[5].bank = (value & 0x0f);
-			mmc3_update_prg(board);
+			board_prg_sync(board);
 		}
 		break;
 	}
 
 	if ((old_prg_and != board->prg_and) ||
 	    (old_prg_or != board->prg_or))
-		mmc3_update_prg(board);
+		board_prg_sync(board);
 
 	if ((old_chr_and != board->chr_and) ||
 	    (old_chr_or != board->chr_or))
 		mmc3_update_chr(board);
-}
-
-static void mmc3_update_prg(struct board *board)
-{
-	if (!board->prg_mode) {
-		board->prg_banks[1].address = 0x8000;
-		board->prg_banks[2].address = 0xa000;
-		board->prg_banks[3].address = 0xc000;
-	} else if (_bank_select_mask == 0x0f) {	/* FIXME probably not the best check */
-		board->prg_banks[1].address = 0xa000;
-		board->prg_banks[2].address = 0xc000;
-		board->prg_banks[3].address = 0x8000;
-	} else {
-		board->prg_banks[1].address = 0xc000;
-		board->prg_banks[2].address = 0xa000;
-		board->prg_banks[3].address = 0x8000;
-	}
-
-	board_prg_sync(board);
 }
 
 static void mmc3_update_chr(struct board *board)
@@ -1015,7 +996,17 @@ static CPU_WRITE_HANDLER(mmc3_bank_select)
 	}
 
 	if ((value & 0x40) != (old & 0x40)) {
-		mmc3_update_prg(board);
+		if (!board->prg_mode) {
+			board->prg_banks[1].address = 0x8000;
+			board->prg_banks[2].address = 0xa000;
+			board->prg_banks[3].address = 0xc000;
+		} else {
+			board->prg_banks[1].address = 0xc000;
+			board->prg_banks[2].address = 0xa000;
+			board->prg_banks[3].address = 0x8000;
+		}
+
+		board_prg_sync(board);
 	}
 }
 
@@ -1033,11 +1024,32 @@ static CPU_WRITE_HANDLER(hkrom_bank_select)
 static CPU_WRITE_HANDLER(rambo1_bank_select)
 {
 	struct board *board;
+	int old;
+
 	board = emu->board;
+	old = _bank_select & 0xc0;
+	_bank_select = value;
 
-	mmc3_bank_select(emu, addr, value, cycles);
-
+	board->prg_mode = value & 0x40;
 	board->chr_mode = value & 0xa0;
+
+	if ((value & 0x80) != (old & 0x80)) {
+		rambo1_update_chr(board);
+	}
+
+	if ((value & 0x40) != (old & 0x40)) {
+		if (!board->prg_mode) {
+			board->prg_banks[1].address = 0x8000;
+			board->prg_banks[2].address = 0xa000;
+			board->prg_banks[3].address = 0xc000;
+		} else {
+			board->prg_banks[1].address = 0xa000;
+			board->prg_banks[2].address = 0xc000;
+			board->prg_banks[3].address = 0x8000;
+		}
+
+		board_prg_sync(board);
+	}
 }
 
 static CPU_WRITE_HANDLER(txrom_compat_bank_select)
@@ -1095,7 +1107,7 @@ static CPU_WRITE_HANDLER(mmc3_bank_data)
 		break;
 	}
 
-	mmc3_update_prg(board);
+	board_prg_sync(board);
 	mmc3_update_chr(board);
 }
 
@@ -1219,27 +1231,38 @@ static CPU_WRITE_HANDLER(mmc3_wram_protect)
 	struct board *board = emu->board;
 	int perms;
 
-	perms = MAP_PERM_READWRITE;
+	if (emu_system_is_vs(board->emu))
+		return;
+
+	_wram_protect = value;
+
+	if (!(value & 0x80))
+		perms = 0;
+	else if (value & 0x40)
+		perms = MAP_PERM_READ;
+	else
+		perms = MAP_PERM_READWRITE;
+
+	board->prg_banks[0].perms = perms;
+	board_prg_sync(board);
+}
+
+static CPU_WRITE_HANDLER(hkrom_wram_protect)
+{
+	struct board *board = emu->board;
+
+	if (_bank_select & 0x20)
+		_wram_protect = value;
+}
+
+static CPU_WRITE_HANDLER(txrom_compat_wram_protect)
+{
+	struct board *board = emu->board;
 
 	if (!_first_bank_select && _mmc6_compat_hack)
 		return;
 
-	if (emu_system_is_vs(board->emu))
-		return;
-
-	if ((board->info->board_type != BOARD_TYPE_HKROM)
-	    || (_bank_select & 0x20))
-		_wram_protect = value;
-
-	if (board->info->board_type != BOARD_TYPE_HKROM) {
-		if (!(value & 0x80))
-			perms = 0;
-		else if (value & 0x40)
-			perms ^= MAP_PERM_WRITE;
-
-		board->prg_banks[0].perms = perms;
-		board_prg_sync(board);
-	}
+	mmc3_wram_protect(emu, addr, value, cycles);
 }
 
 static CPU_WRITE_HANDLER(rambo1_irq_latch)
