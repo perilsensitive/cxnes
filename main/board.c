@@ -58,6 +58,7 @@ extern struct board_info board_whirlwind_2706;
 extern struct board_info board_btl_smb2a;
 extern struct board_info board_btl_smb2b;
 extern struct board_info board_btl_smb2c;
+extern struct board_info board_btl_superbros11;
 extern struct board_info board_rcm_gs2015;
 extern struct board_info board_subor_1;
 extern struct board_info board_subor_0;
@@ -251,6 +252,7 @@ static struct board_info *board_info_list[] = {
 	&board_btl_smb2a,
 	&board_btl_smb2b,
 	&board_btl_smb2c,
+	&board_btl_superbros11,
 	&board_rcm_gs2015,
 	&board_subor_1,
 	&board_subor_0,

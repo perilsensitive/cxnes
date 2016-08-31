@@ -293,6 +293,7 @@
 #define BOARD_TYPE_BTL_SMB2A               INES_TO_BOARD_TYPE( 40,  0, 0, 0)
 #define BOARD_TYPE_BTL_SMB2B               INES_TO_BOARD_TYPE( 50,  0, 0, 0)
 #define BOARD_TYPE_BTL_SMB2C               INES_TO_BOARD_TYPE( 43,  0, 0, 0)
+#define BOARD_TYPE_BTL_SUPERBROS11         INES_TO_BOARD_TYPE(196,  0, 0, 0)
 #define BOARD_TYPE_WHIRLWIND_2706          INES_TO_BOARD_TYPE(108,  0, 0, 0)
 #define BOARD_TYPE_UNL_LH32                0x1e000
 #define BOARD_TYPE_UNL_BB                  0x1e001
