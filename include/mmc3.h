@@ -22,13 +22,7 @@
 
 #define _bank_select board->data[0]
 #define _wram_protect board->data[1]
-#define _mmc6_compat_hack board->data[3]
-#define _first_bank_select board->data[4]
-#define _bank_select_mask board->data[5]
-#define _chr_mode_mask board->data[6]
-#define _cpu_cycle_irq_enable board->data[8]
-
-#define _ext_regs (board->data + 9)
+#define _extra_regs (board->data + 8)
 
 CPU_WRITE_HANDLER(mmc3_wram_protect);
 CPU_WRITE_HANDLER(mmc3_bank_select);

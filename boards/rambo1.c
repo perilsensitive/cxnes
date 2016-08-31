@@ -22,6 +22,8 @@
 #include "m2_timer.h"
 #include "mmc3.h"
 
+#define _cpu_cycle_irq_enable board->data[3]
+
 static int rambo1_init(struct board *board);
 static void rambo1_reset(struct board *board, int hard);
 
@@ -138,15 +140,15 @@ static CPU_WRITE_HANDLER(rambo1_bank_select)
 
 	if ((value & 0xa0) != (old & 0xa0)) {
 		if (!(board->chr_mode & 0x20)) {
-			board->chr_banks0[0].bank = _ext_regs[0] & 0xfe;
-			board->chr_banks0[1].bank = _ext_regs[0] | 0x01;
-			board->chr_banks0[2].bank = _ext_regs[1] & 0xfe;
-			board->chr_banks0[3].bank = _ext_regs[1] | 0x01;
+			board->chr_banks0[0].bank = _extra_regs[0] & 0xfe;
+			board->chr_banks0[1].bank = _extra_regs[0] | 0x01;
+			board->chr_banks0[2].bank = _extra_regs[1] & 0xfe;
+			board->chr_banks0[3].bank = _extra_regs[1] | 0x01;
 		} else {
-			board->chr_banks0[0].bank = _ext_regs[0];
-			board->chr_banks0[1].bank = _ext_regs[1];
-			board->chr_banks0[2].bank = _ext_regs[2];
-			board->chr_banks0[3].bank = _ext_regs[3];
+			board->chr_banks0[0].bank = _extra_regs[0];
+			board->chr_banks0[1].bank = _extra_regs[1];
+			board->chr_banks0[2].bank = _extra_regs[2];
+			board->chr_banks0[3].bank = _extra_regs[3];
 		}
 
 		if (!(board->chr_mode & 0x80)) {
@@ -213,7 +215,7 @@ static CPU_WRITE_HANDLER(rambo1_bank_data)
 	case 8:
 	case 9:
 		bank = ((bank & 1) << 1) | ((bank & 0x08) >> 3);
-		_ext_regs[bank] = value;
+		_extra_regs[bank] = value;
 		board_chr_sync(board, 0);
 		break;
 	case 15:

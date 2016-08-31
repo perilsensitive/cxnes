@@ -22,6 +22,9 @@
 #include "m2_timer.h"
 #include "mmc3.h"
 
+#define _first_bank_select board->data[2]
+#define _mmc6_compat_hack board->data[3]
+
 static CPU_WRITE_HANDLER(txrom_compat_bank_select);
 static CPU_WRITE_HANDLER(txrom_compat_wram_protect);
 static CPU_WRITE_HANDLER(waixing_bank_data);
@@ -501,13 +504,9 @@ int mmc3_init(struct board *board)
 
 	_mmc6_compat_hack = 0;
 	if (board->info->board_type == BOARD_TYPE_TxROM_COMPAT)
-		_mmc6_compat_hack =
-			emu->config->mmc6_compat_hack_enabled;
-
+		_mmc6_compat_hack = 1;
 
 	variant = A12_TIMER_VARIANT_MMC3_STD;
-	_bank_select_mask = 0x07;
-	_chr_mode_mask = 0x80;
 	switch (board->info->board_type) {
 	case BOARD_TYPE_ACCLAIM_MC_ACC:
 		variant = A12_TIMER_VARIANT_ACCLAIM_MC_ACC;
@@ -558,8 +557,8 @@ void mmc3_reset(struct board *board, int hard)
 			board->chr_or = 0x000;
 			break;
 		case BOARD_TYPE_BMC_SUPERHIK_8_IN_1:
-			_ext_regs[4] = 0;
-			_ext_regs[3] &= 0x3f;
+			_extra_regs[4] = 0;
+			_extra_regs[3] &= 0x3f;
 			board->prg_or = 0x00;
 			board->chr_or = 0x00;
 			/* FIXME these may not be correct */
@@ -946,7 +945,7 @@ static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler)
 
 	board = emu->board;
 
-	if (_ext_regs[3] & 0x40) {
+	if (_extra_regs[3] & 0x40) {
 		if (board->prg_banks[0].perms == MAP_PERM_WRITE) {
 			if (board->wram[0].size) {
 				addr -= 0x6000;
@@ -958,8 +957,8 @@ static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler)
 		return;
 	}
 
-	next_reg = _ext_regs[4];
-	_ext_regs[next_reg] = value;
+	next_reg = _extra_regs[4];
+	_extra_regs[next_reg] = value;
 
 	switch (next_reg) {
 	case 1:
@@ -973,13 +972,13 @@ static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler)
 	}
 
 	next_reg = (next_reg + 1) & 0x03;
-	_ext_regs[4] = next_reg;
+	_extra_regs[4] = next_reg;
 
-	board->chr_or = ((_ext_regs[2] << 4) & 0xf00) | _ext_regs[0];
+	board->chr_or = ((_extra_regs[2] << 4) & 0xf00) | _extra_regs[0];
 
-	if (_ext_regs[2] & 0x08)
-		board->chr_and = (1 << ((_ext_regs[2] & 0x07) + 1)) - 1;
-	else if (_ext_regs[2] & 0x07)
+	if (_extra_regs[2] & 0x08)
+		board->chr_and = (1 << ((_extra_regs[2] & 0x07) + 1)) - 1;
+	else if (_extra_regs[2] & 0x07)
 		board->chr_and = 0x00;
 	else {
 		board->chr_and = 0xff;

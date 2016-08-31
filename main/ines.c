@@ -524,8 +524,10 @@ int ines_load(struct emu *emu, struct rom *rom)
 
 	switch (board_type) {
 	case BOARD_TYPE_TxROM:
-		if (header.version == 1)
+		if ((header.version == 1) &&
+		    (emu->config->mmc6_compat_hack_enabled)) {
 			board_type = BOARD_TYPE_TxROM_COMPAT;
+		}
 		break;
 	case BOARD_TYPE_VS_UNISYSTEM:
 		if (header.prg_rom_banks > 2)
