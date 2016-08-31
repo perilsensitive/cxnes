@@ -22,8 +22,6 @@
 #include "m2_timer.h"
 #include "mmc3.h"
 
-static CPU_WRITE_HANDLER(btl_superbros11_bank_data);
-
 static struct board_write_handler btl_superbros11_write_handlers[] = {
 	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8004},
 	{mmc3_bank_data, 0x8004, SIZE_8K, 0x8004},
@@ -44,10 +42,8 @@ struct board_info board_btl_superbros11 = {
 	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = btl_superbros11_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
-	.max_chr_rom_size = SIZE_64K,
+	.max_chr_rom_size = SIZE_256K,
 	.max_wram_size = {SIZE_8K, 0},
-	.min_vram_size = {SIZE_8K, 0},
-	.max_vram_size = {SIZE_64K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
 	.mirroring_values = std_mirroring_vh,
 };

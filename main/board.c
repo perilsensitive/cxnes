@@ -54,6 +54,7 @@ extern struct board_info board_unl_ac08;
 extern struct board_info board_unl_cc_21;
 extern struct board_info board_unl_bb;
 extern struct board_info board_unl_lh32;
+extern struct board_info board_unl_txc_22211b;
 extern struct board_info board_whirlwind_2706;
 extern struct board_info board_btl_smb2a;
 extern struct board_info board_btl_smb2b;
@@ -246,6 +247,7 @@ static struct board_info *board_info_list[] = {
 	&board_unl_cc_21,
 	&board_unl_bb,
 	&board_unl_lh32,
+	&board_unl_txc_22211b,
 	&board_unl_ks7037,
 	&board_unl_ks7057,
 	&board_whirlwind_2706,
