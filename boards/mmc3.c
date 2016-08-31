@@ -60,7 +60,7 @@ static int mmc3_init(struct board *board);
 static void mmc3_cleanup(struct board *board);
 static void mmc3_reset(struct board *board, int);
 static void mmc3_end_frame(struct board *board, uint32_t cycles);
-static void handle_txsrom_mirroring(struct board *board);
+static void mmc3_txsrom_mirroring(struct board *board);
 static int mmc3_save_state(struct board *board, struct save_state *state);
 static int mmc3_load_state(struct board *board, struct save_state *state);
 
@@ -885,16 +885,16 @@ static CPU_WRITE_HANDLER(multicart_bank_switch)
 		board_chr_sync(board, 0);
 }
 
-static void handle_txsrom_mirroring(struct board *board)
+static void mmc3_txsrom_mirroring(struct board *board)
 {
 	int i;
 
 	for (i = 0; i < 4; i++) {
 		int reg = i;
 		if (board->chr_mode)
-			reg += 2;
+			reg += 4;
 		else
-			reg /= 2;
+			reg = reg & 0xfe;
 
 		board->nmt_banks[i].type = MAP_TYPE_CIRAM;
 		board->nmt_banks[i].bank =
@@ -960,7 +960,7 @@ static CPU_WRITE_HANDLER(txsrom_bank_select)
 	mmc3_bank_select(emu, addr, value, cycles);
 
 	if ((value & 0x80) != (old & 0x80)) {
-		handle_txsrom_mirroring(board);
+		mmc3_txsrom_mirroring(board);
 	}
 }
 
@@ -1072,7 +1072,7 @@ static CPU_WRITE_HANDLER(rambo1_bank_select)
 		}
 
 	    	if (board->info->board_type == BOARD_TYPE_TENGEN_800037)
-			handle_txsrom_mirroring(board);
+			mmc3_txsrom_mirroring(board);
 
 		board_chr_sync(board, 0);
 	}
@@ -1130,7 +1130,7 @@ static CPU_WRITE_HANDLER(txsrom_bank_data)
 	mmc3_bank_data(emu, addr, value, cycles);
 
 	if (bank < 6)
-		handle_txsrom_mirroring(board);
+		mmc3_txsrom_mirroring(board);
 }
 
 static CPU_WRITE_HANDLER(mmc3_bank_data)
@@ -1199,7 +1199,7 @@ static CPU_WRITE_HANDLER(rambo1_bank_data)
 
 	if ((bank < 6) &&
 	    (board->info->board_type == BOARD_TYPE_TENGEN_800037)) {
-		handle_txsrom_mirroring(board);
+		mmc3_txsrom_mirroring(board);
 	}
 }
 
