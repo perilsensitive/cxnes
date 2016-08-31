@@ -22,6 +22,8 @@
 #include "m2_timer.h"
 #include "mmc3.h"
 
+static CPU_WRITE_HANDLER(txrom_compat_bank_select);
+static CPU_WRITE_HANDLER(txrom_compat_wram_protect);
 static CPU_WRITE_HANDLER(waixing_bank_data);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
 static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
@@ -64,6 +66,17 @@ struct bank mmc3_init_chr0[] = {
 	{.type = MAP_TYPE_END},
 };
 
+struct board_write_handler txrom_compat_write_handlers[] = {
+	{txrom_compat_bank_select, 0x8000, SIZE_8K, 0x8001},
+	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{txrom_compat_wram_protect, 0xa001, SIZE_8K, 0xa001},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{NULL}
+};
 
 struct board_write_handler mmc3_write_handlers[] = {
 	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
@@ -186,6 +199,21 @@ static struct board_write_handler bmc_marioparty7in1_write_handlers[] = {
 	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
 	{bmc_marioparty7in1_write_handler, 0x6000, SIZE_8K, 0},
 	{NULL}
+};
+
+struct board_info board_txrom_compat = {
+	.board_type = BOARD_TYPE_TxROM_COMPAT,
+	.name = "TxROM/HKROM",
+	.mapper_name = "MMC3/MMC6",
+	.funcs = &mmc3_funcs,
+	.init_prg = mmc3_init_prg,
+	.init_chr0 = mmc3_init_chr0,
+	.write_handlers = txrom_compat_write_handlers,
+	.max_prg_rom_size = SIZE_2048K,
+	.max_chr_rom_size = SIZE_256K,
+	.max_wram_size = {SIZE_8K, 0},
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = std_mirroring_vh,
 };
 
 struct board_info board_txrom = {
@@ -472,7 +500,7 @@ int mmc3_init(struct board *board)
 	 */
 
 	_mmc6_compat_hack = 0;
-	if (board->info->board_type == BOARD_TYPE_TxROM)
+	if (board->info->board_type == BOARD_TYPE_TxROM_COMPAT)
 		_mmc6_compat_hack =
 			emu->config->mmc6_compat_hack_enabled;
 

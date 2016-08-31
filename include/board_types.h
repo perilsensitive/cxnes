@@ -177,6 +177,7 @@
 #define BOARD_TYPE_SxROM_COMPAT            INES_TO_BOARD_TYPE(  1,  0, 0, 7)
 #define BOARD_TYPE_SxROM_WRAM              INES_TO_BOARD_TYPE(  1,  0, 0, 6)
 #define BOARD_TYPE_TxROM                   INES_TO_BOARD_TYPE(  4,  0, 0, 0)
+#define BOARD_TYPE_TxROM_COMPAT            INES_TO_BOARD_TYPE(  4,  0, 0, 3)
 #define BOARD_TYPE_TxROM_WRAM              INES_TO_BOARD_TYPE(  4,  0, 0, 1)
 #define BOARD_TYPE_TVROM                   INES_TO_BOARD_TYPE(  4,  0, 0, 2)
 #define BOARD_TYPE_ACCLAIM_MC_ACC          INES_TO_BOARD_TYPE(  4,  3, 0, 0)

@@ -137,6 +137,7 @@ extern struct board_info board_sxrom_compat;
 extern struct board_info board_sxrom_mmc1a;
 extern struct board_info board_event;
 extern struct board_info board_txrom;
+extern struct board_info board_txrom_compat;
 extern struct board_info board_txrom_mmc3a;
 extern struct board_info board_txsrom;
 extern struct board_info board_tqrom;
@@ -329,6 +330,7 @@ static struct board_info *board_info_list[] = {
 	&board_sxrom_mmc1a,
 	&board_event,
 	&board_txrom,
+	&board_txrom_compat,
 	&board_txrom_mmc3a,
 	&board_txsrom,
 	&board_tqrom,
