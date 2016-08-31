@@ -187,6 +187,7 @@ cxnes_SOURCES = \
 	boards/taito_tc0190fmc.c \
 	boards/streemerz_bundle.c \
 	boards/mmc3.c \
+	boards/rambo1.c \
 	boards/mmc1.c \
 	boards/namco163.c \
 	boards/ines36.c \

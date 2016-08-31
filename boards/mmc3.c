@@ -20,28 +20,14 @@
 #include "board_private.h"
 #include "a12_timer.h"
 #include "m2_timer.h"
+#include "mmc3.h"
 
-#define _bank_select board->data[0]
-#define _wram_protect board->data[1]
-#define _mmc6_compat_hack board->data[3]
-#define _first_bank_select board->data[4]
-#define _bank_select_mask board->data[5]
-#define _chr_mode_mask board->data[6]
-#define _cpu_cycle_irq_enable board->data[8]
-
-#define _ext_regs (board->data + 9)
-
-static CPU_WRITE_HANDLER(mmc3_wram_protect);
-static CPU_WRITE_HANDLER(mmc3_bank_select);
-static CPU_WRITE_HANDLER(mmc3_bank_data);
 static CPU_WRITE_HANDLER(txsrom_bank_select);
 static CPU_WRITE_HANDLER(txsrom_bank_data);
 static CPU_WRITE_HANDLER(waixing_bank_data);
 static CPU_WRITE_HANDLER(tqrom_bank_data);
 static CPU_WRITE_HANDLER(hkrom_bank_select);
 static CPU_WRITE_HANDLER(hkrom_wram_protect);
-static CPU_WRITE_HANDLER(rambo1_bank_select);
-static CPU_WRITE_HANDLER(rambo1_bank_data);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
 static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler);
@@ -52,19 +38,8 @@ static CPU_WRITE_HANDLER(multicart_bank_switch);
 static CPU_WRITE_HANDLER(m15_in_1_write_handler);
 static CPU_WRITE_HANDLER(txc_tw_write_handler);
 static CPU_WRITE_HANDLER(bmc_marioparty7in1_write_handler);
-static CPU_WRITE_HANDLER(rambo1_irq_latch);
-static CPU_WRITE_HANDLER(rambo1_irq_reload);
-static CPU_WRITE_HANDLER(rambo1_irq_disable);
-static CPU_WRITE_HANDLER(rambo1_irq_enable);
-static int mmc3_init(struct board *board);
-static void mmc3_cleanup(struct board *board);
-static void mmc3_reset(struct board *board, int);
-static void mmc3_end_frame(struct board *board, uint32_t cycles);
-static void mmc3_txsrom_mirroring(struct board *board);
-static int mmc3_save_state(struct board *board, struct save_state *state);
-static int mmc3_load_state(struct board *board, struct save_state *state);
 
-static struct board_funcs mmc3_funcs = {
+struct board_funcs mmc3_funcs = {
 	.init = mmc3_init,
 	.reset = mmc3_reset,
 	.cleanup = mmc3_cleanup,
@@ -73,16 +48,7 @@ static struct board_funcs mmc3_funcs = {
 	.save_state = mmc3_save_state,
 };
 
-static struct board_funcs rambo1_funcs = {
-	.init = mmc3_init,
-	.reset = mmc3_reset,
-	.cleanup = mmc3_cleanup,
-	.end_frame = mmc3_end_frame,
-	.load_state = mmc3_load_state,
-	.save_state = mmc3_save_state,
-};
-
-static struct bank mmc3_init_prg[] = {
+struct bank mmc3_init_prg[] = {
 	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{0, 0, SIZE_8K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{1, 0, SIZE_8K, 0xa000, MAP_PERM_READ, MAP_TYPE_ROM},
@@ -93,7 +59,7 @@ static struct bank mmc3_init_prg[] = {
 	{.type = MAP_TYPE_END},
 };
 
-static struct bank new_init_chr0[] = {
+struct bank mmc3_init_chr0[] = {
 	{0, 0, SIZE_1K, 0x0000, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{1, 0, SIZE_1K, 0x0400, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
 	{2, 0, SIZE_1K, 0x0800, MAP_PERM_READWRITE, MAP_TYPE_AUTO},
@@ -106,7 +72,7 @@ static struct bank new_init_chr0[] = {
 };
 
 
-static struct board_write_handler mmc3_write_handlers[] = {
+struct board_write_handler mmc3_write_handlers[] = {
 	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
 	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
@@ -189,18 +155,6 @@ static struct board_write_handler hosenkan_write_handlers[] = {
 	{NULL}
 };
 
-static struct board_write_handler rambo1_write_handlers[] = {
-	{rambo1_bank_select, 0x8000, SIZE_8K, 0x8001},
-	{rambo1_bank_data, 0x8001, SIZE_8K, 0x8001},
-	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
-	{rambo1_irq_latch, 0xc000, SIZE_8K, 0xc001},
-	{rambo1_irq_reload, 0xc001, SIZE_8K, 0xc001},
-	{rambo1_irq_disable, 0xe000, SIZE_8K, 0xe001},
-	{rambo1_irq_enable, 0xe001, SIZE_8K, 0xe001},
-	{NULL}
-};
-
 static struct board_write_handler txsrom_write_handlers[] = {
 	{txsrom_bank_select, 0x8000, SIZE_8K, 0x8001},
 	{txsrom_bank_data, 0x8001, SIZE_8K, 0x8001},
@@ -209,18 +163,6 @@ static struct board_write_handler txsrom_write_handlers[] = {
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
 	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
-	{NULL},
-};
-
-static struct board_write_handler tengen800037_write_handlers[] = {
-	{rambo1_bank_select, 0x8000, SIZE_8K, 0x8001},
-	{rambo1_bank_data, 0x8001, SIZE_8K, 0x8001},
-	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
-	{rambo1_irq_latch, 0xc000, SIZE_8K, 0xc001},
-	{rambo1_irq_reload, 0xc001, SIZE_8K, 0xc001},
-	{rambo1_irq_disable, 0xe000, SIZE_8K, 0xe001},
-	{rambo1_irq_enable, 0xe001, SIZE_8K, 0xe001},
 	{NULL},
 };
 
@@ -300,7 +242,7 @@ struct board_info board_txrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -315,7 +257,7 @@ struct board_info board_acclaim_mc_acc = {
 	.mapper_name = "MC-ACC",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -330,7 +272,7 @@ struct board_info board_txrom_mmc3a = {
 	.mapper_name = "MMC3A",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = mmc3_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -345,7 +287,7 @@ struct board_info board_txsrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = txsrom_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -360,7 +302,7 @@ struct board_info board_tqrom = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = tqrom_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_64K,
@@ -377,7 +319,7 @@ struct board_info board_hkrom = {
 	.mapper_name = "MMC6",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.read_handlers = hkrom_read_handlers,
 	.write_handlers = hkrom_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
@@ -395,7 +337,7 @@ struct board_info board_nes_qj = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -409,43 +351,11 @@ struct board_info board_pal_zz = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_256K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
-	.mirroring_values = std_mirroring_vh,
-};
-
-struct board_info board_tengen800032 = {
-	.board_type = BOARD_TYPE_TENGEN_800032,
-	.name = "TENGEN-800032",
-	.mapper_name = "RAMBO-1",
-	.funcs = &rambo1_funcs,
-	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
-	.write_handlers = rambo1_write_handlers,
-	.max_prg_rom_size = SIZE_512K,
-	.max_chr_rom_size = SIZE_256K,
-	.max_wram_size = {SIZE_8K, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M |
-	         BOARD_INFO_FLAG_M2_TIMER,
-	.mirroring_values = std_mirroring_vh,
-};
-
-struct board_info board_tengen800037 = {
-	.board_type = BOARD_TYPE_TENGEN_800037,
-	.name = "TENGEN-800037",
-	.mapper_name = "RAMBO-1",
-	.funcs = &rambo1_funcs,
-	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
-	.write_handlers = tengen800037_write_handlers,
-	.max_prg_rom_size = SIZE_512K,
-	.max_chr_rom_size = SIZE_256K,
-	.max_wram_size = {SIZE_8K, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M |
-	         BOARD_INFO_FLAG_M2_TIMER,
 	.mirroring_values = std_mirroring_vh,
 };
 
@@ -455,7 +365,7 @@ struct board_info board_bmc_15_in_1 = {
 	.mapper_name = "MMC3",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = m15_in_1_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_512K,
@@ -468,7 +378,7 @@ struct board_info board_waixing_type_a = {
 	.name = "WAIXING-A",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = waixing_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -484,7 +394,7 @@ struct board_info board_waixing_type_c = {
 	.name = "WAIXING-C",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = waixing_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -500,7 +410,7 @@ struct board_info board_kasing = {
 	.name = "KASING",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = qj_zz_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
@@ -513,7 +423,7 @@ struct board_info board_waixing_type_h = {
 	.name = "WAIXING-H",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = waixing_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -527,7 +437,7 @@ struct board_info board_txc_tw = {
 	.name = "TXC-TW",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = txc_tw_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -540,7 +450,7 @@ struct board_info board_bmc_marioparty7in1 = {
 	.name = "BMC-MARIOPARTY-7IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = bmc_marioparty7in1_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_2048K,
@@ -553,7 +463,7 @@ struct board_info board_hosenkan_electronics = {
 	.name = "UNL-HOSENKAN",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = hosenkan_write_handlers,
 	.max_prg_rom_size = SIZE_2048K,
 	.max_chr_rom_size = SIZE_256K,
@@ -567,7 +477,7 @@ struct board_info board_bmc_superbig_7in1 = {
 	.name = "BMC-SUPERBIG-7IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = bmc_superbig7in1_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
 	.max_chr_rom_size = SIZE_1024K,
@@ -581,7 +491,7 @@ struct board_info board_bmc_superhik_4in1 = {
 	.name = "BMC-SUPERHIK-4IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = bmc_superhik4in1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_512K,
@@ -594,7 +504,7 @@ struct board_info board_bmc_superhik_8in1 = {
 	.name = "BMC-SUPERHIK8IN1",
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
-	.init_chr0 = new_init_chr0,
+	.init_chr0 = mmc3_init_chr0,
 	.write_handlers = bmc_superhik8in1_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_512K,
@@ -602,12 +512,12 @@ struct board_info board_bmc_superhik_8in1 = {
 	.mirroring_values = std_mirroring_vh,
 };
 
-static void mmc3_end_frame(struct board *board, uint32_t cycles)
+void mmc3_end_frame(struct board *board, uint32_t cycles)
 {
 	a12_timer_end_frame(board->emu->a12_timer, cycles);
 }
 
-static int mmc3_init(struct board *board)
+int mmc3_init(struct board *board)
 {
 	struct emu *emu;
 	int variant;
@@ -689,22 +599,22 @@ static int mmc3_init(struct board *board)
 	return 0;
 }
 
-static void mmc3_cleanup(struct board *board)
+void mmc3_cleanup(struct board *board)
 {
 	a12_timer_cleanup(board->emu);
 }
 
-static int mmc3_load_state(struct board *board, struct save_state *state)
+int mmc3_load_state(struct board *board, struct save_state *state)
 {
 	return a12_timer_load_state(board->emu, state);
 }
 
-static int mmc3_save_state(struct board *board, struct save_state *state)
+int mmc3_save_state(struct board *board, struct save_state *state)
 {
 	return a12_timer_save_state(board->emu, state);
 }
 
-static void mmc3_reset(struct board *board, int hard)
+void mmc3_reset(struct board *board, int hard)
 {
 	if (hard) {
 		a12_timer_reset(board->emu->a12_timer, hard);
@@ -885,7 +795,7 @@ static CPU_WRITE_HANDLER(multicart_bank_switch)
 		board_chr_sync(board, 0);
 }
 
-static void mmc3_txsrom_mirroring(struct board *board)
+void mmc3_txsrom_mirroring(struct board *board)
 {
 	int i;
 
@@ -964,7 +874,7 @@ static CPU_WRITE_HANDLER(txsrom_bank_select)
 	}
 }
 
-static CPU_WRITE_HANDLER(mmc3_bank_select)
+CPU_WRITE_HANDLER(mmc3_bank_select)
 {
 	struct board *board;
 	int old;
@@ -1026,72 +936,6 @@ static CPU_WRITE_HANDLER(hkrom_bank_select)
 		_wram_protect = 0;
 }
 
-static CPU_WRITE_HANDLER(rambo1_bank_select)
-{
-	struct board *board;
-	int old;
-
-	board = emu->board;
-	old = _bank_select & 0xc0;
-	_bank_select = value;
-
-	board->prg_mode = value & 0x40;
-	board->chr_mode = value & 0xa0;
-
-	if ((value & 0x80) != (old & 0x80)) {
-		if (!(board->chr_mode & 0x20)) {
-			board->chr_banks0[0].bank = _ext_regs[0] & 0xfe;
-			board->chr_banks0[1].bank = _ext_regs[0] | 0x01;
-			board->chr_banks0[2].bank = _ext_regs[1] & 0xfe;
-			board->chr_banks0[3].bank = _ext_regs[1] | 0x01;
-		} else {
-			board->chr_banks0[0].bank = _ext_regs[0];
-			board->chr_banks0[1].bank = _ext_regs[1];
-			board->chr_banks0[2].bank = _ext_regs[2];
-			board->chr_banks0[3].bank = _ext_regs[3];
-		}
-
-		if (!(board->chr_mode & 0x80)) {
-			board->chr_banks0[0].address &= 0x0fff;
-			board->chr_banks0[1].address &= 0x0fff;
-			board->chr_banks0[2].address &= 0x0fff;
-			board->chr_banks0[3].address &= 0x0fff;
-			board->chr_banks0[4].address |= 0x1000;
-			board->chr_banks0[5].address |= 0x1000;
-			board->chr_banks0[6].address |= 0x1000;
-			board->chr_banks0[7].address |= 0x1000;
-		} else {
-			board->chr_banks0[0].address |= 0x1000;
-			board->chr_banks0[1].address |= 0x1000;
-			board->chr_banks0[2].address |= 0x1000;
-			board->chr_banks0[3].address |= 0x1000;
-			board->chr_banks0[4].address &= 0x0fff;
-			board->chr_banks0[5].address &= 0x0fff;
-			board->chr_banks0[6].address &= 0x0fff;
-			board->chr_banks0[7].address &= 0x0fff;
-		}
-
-	    	if (board->info->board_type == BOARD_TYPE_TENGEN_800037)
-			mmc3_txsrom_mirroring(board);
-
-		board_chr_sync(board, 0);
-	}
-
-	if ((value & 0x40) != (old & 0x40)) {
-		if (!board->prg_mode) {
-			board->prg_banks[1].address = 0x8000;
-			board->prg_banks[2].address = 0xa000;
-			board->prg_banks[3].address = 0xc000;
-		} else {
-			board->prg_banks[1].address = 0xa000;
-			board->prg_banks[2].address = 0xc000;
-			board->prg_banks[3].address = 0x8000;
-		}
-
-		board_prg_sync(board);
-	}
-}
-
 static CPU_WRITE_HANDLER(txrom_compat_bank_select)
 {
 	struct board *board;
@@ -1133,7 +977,7 @@ static CPU_WRITE_HANDLER(txsrom_bank_data)
 		mmc3_txsrom_mirroring(board);
 }
 
-static CPU_WRITE_HANDLER(mmc3_bank_data)
+CPU_WRITE_HANDLER(mmc3_bank_data)
 {
 	struct board *board;
 	int bank;
@@ -1163,43 +1007,6 @@ static CPU_WRITE_HANDLER(mmc3_bank_data)
 		board->prg_banks[bank - 0x05].bank = value;
 		board_prg_sync(board);
 		break;
-	}
-}
-
-static CPU_WRITE_HANDLER(rambo1_bank_data)
-{
-	struct board *board;
-	int bank;
-
-	board = emu->board;
-
-	bank = _bank_select & 0x0f;
-
-	switch (bank) {
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-		mmc3_bank_data(emu, addr, value, cycles);
-		break;
-	case 0:
-	case 1:
-	case 8:
-	case 9:
-		bank = ((bank & 1) << 1) | ((bank & 0x08) >> 3);
-		_ext_regs[bank] = value;
-		board_chr_sync(board, 0);
-		break;
-	case 15:
-		update_prg_bank(board, 3, value);
-		break;
-	}
-
-	if ((bank < 6) &&
-	    (board->info->board_type == BOARD_TYPE_TENGEN_800037)) {
-		mmc3_txsrom_mirroring(board);
 	}
 }
 
@@ -1268,7 +1075,7 @@ static CPU_WRITE_HANDLER(waixing_bank_data)
 	mmc3_bank_data(emu, addr, value, cycles);
 }
 
-static CPU_WRITE_HANDLER(mmc3_wram_protect)
+CPU_WRITE_HANDLER(mmc3_wram_protect)
 {
 	struct board *board = emu->board;
 	int perms;
@@ -1305,65 +1112,6 @@ static CPU_WRITE_HANDLER(txrom_compat_wram_protect)
 		return;
 
 	mmc3_wram_protect(emu, addr, value, cycles);
-}
-
-static CPU_WRITE_HANDLER(rambo1_irq_latch)
-{
-	emu->board->irq_counter_reload = value;
-	m2_timer_set_reload(emu->m2_timer, value, cycles);
-	a12_timer_set_reload(emu->a12_timer, value, cycles);
-}
-
-static CPU_WRITE_HANDLER(rambo1_irq_reload)
-{
-	struct board *board;
-	int delay;
-
-	board = emu->board;
-	
-	if (board->irq_control != (value & 1)) {
-		board->irq_control = value & 1;
-		m2_timer_set_counter_enabled(emu->m2_timer, value & 0x01, cycles);
-		a12_timer_set_counter_enabled(emu->a12_timer, !(value & 0x01), cycles);
-	}
-
-	if (board->irq_counter_reload == 0)
-		delay = 0;
-	else
-		delay = 1;
-
-	if (board->irq_control) {
-		m2_timer_force_reload(emu->m2_timer, cycles);
-		m2_timer_set_prescaler(emu->m2_timer, 3, cycles);
-		m2_timer_set_force_reload_delay(emu->m2_timer, delay ? 2 : 0, cycles);
-	} else {
-		//a12_timer_set_force_reload_delay(emu->a12_timer, delay, cycles);
-		a12_timer_force_reload(emu->a12_timer, cycles);
-	}
-}
-
-static CPU_WRITE_HANDLER(rambo1_irq_disable)
-{
-	struct board *board;
-
-	board = emu->board;
-	
-	if (board->irq_control)
-		m2_timer_set_irq_enabled(emu->m2_timer, 0, cycles);
-	else
-		a12_timer_set_irq_enabled(emu->a12_timer, 0, cycles);
-}
-
-static CPU_WRITE_HANDLER(rambo1_irq_enable)
-{
-	struct board *board;
-
-	board = emu->board;
-
-	if (board->irq_control)
-		m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
-	else
-		a12_timer_set_irq_enabled(emu->a12_timer, 1, cycles);
 }
 
 static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler)
