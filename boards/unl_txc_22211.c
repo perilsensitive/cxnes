@@ -26,8 +26,8 @@ static CPU_READ_HANDLER(txc_22211a_read_handler);
 static CPU_WRITE_HANDLER(txc_22211b_write_handler);
 
 static struct bank unl_22211a_init_prg[] = {
-	{ 0, 0, SIZE_8K, 0x6000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{-1, 0, SIZE_32K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{0, 0, SIZE_8K, 0x6000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{0, 0, SIZE_32K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 

@@ -297,6 +297,7 @@
 #define BOARD_TYPE_WHIRLWIND_2706          INES_TO_BOARD_TYPE(108,  0, 0, 0)
 #define BOARD_TYPE_UNL_TXC_22211B          INES_TO_BOARD_TYPE(172,  0, 0, 0)
 #define BOARD_TYPE_UNL_TXC_22211A          INES_TO_BOARD_TYPE(132,  0, 0, 0)
+#define BOARD_TYPE_CNE_DECATHLON           INES_TO_BOARD_TYPE(244,  0, 0, 0)
 #define BOARD_TYPE_UNL_LH32                0x1e000
 #define BOARD_TYPE_UNL_BB                  0x1e001
 #define BOARD_TYPE_UNL_SMB2J               0x1e002

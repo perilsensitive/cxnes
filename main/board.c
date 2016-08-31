@@ -53,6 +53,7 @@ extern struct board_info board_unl_smb2j;
 extern struct board_info board_unl_ac08;
 extern struct board_info board_unl_cc_21;
 extern struct board_info board_unl_bb;
+extern struct board_info board_cne_decathlon;
 extern struct board_info board_unl_lh32;
 extern struct board_info board_unl_txc_22211a;
 extern struct board_info board_unl_txc_22211b;
@@ -247,6 +248,7 @@ static struct board_info *board_info_list[] = {
 	&board_unl_ac08,
 	&board_unl_cc_21,
 	&board_unl_bb,
+	&board_cne_decathlon,
 	&board_unl_lh32,
 	&board_unl_txc_22211a,
 	&board_unl_txc_22211b,
