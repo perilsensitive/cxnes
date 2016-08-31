@@ -27,7 +27,6 @@
 #define _first_bank_select board->data[4]
 #define _bank_select_mask board->data[5]
 #define _chr_mode_mask board->data[6]
-#define _has_alt_mirroring board->data[7]
 #define _cpu_cycle_irq_enable board->data[8]
 
 #define _ext_regs (board->data + 9)
@@ -35,6 +34,8 @@
 static CPU_WRITE_HANDLER(mmc3_wram_protect);
 static CPU_WRITE_HANDLER(mmc3_bank_select);
 static CPU_WRITE_HANDLER(mmc3_bank_data);
+static CPU_WRITE_HANDLER(txsrom_bank_select);
+static CPU_WRITE_HANDLER(txsrom_bank_data);
 static CPU_WRITE_HANDLER(waixing_bank_data);
 static CPU_WRITE_HANDLER(tqrom_bank_data);
 static CPU_WRITE_HANDLER(hkrom_bank_select);
@@ -59,8 +60,7 @@ static int mmc3_init(struct board *board);
 static void mmc3_cleanup(struct board *board);
 static void mmc3_reset(struct board *board, int);
 static void mmc3_end_frame(struct board *board, uint32_t cycles);
-static void mmc3_update_chr(struct board *board);
-static void rambo1_update_chr(struct board *board);
+static void handle_txsrom_mirroring(struct board *board);
 static int mmc3_save_state(struct board *board, struct save_state *state);
 static int mmc3_load_state(struct board *board, struct save_state *state);
 
@@ -202,8 +202,8 @@ static struct board_write_handler rambo1_write_handlers[] = {
 };
 
 static struct board_write_handler txsrom_write_handlers[] = {
-	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
-	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
+	{txsrom_bank_select, 0x8000, SIZE_8K, 0x8001},
+	{txsrom_bank_data, 0x8001, SIZE_8K, 0x8001},
 	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
@@ -668,7 +668,6 @@ static int mmc3_init(struct board *board)
 	variant = A12_TIMER_VARIANT_MMC3_STD;
 	_bank_select_mask = 0x07;
 	_chr_mode_mask = 0x80;
-	_has_alt_mirroring = 0;
 	switch (board->info->board_type) {
 	case BOARD_TYPE_ACCLAIM_MC_ACC:
 		variant = A12_TIMER_VARIANT_ACCLAIM_MC_ACC;
@@ -677,14 +676,10 @@ static int mmc3_init(struct board *board)
 		variant = A12_TIMER_VARIANT_MMC3_ALT;
 		break;
 	case BOARD_TYPE_TENGEN_800037:
-		_has_alt_mirroring = 1;
 	case BOARD_TYPE_TENGEN_800032:
 		variant = A12_TIMER_VARIANT_RAMBO1;
 		_bank_select_mask = 0x0f;
 		_chr_mode_mask = 0xa0;
-		break;
-	case BOARD_TYPE_TxSROM:
-		_has_alt_mirroring = 1;
 		break;
 	}
 
@@ -887,54 +882,29 @@ static CPU_WRITE_HANDLER(multicart_bank_switch)
 
 	if ((old_chr_and != board->chr_and) ||
 	    (old_chr_or != board->chr_or))
-		mmc3_update_chr(board);
+		board_chr_sync(board, 0);
 }
 
-static void mmc3_update_chr(struct board *board)
+static void handle_txsrom_mirroring(struct board *board)
 {
-	if (!(board->chr_mode & 0x80)) {
-		board->chr_banks0[0].address &= 0x0fff;
-		board->chr_banks0[1].address &= 0x0fff;
-		board->chr_banks0[2].address &= 0x0fff;
-		board->chr_banks0[3].address &= 0x0fff;
-		board->chr_banks0[4].address |= 0x1000;
-		board->chr_banks0[5].address |= 0x1000;
-		board->chr_banks0[6].address |= 0x1000;
-		board->chr_banks0[7].address |= 0x1000;
-	} else {
-		board->chr_banks0[0].address |= 0x1000;
-		board->chr_banks0[1].address |= 0x1000;
-		board->chr_banks0[2].address |= 0x1000;
-		board->chr_banks0[3].address |= 0x1000;
-		board->chr_banks0[4].address &= 0x0fff;
-		board->chr_banks0[5].address &= 0x0fff;
-		board->chr_banks0[6].address &= 0x0fff;
-		board->chr_banks0[7].address &= 0x0fff;
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		int reg = i;
+		if (board->chr_mode)
+			reg += 2;
+		else
+			reg /= 2;
+
+		board->nmt_banks[i].type = MAP_TYPE_CIRAM;
+		board->nmt_banks[i].bank =
+		    board->chr_banks0[reg].
+		    bank & 0x80 ? 1 : 0;
+		board->nmt_banks[i].perms =
+		    MAP_PERM_READWRITE;
 	}
 
-//      if (board->info->board_type == BOARD_TYPE_TxSROM) {
-	if (_has_alt_mirroring) {
-		int i;
-
-		for (i = 0; i < 4; i++) {
-			int reg = i;
-			if (board->chr_mode)
-				reg += 2;
-			else
-				reg /= 2;
-
-			board->nmt_banks[i].type = MAP_TYPE_CIRAM;
-			board->nmt_banks[i].bank =
-			    board->chr_banks0[reg].
-			    bank & 0x80 ? 1 : 0;
-			board->nmt_banks[i].perms =
-			    MAP_PERM_READWRITE;
-		}
-
-		board_nmt_sync(board);
-	}
-
-	board_chr_sync(board, 0);
+	board_nmt_sync(board);
 }
 
 static CPU_WRITE_HANDLER(hosenkan_write_handler)
@@ -979,6 +949,21 @@ static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler)
 	board_chr_sync(board, 0);
 }
 
+static CPU_WRITE_HANDLER(txsrom_bank_select)
+{
+	struct board *board;
+	int old;
+
+	board = emu->board;
+	old = _bank_select & 0xc0;
+
+	mmc3_bank_select(emu, addr, value, cycles);
+
+	if ((value & 0x80) != (old & 0x80)) {
+		handle_txsrom_mirroring(board);
+	}
+}
+
 static CPU_WRITE_HANDLER(mmc3_bank_select)
 {
 	struct board *board;
@@ -992,7 +977,27 @@ static CPU_WRITE_HANDLER(mmc3_bank_select)
 	board->chr_mode = value & 0x80;
 
 	if ((value & 0x80) != (old & 0x80)) {
-		mmc3_update_chr(board);
+		if (!(board->chr_mode & 0x80)) {
+			board->chr_banks0[0].address &= 0x0fff;
+			board->chr_banks0[1].address &= 0x0fff;
+			board->chr_banks0[2].address &= 0x0fff;
+			board->chr_banks0[3].address &= 0x0fff;
+			board->chr_banks0[4].address |= 0x1000;
+			board->chr_banks0[5].address |= 0x1000;
+			board->chr_banks0[6].address |= 0x1000;
+			board->chr_banks0[7].address |= 0x1000;
+		} else {
+			board->chr_banks0[0].address |= 0x1000;
+			board->chr_banks0[1].address |= 0x1000;
+			board->chr_banks0[2].address |= 0x1000;
+			board->chr_banks0[3].address |= 0x1000;
+			board->chr_banks0[4].address &= 0x0fff;
+			board->chr_banks0[5].address &= 0x0fff;
+			board->chr_banks0[6].address &= 0x0fff;
+			board->chr_banks0[7].address &= 0x0fff;
+		}
+
+		board_chr_sync(board, 0);
 	}
 
 	if ((value & 0x40) != (old & 0x40)) {
@@ -1034,7 +1039,42 @@ static CPU_WRITE_HANDLER(rambo1_bank_select)
 	board->chr_mode = value & 0xa0;
 
 	if ((value & 0x80) != (old & 0x80)) {
-		rambo1_update_chr(board);
+		if (!(board->chr_mode & 0x20)) {
+			board->chr_banks0[0].bank = _ext_regs[0] & 0xfe;
+			board->chr_banks0[1].bank = _ext_regs[0] | 0x01;
+			board->chr_banks0[2].bank = _ext_regs[1] & 0xfe;
+			board->chr_banks0[3].bank = _ext_regs[1] | 0x01;
+		} else {
+			board->chr_banks0[0].bank = _ext_regs[0];
+			board->chr_banks0[1].bank = _ext_regs[1];
+			board->chr_banks0[2].bank = _ext_regs[2];
+			board->chr_banks0[3].bank = _ext_regs[3];
+		}
+
+		if (!(board->chr_mode & 0x80)) {
+			board->chr_banks0[0].address &= 0x0fff;
+			board->chr_banks0[1].address &= 0x0fff;
+			board->chr_banks0[2].address &= 0x0fff;
+			board->chr_banks0[3].address &= 0x0fff;
+			board->chr_banks0[4].address |= 0x1000;
+			board->chr_banks0[5].address |= 0x1000;
+			board->chr_banks0[6].address |= 0x1000;
+			board->chr_banks0[7].address |= 0x1000;
+		} else {
+			board->chr_banks0[0].address |= 0x1000;
+			board->chr_banks0[1].address |= 0x1000;
+			board->chr_banks0[2].address |= 0x1000;
+			board->chr_banks0[3].address |= 0x1000;
+			board->chr_banks0[4].address &= 0x0fff;
+			board->chr_banks0[5].address &= 0x0fff;
+			board->chr_banks0[6].address &= 0x0fff;
+			board->chr_banks0[7].address &= 0x0fff;
+		}
+
+	    	if (board->info->board_type == BOARD_TYPE_TENGEN_800037)
+			handle_txsrom_mirroring(board);
+
+		board_chr_sync(board, 0);
 	}
 
 	if ((value & 0x40) != (old & 0x40)) {
@@ -1078,6 +1118,21 @@ static CPU_WRITE_HANDLER(txrom_compat_bank_select)
 	}
 }
 
+static CPU_WRITE_HANDLER(txsrom_bank_data)
+{
+	struct board *board;
+	int bank;
+
+	board = emu->board;
+
+	bank = _bank_select & 0x07;
+
+	mmc3_bank_data(emu, addr, value, cycles);
+
+	if (bank < 6)
+		handle_txsrom_mirroring(board);
+}
+
 static CPU_WRITE_HANDLER(mmc3_bank_data)
 {
 	struct board *board;
@@ -1100,32 +1155,15 @@ static CPU_WRITE_HANDLER(mmc3_bank_data)
 		} else {
 			board->chr_banks0[bank + 2].bank = value;
 		}
+
+		board_chr_sync(board, 0);
 		break;
 	case 6:
 	case 7:
 		board->prg_banks[bank - 0x05].bank = value;
+		board_prg_sync(board);
 		break;
 	}
-
-	board_prg_sync(board);
-	mmc3_update_chr(board);
-}
-
-static void rambo1_update_chr(struct board *board)
-{
-	if (!(board->chr_mode & 0x20)) {
-		board->chr_banks0[0].bank = _ext_regs[0] & 0xfe;
-		board->chr_banks0[1].bank = _ext_regs[0] | 0x01;
-		board->chr_banks0[2].bank = _ext_regs[1] & 0xfe;
-		board->chr_banks0[3].bank = _ext_regs[1] | 0x01;
-	} else {
-		board->chr_banks0[0].bank = _ext_regs[0];
-		board->chr_banks0[1].bank = _ext_regs[1];
-		board->chr_banks0[2].bank = _ext_regs[2];
-		board->chr_banks0[3].bank = _ext_regs[3];
-	}
-
-	mmc3_update_chr(board);
 }
 
 static CPU_WRITE_HANDLER(rambo1_bank_data)
@@ -1152,13 +1190,17 @@ static CPU_WRITE_HANDLER(rambo1_bank_data)
 	case 9:
 		bank = ((bank & 1) << 1) | ((bank & 0x08) >> 3);
 		_ext_regs[bank] = value;
-		rambo1_update_chr(board);
+		board_chr_sync(board, 0);
 		break;
 	case 15:
 		update_prg_bank(board, 3, value);
 		break;
 	}
 
+	if ((bank < 6) &&
+	    (board->info->board_type == BOARD_TYPE_TENGEN_800037)) {
+		handle_txsrom_mirroring(board);
+	}
 }
 
 static CPU_WRITE_HANDLER(tqrom_bank_data)
