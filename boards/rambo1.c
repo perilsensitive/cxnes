@@ -106,7 +106,7 @@ static CPU_WRITE_HANDLER(rambo1_bank_select)
 	board->prg_mode = value & 0x40;
 	board->chr_mode = value & 0xa0;
 
-	if ((value & 0x80) != (old & 0x80)) {
+	if ((value & 0xa0) != (old & 0xa0)) {
 		if (!(board->chr_mode & 0x20)) {
 			board->chr_banks0[0].bank = _ext_regs[0] & 0xfe;
 			board->chr_banks0[1].bank = _ext_regs[0] | 0x01;
