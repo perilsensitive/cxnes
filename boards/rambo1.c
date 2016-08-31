@@ -22,6 +22,9 @@
 #include "m2_timer.h"
 #include "mmc3.h"
 
+static int rambo1_init(struct board *board);
+static void rambo1_reset(struct board *board, int hard);
+
 static CPU_WRITE_HANDLER(rambo1_bank_select);
 static CPU_WRITE_HANDLER(rambo1_bank_data);
 static CPU_WRITE_HANDLER(rambo1_irq_latch);
@@ -30,8 +33,8 @@ static CPU_WRITE_HANDLER(rambo1_irq_disable);
 static CPU_WRITE_HANDLER(rambo1_irq_enable);
 
 static struct board_funcs rambo1_funcs = {
-	.init = mmc3_init,
-	.reset = mmc3_reset,
+	.init = rambo1_init,
+	.reset = rambo1_reset,
 	.cleanup = mmc3_cleanup,
 	.end_frame = mmc3_end_frame,
 	.load_state = mmc3_load_state,
@@ -93,6 +96,33 @@ struct board_info board_tengen800037 = {
 	         BOARD_INFO_FLAG_M2_TIMER,
 	.mirroring_values = std_mirroring_vh,
 };
+
+static int rambo1_init(struct board *board)
+{
+	if (a12_timer_init(board->emu, A12_TIMER_VARIANT_RAMBO1))
+		return 1;
+
+	return 0;
+}
+
+static void rambo1_reset(struct board *board, int hard)
+{
+	mmc3_reset(board, hard);
+
+	if (hard) {
+		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_prescaler(board->emu->m2_timer, 3, 0);
+		m2_timer_set_prescaler_reload(board->emu->m2_timer, 3, 0);
+		m2_timer_set_irq_delay(board->emu->m2_timer, 2, 0);
+		m2_timer_set_size(board->emu->m2_timer, 8, 0);
+		m2_timer_set_flags(board->emu->m2_timer,
+				   M2_TIMER_FLAG_RELOAD |
+				   M2_TIMER_FLAG_DELAYED_RELOAD |
+				   M2_TIMER_FLAG_PRESCALER |
+				   M2_TIMER_FLAG_PRESCALER_RELOAD,
+				   0);
+	}
+}
 
 static CPU_WRITE_HANDLER(rambo1_bank_select)
 {

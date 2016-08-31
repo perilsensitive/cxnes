@@ -585,12 +585,6 @@ int mmc3_init(struct board *board)
 	case BOARD_TYPE_TxROM_MMC3A:
 		variant = A12_TIMER_VARIANT_MMC3_ALT;
 		break;
-	case BOARD_TYPE_TENGEN_800037:
-	case BOARD_TYPE_TENGEN_800032:
-		variant = A12_TIMER_VARIANT_RAMBO1;
-		_bank_select_mask = 0x0f;
-		_chr_mode_mask = 0xa0;
-		break;
 	}
 
 	if (a12_timer_init(emu, variant))
@@ -675,22 +669,6 @@ void mmc3_reset(struct board *board, int hard)
 			break;
 		case BOARD_TYPE_TXC_TW:
 			board->prg_banks[5].size = SIZE_32K;
-			break;
-		case BOARD_TYPE_TENGEN_800032:
-		case BOARD_TYPE_TENGEN_800037:
-			board->prg_and = ~0;
-			board->chr_and = ~0;
-			m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
-			m2_timer_set_prescaler(board->emu->m2_timer, 3, 0);
-			m2_timer_set_prescaler_reload(board->emu->m2_timer, 3, 0);
-			m2_timer_set_irq_delay(board->emu->m2_timer, 2, 0);
-			m2_timer_set_size(board->emu->m2_timer, 8, 0);
-			m2_timer_set_flags(board->emu->m2_timer,
-					   M2_TIMER_FLAG_RELOAD |
-					   M2_TIMER_FLAG_DELAYED_RELOAD |
-					   M2_TIMER_FLAG_PRESCALER |
-					   M2_TIMER_FLAG_PRESCALER_RELOAD,
-					   0);
 			break;
 		default:
 			board->prg_and = ~0;
