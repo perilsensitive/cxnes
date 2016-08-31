@@ -188,6 +188,8 @@ cxnes_SOURCES = \
 	boards/streemerz_bundle.c \
 	boards/mmc3.c \
 	boards/rambo1.c \
+	boards/tqrom.c \
+	boards/mmc6.c \
 	boards/mmc1.c \
 	boards/namco163.c \
 	boards/ines36.c \

@@ -25,15 +25,10 @@
 static CPU_WRITE_HANDLER(txsrom_bank_select);
 static CPU_WRITE_HANDLER(txsrom_bank_data);
 static CPU_WRITE_HANDLER(waixing_bank_data);
-static CPU_WRITE_HANDLER(tqrom_bank_data);
-static CPU_WRITE_HANDLER(hkrom_bank_select);
-static CPU_WRITE_HANDLER(hkrom_wram_protect);
 static CPU_WRITE_HANDLER(hosenkan_write_handler);
 static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler);
-static CPU_READ_HANDLER(mmc6_wram_read_handler);
-static CPU_WRITE_HANDLER(mmc6_wram_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
 static CPU_WRITE_HANDLER(m15_in_1_write_handler);
 static CPU_WRITE_HANDLER(txc_tw_write_handler);
@@ -87,18 +82,6 @@ struct board_write_handler mmc3_write_handlers[] = {
 static struct board_write_handler waixing_write_handlers[] = {
 	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
 	{waixing_bank_data, 0x8001, SIZE_8K, 0x8001},
-	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
-	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
-	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
-	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
-	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
-	{NULL}
-};
-
-static struct board_write_handler tqrom_write_handlers[] = {
-	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
-	{tqrom_bank_data, 0x8001, SIZE_8K, 0x8001},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
@@ -176,24 +159,6 @@ static struct board_write_handler qj_zz_write_handlers[] = {
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
 	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
-	{NULL},
-};
-
-static struct board_write_handler hkrom_write_handlers[] = {
-	{hkrom_bank_select, 0x8000, SIZE_8K, 0x8001},
-	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
-	{mmc6_wram_write_handler, 0x7000, SIZE_4K, 0},
-	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
-	{hkrom_wram_protect, 0xa001, SIZE_8K, 0xa001},
-	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
-	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
-	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
-	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
-	{NULL},
-};
-
-static struct board_read_handler hkrom_read_handlers[] = {
-	{mmc6_wram_read_handler, 0x7000, SIZE_4K, 0},
 	{NULL},
 };
 
@@ -293,41 +258,6 @@ struct board_info board_txsrom = {
 	.max_chr_rom_size = SIZE_256K,
 	.max_wram_size = {SIZE_8K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
-	.mirroring_values = std_mirroring_vh,
-};
-
-struct board_info board_tqrom = {
-	.board_type = BOARD_TYPE_TQROM,
-	.name = "NES-TQROM",
-	.mapper_name = "MMC3",
-	.funcs = &mmc3_funcs,
-	.init_prg = mmc3_init_prg,
-	.init_chr0 = mmc3_init_chr0,
-	.write_handlers = tqrom_write_handlers,
-	.max_prg_rom_size = SIZE_2048K,
-	.max_chr_rom_size = SIZE_64K,
-	.max_wram_size = {SIZE_8K, 0},
-	.min_vram_size = {SIZE_8K, 0},
-	.max_vram_size = {SIZE_64K, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M,
-	.mirroring_values = std_mirroring_vh,
-};
-
-struct board_info board_hkrom = {
-	.board_type = BOARD_TYPE_HKROM,
-	.name = "NES-HKROM",
-	.mapper_name = "MMC6",
-	.funcs = &mmc3_funcs,
-	.init_prg = mmc3_init_prg,
-	.init_chr0 = mmc3_init_chr0,
-	.read_handlers = hkrom_read_handlers,
-	.write_handlers = hkrom_write_handlers,
-	.max_prg_rom_size = SIZE_512K,
-	.max_chr_rom_size = SIZE_256K,
-	.min_wram_size = {0, 0},
-	.max_wram_size = {0, 0},
-	.flags = BOARD_INFO_FLAG_MIRROR_M | BOARD_INFO_FLAG_MAPPER_NV,
-	.mapper_ram_size = SIZE_1K,
 	.mirroring_values = std_mirroring_vh,
 };
 
@@ -685,41 +615,6 @@ void mmc3_reset(struct board *board, int hard)
 	}
 }
 
-static CPU_READ_HANDLER(mmc6_wram_read_handler)
-{
-	struct board *board = emu->board;
-	uint8_t rc;
-
-	/* Reads are open-bus if neither 512-byte page is readable */
-
-	addr &= 0x3ff;
-
-	/* Note that there will always be battery-backed PRG-RAM; the RAM
-	   itself is built into the MMC6, and all HKROM boards in existence
-	   have a battery */
-
-	if (!(_wram_protect & 0xa0))
-		rc = value;
-	if ((addr < 0x200 && ((_wram_protect & 0xa0) == 0x80)) ||
-	    (addr >= 0x200 && ((_wram_protect & 0xa0) == 0x20)))
-		rc = 0;
-	else
-		rc = board->mapper_ram.data[addr];
-
-	return rc;
-}
-
-static CPU_WRITE_HANDLER(mmc6_wram_write_handler)
-{
-	struct board *board = emu->board;
-
-	addr &= 0x3ff;
-
-	if ((addr < 0x200 && ((_wram_protect & 0x30) == 0x30)) ||
-	    (addr >= 0x200 && ((_wram_protect & 0xc0) == 0xc0)))
-		board->mapper_ram.data[addr] = value;
-}
-
 static CPU_WRITE_HANDLER(multicart_bank_switch)
 {
 	struct board *board = emu->board;
@@ -903,17 +798,6 @@ CPU_WRITE_HANDLER(mmc3_bank_select)
 	}
 }
 
-static CPU_WRITE_HANDLER(hkrom_bank_select)
-{
-	struct board *board;
-	board = emu->board;
-
-	mmc3_bank_select(emu, addr, value, cycles);
-
-	if (!(_bank_select & 0x20))
-		_wram_protect = 0;
-}
-
 static CPU_WRITE_HANDLER(txrom_compat_bank_select)
 {
 	struct board *board;
@@ -988,34 +872,6 @@ CPU_WRITE_HANDLER(mmc3_bank_data)
 	}
 }
 
-static CPU_WRITE_HANDLER(tqrom_bank_data)
-{
-	struct board *board;
-	int bank;
-	int type;
-
-	board = emu->board;
-	bank = _bank_select & 0x07;
-
-	if (bank < 6) {
-		type = MAP_TYPE_AUTO;
-
-		if (value & 0x40) {
-			value &= 0x3f;
-			type = MAP_TYPE_RAM0;
-		}
-
-		if (bank < 2) {
-			board->chr_banks0[bank * 2].type = type;
-			board->chr_banks0[bank * 2 + 1].type = type;
-		} else {
-			board->chr_banks0[bank + 2].type = type;
-		}
-	}
-
-	mmc3_bank_data(emu, addr, value, cycles);
-}
-
 static CPU_WRITE_HANDLER(waixing_bank_data)
 {
 	struct board *board;
@@ -1072,14 +928,6 @@ CPU_WRITE_HANDLER(mmc3_wram_protect)
 
 	board->prg_banks[0].perms = perms;
 	board_prg_sync(board);
-}
-
-static CPU_WRITE_HANDLER(hkrom_wram_protect)
-{
-	struct board *board = emu->board;
-
-	if (_bank_select & 0x20)
-		_wram_protect = value;
 }
 
 static CPU_WRITE_HANDLER(txrom_compat_wram_protect)
