@@ -85,6 +85,7 @@ extern struct board_info board_cne_psb;
 extern struct board_info board_txc_tw;
 extern struct board_info board_cne_shlz;
 extern struct board_info board_sachen_74ls374n;
+extern struct board_info board_sachen_74ls374n_a;
 extern struct board_info board_kasing;
 extern struct board_info board_rumblestation;
 extern struct board_info board_22_in_1;
@@ -282,6 +283,7 @@ static struct board_info *board_info_list[] = {
 	&board_txc_tw,
 	&board_cne_shlz,
 	&board_sachen_74ls374n,
+	&board_sachen_74ls374n_a,
 	&board_kasing,
 	&board_rumblestation,
 	&board_22_in_1,

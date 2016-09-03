@@ -60,6 +60,23 @@ struct board_info board_sachen_74ls374n = {
 	.mirroring_shift = 1,
 };
 
+struct board_info board_sachen_74ls374n_a = {
+	.board_type = BOARD_TYPE_SACHEN_74LS374N_A,
+	.name = "UNL-SACHEN-74LS374N-A",
+	.init_prg = std_prg_32k,
+	.init_chr0 = std_chr_8k,
+	.funcs = &sachen_74ls374n_funcs,
+	.read_handlers = sachen_74ls374n_read_handlers,
+	.write_handlers = sachen_74ls374n_write_handlers,
+	.max_prg_rom_size = SIZE_256K,
+	.max_chr_rom_size = SIZE_128K,
+	.min_wram_size = { SIZE_8K, 0 },
+	.max_wram_size = { SIZE_8K, 0 },
+	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.mirroring_values = mirroring_values,
+	.mirroring_shift = 1,
+};
+
 static CPU_READ_HANDLER(sachen_74ls374n_read_handler)
 {
 	struct board *board;
@@ -92,18 +109,30 @@ static CPU_WRITE_HANDLER(sachen_74ls374n_write_handler)
 			board_prg_sync(board);
 			break;
 		case 4:
-			board->chr_banks0[0].bank &= 0x0b;
-			board->chr_banks0[0].bank |= (value & 0x01) << 2;
-			board_chr_sync(board, 0);
+			if (board->info->board_type == BOARD_TYPE_SACHEN_74LS374N) {
+				board->chr_banks0[0].bank &= 0x0b;
+				board->chr_banks0[0].bank |= (value & 0x01) << 2;
+				board_chr_sync(board, 0);
+			} else {
+				board->chr_banks0[0].bank &= 0x0e;
+				board->chr_banks0[0].bank |= (value & 0x01);
+				board_chr_sync(board, 0);
+			}
 			break;
 		case 5:
 			board->prg_banks[1].bank = value & 0x07;
 			board_prg_sync(board);
 			break;
 		case 6:
-			board->chr_banks0[0].bank &= 0x0c;
-			board->chr_banks0[0].bank |= (value & 0x03);
-			board_chr_sync(board, 0);
+			if (board->info->board_type == BOARD_TYPE_SACHEN_74LS374N) {
+				board->chr_banks0[0].bank &= 0x0c;
+				board->chr_banks0[0].bank |= (value & 0x03);
+				board_chr_sync(board, 0);
+			} else {
+				board->chr_banks0[0].bank &= 0x0c;
+				board->chr_banks0[0].bank |= (value & 0x03) << 1;
+				board_chr_sync(board, 0);
+			}
 			break;
 		case 7:
 			standard_mirroring_handler(emu, addr, value, cycles);
