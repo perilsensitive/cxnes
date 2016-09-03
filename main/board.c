@@ -47,6 +47,7 @@ struct board_fixup {
 
 extern int running;
 extern struct board_info board_bmc_marioparty7in1;
+extern struct board_info board_bmc_n625092;
 extern struct board_info board_unl_ks7037;
 extern struct board_info board_unl_ks7057;
 extern struct board_info board_unl_smb2j;
@@ -253,6 +254,7 @@ static struct board_info *board_info_list[] = {
 	&board_unl_lh32,
 	&board_unl_txc_22211a,
 	&board_unl_txc_22211b,
+	&board_bmc_n625092,
 	&board_unl_ks7037,
 	&board_unl_ks7057,
 	&board_whirlwind_2706,

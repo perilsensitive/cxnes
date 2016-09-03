@@ -116,6 +116,7 @@ cxnes_SOURCES = \
 	boards/whirlwind.c \
 	boards/unl_lh32.c \
 	boards/unl_txc_22211.c \
+	boards/bmc_n625092.c \
 	boards/unl_bb.c \
 	boards/cne_decathlon.c \
 	boards/subor.c \
