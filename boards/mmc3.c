@@ -631,16 +631,12 @@ void mmc3_reset(struct board *board, int hard)
 static CPU_WRITE_HANDLER(zz_bank_switch)
 {
 	struct board *board = emu->board;
-	uint32_t old_prg_or, old_chr_or;
-	uint8_t old_prg_and, old_chr_and;
+	uint32_t old_chr_or;
 
 	if ((_wram_protect & 0xc0) != 0x80)
 		return;
 
-	old_prg_or = board->prg_or;
 	old_chr_or = board->chr_or;
-	old_prg_and = board->prg_and;
-	old_chr_and = board->chr_and;
 
 	value &= 0x07;
 
@@ -650,12 +646,9 @@ static CPU_WRITE_HANDLER(zz_bank_switch)
 	board->prg_and = ((value & 0x04) << 1 | 0x07);
 	board->chr_or = (value << 5) & 0x80;
 
-	if ((old_prg_and != board->prg_and) ||
-	    (old_prg_or != board->prg_or))
-		board_prg_sync(board);
+	board_prg_sync(board);
 
-	if ((old_chr_and != board->chr_and) ||
-	    (old_chr_or != board->chr_or))
+	if (old_chr_or != board->chr_or)
 		board_chr_sync(board, 0);
 }
 
