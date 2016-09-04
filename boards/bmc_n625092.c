@@ -63,7 +63,7 @@ static CPU_WRITE_HANDLER(bmc_n625092_write_handler)
 	case 0x8000:
 		standard_mirroring_handler(emu, addr, addr & 0x01, cycles);
 		board->prg_mode = (addr & 0x102) >> 1;
-		board->prg_or = (addr & 0xfc) >> 2;
+		board->prg_or = (addr & 0xe0) >> 2;
 		break;
 	case 0xc000:
 		_bank = addr & 0x07;

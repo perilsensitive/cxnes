@@ -33,6 +33,7 @@ static CPU_WRITE_HANDLER(bmc_superbig7in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik4in1_write_handler);
 static CPU_WRITE_HANDLER(bmc_superhik8in1_write_handler);
 static CPU_WRITE_HANDLER(multicart_bank_switch);
+static CPU_WRITE_HANDLER(zz_bank_switch);
 static CPU_WRITE_HANDLER(m15_in_1_write_handler);
 static CPU_WRITE_HANDLER(txc_tw_write_handler);
 static CPU_WRITE_HANDLER(bmc_marioparty7in1_write_handler);
@@ -152,12 +153,25 @@ static struct board_write_handler hosenkan_write_handlers[] = {
 	{NULL}
 };
 
-static struct board_write_handler qj_zz_write_handlers[] = {
+static struct board_write_handler qj_write_handlers[] = {
 	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
 	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
 	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
 	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
 	{multicart_bank_switch, 0x6000, SIZE_8K, 0},
+	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
+	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
+	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
+	{a12_timer_irq_enable, 0xe001, SIZE_8K, 0xe001},
+	{NULL},
+};
+
+static struct board_write_handler zz_write_handlers[] = {
+	{mmc3_bank_select, 0x8000, SIZE_8K, 0x8001},
+	{mmc3_bank_data, 0x8001, SIZE_8K, 0x8001},
+	{standard_mirroring_handler, 0xa000, SIZE_8K, 0xa001},
+	{mmc3_wram_protect, 0xa001, SIZE_8K, 0xa001},
+	{zz_bank_switch, 0x6000, SIZE_8K, 0},
 	{a12_timer_irq_latch, 0xc000, SIZE_8K, 0xc001},
 	{a12_timer_irq_reload, 0xc001, SIZE_8K, 0xc001},
 	{a12_timer_irq_disable, 0xe000, SIZE_8K, 0xe001},
@@ -271,7 +285,7 @@ struct board_info board_nes_qj = {
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = mmc3_init_chr0,
-	.write_handlers = qj_zz_write_handlers,
+	.write_handlers = qj_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -285,7 +299,7 @@ struct board_info board_pal_zz = {
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = mmc3_init_chr0,
-	.write_handlers = qj_zz_write_handlers,
+	.write_handlers = zz_write_handlers,
 	.max_prg_rom_size = SIZE_256K,
 	.max_chr_rom_size = SIZE_256K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -344,7 +358,7 @@ struct board_info board_kasing = {
 	.funcs = &mmc3_funcs,
 	.init_prg = mmc3_init_prg,
 	.init_chr0 = mmc3_init_chr0,
-	.write_handlers = qj_zz_write_handlers,
+	.write_handlers = qj_write_handlers,
 	.max_prg_rom_size = SIZE_512K,
 	.max_chr_rom_size = SIZE_256K,
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
@@ -614,6 +628,37 @@ void mmc3_reset(struct board *board, int hard)
 	}
 }
 
+static CPU_WRITE_HANDLER(zz_bank_switch)
+{
+	struct board *board = emu->board;
+	uint32_t old_prg_or, old_chr_or;
+	uint8_t old_prg_and, old_chr_and;
+
+	if ((_wram_protect & 0xc0) != 0x80)
+		return;
+
+	old_prg_or = board->prg_or;
+	old_chr_or = board->chr_or;
+	old_prg_and = board->prg_and;
+	old_chr_and = board->chr_and;
+
+	value &= 0x07;
+
+	board->prg_or = (value << 2) & 0x10;
+	if ((value & 0x03) == 0x03)
+		board->prg_or |= 0x08;
+	board->prg_and = ((value & 0x04) << 1 | 0x07);
+	board->chr_or = (value << 5) & 0x80;
+
+	if ((old_prg_and != board->prg_and) ||
+	    (old_prg_or != board->prg_or))
+		board_prg_sync(board);
+
+	if ((old_chr_and != board->chr_and) ||
+	    (old_chr_or != board->chr_or))
+		board_chr_sync(board, 0);
+}
+
 static CPU_WRITE_HANDLER(multicart_bank_switch)
 {
 	struct board *board = emu->board;
@@ -633,13 +678,6 @@ static CPU_WRITE_HANDLER(multicart_bank_switch)
 	case BOARD_TYPE_QJ:
 		board->prg_or = (value & 1) << 4;
 		board->chr_or = (value & 1) << 7;
-		break;
-	case BOARD_TYPE_ZZ:
-		board->prg_or = (value << 2) & 0x10;
-		if ((value & 0x03) == 0x03)
-			board->prg_or |= 0x08;
-		board->prg_and = (value << 1 | 0x07);
-		board->chr_or = (value << 5) & 0x80;
 		break;
 	case BOARD_TYPE_KASING:
 		if (addr & 0x01) {
