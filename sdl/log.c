@@ -84,7 +84,7 @@ static void va_log_message(enum log_priority priority, const char *fmt, va_list 
 
 	sdl_priority = priority_info[priority].sdl_priority;
 
-	size = vsnprintf(NULL, 0, fmt, args);
+	size = vsnprintf(NULL, 0, fmt, args) + 1;
 
 	buffer = NULL;
 
