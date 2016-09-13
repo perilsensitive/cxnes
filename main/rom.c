@@ -158,6 +158,16 @@ static int rom_load_file_data(struct emu *emu, const char *filename,
 			if (tmp)
 				*tmp = '\0';
 
+			tmp = strrchr(rom->info.name, PATHSEP[0]);
+			if (!tmp)
+				tmp = strrchr(rom->info.name, '/');
+
+			if (tmp) {
+				tmp++;
+				memmove(rom->info.name, tmp,
+					strlen(rom->info.name) + 1 -
+					(tmp - rom->info.name)); 
+			}
 		}
 
 		*romptr = rom;
