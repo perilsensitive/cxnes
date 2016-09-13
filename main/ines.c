@@ -536,8 +536,11 @@ int ines_load(struct emu *emu, struct rom *rom)
 			board_type = BOARD_TYPE_VS_GUMSHOE;
 		break;
 	case BOARD_TYPE_NROM:
-		if (header.prg_rom_banks == 3)
+		if (header.prg_rom_banks == 3) {
 			board_type = BOARD_TYPE_NROM368;
+			//prg_size = 46 * 1024;
+			//rom->offset = INES_HEADER_SIZE + SIZE_2K;
+		}
 		break;
 	case BOARD_TYPE_ExROM:
 		if (header.version == 1)
@@ -740,7 +743,13 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return 0;
 	}
 
-	rom->offset = INES_HEADER_SIZE;
+	if (board_type == BOARD_TYPE_NROM368) {
+		rom->offset = INES_HEADER_SIZE + SIZE_2K;
+		prg_size = SIZE_1K * 46;
+	} else {
+		rom->offset = INES_HEADER_SIZE;
+	}
+
 	rom->info.total_prg_size = prg_size;
 	rom->info.total_chr_size = chr_size;
 	rom->info.prg_size[0] = prg_size;
