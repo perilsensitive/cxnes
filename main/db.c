@@ -267,6 +267,18 @@ static int parse_system_type(char *value)
 	return system_type;
 }
 
+const char *db_get_system_type_name(int type)
+{
+	int i;
+
+	for (i = 0; system_type_mappings[i].name; i++) {
+		if (system_type_mappings[i].value == type)
+			break;
+	}
+
+	return system_type_mappings[i].name;
+}
+
 static int parse_mirroring(char *value)
 {
 	int mirroring;

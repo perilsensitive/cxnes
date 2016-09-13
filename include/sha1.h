@@ -40,5 +40,6 @@ uint8_t* sha1_result(sha1nfo *s);
 void sha1_initHmac(sha1nfo *s, const uint8_t* key, int keyLength);
 uint8_t* sha1_resultHmac(sha1nfo *s);
 void printHash(uint8_t* hash);
+void sha1buf(uint8_t *output, uint8_t *data, size_t size);
 
 #endif /* __SHA1_H__ */

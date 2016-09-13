@@ -18,6 +18,8 @@
 */
 
 #include "emu.h"
+#include "crc32.h"
+#include "sha1.h"
 #include "db.h"
 
 #define INES_HEADER_SIZE 16
@@ -738,14 +740,29 @@ int ines_load(struct emu *emu, struct rom *rom)
 		return 0;
 	}
 
+	rom->offset = INES_HEADER_SIZE;
 	rom->info.total_prg_size = prg_size;
 	rom->info.total_chr_size = chr_size;
 	rom->info.prg_size[0] = prg_size;
 	rom->info.chr_size[0] = chr_size;
 
 	rom->info.prg_size_count = 1;
-	if (chr_size)
+	if (chr_size) {
 		rom->info.chr_size_count = 1;
+		rom->info.chr_crc_count = 1;
+		rom->info.chr_sha1_count = 1;
+		rom->info.chr_crc[0] = crc32buf(rom->buffer + rom->offset +
+						prg_size, chr_size, NULL);
+		sha1buf(rom->info.chr_sha1[0], rom->buffer + rom->offset +
+		        prg_size, chr_size);
+	}
+
+	rom->info.prg_crc_count = 1;
+	rom->info.prg_sha1_count = 1;
+	rom->info.prg_crc[0] = crc32buf(rom->buffer + rom->offset,
+	                                prg_size, NULL);
+	sha1buf(rom->info.prg_sha1[0], rom->buffer + rom->offset,
+		chr_size);
 
 	if (wram_nv[0])
 		rom->info.flags |= ROM_FLAG_WRAM0_NV;
@@ -788,7 +805,6 @@ int ines_load(struct emu *emu, struct rom *rom)
 		}
 	}
 
-	rom->offset = 16;
 	rom_calculate_checksum(rom);
 
 	return 0;

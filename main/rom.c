@@ -1041,7 +1041,6 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 {
 	int i;
 	const char *mirror;
-	size_t mapper_ram_size;
 	uint32_t board_type;
 
 	mirror = NULL;
@@ -1053,14 +1052,16 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 		mirror = "Vertical";
 		break;
 	case MIRROR_1A:
+		mirror = "Single-Screen A";
+		break;
 	case MIRROR_1B:
-		mirror = "One-screen";
+		mirror = "Single-Screen B";
 		break;
 	case MIRROR_4:
-		mirror = "Four-screen";
+		mirror = "Four-Screen";
 		break;
 	case MIRROR_M:
-		mirror = "Mapper-controlled";
+		mirror = "Mapper-Controlled";
 		break;
 
 	}
@@ -1075,8 +1076,14 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 	if (rom->info.name)
 		text_buffer_append(tbuffer, "Name: %s\n", rom->info.name);
 
-	text_buffer_append(tbuffer, "Board Type: %s\n",
+	text_buffer_append(tbuffer, "Board: %s\n",
 			   board_info_get_name(rom->board_info));
+
+	text_buffer_append(tbuffer, "System: %s\n",
+			   db_get_system_type_name(rom->info.system_type));
+
+	if (mirror)
+		text_buffer_append(tbuffer, "Mirroring: %s\n", mirror);
 
 	if (BOARD_TYPE_IS_INES(rom->info.board_type)) {
 		text_buffer_append(tbuffer, "iNES Mapper: %d\n",
@@ -1085,8 +1092,53 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 		       BOARD_TYPE_TO_INES_SUBMAPPER(rom->info.board_type));
 	}
 
-	text_buffer_append(tbuffer, "System Type: %s\n",
-			   emu_get_system_type_name(rom->info.system_type));
+	text_buffer_append(tbuffer, "PRG:");
+	for (i = 0; i< rom->info.prg_size_count; i++) {
+		text_buffer_append(tbuffer, " %d", rom->info.prg_size[i]);
+	}
+	text_buffer_append(tbuffer, "\n");
+
+	text_buffer_append(tbuffer, "PRG-CRC:");
+	for (i = 0; i< rom->info.prg_crc_count; i++) {
+		text_buffer_append(tbuffer, " %08X", rom->info.prg_crc[i]);
+	}
+	text_buffer_append(tbuffer, "\n");
+
+	text_buffer_append(tbuffer, "PRG-SHA1:");
+	for (i = 0; i< rom->info.prg_sha1_count; i++) {
+		int j;
+
+		text_buffer_append(tbuffer, " ");
+		for (j = 0; j < 20; j++)
+			text_buffer_append(tbuffer, "%02x", rom->info.prg_sha1[i][j]);
+	}
+	text_buffer_append(tbuffer, "\n");
+
+	if (rom->info.chr_size_count) {
+		text_buffer_append(tbuffer, "CHR:");
+		for (i = 0; i< rom->info.chr_size_count; i++) {
+			text_buffer_append(tbuffer, " %d", rom->info.chr_size[i]);
+		}
+		text_buffer_append(tbuffer, "\n");
+
+		text_buffer_append(tbuffer, "CHR-CRC:");
+		for (i = 0; i< rom->info.chr_crc_count; i++) {
+			text_buffer_append(tbuffer, " %08X", rom->info.chr_crc[i]);
+		}
+		text_buffer_append(tbuffer, "\n");
+
+		text_buffer_append(tbuffer, "CHR-SHA1:");
+		for (i = 0; i< rom->info.chr_sha1_count; i++) {
+			int j;
+
+			text_buffer_append(tbuffer, " ");
+			for (j = 0; j < 20; j++) {
+				text_buffer_append(tbuffer, "%02x",
+						   rom->info.chr_sha1[i][j]);
+			}
+		}
+		text_buffer_append(tbuffer, "\n");
+	}
 
 	if (board_type == BOARD_TYPE_NSF) {
 		int expansion_sound;
@@ -1131,58 +1183,79 @@ void rom_get_info(struct rom *rom, struct text_buffer *tbuffer)
 		goto done;
 	}
 
-	if (mirror)
-		text_buffer_append(tbuffer, "Mirroring: %s\n", mirror);
+	text_buffer_append(tbuffer, "CRC: %08X\n", rom->info.combined_crc);
+	text_buffer_append(tbuffer, "SHA1: ");
 
-	text_buffer_append(tbuffer, "PRG Size: %d\n", rom->info.total_prg_size);
+	for (i = 0; i < 20; i++)
+		text_buffer_append(tbuffer, "%02X", rom->info.combined_sha1[i]);
+	text_buffer_append(tbuffer, "\n");
 
-	if (rom->info.total_chr_size) {
-		text_buffer_append(tbuffer, "CHR Size: %d\n",
-				   rom->info.total_chr_size);
-	}
 
 	if (rom->info.wram_size[0]) {
-		text_buffer_append(tbuffer, "WRAM 0 Size: %d%s\n",
-				   rom->info.wram_size[0],
-				   rom->info.flags & ROM_FLAG_WRAM0_NV ?
-				   " (non-volatile)" : "");
+		text_buffer_append(tbuffer, "WRAM0: %d\n",
+				   rom->info.wram_size[0]);
+		if (rom->info.flags & ROM_FLAG_WRAM0_NV) {
+			text_buffer_append(tbuffer, "WRAM0-Battery: true\n");
+		}
 	}
 
 	if (rom->info.wram_size[1]) {
-		text_buffer_append(tbuffer, "WRAM 1 Size: %d%s\n",
-				   rom->info.wram_size[1],
-				   rom->info.flags & ROM_FLAG_WRAM1_NV ?
-				   " (non-volatile)" : "");
+		text_buffer_append(tbuffer, "WRAM1: %d\n",
+				   rom->info.wram_size[1]);
+		if (rom->info.flags & ROM_FLAG_WRAM1_NV) {
+			text_buffer_append(tbuffer, "WRAM1-Battery: true\n");
+		}
 	}
 
 	if (rom->info.vram_size[0]) {
-		text_buffer_append(tbuffer, "VRAM 0 Size: %d%s\n",
-				   rom->info.vram_size[0],
-				   rom->info.flags & ROM_FLAG_VRAM0_NV ?
-				   " (non-volatile)" : "");
+		text_buffer_append(tbuffer, "VRAM0: %d\n",
+				   rom->info.vram_size[0]);
+		if (rom->info.flags & ROM_FLAG_VRAM0_NV) {
+			text_buffer_append(tbuffer, "VRAM0-Battery: true\n");
+		}
 	}
 
 	if (rom->info.vram_size[1]) {
-		text_buffer_append(tbuffer, "VRAM 1 Size: %d%s\n",
-				   rom->info.vram_size[1],
-				   rom->info.flags & ROM_FLAG_VRAM1_NV ?
-				   " (non-volatile)" : "");
+		text_buffer_append(tbuffer, "VRAM1: %d\n",
+				   rom->info.vram_size[1]);
+		if (rom->info.flags & ROM_FLAG_VRAM1_NV) {
+			text_buffer_append(tbuffer, "VRAM1-Battery: true\n");
+		}
 	}
 
-	mapper_ram_size = board_info_get_mapper_ram_size(rom->board_info);
-	if (mapper_ram_size) {
-		text_buffer_append(tbuffer, "Mapper RAM Size: %lu%s\n",
-				   mapper_ram_size,
-				   rom->info.flags & ROM_FLAG_MAPPER_NV ?
-				   " (non-volatile)" : "");
+	if (rom->info.flags & ROM_FLAG_MAPPER_NV)
+		text_buffer_append(tbuffer, "Mapper-Battery: true\n");
+
+
+	if (rom->info.system_type == EMU_SYSTEM_TYPE_PAL_NES) {
+		if (rom->info.flags & ROM_FLAG_TIMING_NTSC)
+			text_buffer_append(tbuffer, "NTSC-Timing: true\n");
+		if (rom->info.flags & ROM_FLAG_TIMING_DENDY)
+			text_buffer_append(tbuffer, "Dendy-Timing: true\n");
+	} else if (rom->info.system_type == EMU_SYSTEM_TYPE_DENDY) {
+		if (rom->info.flags & ROM_FLAG_TIMING_NTSC)
+			text_buffer_append(tbuffer, "NTSC-Timing: true\n");
+		if (rom->info.flags & ROM_FLAG_TIMING_PAL)
+			text_buffer_append(tbuffer, "PAL-Timing: true\n");
+	} else {
+		if (rom->info.flags & ROM_FLAG_TIMING_PAL)
+			text_buffer_append(tbuffer, "PAL-Timing: true\n");
+		if (rom->info.flags & ROM_FLAG_TIMING_DENDY)
+			text_buffer_append(tbuffer, "Dendy-Timing: true\n");
 	}
 
-	text_buffer_append(tbuffer, "CRC32: %08x\n", rom->info.combined_crc);
-	text_buffer_append(tbuffer, "SHA-1: ");
 
-	for (i = 0; i < 20; i++)
-		text_buffer_append(tbuffer, "%02x", rom->info.combined_sha1[i]);
-	text_buffer_append(tbuffer, "\n");
+
+	if (rom->info.total_prg_size != rom->info.prg_size[0]) {
+		text_buffer_append(tbuffer, "Total PRG Size: %d\n",
+		                   rom->info.total_prg_size);
+	}
+
+	if (rom->info.total_chr_size && (rom->info.total_chr_size !=
+	                                 rom->info.chr_size[0])) {
+		text_buffer_append(tbuffer, "Total CHR Size: %d\n",
+				   rom->info.total_chr_size);
+	}
 
 	text_buffer_append(tbuffer, "Present in ROM Database: %s\n",
 			   (rom->info.flags & ROM_FLAG_IN_DB) ? "Yes" : "No");

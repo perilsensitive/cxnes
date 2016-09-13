@@ -28,6 +28,7 @@ struct rom_info *db_lookup(struct rom *rom, struct rom_info *start);
 struct rom_info *db_lookup_split_rom(struct archive *archive, int *chip_list,
 				     struct rom_info *start);
 
+const char *db_get_system_type_name(int type);
 void print_rom(struct rom *rom);
 int db_load_file(struct emu *emu, const char *filename);
 void db_cleanup(void);
