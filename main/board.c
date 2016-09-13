@@ -2247,7 +2247,8 @@ void board_prg_sync(struct board *board)
 		 */
 		if (bank >= 0) {
 			bank = ((bank & and) | or) >> b->shift;
-			bank %= num_banks;
+			if (num_banks)
+				bank %= num_banks;
 		}
 
 		if (data) {
@@ -2469,7 +2470,8 @@ void board_chr_sync(struct board *board, int set)
 		 */
 		if (bank >= 0) {
 			bank = ((b->bank & and) | or) >> b->shift;
-			bank %= num_banks;
+			if (num_banks)
+				bank %= num_banks;
 		}
 
 		if (data) {
