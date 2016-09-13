@@ -2230,8 +2230,6 @@ void board_prg_sync(struct board *board)
 		if (bank >= 0) {
 			if (num_banks <= 1)
 				bank = 0;
-			else
-				bank %= num_banks;
 		} else {
 			if (num_banks <= 1)
 				bank = -1;
@@ -2247,8 +2245,10 @@ void board_prg_sync(struct board *board)
 		 * (only happens if data_size is not a multiple
 		 * of bank size).
 		 */
-		if (bank >= 0)
+		if (bank >= 0) {
 			bank = ((bank & and) | or) >> b->shift;
+			bank %= num_banks;
+		}
 
 		if (data) {
 			int offset;
@@ -2452,8 +2452,6 @@ void board_chr_sync(struct board *board, int set)
 		if (bank >= 0) {
 			if (num_banks <= 1)
 				bank = 0;
-			else
-				bank %= num_banks;
 		} else {
 			if (num_banks <= 1)
 				bank = -1;
@@ -2469,8 +2467,10 @@ void board_chr_sync(struct board *board, int set)
 		 * (only happens if data_size is not a multiple
 		 * of bank size).
 		 */
-		if (bank >= 0)
+		if (bank >= 0) {
 			bank = ((b->bank & and) | or) >> b->shift;
+			bank %= num_banks;
+		}
 
 		if (data) {
 			int offset;
