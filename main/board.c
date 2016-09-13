@@ -2255,12 +2255,8 @@ void board_prg_sync(struct board *board)
 
 			offset = (int)bank * b->size;
 			if (offset < 0) {
-				/* printf("offset = %d, data_size = %d\n",
-				 *        offset, data_size);
-				 */
 				data += (data_size + offset);
 			} else {
-				offset = offset % data_size;
 				data += offset;
 			}
 		} else {
@@ -2396,6 +2392,7 @@ void board_chr_sync(struct board *board, int set)
 		int type, perms;
 		int addr;
 		size_t size;
+		int num_banks;
 
 		if (set)
 			b = &board->chr_banks1[i];
@@ -2411,7 +2408,6 @@ void board_chr_sync(struct board *board, int set)
 		data_size = 0;
 
 		type = b->type;
-		bank = ((b->bank & and) | or) >> b->shift;
 		perms = b->perms;
 
 		if (type == MAP_TYPE_AUTO) {
@@ -2450,15 +2446,39 @@ void board_chr_sync(struct board *board, int set)
 			break;
 		}
 
+		bank = b->bank;
+		num_banks = data_size / b->size;
+
+		if (bank >= 0) {
+			if (num_banks <= 1)
+				bank = 0;
+			else
+				bank %= num_banks;
+		} else {
+			if (num_banks <= 1)
+				bank = -1;
+			else
+				bank = -(-bank % num_banks);
+		}
+
+		if ((bank < 0) && !(data_size % b->size))
+			bank += num_banks;
+
+		/* Applying chr_and and chr_or doesn't really
+		 * work if we're using negative bank numbers
+		 * (only happens if data_size is not a multiple
+		 * of bank size).
+		 */
+		if (bank >= 0)
+			bank = ((b->bank & and) | or) >> b->shift;
+
 		if (data) {
 			int offset;
 
 			offset = (int)bank * b->size;
 			if (offset < 0) {
-				offset = -(-offset % data_size);
 				data += (data_size + offset);
 			} else {
-				offset = offset % data_size;
 				data += offset;
 			}
 		}
