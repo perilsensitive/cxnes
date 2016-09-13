@@ -1311,6 +1311,7 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 {
 	int i;
 	struct emu *emu;
+	int timing;
 
 	emu = cpu->emu;
 
@@ -1340,8 +1341,10 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 		       sizeof(cpu->interrupt_times));
 	}
 
-	if ((emu->rom->info.flags & ROM_FLAG_TIMING_MASK) ==
-	    ROM_FLAG_TIMING_PAL_NTSC) {
+	timing = emu->rom->info.flags & ROM_FLAG_TIMING_MASK;
+
+	if ((timing == ROM_FLAG_TIMING_PAL_NTSC) ||
+	    (timing == ROM_FLAG_TIMING_ALL)) {
 		cpu->frames_before_overclock =
 			emu->config->frames_before_overclock;
 	} else {
