@@ -2165,6 +2165,7 @@ void board_prg_sync(struct board *board)
 		int type, perms;
 		int addr;
 		size_t size;
+		int num_banks;
 
 		b = &board->prg_banks[i];
 		if (b->size == 0)
@@ -2224,18 +2225,39 @@ void board_prg_sync(struct board *board)
 		}
 
 		bank = b->bank;
-		while ((bank < 0) && b->size) {
-			bank = (data_size / b->size) + bank;
-			/* printf("bank = %d (data_size %d, b->size %d)\n", bank, data_size, b->size); */
+		num_banks = data_size / b->size;
+
+		if (bank >= 0) {
+			if (num_banks <= 1)
+				bank = 0;
+			else
+				bank %= num_banks;
+		} else {
+			if (num_banks <= 1)
+				bank = -1;
+			else
+				bank = -(-bank % num_banks);
 		}
-		bank = ((bank & and) | or) >> b->shift;
+
+		if ((bank < 0) && !(data_size % b->size))
+			bank += num_banks;
+
+		/* Applying prg_and and prg_or doesn't really
+		 * work if we're using negative bank numbers
+		 * (only happens if data_size is not a multiple
+		 * of bank size).
+		 */
+		if (bank >= 0)
+			bank = ((bank & and) | or) >> b->shift;
 
 		if (data) {
 			int offset;
 
 			offset = (int)bank * b->size;
 			if (offset < 0) {
-				offset = -(-offset % data_size);
+				/* printf("offset = %d, data_size = %d\n",
+				 *        offset, data_size);
+				 */
 				data += (data_size + offset);
 			} else {
 				offset = offset % data_size;
@@ -2246,8 +2268,10 @@ void board_prg_sync(struct board *board)
 		}
 
 
-             /* printf("%x: mapping %x to %x, bank=%x bankfu=%x, size=%x, perms=%x\n", type, */
-             /*        data, b->address, b->bank, bank, b->size, perms); */
+		/*
+		printf("%x: mapping %x to %x, bank=%x bankfu=%x, size=%x, perms=%x\n",
+	               type, data, b->address, b->bank, bank, b->size, perms); 
+		*/
  
 		size = (b->size <= data_size) ? b->size : data_size;
 
@@ -2593,10 +2617,7 @@ CPU_WRITE_HANDLER(standard_mirroring_handler)
 
 /* FIXME I don't know if these should go in their own .c file */
 struct bank std_prg_46k[] = {
-	{-23, 0, SIZE_2K, 0x4800, MAP_PERM_READ, MAP_TYPE_ROM},
-	{-11, 0, SIZE_4K, 0x5000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{ -5, 0, SIZE_8K, 0x6000, MAP_PERM_READ, MAP_TYPE_ROM},
-	{ -1, 0, SIZE_32K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{ -1, 0, 1024 * 46, 0x4800, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 
