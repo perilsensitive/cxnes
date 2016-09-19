@@ -116,7 +116,7 @@ extern struct board_info board_cnrom_security_bank2;
 extern struct board_info board_cnrom_security_bank3;
 extern struct board_info board_singlechip;
 extern struct board_info board_nina001;
-extern struct board_info board_streemerz_bundle;
+extern struct board_info board_mlt_action53;
 extern struct board_info board_sunsoft5b;
 extern struct board_info board_fds;
 extern struct board_info board_nsf;
@@ -314,7 +314,7 @@ static struct board_info *board_info_list[] = {
 	&board_cnrom_security_bank3,
 	&board_singlechip,
 	&board_nina001,
-	&board_streemerz_bundle,
+	&board_mlt_action53,
 	&board_sunsoft5b,
 	&board_fds,
 	&board_nsf,

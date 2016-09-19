@@ -24,51 +24,51 @@
 #define _mirror_mode board->data[2]
 #define _chr_a10 board->data[3]
 
-static void streemerz_bundle_reset(struct board *board, int);
-static CPU_WRITE_HANDLER(streemerz_bundle_write_handler);
+static void mlt_action53_reset(struct board *board, int);
+static CPU_WRITE_HANDLER(mlt_action53_write_handler);
 
-static struct board_funcs streemerz_bundle_funcs = {
-	.reset = streemerz_bundle_reset,
+static struct board_funcs mlt_action53_funcs = {
+	.reset = mlt_action53_reset,
 };
 
-static struct board_write_handler streemerz_write_handlers[] = {
-	{streemerz_bundle_write_handler, 0x5000, SIZE_4K, 0},
-	{streemerz_bundle_write_handler, 0x8000, SIZE_32K, 0},
+static struct board_write_handler action53_write_handlers[] = {
+	{mlt_action53_write_handler, 0x5000, SIZE_4K, 0},
+	{mlt_action53_write_handler, 0x8000, SIZE_32K, 0},
 	{NULL},
 };
 
-struct bank streemerz_bundle_init_prg[] = {
+struct bank mlt_action53_init_prg[] = {
 	{0, 0, SIZE_16K, 0x8000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{-1, 0, SIZE_16K, 0xc000, MAP_PERM_READ, MAP_TYPE_ROM},
 	{.type = MAP_TYPE_END},
 };
 
-static uint8_t streemerz_bundle_mirroring[4] = { MIRROR_1A, MIRROR_1B,
+static uint8_t mlt_action53_mirroring[4] = { MIRROR_1A, MIRROR_1B,
 						 MIRROR_V,  MIRROR_H };
 
-struct board_info board_streemerz_bundle = {
-	.board_type = BOARD_TYPE_STREEMERZ_BUNDLE,
-	.name = "Streemerz Bundle",
-	.funcs = &streemerz_bundle_funcs,
-	.init_prg = streemerz_bundle_init_prg,
+struct board_info board_mlt_action53 = {
+	.board_type = BOARD_TYPE_MLT_ACTION53,
+	.name = "MLT-ACTION53",
+	.funcs = &mlt_action53_funcs,
+	.init_prg = mlt_action53_init_prg,
 	.init_chr0 = std_chr_8k,
-	.write_handlers = streemerz_write_handlers,
+	.write_handlers = action53_write_handlers,
 	.max_prg_rom_size = SIZE_8192K,
 	.max_chr_rom_size = 0,
 	.min_vram_size = {SIZE_32K, 0},
 	.max_vram_size = {SIZE_32K, 0},
 	.flags = BOARD_INFO_FLAG_MIRROR_M,
-	.mirroring_values = streemerz_bundle_mirroring,
+	.mirroring_values = mlt_action53_mirroring,
 };
 
-static void streemerz_bundle_reset(struct board *board, int hard)
+static void mlt_action53_reset(struct board *board, int hard)
 {
 /* FIXME move this into board_info now that I'm not tied down to using the macro */
 	if (hard)
 		board->prg_or = 0x1fe;
 }
 
-static CPU_WRITE_HANDLER(streemerz_bundle_write_handler)
+static CPU_WRITE_HANDLER(mlt_action53_write_handler)
 {
 	struct board *board = emu->board;
 

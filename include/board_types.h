@@ -89,7 +89,7 @@
 
 /* Homebrew boards */
 #define BOARD_TYPE_SINGLECHIP              INES_TO_BOARD_TYPE(218,  0, 0, 0)
-#define BOARD_TYPE_STREEMERZ_BUNDLE        INES_TO_BOARD_TYPE( 28,  0, 0, 0)
+#define BOARD_TYPE_MLT_ACTION53            INES_TO_BOARD_TYPE( 28,  0, 0, 0)
 #define BOARD_TYPE_UNROM_512	           INES_TO_BOARD_TYPE( 30,  0, 0, 0)
 #define BOARD_TYPE_UNROM_512_8	           INES_TO_BOARD_TYPE( 30,  0, 0, 2)
 #define BOARD_TYPE_UNROM_512_16	           INES_TO_BOARD_TYPE( 30,  0, 0, 3)

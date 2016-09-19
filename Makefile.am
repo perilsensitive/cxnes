@@ -189,7 +189,7 @@ cxnes_SOURCES = \
 	boards/gxrom.c \
 	boards/nina001.c \
 	boards/taito_tc0190fmc.c \
-	boards/streemerz_bundle.c \
+	boards/action53.c \
 	boards/mmc3.c \
 	boards/rambo1.c \
 	boards/tqrom.c \
