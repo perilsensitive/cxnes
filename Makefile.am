@@ -277,3 +277,14 @@ install-data-hook:
 	cp -r data/icons $(DESTDIR)$(pkgdatadir)/data
 	(cd $(DESTDIR)$(pkgdatadir) && zip -r ../../$(PACKAGE)-$(VERSION)-$(ZIP_ARCH).zip .)
 endif
+
+release: .git/HEAD VERSION
+	$(eval VER=$(shell cat VERSION | tr -d v))
+	sed 's/^Version .*/Version v$(VER)/;s/^Updated .*/Updated '$(shell date '+%Y-%m-%d')'/' README.md > README.md.new
+	mv -f README.md.new README.md
+	sed 's/^AC_INIT(.*/AC_INIT([cxnes], [$(VER)])/' configure.ac > configure.ac.new
+	mv -f configure.ac.new configure.ac
+	git add -u
+	git commit -n -m "Release v$(VER)"
+	git tag -a -f -m "Release v$(VER)" v$(VER) HEAD
+
