@@ -20,3 +20,4 @@ cxnes
 *.dll
 share/*
 tmp/*
+main/version.c

@@ -27,6 +27,7 @@
 #include "license.h"
 #include "text_buffer.h"
 #include "file_io.h"
+#include "version.h"
 
 extern void quit_callback(void);
 extern void fullscreen_callback(void);
@@ -247,7 +248,7 @@ static void about_callback(GtkWidget *widget, gpointer userdata) {
 
 	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(aboutdialog), license);
 	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(aboutdialog), "cxNES");
-	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(aboutdialog), PACKAGE_VERSION);
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(aboutdialog), emu_version);
 	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(aboutdialog), "NES/Famicom Emulator");
 	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(aboutdialog), "https://perilsensitive.github.io/cxnes");
 	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(aboutdialog), "(c) 2015 Ryan Jackson");

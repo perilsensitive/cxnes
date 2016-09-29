@@ -6,7 +6,6 @@ AM_LDFLAGS = -lm
 .rc.o:
 	windres $(WINDRESFLAGS) -o $@ $<
 
-
 pkgdata_DATA = data/PressStart2P.ttf data/gamecontrollerdb.txt data/nsf.rom data/romdb.txt
 if !WINDOWS
 
@@ -35,7 +34,12 @@ applicationsdir = $(datarootdir)/applications
 dist_applications_DATA = data/cxnes.desktop
 endif
 
+EXTRA_DIST = VERSION
+
+CLEANFILES = main/version.c
+
 bin_PROGRAMS = cxnes
+nodist_cxnes_SOURCES = main/version.c
 cxnes_SOURCES = \
 	sdl/main.c \
 	sdl/file_io.c \
@@ -226,6 +230,12 @@ endif
 if ZIP_ENABLED
 cxnes_SOURCES += main/unzip.c main/ioapi.c
 endif
+
+VERSION_C_DEPS = $(shell git rev-parse --is-inside-work-tree > /dev/null 2>&1 && echo .git/HEAD .git/packed-refs .git/refs/heads/* .git/refs/tags/*) VERSION
+VERSION_STRING = $(shell git describe 2>/dev/null || cat VERSION)
+
+main/version.c: $(VERSION_C_DEPS)
+	@echo "const char *emu_version = \"$(VERSION_STRING)\";" > $@
 
 install-data-local:
 	@$(NORMAL_INSTALL)
