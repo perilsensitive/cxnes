@@ -271,21 +271,24 @@ symbol on the keycap (e.g., 'U' is mapped to 'U').
 
 Famicom Disk System
 ===================
-Famicom Disk System support requires a copy of the Famicom Disk System BIOS. 
-You can configure cxNES with the location of this file via the GUI
-(Options -> Path Configuration -> FDS BIOS Path) or the config file (set fds_bios_path).
-You can also put it in the directories listed below (which you use will depend on your
-platform), but you must name the file 'disksys.rom' if you want cxNES to use it automatically.
+Famicom Disk System support requires a copy of the Famicom Disk System BIOS.
+You can configure cxNES with the location of this file via the GUI (Options ->
+Path Configuration -> FDS BIOS Path) or the config file (set fds_bios_path).
+
+You can also put it in the directories listed below (which you use will depend
+on your platform), but you must name the file 'disksys.rom' if you want cxNES
+to use it automatically.
 
 Linux:  
+* The same directory as the disk image being loaded
 * $HOME/.local/share/cxnes
 * The global data directory for cxnes (/usr/local/share/cxnes by default, or
   /usr/share/cxnes if you installed from a package)
 
 Windows:  
+* The same directory as the disk image being loaded
 * %APPDATA%\cxnes
 * The same folder as cxnes.exe
-
 
 Credits
 =======
