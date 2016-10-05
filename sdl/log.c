@@ -78,13 +78,16 @@ static void va_log_message(enum log_priority priority, const char *fmt, va_list 
 	SDL_LogPriority sdl_priority;
 	int size;
 	char *buffer;
+	va_list temp;
 
 	if (priority >= LOG_PRIORITY_NUM_PRIORITIES)
 		priority = LOG_PRIORITY_INFO;
 
 	sdl_priority = priority_info[priority].sdl_priority;
 
-	size = vsnprintf(NULL, 0, fmt, args) + 1;
+	va_copy(temp, args);
+	size = vsnprintf(NULL, 0, fmt, temp) + 1;
+	va_end(temp);
 
 	buffer = NULL;
 
@@ -95,7 +98,10 @@ static void va_log_message(enum log_priority priority, const char *fmt, va_list 
 			return;
 	}
 
-	vsnprintf(buffer, size, fmt, args);
+
+	va_copy(temp, args);
+	vsnprintf(buffer, size, fmt, temp);
+	va_end(temp);
 
 #if GUI_ENABLED
 	if (gui_enabled && (priority == LOG_PRIORITY_ERROR)) {
