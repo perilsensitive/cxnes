@@ -763,6 +763,8 @@ void emu_deinit(struct emu *emu)
 	if (emu->rom)
 		rom_free(emu->rom);
 
+	rom_config_reset(emu->config);
+
 	emu->rom = NULL;
 	emu->rom_path = NULL;
 	emu->rom_file = NULL;

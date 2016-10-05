@@ -230,6 +230,7 @@ struct config {
 };
 
 void config_reset_value(struct config *, const char *name);
+void rom_config_reset(struct config *config);
 void *config_get_data_ptr(struct config *, const char *name);
 void main_config_set(struct config *, const char *name, const char *value);
 void rom_config_set(struct config *, const char *name, const char *value);

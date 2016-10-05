@@ -1720,6 +1720,18 @@ void rom_config_set(struct config *config, const char *name, const char *value)
 	config_set(config, rom_config_parameters, name, value);
 }
 
+void rom_config_reset(struct config *config)
+{
+	struct config_parameter *parameter;
+
+	parameter = rom_config_parameters;
+	while (parameter->name) {
+		config_set(config, rom_config_parameters,
+			   parameter->name, NULL);
+		parameter++;
+	}
+}
+
 void config_reset_value(struct config *config, const char *name)
 {
 	config_set(config, config_parameters, name, NULL);
