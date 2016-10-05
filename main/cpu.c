@@ -2498,10 +2498,23 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 	   transfers.
 	*/
 
-	max = (cpu->frame_cycles - cpu->cycles) / cpu->cpu_clock_divider + 2;
+	if ((cpu->frame_state == FRAME_STATE_OVERCLOCK) &&
+	    (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)) {
+		max = cpu->overclock_cycles + cpu->frame_cycles;
+	} else {
+		max = cpu->frame_cycles;
+	}
+
+	max -= cpu->cycles;
+	max /= cpu->cpu_clock_divider + 2;
 	max += cpu->oam_dma_step * 2;
 	if (max > 254 * 2)
 		max = 254 * 2;
+
+	if ((cpu->frame_state == FRAME_STATE_OVERCLOCK) &&
+	    (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)) {
+		max = 254 * 2;
+	}
 
 	for (i = cpu->oam_dma_step * 2; i < max; i+= 2) {
 		read_mem(cpu, addr);
