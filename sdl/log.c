@@ -109,7 +109,7 @@ static void va_log_message(enum log_priority priority, const char *fmt, va_list 
 	}
 #endif
 
-	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, sdl_priority, buffer);
+	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, sdl_priority, buffer, "");
 
 	free(buffer);
 
