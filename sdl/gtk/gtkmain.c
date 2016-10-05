@@ -201,6 +201,7 @@ extern void gui_audio_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_path_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_misc_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_rom_configuration_dialog(GtkWidget *, gpointer);
+void gui_set_size(int w, int h);
 
 extern int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles);
 extern int video_save_screenshot(const char *filename);
@@ -323,6 +324,9 @@ static void keycode_map_cleanup(void)
 
 void gui_resize(int fs)
 {
+	GdkScreen *default_screen;
+	int width, height;
+
 	if (!drawingarea)
 		return;
 
@@ -331,10 +335,18 @@ void gui_resize(int fs)
 
 	fullscreen = fs;
 
-	if (fullscreen)
+
+	if (fullscreen) {
+		default_screen = gdk_screen_get_default();
+		width = gdk_screen_get_width(default_screen);
+		height = gdk_screen_get_height(default_screen);
 		gtk_window_fullscreen(GTK_WINDOW(gtkwindow));
-	else
+		gui_set_size(width, height);
+	} else {
+		video_get_windowed_size(&width, &height);
+		gui_set_size(width, height);
 		gtk_window_unfullscreen(GTK_WINDOW(gtkwindow));
+	}
 }
 
 static gboolean motion_event_callback(GtkWidget *widget, GdkEventMotion *motion,
