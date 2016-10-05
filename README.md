@@ -33,8 +33,8 @@ Supported Image/ROM Formats
   + fwNES format, with or without header
   + "Raw" format (includes gaps, start marks and checksums)
 * NSF
-* Any of the above in a ZIP container
-* Split ROMs inside a ZIP container (provided split ROM checksums exist in the database)
+* Any of the above in a ZIP or 7-Zip container
+* Split ROMs inside a ZIP or 7-Zip container (provided split ROM checksums exist in the database)
 
 Input Devices/Accessories
 -------------------------
@@ -42,9 +42,11 @@ Input Devices/Accessories
 * Four-player adapters (NES and Famicom types)
 * Arkanoid Controllers (NES and Famicom variants)
 * Zapper
+* Bandai Hyper Shot
 * Power Pad
 * Family Trainer
 * Family BASIC Keyboard
+* Konami Hyper Shot
 * SUBOR Keyboard
 * SNES Mouse
 * VS. Unisystem support
@@ -134,6 +136,7 @@ Misc
   + Writes to FDS images saved as IPS patches
 * Windows builds can be configured to run in portable mode, storing all
   user data (save files, states, etc.) in the application directory.
+* Overclocking support
 
 Portable Mode (Windows only)
 ----------------------------
@@ -287,8 +290,9 @@ Linux:
 
 Windows:  
 * The same directory as the disk image being loaded
-* %APPDATA%\cxnes
-* The same folder as cxnes.exe
+* %APPDATA%\cxnes (or the userdata directory under the cxnes install directory
+  if using portable mode)
+* The data directory under the cxnes install directory
 
 Credits
 =======
