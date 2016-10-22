@@ -268,31 +268,31 @@ static const GLfloat vertex_buffer_data[] = {
 };
 static const GLushort element_buffer_data[] = { 0, 1, 2, 3 };
 
-static char *vertex_shader_source = {
-	"#version 110"
-	""
-	"attribute vec2 position;"
-	""
-	"varying vec2 texcoord;"
-	""
-	"void main()"
-	"{"
-	"    gl_Position = vec4(position, 0.0, 1.0);"
-	"    texcoord = position * vec2(0.5) + vec2(0.5);"
-	"}"
+static char *vertex_shader_source[] = {
+	"#version 110\n"
+	"\n"
+	"attribute vec2 position;\n"
+	"\n"
+	"varying vec2 texcoord;\n"
+	"\n"
+	"void main()\n"
+	"{\n"
+	"    gl_Position = vec4(position, 0.0, 1.0);\n"
+	"    texcoord = position * vec2(0.5) + vec2(0.5);\n"
+	"}\n"
 };
 
-static char *fragment_shader_source = {
-	"#version 110"
-	""
-	"uniform sampler2D texture;"
-	""
-	"varying vec2 texcoord;"
-	""
-	"void main()"
-	"{"
-	"    gl_FragColor = texture2D(texture, texcoord);"
-	"}"
+static char *fragment_shader_source[] = {
+	"#version 110\n"
+	"\n"
+	"uniform sampler2D texture;\n"
+	"\n"
+	"varying vec2 texcoord;\n"
+	"\n"
+	"void main()\n"
+	"{\n"
+	"    gl_FragColor = texture2D(texture, texcoord);\n"
+	"}\n"
 };
 
 static void handle_resize_event(void);
@@ -301,7 +301,7 @@ void video_update_texture(void);
 int video_draw_buffer(void);
 
 static GLuint create_buffer(GLenum, const void *, GLsizei);
-static GLuint make_shader(GLenum, char *);
+static GLuint make_shader(GLenum, char **);
 static GLuint make_program(GLuint, GLuint);
 static void render_copy(struct texture *, SDL_Rect *, SDL_Rect *);
 static void set_alpha_blending(int);
@@ -2214,7 +2214,7 @@ static void show_info_log(GLuint object,
 	free(log);
 }
 
-static GLuint make_shader(GLenum type, char *source)
+static GLuint make_shader(GLenum type, char **source)
 {
 	GLint length;
 	GLuint shader;
@@ -2223,14 +2223,14 @@ static GLuint make_shader(GLenum type, char *source)
 	if (!source)
 		return 0;
 
+	length = strlen(source[0]);
 	shader = glCreateShader(type);
-	glShaderSource(shader, 1, (const GLchar**)&source, &length);
-	free(source);
+	glShaderSource(shader, 1, (const GLchar**)source, &length);
 	glCompileShader(shader);
 
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &shader_ok);
 	if (!shader_ok) {
-		fprintf(stderr, "Failed to compile %s:\n", source);
+		fprintf(stderr, "Failed to compile %s:\n", source[0]);
 		show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
 		glDeleteShader(shader);
 
