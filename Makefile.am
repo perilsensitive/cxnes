@@ -1,4 +1,4 @@
-AM_CFLAGS = -I ./include -Wall -Werror=format-security \
+AM_CFLAGS = -I ./include -Wall -Werror=format-security -DGLEW_STATIC \
             -DPACKAGE_DATADIR='"$(pkgdatadir)"' -DDATADIR='"$(datadir)"' \
             -DDEFAULT_OSD_FONT='"PressStart2P.ttf"' -std=gnu99
 AM_LDFLAGS = -lm
@@ -60,6 +60,7 @@ cxnes_SOURCES = \
 	main/archive_null.c \
 	main/archive_7zip.c \
 	main/archive_zip.c \
+	main/glew.c \
 	main/board.c \
 	main/crc32.c \
 	main/sha1.c \
