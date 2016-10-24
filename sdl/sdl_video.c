@@ -2282,7 +2282,7 @@ static struct texture *create_texture_from_surface(SDL_Surface *surface)
 
 	texture = create_texture(surface->w, surface->h, 0, 0);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, fps_text_texture->id);
+	glBindTexture(GL_TEXTURE_2D, texture->id);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
 			texture->w, texture->h,
 			GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
@@ -2512,20 +2512,6 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 		vertex_buffer_data[14] = maxu;
 		vertex_buffer_data[15] = minv;
 	}
-
-
-	/*
-	glBegin(GL_TRIANGLE_STRIP);
-	glTexCoord2f(minu, minv);
-	glVertex2f(minx, miny);
-	glTexCoord2f(maxu, minv);
-	glVertex2f(maxx, miny);
-	glTexCoord2f(minu, maxv);
-	glVertex2f(minx, maxy);
-	glTexCoord2f(maxu, maxv);
-	glVertex2f(maxx, maxy);
-	glEnd();
-	*/
 
 	glUseProgram(program);
 	glActiveTexture(GL_TEXTURE0);
