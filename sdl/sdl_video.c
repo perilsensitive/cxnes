@@ -117,6 +117,7 @@ POWER_REQUEST_CONTEXT disable_screensaver_request_context;
 #endif
 
 static GLint position;
+static GLint texture_coordinates;
 static GLint texture_uniform;
 static GLuint vertex_buffer, element_buffer;
 static GLuint vertex_shader, fragment_shader, program;
@@ -260,25 +261,27 @@ static struct palette_list_entry palette_list[] = {
 /* static float const sony_decoder [6] = */
 /* 	{ 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 }; */
 
-static const GLfloat vertex_buffer_data[] = { 
-    -1.0f, -1.0f,
-     1.0f, -1.0f,
-    -1.0f,  1.0f,
-     1.0f,  1.0f
+static GLfloat vertex_buffer_data[] = { 
+    -1.0f, -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f, -1.0f,
 };
+
 static const GLushort element_buffer_data[] = { 0, 1, 2, 3 };
 
 static char *vertex_shader_source[] = {
 	"#version 110\n"
 	"\n"
 	"attribute vec2 position;\n"
+	"attribute vec2 texture_coordinates;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
 	"    gl_Position = vec4(position, 0.0, 1.0);\n"
-	"    texcoord = position * vec2(0.5) + vec2(0.5);\n"
+	"    texcoord = texture_coordinates;\n"
 	"}\n"
 };
 
@@ -1290,6 +1293,7 @@ int video_init(struct emu *emu)
 
 	texture_uniform = glGetUniformLocation(program, "texture");
 	position = glGetAttribLocation(program, "position");
+	texture_coordinates = glGetAttribLocation(program, "texture_coordinates");
 
 	if (fullscreen
 #if GUI_ENABLED
@@ -2195,7 +2199,7 @@ static GLuint create_buffer(GLenum target, const void *data, GLsizei size)
 	GLuint buffer;
 	glGenBuffers(1, &buffer);
 	glBindBuffer(target, buffer);
-	glBufferData(target, size, data, GL_STATIC_DRAW);
+	glBufferData(target, size, data, GL_DYNAMIC_DRAW);
 
 	return buffer;
 }
@@ -2323,11 +2327,13 @@ static void set_render_target(struct texture *texture)
 		SDL_GetWindowSize(window, &window_w, &window_h);
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 		glViewport(0, 0, window_w, window_h);
+		/*
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(0, window_w, window_h, 0, 0.0, 1.0);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+		*/
 		
 		return;
 	}
@@ -2336,9 +2342,11 @@ static void set_render_target(struct texture *texture)
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, texture->fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
 				  GL_TEXTURE_2D, texture->id, 0);
+	/*
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, texture->w, 0, texture->h, 0.0, 1.0);
+	*/
 }
 
 static void set_color(SDL_Color *color)
@@ -2396,6 +2404,9 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 	GLfloat minx, miny, maxx, maxy;
 	GLfloat minu, maxu, minv, maxv;
 	SDL_Rect real_srcrect, real_dstrect;
+	GLubyte *ptr;
+	int dest_w, dest_h;
+	int i;
 
 	if (using_sdl_renderer) {
 		SDL_RenderCopy(renderer, texture->sdl_texture,
@@ -2403,9 +2414,8 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 
 		return;
 	}
-	
+
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture->id);
 
 	real_srcrect.x = 0;
 	real_srcrect.y = 0;
@@ -2424,6 +2434,9 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 		real_dstrect.w = window_w;
 		real_dstrect.h = window_h;
 	}
+
+	dest_w = real_dstrect.w;
+	dest_h = real_dstrect.h;
 
 	if (srcrect && !SDL_IntersectRect(srcrect, &real_srcrect,
 					  &real_srcrect)) {
@@ -2444,6 +2457,11 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 	maxx = real_dstrect.x + real_dstrect.w;
 	maxy = real_dstrect.y + real_dstrect.h;
 
+	minx = (minx / dest_w) * 2.0 - 1.0;
+	maxx = (maxx / dest_w) * 2.0 - 1.0;
+	miny = 1.0 - (miny / dest_h) * 2.0;
+	maxy = 1.0 - (maxy / dest_h) * 2.0;
+
 	minu = (GLfloat) real_srcrect.x / texture->w;
 	minu *= texture->texw;
 	maxu = (GLfloat) (real_srcrect.x + real_srcrect.w) / texture->w;
@@ -2453,6 +2471,50 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 	maxv = (GLfloat) (real_srcrect.y + real_srcrect.h) / texture->h;
 	maxv *= texture->texh;
 
+	if (!render_target) {
+		vertex_buffer_data[0] = minx;
+		vertex_buffer_data[1] = miny;
+		vertex_buffer_data[2] = minu;
+		vertex_buffer_data[3] = minv;
+
+		vertex_buffer_data[4] = maxx;
+		vertex_buffer_data[5] = miny;
+		vertex_buffer_data[6] = maxu;
+		vertex_buffer_data[7] = minv;
+
+		vertex_buffer_data[8] = minx;
+		vertex_buffer_data[9] = maxy;
+		vertex_buffer_data[10] = minu;
+		vertex_buffer_data[11] = maxv;
+
+		vertex_buffer_data[12] = maxx;
+		vertex_buffer_data[13] = maxy;
+		vertex_buffer_data[14] = maxu;
+		vertex_buffer_data[15] = maxv;
+	} else {
+		vertex_buffer_data[0] = minx;
+		vertex_buffer_data[1] = miny;
+		vertex_buffer_data[2] = minu;
+		vertex_buffer_data[3] = maxv;
+
+		vertex_buffer_data[4] = maxx;
+		vertex_buffer_data[5] = miny;
+		vertex_buffer_data[6] = maxu;
+		vertex_buffer_data[7] = maxv;
+
+		vertex_buffer_data[8] = minx;
+		vertex_buffer_data[9] = maxy;
+		vertex_buffer_data[10] = minu;
+		vertex_buffer_data[11] = minv;
+
+		vertex_buffer_data[12] = maxx;
+		vertex_buffer_data[13] = maxy;
+		vertex_buffer_data[14] = maxu;
+		vertex_buffer_data[15] = minv;
+	}
+
+
+	/*
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(minu, minv);
 	glVertex2f(minx, miny);
@@ -2463,6 +2525,33 @@ static void render_copy(struct texture *texture, SDL_Rect *srcrect,
 	glTexCoord2f(maxu, maxv);
 	glVertex2f(maxx, maxy);
 	glEnd();
+	*/
+
+	glUseProgram(program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+	glUniform1i(texture_uniform, 0);
+
+	/* FIXME update vertex buffer with new coords */
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	for (i = 0; i < 16; i++) {
+		*(GLfloat *)ptr = vertex_buffer_data[i];
+		ptr += sizeof(GLfloat);
+	}
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+	glVertexAttribPointer(position, 2, GL_FLOAT, GL_FALSE,
+	                      sizeof(GLfloat) * 4, (void *)0);
+
+	glEnableVertexAttribArray(position);
+	glVertexAttribPointer(texture_coordinates, 2, GL_FLOAT, GL_FALSE,
+	                      sizeof(GLfloat) * 4, (void *)(sizeof(GLfloat)*2));
+
+	glEnableVertexAttribArray(texture_coordinates);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (void *)0);
+	glDisableVertexAttribArray(position);
+	glDisableVertexAttribArray(texture_coordinates);
 
 	glDisable(GL_TEXTURE_2D);
 }
