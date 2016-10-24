@@ -270,6 +270,16 @@ static struct texture *create_texture_from_surface(SDL_Surface *);
 static struct texture *create_texture(int, int, int, int);
 static int power_of_2(int);
 
+static void set_swap_interval(int interval)
+{
+#if _WIN32
+	if (gui_enabled && WGLEW_EXT_swap_control)
+		wglSwapIntervalEXT(interval);
+#endif
+
+	SDL_GL_SetSwapInterval(interval);
+}
+
 static void calc_osd_rects(void)
 {
 	int text_line_skip;
@@ -877,6 +887,11 @@ static int video_create_textures(struct emu *emu)
 
 int video_apply_config(struct emu *emu)
 {
+
+	if (emu->config->vsync)
+		set_swap_interval(1);
+	else
+		set_swap_interval(0);
 
 	video_create_textures(emu);
 
