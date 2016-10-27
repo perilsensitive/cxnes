@@ -1205,8 +1205,7 @@ static int video_create_window(void)
 		}
 
 #if (GUI_ENABLED && _WIN32)
-		if (gui_enabled)
-			windows_init_for_opengl(native_window);
+		windows_init_for_opengl(native_window);
 #endif
 
 		if (GLEW_EXT_framebuffer_object)
