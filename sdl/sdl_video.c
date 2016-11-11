@@ -863,7 +863,8 @@ int video_apply_config(struct emu *emu)
 #if GUI_ENABLED
 	if (gui_enabled)
 	{
-		gui_set_size(window_rect.w, window_rect.h);
+		if (!fullscreen)
+			gui_set_size(window_rect.w, window_rect.h);
 		handle_resize_event();
 	}
 	else
@@ -1303,6 +1304,9 @@ static void handle_resize_event(void)
 	double scaling_factor;
 	int old_width, old_height;
 	int winw, winh;
+
+	if (!window)
+		return;
 
 	SDL_GetWindowSize(window, &winw, &winh);
 

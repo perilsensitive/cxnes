@@ -324,7 +324,14 @@ static void keycode_map_cleanup(void)
 
 void gui_resize(int fs)
 {
+#if GTK_MINOR_VERSION >= 22
+	GdkDisplay *default_display;
+	GdkWindow *window;
+	GdkMonitor *monitor;
+	GdkRectangle geometry;
+#else
 	GdkScreen *default_screen;
+#endif
 	int width, height;
 
 	if (!drawingarea)
@@ -337,9 +344,18 @@ void gui_resize(int fs)
 
 
 	if (fullscreen) {
+#if GTK_MINOR_VERSION >= 22
+		default_display = gdk_display_get_default();
+		window = gtk_widget_get_window(GTK_WIDGET(gtkwindow));
+		monitor = gdk_display_get_monitor_at_window(default_display, window);
+		gdk_monitor_get_geometry(monitor, &geometry);
+		width = geometry.width;
+		height = geometry.height;
+#else
 		default_screen = gdk_screen_get_default();
 		width = gdk_screen_get_width(default_screen);
 		height = gdk_screen_get_height(default_screen);
+#endif
 		gtk_window_fullscreen(GTK_WINDOW(gtkwindow));
 		gui_set_size(width, height);
 	} else {
