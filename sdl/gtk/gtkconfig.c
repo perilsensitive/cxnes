@@ -1353,6 +1353,7 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 				"default_to_rom_path");
 	//gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 	gtk_grid_attach(GTK_GRID(grid), check, 1, 1, 2, 1);
+
 	label = gtk_label_new_with_mnemonic("_Save Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
 	entry = config_entry(dialog, config, "save_path");
@@ -1367,11 +1368,25 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	gtk_grid_attach(GTK_GRID(grid), entry,  1, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), button, 2, 2, 1, 1);
 
+	label = gtk_label_new_with_mnemonic("_FDS Save Path:");
+	gtk_widget_set_halign(label, GTK_ALIGN_START);
+	entry = config_entry(dialog, config, "fds_save_path");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 42);
+	button = gtk_button_new_with_label("Browse...");
+	g_object_set_data(G_OBJECT(button), "dialog", dialog);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(folder_chooser_callback),
+			 entry);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 3, 1, 1);
+
 	check = config_checkbox(dialog,
 				"Store new sa_ve files in same directory as ROM",
 				config,
 				"save_uses_romdir");
-	gtk_grid_attach(GTK_GRID(grid), check, 1, 3, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), check, 1, 4, 2, 1);
 
 	label = gtk_label_new_with_mnemonic("ROM _Configuration Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -1383,15 +1398,15 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(folder_chooser_callback),
 			 entry);
-	gtk_grid_attach(GTK_GRID(grid), label,  0, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry,  1, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 2, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 5, 1, 1);
 
 	check = config_checkbox(dialog,
 				"Store new ROM-specific con_fig files in same directory as ROM",
 				config,
 				"config_uses_romdir");
-	gtk_grid_attach(GTK_GRID(grid), check, 1, 5, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), check, 1, 6, 2, 1);
 
 	label = gtk_label_new_with_mnemonic("Saves_tate Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -1403,9 +1418,9 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(folder_chooser_callback),
 			 entry);
-	gtk_grid_attach(GTK_GRID(grid), label,  0, 6, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry,  1, 6, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 2, 6, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 7, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 7, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 7, 1, 1);
 
 	label = gtk_label_new_with_mnemonic("Screens_hot Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -1417,9 +1432,9 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(folder_chooser_callback),
 			 entry);
-	gtk_grid_attach(GTK_GRID(grid), label,  0, 7, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry,  1, 7, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 2, 7, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 8, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 8, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 8, 1, 1);
 
 	label = gtk_label_new_with_mnemonic("_Patch Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -1431,9 +1446,9 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(folder_chooser_callback),
 			 entry);
-	gtk_grid_attach(GTK_GRID(grid), label,  0, 8, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry,  1, 8, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 2, 8, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 9, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 9, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 9, 1, 1);
 
 	label = gtk_label_new_with_mnemonic("FDS _BIOS Path:");
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -1445,9 +1460,9 @@ static void configuration_setup_path(GtkWidget *dialog, struct config *config)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(file_chooser_callback),
 			 entry);
-	gtk_grid_attach(GTK_GRID(grid), label,  0, 9, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry,  1, 9, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 2, 9, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), label,  0, 10, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), entry,  1, 10, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), button, 2, 10, 1, 1);
 
 }
 

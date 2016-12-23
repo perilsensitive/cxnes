@@ -24,6 +24,7 @@
 
 enum {
 	CONFIG_DATA_DIR_SAVE,
+	CONFIG_DATA_DIR_FDS_SAVE,
 	CONFIG_DATA_DIR_CONFIG,
 	CONFIG_DATA_DIR_CHEAT,
 	CONFIG_DATA_DIR_CHEAT_DB,
@@ -141,6 +142,7 @@ struct config {
 	int gui_enabled;
 	const char *loglevel;
 	const char *save_path;
+	const char *fds_save_path;
 	const char *screenshot_path;
 	const char *config_path;
 	const char *cheat_path;

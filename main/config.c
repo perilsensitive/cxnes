@@ -43,6 +43,7 @@
 #define DEFAULT_CHEAT_DB "cheatdb"
 #define DEFAULT_CHEAT_PATH "cheat"
 #define DEFAULT_SAVE_PATH "save"
+#define DEFAULT_FDS_SAVE_PATH "fds"
 #define DEFAULT_PATCH_PATH "patch"
 #define DEFAULT_STATE_PATH "state"
 #define DEFAULT_ROMCFG_PATH "romcfg"
@@ -794,6 +795,7 @@ static struct config_parameter config_parameters[] = {
 	CONFIG_STRING(screensaver_deactivate_command, "xdg-screensaver reset"),
 	CONFIG_BOOLEAN(gui_enabled, 1),
 	CONFIG_STRING(save_path, NULL),
+	CONFIG_STRING(fds_save_path, NULL),
 	CONFIG_STRING(screenshot_path, NULL),
 	CONFIG_STRING(config_path, NULL),
 	CONFIG_STRING(rom_path, NULL),
@@ -1347,6 +1349,10 @@ char *config_get_path(struct config *config, int which, const char* filename, in
 	case CONFIG_DATA_DIR_SAVE:
 		config_value = config->save_path;
 		default_path = DEFAULT_SAVE_PATH;
+		break;
+	case CONFIG_DATA_DIR_FDS_SAVE:
+		config_value = config->fds_save_path;
+		default_path = DEFAULT_FDS_SAVE_PATH;
 		break;
 	case CONFIG_DATA_DIR_PATCH:
 		config_value = config->patch_path;

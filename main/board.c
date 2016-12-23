@@ -1669,9 +1669,15 @@ static int board_apply_ips_save(struct board *board)
 	p = NULL;
 	rc = -1;
 
-	save_file = config_get_path(board->emu->config,
-					CONFIG_DATA_DIR_SAVE,
-					board->emu->save_file, 1);
+	if (board->info->board_type == BOARD_TYPE_FDS) {
+		save_file = config_get_path(board->emu->config,
+						CONFIG_DATA_DIR_FDS_SAVE,
+						board->emu->save_file, 1);
+	} else {
+		save_file = config_get_path(board->emu->config,
+						CONFIG_DATA_DIR_SAVE,
+						board->emu->save_file, 1);
+	}
 
 	if (!save_file)
 		goto done;
@@ -2000,9 +2006,15 @@ void board_write_ips_save(struct board *board, struct range_list *range_list)
 
 	p = NULL;
 
-	save_file = config_get_path(board->emu->config,
-					CONFIG_DATA_DIR_SAVE,
-					board->emu->save_file, 1);
+	if (board->info->board_type == BOARD_TYPE_FDS) {
+		save_file = config_get_path(board->emu->config,
+						CONFIG_DATA_DIR_FDS_SAVE,
+						board->emu->save_file, 1);
+	} else {
+		save_file = config_get_path(board->emu->config,
+						CONFIG_DATA_DIR_SAVE,
+						board->emu->save_file, 1);
+	}
 
 	if (!save_file)
 		return;
