@@ -83,6 +83,8 @@ struct cpu_state {
 	int oam_dma_step;
 	int oam_dma_addr;
 	int is_opcode_fetch;
+	int opcode;
+	int opcode_addr;
 
 	cpu_read_handler_t *read_handlers[CPU_MEM_SIZE];
 	cpu_write_handler_t *write_handlers[CPU_MEM_SIZE];
@@ -99,6 +101,7 @@ struct cpu_state {
 	int type;
 	int cpu_clock_divider;
 	int debug;
+	int overclock_allowed;
 
 	struct emu *emu;
 };
@@ -153,7 +156,7 @@ static inline void calculate_step_cycles(struct cpu_state *cpu);
 #define clear_flag(x) { cpu->P &= ~(x); }
 #define set_flag(x) { cpu->P |= (x); }
 #define jam() { cpu->jammed = 1; printf("jammed (PC: %x opcode %02x)\n", \
-					cpu->PC - 1, opcode); }
+					cpu->PC - 1, cpu->opcode); }
 
 
 #define load_imm(y) { *(y) = operand; set_zn_flags(*(y)); cpu->PC++; }
@@ -1212,15 +1215,15 @@ static void decode_opcode(struct cpu_state *cpu, int addr)
 //      printf("opcode: %x\n", opcode);
 	if (mode != -1) {
 		if (mode == IMP)
-			printf("% 7d  $%04X:  %s         ", cpu->cycles,
+			log_warn("% 7d  $%04X:  %s         ", cpu->cycles,
 			       opcode_addr, mnemonic);
 		else
-			printf(fmt, cpu->cycles, opcode_addr, mnemonic, addr);
+			log_warn(fmt, cpu->cycles, opcode_addr, mnemonic, addr);
 	} else {
-		printf("% 7d  $%04x:  unknown opcode %02x", cpu->cycles,
+		log_warn("% 7d  $%04x:  unknown opcode %02x", cpu->cycles,
 		       opcode_addr, opcode);
 	}
-	printf("  A:$%02X  X:$%02X  Y:$%02X  S:$%02X  P:%c%c%c%c%c%c%c%c",
+	log_warn("  A:$%02X  X:$%02X  Y:$%02X  S:$%02X  P:%c%c%c%c%c%c%c%c",
 	       cpu->A, cpu->X, cpu->Y, cpu->S,
 	       cpu->P & N_FLAG ? 'N' : '.',
 	       cpu->P & V_FLAG ? 'V' : '.',
@@ -1230,7 +1233,7 @@ static void decode_opcode(struct cpu_state *cpu, int addr)
 	       cpu->P & I_FLAG ? 'I' : '.',
 	       cpu->P & Z_FLAG ? 'Z' : '.', cpu->P & C_FLAG ? 'C' : '.');
 
-	printf("\n");
+	log_warn("\n");
 }
 
 static void brk(struct cpu_state *cpu)
@@ -1317,6 +1320,9 @@ void cpu_reset(struct cpu_state *cpu, int hard)
 
 	if (cpu->selected_overclock_mode < 0)
 		cpu_set_overclock(cpu, cpu->emu->config->overclock_mode, 0);
+
+	if (cpu->overclock_allowed < 0)
+		cpu->overclock_allowed = 1;
 
 	cpu->odd = 0;
 
@@ -1505,6 +1511,7 @@ int cpu_init(struct emu *emu)
 
 	cpu->selected_overclock_mode = -1;
 	cpu->overclock_mode = -1;
+	cpu->overclock_allowed = -1;
 
 	return 1;
 }
@@ -1520,13 +1527,14 @@ void cpu_set_frame_cycles(struct cpu_state *cpu, uint32_t visible_cycles,
 {
 	cpu->frame_cycles = frame_cycles;
 	cpu->visible_cycles = visible_cycles;
+	cpu->overclock_timestamp = ~0;
 
-	if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)
-		cpu->overclock_timestamp = cpu->visible_cycles;
-	else if (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)
-		cpu->overclock_timestamp = cpu->frame_cycles;
-	else
-		cpu->overclock_timestamp = ~0;
+	if (cpu->overclock_allowed) {
+		if (cpu->overclock_mode == OVERCLOCK_MODE_POST_RENDER)
+			cpu->overclock_timestamp = cpu->visible_cycles;
+		else if (cpu->overclock_mode == OVERCLOCK_MODE_VBLANK)
+			cpu->overclock_timestamp = cpu->frame_cycles;
+	}
 
 	recalc_cycle_operation_timestamp(cpu);
 
@@ -1537,7 +1545,7 @@ uint32_t cpu_run(struct cpu_state *cpu)
 {
 	int oc_mode;
 
-	if (cpu->frames_before_overclock)
+	if (!cpu->overclock_allowed || cpu->frames_before_overclock)
 		oc_mode = OVERCLOCK_MODE_NONE;
 	else
 		oc_mode = cpu->overclock_mode;
@@ -1557,7 +1565,6 @@ uint32_t cpu_run(struct cpu_state *cpu)
 		calculate_step_cycles(cpu);
 
 		while (cpu->cycles <= cpu->step_cycles) {
-			uint8_t opcode;
 			uint8_t operand;
 			uint16_t absaddr = 0;
 			unsigned int index;
@@ -1589,15 +1596,16 @@ uint32_t cpu_run(struct cpu_state *cpu)
 			cpu->is_opcode_fetch = 1;
 			read_mem(cpu, cpu->PC);
 			cpu->is_opcode_fetch = 0;
-			opcode = cpu->data_bus;
+			cpu->opcode_addr = cpu->PC;
+			cpu->opcode = cpu->data_bus;
 
 			/* NMI, IRQ and RESET are all handled by the logic for BRK */
 			if ((cpu->frame_state != FRAME_STATE_OVERCLOCK) &&
 			    (cpu->interrupts & cpu->interrupt_mask)) {
-				opcode = 0x00;
+				cpu->opcode = 0x00;
 			} else {
 				cpu->PC++;
-				if (opcode == 0x00)
+				if (cpu->opcode == 0x00)
 					cpu->P |= B_FLAG;
 			}
 
@@ -1620,7 +1628,7 @@ uint32_t cpu_run(struct cpu_state *cpu)
 			/* Left out the opcode mnemonics to keep this short.  It should
 			   be reasonably clear from the code what each opcode does and
 			   what its addressing mode is. */
-			switch (opcode) {
+			switch (cpu->opcode) {
 			case 0x0b:
 			case 0x2b:
 				anc(cpu, operand);
@@ -2069,7 +2077,7 @@ uint32_t cpu_run(struct cpu_state *cpu)
 				break;
 			}
 
-			switch (opcode) {
+			switch (cpu->opcode) {
 			case 0x61:
 			case 0x65:
 			case 0x6d:
@@ -2431,6 +2439,16 @@ int cpu_get_pc(struct cpu_state *cpu)
 	return cpu->PC;
 }
 
+int cpu_get_opcode(struct cpu_state *cpu)
+{
+	return cpu->opcode;
+}
+
+int cpu_get_opcode_address(struct cpu_state *cpu)
+{
+	return cpu->opcode_addr;
+}
+
 int cpu_get_stack_pointer(struct cpu_state *cpu)
 {
 	return cpu->S;
@@ -2650,6 +2668,21 @@ const char *cpu_get_overclock(struct cpu_state *cpu)
 	}
 
 	return name;
+}
+
+void cpu_force_overclock_end(struct cpu_state *cpu)
+{
+	if (cpu->frame_state == FRAME_STATE_OVERCLOCK) {
+		cpu->cycles = cpu->overclock_timestamp;
+	}
+}
+
+void cpu_set_overclock_allowed(struct cpu_state *cpu, int allowed)
+{
+	//log_debug("overclock allowed: %d\n", allowed);
+	cpu->overclock_allowed = allowed;
+	if (!allowed)
+		cpu_disable_overclock_for_frame(cpu);
 }
 
 void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)

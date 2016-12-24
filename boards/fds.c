@@ -328,6 +328,7 @@ static void fds_set_eof(struct board *board)
 	_next_clock = ~0;
 	_next_disk_interrupt = ~0;
 	cpu_interrupt_cancel(board->emu->cpu, IRQ_DISK);
+	cpu_set_overclock_allowed(board->emu->cpu, 1);
 
 	if (_dirty_flag) {
 		/* fds_write_ips_file(board); */
@@ -936,6 +937,19 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 		_write_buffer = value;
 		break;
 	case 0x4025:
+		if (emu->overclocking) {
+			if ((value & 0x03) == 0x01) {
+				cpu_set_pc(emu->cpu, cpu_get_opcode_address(emu->cpu));
+				cpu_force_overclock_end(emu->cpu);
+				break;
+			}
+		} else {
+			if ((value & 0x03) == 0x01) {
+				cpu_set_overclock_allowed(emu->cpu, 0);
+			} else {
+				cpu_set_overclock_allowed(emu->cpu, 1);
+			}
+		}
 		standard_mirroring_handler(emu, 0, value, cycles);
 
 		if (!_diskio_enabled)

@@ -105,6 +105,8 @@ void cpu_set_dmc_dma_timestamp(struct cpu_state *cpu, uint32_t cycles, int addr,
 void cpu_oam_dma(struct cpu_state *cpu, int addr, int odd);
 cpu_write_handler_t *cpu_get_write_handler(struct cpu_state *cpu, int addr);
 int cpu_get_pc(struct cpu_state *cpu);
+int cpu_get_opcode(struct cpu_state *cpu);
+int cpu_get_opcode_address(struct cpu_state *cpu);
 int cpu_get_stack_pointer(struct cpu_state *cpu);
 void cpu_set_trace(struct cpu_state *cpu, int enabled);
 int cpu_save_state(struct cpu_state *cpu, struct save_state *state);
@@ -118,4 +120,6 @@ void cpu_set_x_register(struct cpu_state *cpu, uint8_t value);
 void cpu_disable_overclock_for_frame(struct cpu_state *cpu);
 void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display);
 const char *cpu_get_overclock(struct cpu_state *cpu);
+void cpu_set_overclock_allowed(struct cpu_state *cpu, int);
+void cpu_force_overclock_end(struct cpu_state *cpu);
 #endif				/* __CPU_H__ */
