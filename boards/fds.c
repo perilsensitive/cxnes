@@ -33,6 +33,7 @@
 #define _write_buffer board->data[3]
 #define _control_reg board->data[4]
 #define _status_reg board->data[5]
+#define _flip_disk_counter board->data[6]
 #define _bios_patch_enabled board->data[8]
 #define _gap_covered board->data[9]
 #define _previous_crc board->data[15]
@@ -81,8 +82,10 @@ static void fds_end_frame(struct board *board, uint32_t);
 static void fds_run(struct board *board, uint32_t cycles);
 static int fds_load_state(struct board *board, struct save_state *state);
 static int fds_save_state(struct board *board, struct save_state *state);
-static int fds_disk_eject(void *, uint32_t event, uint32_t value);
-static int fds_disk_select(void *, uint32_t event, uint32_t value);
+static int fds_input_handler(void *, uint32_t event, uint32_t value);
+
+static int fds_disk_set_inserted(struct board *board, int state);
+static int fds_disk_set_side(struct board *board, int side);
 
 static int fds_read_byte(struct board *board, int do_high_level, uint32_t cycles);
 static int fds_write_byte(struct board *board);
@@ -111,8 +114,9 @@ static struct auto_eject_timer_setup eject_timer_settings[] = {
 };
 
 static struct input_event_handler fds_handlers[] = {
-	{ ACTION_FDS_EJECT, fds_disk_eject},
-	{ ACTION_FDS_SELECT, fds_disk_select},
+	{ ACTION_FDS_EJECT, fds_input_handler},
+	{ ACTION_FDS_SELECT, fds_input_handler},
+	{ ACTION_FDS_FLIP, fds_input_handler},
 	{ ACTION_NONE },
 };
 
@@ -452,6 +456,7 @@ void fds_reset(struct board *board, int hard)
 	else
 		_auto_eject_state = AUTO_EJECT_DISABLED;
 		
+	_flip_disk_counter = ~0;
 	_next_clock = ~0;
 	_next_disk_interrupt = ~0;
 	_offset = board->emu->rom->disk_side_size;
@@ -619,6 +624,14 @@ static void fds_end_frame(struct board *board, uint32_t cycles)
 		} else {
 			_auto_eject_counter = _auto_eject_counter_max;
 			_auto_eject_state ^= 1;
+		}
+	}
+
+	if ((int)_flip_disk_counter > 0) {
+		_flip_disk_counter--;
+		if (!_flip_disk_counter) {
+			_flip_disk_counter = ~0;
+			fds_disk_set_inserted(board, 1);
 		}
 	}
 
@@ -867,6 +880,7 @@ static void fds_auto_disk_select(struct board *board)
 
 	if (new_side && (board->prg_rom.data + _disk_offset != new_side)) {
 		_disk_offset = new_side - board->prg_rom.data;
+		_flip_disk_counter = ~0;
 		osdprintf("Disk %u, side %c auto-selected\n",
 			  (_disk_offset) / side_size / 2 + 1,
 			  (_disk_offset) / side_size % 2 ? 'B' : 'A');
@@ -930,8 +944,10 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 			break;
 
 		_status_reg &= ~FDS_STATUS_XFER;
-		if (board->emu->config->fds_auto_disk_change_enabled && (_auto_eject_state != AUTO_EJECT_DISABLED))
+		if (board->emu->config->fds_auto_disk_change_enabled && (_auto_eject_state != AUTO_EJECT_DISABLED)) {
 			_auto_eject_state = AUTO_EJECT_WAITING;
+			_flip_disk_counter = ~0;
+		}
 		cpu_interrupt_ack(emu->cpu, IRQ_DISK);
 		schedule_disk_interrupt(board, cycles);
 		_write_buffer = value;
@@ -1039,6 +1055,7 @@ static CPU_READ_HANDLER(fds_read_handler)
 
 		if (board->emu->config->fds_auto_disk_change_enabled && (_auto_eject_state != AUTO_EJECT_DISABLED)) {
 			_auto_eject_state = AUTO_EJECT_WAITING;
+			_flip_disk_counter = ~0;
 		}
 		value = _read_buffer;
 
@@ -1067,6 +1084,7 @@ static CPU_READ_HANDLER(fds_read_handler)
 				value |= 0x05; /* ejected */
 				break;
 			case AUTO_EJECT_WAITING:
+				_flip_disk_counter = ~0;
 				_auto_eject_state = 0;
 				_auto_eject_counter = 9;
 				break;
@@ -1089,49 +1107,81 @@ static CPU_READ_HANDLER(fds_read_handler)
 	return value;
 }
 
-int fds_disk_eject(void *data, uint32_t event, uint32_t value)
+static int fds_input_handler(void *data, uint32_t event, uint32_t value)
 {
 	struct emu *emu = data;
 	struct board *board = emu->board;
+	int side;
 
-	if (event) {
-		if (_drive_status_reg & FDS_DISK_INSERTED) {
-			osdprintf("Disk Ejected\n");
-			_drive_status_reg = FDS_DISK_PROTECTED;
-			_auto_eject_state = AUTO_EJECT_DISABLED;
-		} else {
+	if (!event)
+		return 1;
+
+	switch (value) {
+	case ACTION_FDS_EJECT:
+		_flip_disk_counter = ~0;
+		if (fds_disk_set_inserted(board, -1))
 			osdprintf("Disk Inserted\n");
-			_drive_status_reg = FDS_DISK_INSERTED;
-			_auto_eject_state = AUTO_EJECT_WAITING;
-		}
+		else
+			osdprintf("Disk Ejected\n");
+		break;
+	case ACTION_FDS_FLIP:
+		fds_disk_set_inserted(board, 0);
+		_flip_disk_counter = 200;
+		side = fds_disk_set_side(board, -1);
+		osdprintf("Disk %d, side %c selected\n",
+			  side / 2 + 1, side % 2 ? 'B' : 'A');
+		break;
+	case ACTION_FDS_SELECT:
+		_flip_disk_counter = ~0;
+		side = fds_disk_set_side(board, -1);
+		osdprintf("Disk %d, side %c selected\n",
+			  side / 2 + 1, side % 2 ? 'B' : 'A');
+		break;
 	}
 
 	return 1;
 }
 
-int fds_disk_select(void *data, uint32_t event, uint32_t value)
+static int fds_disk_set_inserted(struct board *board, int state)
 {
-	struct emu *emu = data;
-	struct board *board = emu->board;
-	size_t side_size;
-
-	if (!event)
-		return 1;
-
-	side_size = emu->rom->disk_side_size;
-
-	if (!(_drive_status_reg & FDS_DISK_INSERTED)) {
-		_disk_offset += side_size;
-		if (_disk_offset >= (board->prg_rom.size) /
-		    side_size * side_size)
-			_disk_offset = 0;
-
-		osdprintf("Disk %d, side %c selected\n",
-			  _disk_offset / side_size / 2 + 1,
-			  _disk_offset / side_size % 2 ? 'B' : 'A');
+	if (state < 0) {
+		if (_drive_status_reg & FDS_DISK_INSERTED)
+			state = 0;
+		else
+			state = 1;
 	}
 
-	return 1;
+	if (!state) {
+		_drive_status_reg = FDS_DISK_PROTECTED;
+		_auto_eject_state = AUTO_EJECT_DISABLED;
+	} else {
+		_drive_status_reg = FDS_DISK_INSERTED;
+		_auto_eject_state = AUTO_EJECT_WAITING;
+	}
+
+	return state;
+}
+
+static int fds_disk_set_side(struct board *board, int side)
+{
+	size_t side_size;
+	int max_side;
+
+	if (_drive_status_reg & FDS_DISK_INSERTED)
+		return -1;
+
+	side_size = board->emu->rom->disk_side_size;
+
+	max_side = board->prg_rom.size / side_size;
+
+	if (side < 0)
+		side = (_disk_offset / side_size) + 1;
+
+	side %= max_side;
+
+	_disk_offset = side * side_size;
+
+	return side;
 }
 
 static int fds_load_state(struct board *board, struct save_state *state)

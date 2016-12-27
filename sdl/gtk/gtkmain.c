@@ -713,6 +713,7 @@ void gui_cleanup(void)
 static gboolean f10_accel_hack(GtkAccelGroup *group, GObject *acceleratable,
 		    guint keyval, GdkModifierType modifier)
 {
+	printf("HERE\n");
 	return TRUE;
 }
 

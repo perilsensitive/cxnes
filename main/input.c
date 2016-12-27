@@ -389,6 +389,7 @@ struct emu_action_id_map emu_action_id_map[] = {
 
 	EMU_ACTION_ID_MAP(FDS_EJECT, EMULATOR, "FDS Disk Eject"),
 	EMU_ACTION_ID_MAP(FDS_SELECT, EMULATOR, "FDS Disk Select"),
+	EMU_ACTION_ID_MAP(FDS_FLIP, EMULATOR, "FDS Disk Flip"),
 
 	EMU_ACTION_ID_MAP(SAVE_SCREENSHOT, EMULATOR, "Save Screenshot"),
 

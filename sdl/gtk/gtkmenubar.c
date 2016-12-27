@@ -130,11 +130,21 @@ static void eject_disk_callback(GtkWidget *widget, gpointer userdata)
 	}
 }
 
-static void switch_disk_callback(GtkWidget *widget, gpointer userdata)
+static void select_disk_callback(GtkWidget *widget, gpointer userdata)
 {
 	struct emu_action *event;
 
 	event = input_lookup_emu_action(ACTION_FDS_SELECT);
+	if (event && event->handler) {
+		event->handler(event->data, 1, event->id);
+	}
+}
+
+static void flip_disk_callback(GtkWidget *widget, gpointer userdata)
+{
+	struct emu_action *event;
+
+	event = input_lookup_emu_action(ACTION_FDS_FLIP);
 	if (event && event->handler) {
 		event->handler(event->data, 1, event->id);
 	}
@@ -1564,7 +1574,9 @@ static GtkWidget *gui_build_emulator_menu(void)
 
 	gui_add_menu_item(menu, "Insert/Eject _Disk", eject_disk_callback,
 			  NULL, is_sensitive_if_fds);
-	gui_add_menu_item(menu, "_Switch Disk", switch_disk_callback,
+	gui_add_menu_item(menu, "_Select Disk", select_disk_callback,
+			  NULL, is_sensitive_if_fds);
+	gui_add_menu_item(menu, "_Flip Disk", flip_disk_callback,
 			  NULL, is_sensitive_if_fds);
 
 	item = gui_add_menu_item(menu, "_Overclock Mode", NULL, NULL,

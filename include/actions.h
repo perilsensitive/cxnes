@@ -359,6 +359,7 @@
 #define ACTION_TOGGLE_CHEATS        0x20ffff18
 #define ACTION_SWITCH_FOUR_PLAYER_MODE 0x20ffff19
 #define ACTION_MICROPHONE            0x00ffff1a
+#define ACTION_FDS_FLIP             0x00ffff1b
 
 #define ACTION_TOGGLE_MOUSE_GRAB    0x20ffff1e
 #define ACTION_TOGGLE_FPS           0x30ffff1f

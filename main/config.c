@@ -955,8 +955,9 @@ struct binding_item default_bindings[] = {
 	/* { .name = "7", .value = "DIP_SWITCH_7" }, */
 	/* { .name = "8", .value = "DIP_SWITCH_8" }, */
 
-	{ .name = "[CTRL] Keyboard F10", .value = "VS_SERVICE_SWITCH,FDS_EJECT" },
-	{ .name = "Keyboard F10", .value = "VS_COIN_SWITCH_1,FDS_SELECT" },
+	{ .name = "[CTRL] Keyboard F4", .value = "VS_SERVICE_SWITCH,FDS_EJECT" },
+	{ .name = "[SHIFT] Keyboard F4", .value = "FDS_SELECT" },
+	{ .name = "Keyboard F4", .value = "VS_COIN_SWITCH_1,FDS_FLIP" },
 
 /* Controller Input Bindings */
 	{ .name = "Keyboard F9", .value = "SWITCH_FOUR_PLAYER_MODE" },
