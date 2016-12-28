@@ -795,3 +795,32 @@ int patch_is_ips(uint8_t *patch, size_t patch_size)
 
 	return 1;
 }
+
+struct range_list *patch_generate_range_list(uint8_t *dst, size_t dst_size,
+                                             uint8_t *src, size_t src_size)
+{
+	int i;
+	size_t min_size;
+	struct range_list *ranges;
+
+	ranges = NULL;
+
+	if (dst_size > src_size)
+		min_size = src_size;
+	else
+		min_size = dst_size;
+
+	for (i = 0; i < min_size; i++) {
+		if (dst[i] == src[i])
+			continue;
+
+		add_range(&ranges, i, 1);
+	}
+
+	if (dst_size > src_size)
+		add_range(&ranges, src_size, dst_size - src_size);
+	else if (src_size > dst_size)
+		add_range(&ranges, dst_size, src_size - dst_size);
+
+	return ranges;
+}

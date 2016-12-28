@@ -31,6 +31,7 @@
 #include "file_io.h"
 #include "patch.h"
 #include "m2_timer.h"
+#include "fds.h"
 
 struct board_name_mapping {
 	const char *name;
@@ -1642,6 +1643,122 @@ void board_init_dipswitches(struct board *board)
 		board->dip_switches |= config->dip_switch[i] << i;
 }
 
+static int board_apply_fds_save(struct board *board)
+{
+	size_t size;
+	char *save_file;
+	uint8_t *p;
+	uint8_t *data_to_patch;
+	size_t data_size;
+	off_t offset;
+	struct rom shadow_fds;
+	struct range_list *modified_ranges;
+	int rc;
+	int orig_sides, save_sides;
+
+	if (!board->info)
+		return -1;
+
+	rc = -1;
+
+	orig_sides = board->emu->rom->buffer_size / 65500;
+
+	if (board->info->board_type == BOARD_TYPE_FDS)
+		return -1;
+	save_file = config_get_path(board->emu->config,
+	                            CONFIG_DATA_DIR_FDS_SAVE,
+	                            board->emu->save_file, 1);
+
+	if (!save_file)
+		goto done;
+
+	if (!check_file_exists(save_file))
+		goto done;
+
+	size = get_file_size(save_file);
+	if (size < 0) {
+		goto done;
+	} else if (size == 0) {
+		rc = 0;
+		goto done;
+	}
+
+	p = malloc(size);
+	if (!p)
+		goto done;
+
+	printf("Save file: %s\n", save_file);
+	if (readfile(save_file, p, size)) {
+		goto done;
+	}
+
+	if (patch_is_ips(p, size)) {
+		if (board->info->flags & BOARD_INFO_FLAG_PRG_IPS) {
+			data_to_patch = board->emu->rom->buffer;
+			data_size = board->emu->rom->buffer_size;
+			offset = board->emu->rom->offset;
+		}
+
+		if (patch_apply_ips(&data_to_patch, &data_size, offset, offset,
+		                    p, size, &board->modified_ranges) != 0) {
+
+			err_message("failed to apply IPS save file %s\n",
+				    save_file);
+			goto done;
+		}
+
+		board->emu->rom->buffer = data_to_patch;
+		board->emu->rom->buffer_size = data_size;
+		board->prg_rom.data = data_to_patch + offset;
+
+		rc = 0;
+
+		goto done;
+	}
+
+	shadow_fds.buffer = p;
+	shadow_fds.buffer_size = size;
+	if (fds_load(board->emu, &shadow_fds)) {
+		/* FIXME error? */
+		goto done;
+	}
+
+	rc = fds_convert_to_fds(&shadow_fds);
+	if (rc) {
+		/* FIXME error? */
+		goto done;
+	}
+
+	save_sides = shadow_fds.buffer_size / 65500;
+
+	if (save_sides != orig_sides) {
+		goto done;
+	}
+
+	data_size = board->emu->rom->buffer_size / 65500 * 65500 + 16;
+	modified_ranges = patch_generate_range_list(shadow_fds.buffer +
+	                                            shadow_fds.offset,
+	                                            shadow_fds.buffer_size,
+						    board->emu->rom->buffer +
+						    board->emu->rom->offset,
+						    data_size);
+
+	memcpy(board->emu->rom->buffer, p, size);
+
+	board->modified_ranges = modified_ranges;
+	rc = 0;
+
+done:
+
+	if (save_file)
+		free(save_file);
+
+	if (p)
+		free(p);
+
+	return rc;
+}
+
 static int board_apply_ips_save(struct board *board)
 {
 	uint8_t *p;
@@ -1823,7 +1940,16 @@ int board_init(struct emu *emu, struct rom *rom)
 	board_init_ram_chips(board);
 	emu_load_cheat(board->emu);
 	board_init_dipswitches(board);
-	board_apply_ips_save(board);
+	if (board->info->board_type == BOARD_TYPE_FDS) {
+		size_t size = emu->rom->buffer_size;
+		size /= 65500;
+		size *= 65500;
+		size += 16;
+		board_apply_fds_save(board);
+		writefile("foo.fds", emu->rom->buffer, size);
+	} else {
+		board_apply_ips_save(board);
+	}
 
 	board->prg_and = ~0;
 	board->chr_and = ~0;

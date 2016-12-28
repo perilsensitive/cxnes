@@ -58,4 +58,6 @@ int patch_get_output_crc(uint8_t *patch, size_t patch_size, uint32_t *crc);
 int patch_get_patch_crc(uint8_t *patch, size_t patch_size, uint32_t *crc);
 uint32_t patch_calc_patch_crc(uint8_t *patch, size_t patch_size);
 int patch_is_ips(uint8_t *patch, size_t patch_size);
+struct range_list *patch_generate_range_list(uint8_t *dst, size_t dst_size,
+                                             uint8_t *src, size_t src_size);
 #endif
