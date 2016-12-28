@@ -187,53 +187,57 @@ static void fds_init_modified_ranges(struct board *board)
 	offset = 0;
 	for (i = 0; i < block_list->total_entries; i++) {
 		struct fds_block_list_entry *entry;
+		int current_side, previous_side;
 
 		entry = &block_list->entries[i];
-		entry->new_offset = offset;
 
+		current_side = entry->offset / side_size;
+		if (i > 0) {
+			previous_side =
+				block_list->entries[i - 1].offset /
+				side_size;
+		} else {
+			previous_side = -1;
+		}
+
+		if (previous_side != current_side) {
+			offset = current_side * side_size;
+		}
+
+		entry->new_offset = offset;
 		offset += entry->size;
 	}
 				
 	for (range = board->modified_ranges; range;
 	     range = range->next) {
+		off_t offset = range->offset - 16;
 		for (i = 0; i < block_list->total_entries; i++) {
 			struct fds_block_list_entry *entry;
 			size_t new_size;
 			off_t new_offset;
-			int current_side;
-			int previous_side;
 
 			entry = &block_list->entries[i];
-				
-			if (range->offset + range->length <=
+
+			if (offset + range->length <=
 			    entry->new_offset) {
 				continue;
 			}
 
 			if (entry->new_offset + entry->size <=
-			    range->offset) {
+			    offset) {
 				continue;
 			}
 
-			
-			current_side = entry->offset / side_size;
-			if (i > 0) {
-				previous_side =
-					block_list->entries[i - 1].offset /
-					side_size;
+			if (i) {
+				new_offset = block_list->entries[i - 1].offset +
+				block_list->entries[i - 1].size + 2;
 			} else {
-				previous_side = -1;
+				new_offset = entry->offset;
 			}
 
 			/* We want to mark not only the block data, but also
 			   gap, start mark and CRC.
 			*/
-			if (i && (previous_side == current_side)) {
-				new_offset = block_list->entries[i - 1].offset +
-					block_list->entries[i - 1].size + 2;
-			} else {
-				new_offset = entry->new_offset;
-			}
 
 			new_size = entry->offset + entry->size + 2;
 			new_size -= new_offset;
