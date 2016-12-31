@@ -175,6 +175,7 @@ static void fds_init_modified_ranges(struct board *board)
 	struct range_list *dirty_blocks;
 	off_t offset;
 	size_t side_size;
+	int previous_side;
 	int i;
 
 	dirty_blocks = NULL;
@@ -185,33 +186,28 @@ static void fds_init_modified_ranges(struct board *board)
 	if (!block_list)
 		return;
 
-	offset = 0;
+	previous_side = -1;
 	for (i = 0; i < block_list->total_entries; i++) {
 		struct fds_block_list_entry *entry;
-		int current_side, previous_side;
+		int current_side;
 
 		entry = &block_list->entries[i];
 
 		current_side = entry->offset / side_size;
-		if (i > 0) {
-			previous_side =
-				block_list->entries[i - 1].offset /
-				side_size;
-		} else {
-			previous_side = -1;
-		}
 
 		if (previous_side != current_side) {
 			offset = current_side * side_size;
+			offset += board->emu->rom->offset;
 		}
 
 		entry->new_offset = offset;
 		offset += entry->size;
+		previous_side = block_list->entries[i].offset /
+		                side_size;
 	}
 				
 	for (range = board->modified_ranges; range;
 	     range = range->next) {
-		off_t offset = range->offset - 16;
 		for (i = 0; i < block_list->total_entries; i++) {
 			struct fds_block_list_entry *entry;
 			size_t new_size;
@@ -219,13 +215,13 @@ static void fds_init_modified_ranges(struct board *board)
 
 			entry = &block_list->entries[i];
 
-			if (offset + range->length <=
+			if (range->offset + range->length <=
 			    entry->new_offset) {
 				continue;
 			}
 
 			if (entry->new_offset + entry->size <=
-			    offset) {
+			    range->offset) {
 				continue;
 			}
 
@@ -260,6 +256,7 @@ static void fds_write_save(struct board *board)
 	size_t side_size;
 	struct rom fds_image;
 	off_t offset;
+	int previous_side;
 	int i;
 
 	dirty_blocks = NULL;
@@ -290,7 +287,7 @@ static void fds_write_save(struct board *board)
 
 		buffer_size /= 65500;
 		buffer_size *= 65500;
-		buffer_size += 16;
+		buffer_size += fds_image.offset;
 
 		save_file = config_get_path(board->emu->config,
 						CONFIG_DATA_DIR_FDS_SAVE,
@@ -318,27 +315,24 @@ static void fds_write_save(struct board *board)
 		return;
 
 
-	offset = 0;
+	previous_side = -1;
 	for (i = 0; i < block_list->total_entries; i++) {
 		struct fds_block_list_entry *entry;
-		int current_side, previous_side;
+		int current_side;
 		
 		entry = &block_list->entries[i];
 
 		current_side = entry->offset / side_size;
-		if (i > 0) {
-			previous_side =
-				block_list->entries[i - 1].offset /
-				side_size;
-		} else {
-			previous_side = -1;
-		}
 
 		if (previous_side != current_side) {
 			offset = current_side * side_size;
+			offset += board->emu->rom->offset;
 		}
+
 		entry->new_offset = offset;
 		offset += entry->size;
+		previous_side = block_list->entries[i].offset /
+		                side_size;
 	}
 				
 	for (range = board->modified_ranges; range;
@@ -462,7 +456,7 @@ static int fds_init(struct board *board)
 
 	fds_convert_to_raw(emu->rom);
 	board->prg_rom.data = emu->rom->buffer + emu->rom->offset;
-	board->prg_rom.size = emu->rom->buffer_size - 16;
+	board->prg_rom.size = emu->rom->buffer_size - emu->rom->offset;
 	fds_init_modified_ranges(emu->board);
 
 	cpu_set_read_handler(emu->cpu, 0xe445, 1, 0, fds_read_handler);
@@ -1348,7 +1342,8 @@ static int fds_write_byte(struct board *board)
 	board->prg_rom.data[_disk_offset + _offset] =
 		_write_buffer;
 	_dirty_flag = 1;
-	add_range(&board->modified_ranges, _disk_offset + _offset, 1);
+	add_range(&board->modified_ranges, _disk_offset + _offset +
+	          board->emu->rom->offset, 1);
 	_read_buffer = board->prg_rom.data[_disk_offset + _offset];
 
 	_previous_crc = (_control_reg & FDS_CTRL_CRC);
