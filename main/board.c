@@ -1699,7 +1699,7 @@ static int board_apply_fds_save(struct board *board)
 		if (board->info->flags & BOARD_INFO_FLAG_PRG_IPS) {
 			data_to_patch = board->emu->rom->buffer;
 			data_size = board->emu->rom->buffer_size;
-			offset = board->emu->rom->offset;
+			offset = 0;
 		}
 
 		if (patch_apply_ips(&data_to_patch, &data_size, offset, offset,
