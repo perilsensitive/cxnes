@@ -1661,11 +1661,16 @@ static int board_apply_fds_save(struct board *board)
 
 	rc = -1;
 
+	if (board->info->board_type != BOARD_TYPE_FDS)
+		return -1;
+
 	orig_sides = board->emu->rom->buffer_size / 65500;
 
 	save_file = config_get_path(board->emu->config,
 	                            CONFIG_DATA_DIR_FDS_SAVE,
 	                            board->emu->save_file, 1);
+
+	p = NULL;
 
 	if (!save_file)
 		goto done;
