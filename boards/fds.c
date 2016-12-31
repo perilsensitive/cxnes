@@ -21,6 +21,7 @@
 #include "input.h"
 #include "actions.h"
 #include "patch.h"
+#include "file_io.h"
 #include "fds.h"
 #include "fds_audio.h"
 #include "m2_timer.h"
@@ -251,12 +252,13 @@ static void fds_init_modified_ranges(struct board *board)
 	fds_block_list_free(block_list);
 }
 
-static void fds_write_ips_save(struct board *board)
+static void fds_write_save(struct board *board)
 {
 	struct fds_block_list *block_list;
 	struct range_list *range, *new_range;
 	struct range_list *dirty_blocks;
 	size_t side_size;
+	struct rom fds_image;
 	off_t offset;
 	int i;
 
@@ -266,9 +268,55 @@ static void fds_write_ips_save(struct board *board)
 
 	/* printf("flushing dirty disk data\n"); */
 
+	if (0) {
+		size_t buffer_size;
+		uint8_t *buffer;
+		char *save_file;
+
+		buffer_size = board->emu->rom->buffer_size;
+		buffer = malloc(buffer_size);
+
+		if (!buffer)
+			return;
+
+		memcpy(buffer, board->emu->rom->buffer, buffer_size);
+		fds_image.buffer = buffer;
+		fds_image.offset = board->emu->rom->offset;
+		fds_image.buffer_size = buffer_size;
+		fds_image.disk_side_size = board->emu->rom->disk_side_size;
+
+		if (fds_convert_to_fds(&fds_image))
+			return;
+
+		buffer_size /= 65500;
+		buffer_size *= 65500;
+		buffer_size += 16;
+
+		save_file = config_get_path(board->emu->config,
+						CONFIG_DATA_DIR_FDS_SAVE,
+						board->emu->save_file, 1);
+
+		if (!save_file)
+			return;
+
+		if (buffer_size && writefile(save_file, buffer, buffer_size)) {
+			log_err("failed to write FDS save file \"%s\"\n",
+				save_file);
+		}
+
+		if (save_file)
+			free(save_file);
+
+		free(buffer);
+
+		return;
+
+	}
+
 	fds_validate_image(board->emu->rom, &block_list, 0);
 	if (!block_list)
 		return;
+
 
 	offset = 0;
 	for (i = 0; i < block_list->total_entries; i++) {
@@ -339,8 +387,7 @@ static void fds_set_eof(struct board *board)
 	cpu_set_overclock_allowed(board->emu->cpu, 1);
 
 	if (_dirty_flag) {
-		/* fds_write_ips_file(board); */
-		fds_write_ips_save(board);
+		fds_write_save(board);
 		_dirty_flag = 0;
 	}
 
@@ -428,7 +475,7 @@ static int fds_init(struct board *board)
 static void fds_cleanup(struct board *board)
 {
 	if (_dirty_flag) {
-		fds_write_ips_save(board);
+		fds_write_save(board);
 	}
 	free_range_list(&board->modified_ranges);
 	input_disconnect_handlers(fds_handlers);
