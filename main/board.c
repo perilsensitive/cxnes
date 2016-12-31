@@ -1663,8 +1663,6 @@ static int board_apply_fds_save(struct board *board)
 
 	orig_sides = board->emu->rom->buffer_size / 65500;
 
-	if (board->info->board_type == BOARD_TYPE_FDS)
-		return -1;
 	save_file = config_get_path(board->emu->config,
 	                            CONFIG_DATA_DIR_FDS_SAVE,
 	                            board->emu->save_file, 1);
@@ -1941,12 +1939,7 @@ int board_init(struct emu *emu, struct rom *rom)
 	emu_load_cheat(board->emu);
 	board_init_dipswitches(board);
 	if (board->info->board_type == BOARD_TYPE_FDS) {
-		size_t size = emu->rom->buffer_size;
-		size /= 65500;
-		size *= 65500;
-		size += 16;
 		board_apply_fds_save(board);
-		writefile("foo.fds", emu->rom->buffer, size);
 	} else {
 		board_apply_ips_save(board);
 	}
