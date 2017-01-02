@@ -373,12 +373,13 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
      This has all gaps of standard length ("standard" being what the
      BIOS/hardware would expect to have present when reading or would
      create when writing), block start marks are present as are
-     CRCs. sides are 65500 bytes each.  This is the format used
-     internally by cxnes.
+     CRCs. Each side is at least 65500 bytes in size, but may be larger
+     if required (all sides concatenated in the same file must be the
+     same size however).  This is the format used internally by cxNES.
 
    - QD format (Nintendo's own format used by its emulators)
-     Similar to FDS format but with no 16-byte header, CRCs are
-     present but not gaps nor block start marks. Sides are 65536 bytes
+     Similar to FDS format but with no 16-byte header. CRCs are
+     present but not gaps or block start marks. Sides are 65536 bytes
      each; this is odd as the QuickDisks Nintendo used only held 65500
      bytes.  Note that at least one official Nintendo disk image in
      this format doesn't have correct CRCs; all CRC bytes are set to
@@ -392,12 +393,12 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
      above formats are acceptable (all sides must be in the same
      format however, and with only one fwNES header).
 
-     cxNES converts all formats to headered FDS for patching, then back
-     to raw afterward when actually booting the image.  This is for
-     compatibility with the majority of FDS patches which assume a
-     headered FDS image.  If you have a patch that requires a different
-     format, you'll probably need to apply it directly to the image
-     using a separate application.
+     cxNES converts all formats to headered FDS in memory for
+     patching, then back to raw afterward when actually booting the
+     image.  This is for compatibility with the majority of FDS
+     patches which assume a headered FDS image.  If you have a patch
+     that requires a different format, you'll probably need to apply
+     it directly to the image using a separate application.
 
      cxNES saves writes to the disk image in IPS format (with a .sav
      extension however); this allows the original disk image to remain

@@ -422,7 +422,7 @@ static int fds_init(struct board *board)
 			     fds_bios_misc);
 	cpu_set_read_handler(emu->cpu, 0xefaf, 1, 0,
 			     fds_bios_misc);
-	cpu_set_read_handler(emu->cpu, 0xeedf, 1, 0,
+	cpu_set_read_handler(emu->cpu, 0xef44, 1, 0,
 			     fds_bios_misc);
 	cpu_set_read_handler(emu->cpu, 0xe682, 1, 0,
 			     fds_bios_misc);
@@ -1549,7 +1549,7 @@ static CPU_READ_HANDLER(fds_bios_misc)
 			value = cpu_peek(emu->cpu, 0xefcd);
 		}
 		break;
-	case 0xeedf:
+	case 0xef44:
 		/* Disable the initial title screen check for disk
 		   presence (will automatically insert disk at reset
 		   (hard or soft) and select disk 1, side A).
