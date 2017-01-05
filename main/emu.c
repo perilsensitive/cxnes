@@ -1246,6 +1246,8 @@ static int emu_set_rom_file(struct emu *emu, const char *rom_file)
 	rom_ext = strrchr(rom_file, '.');
 	if (!rom_ext)
 		len += 4;
+	else
+		len += 4 - strlen(rom_ext);
 
 	emu->save_file = malloc(len);
 	emu->cfg_file = malloc(len);

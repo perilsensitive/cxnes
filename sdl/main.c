@@ -442,6 +442,7 @@ int save_screenshot(void)
 static int main_loop(struct emu *emu)
 {
 	int last_audio_buffer_check = 1;
+
 #if __unix__
 	if (screensaver_deactivate_delay) {
 		screensaver_counter = emu->current_framerate *

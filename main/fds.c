@@ -313,10 +313,10 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
 					block_size = data_size + 1;
 					prev_block_type = 4;
 					block_list->entries[block_list->total_entries - 1].crc32 =
-						crc32buf(&data[offset], block_size, NULL);
+						crc32buf(&data[offset + 1], block_size - 1, NULL /*&crc32_tmp*/);
 					sha1_init(&sha1);
 					sha1_write(&sha1,
-						   (const char *)&data[offset], block_size);
+						   (const char *)&data[offset + 1], block_size - 1);
 					memcpy(block_list->entries[block_list->total_entries - 1].sha1,
 					       sha1_result(&sha1), 20);
 				}
