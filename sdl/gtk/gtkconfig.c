@@ -35,6 +35,15 @@ void int_scale_callback(GtkScale *scale, gpointer user_data)
 	*ptr = gtk_range_get_value(GTK_RANGE(scale));
 }
 
+void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
+{
+	int *ptr;
+
+	ptr = (int *)user_data;
+
+	*ptr = gtk_check_menu_item_get_active(item);
+}
+
 void toggle_callback(GtkToggleButton *toggle, gpointer user_data)
 {
 	int *ptr;
@@ -423,6 +432,31 @@ GtkWidget *config_checkbox(GtkWidget *dialog,
 			 checkbox);
 
 	return checkbox;
+}
+
+GtkWidget *config_check_menu_item(GtkWidget *menu, const char *mnemonic,
+                                  struct config *config, const char *name)
+{
+	GtkWidget *item;
+	int *data;
+
+	item = gtk_check_menu_item_new_with_mnemonic(mnemonic);
+	if (!item)
+		return NULL;
+
+	data = config_get_data_ptr(config, name);
+
+	g_object_set_data(G_OBJECT(item), "config_struct", config);
+	g_object_set_data(G_OBJECT(item), "config_name", (char *)name);
+
+	g_signal_connect(G_OBJECT(item), "toggled",
+			 G_CALLBACK(menu_item_toggle_callback), data);
+
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), *data);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	return item;
 }
 
 GtkWidget *config_int_spinbutton(GtkWidget *dialog,
@@ -1073,7 +1107,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	GtkWidget *dialog_box, *box, *box2;
 	GtkWidget *check;
 	GtkWidget *tmp;
-	GtkWidget *emu_frame, *input_frame, *fds_frame, *ines_frame;
+	GtkWidget *emu_frame, *input_frame, *ines_frame;
 	GtkWidget *state_frame;
 	GtkWidget *cheats_frame;
 	GtkWidget *grid;
@@ -1282,42 +1316,6 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 				config,
 				"guess_system_type_from_filename");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
-	fds_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new_with_mnemonic(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Famicom Disk System Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(fds_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(fds_frame), GTK_SHADOW_NONE);
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(fds_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), fds_frame, 1, 2, 1, 1);
-
-	check = config_checkbox(dialog,
-				"Use _high-level disk I/O",
-				config,
-				"fds_bios_patch_enabled");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"Enable automatic _disk change",
-				config,
-				"fds_auto_disk_change_enabled");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"_Skip BIOS title screen",
-				config,
-				"fds_hide_bios_title_screen");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"S_kip license screen",
-				config,
-				"fds_hide_license_screen");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"U_se IPS patch for FDS save file",
-				config,
-				"fds_use_patch_for_saves");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
 }
 
 static void configuration_setup_path(GtkWidget *dialog, struct config *config)

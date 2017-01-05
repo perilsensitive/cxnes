@@ -72,6 +72,10 @@ extern GtkWidget *config_checkbox(GtkWidget *dialog,
 				  const char *label,
 				  struct config *config,
 				  const char *name);
+extern GtkWidget *config_check_menu_item(GtkWidget *menu,
+				         const char *label,
+				         struct config *config,
+				         const char *name);
 extern GtkWidget *config_int_spinbutton(GtkWidget *dialog,
 					struct config *config,
 					const char *name);

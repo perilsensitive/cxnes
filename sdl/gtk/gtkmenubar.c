@@ -1451,6 +1451,26 @@ static void window_size_menu_show_callback(GtkWidget *widget, gpointer userdata)
 	}
 }
 
+static GtkWidget *gui_build_fds_config_menu(void)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	config_check_menu_item(menu, "_High-level disk I/O",
+	                       emu->config, "fds_bios_patch_enabled");
+	config_check_menu_item(menu, "_Automatic disk change",
+	                       emu->config, "fds_auto_disk_change_enabled");
+	config_check_menu_item(menu, "_Skip BIOS title screen",
+	                       emu->config, "fds_hide_bios_title_screen");
+	config_check_menu_item(menu, "S_kip license screen",
+	                       emu->config, "fds_hide_license_screen");
+	config_check_menu_item(menu, "Sa_ve changes as patch",
+	                       emu->config, "fds_use_patch_for_saves");
+
+	return menu;
+}
+
 static GtkWidget *gui_build_window_size_menu(void)
 {
 	GtkWidget *menu;
@@ -1619,6 +1639,8 @@ static GtkWidget *gui_build_emulator_menu(void)
 static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 {
 	GtkMenuShell *menu;
+	GtkWidget *item;
+	GtkWidget *submenu;
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
@@ -1658,6 +1680,12 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 	gui_add_menu_item(menu, "_Joystick Info...",
 			  gui_joystick_dialog, gtkwindow,
 			  NULL);
+
+	item = gui_add_menu_item(menu, "_FDS Options", NULL, NULL, NULL);
+	submenu = gui_build_fds_config_menu();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
 	return GTK_WIDGET(menu);
 }
