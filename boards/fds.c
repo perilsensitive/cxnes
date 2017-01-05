@@ -265,7 +265,7 @@ static void fds_write_save(struct board *board)
 
 	/* printf("flushing dirty disk data\n"); */
 
-	if (0) {
+	if (!board->emu->config->fds_use_patch_for_saves) {
 		size_t buffer_size;
 		uint8_t *buffer;
 		char *save_file;

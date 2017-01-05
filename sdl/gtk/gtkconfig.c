@@ -1312,6 +1312,11 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 				config,
 				"fds_hide_license_screen");
 	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
+	check = config_checkbox(dialog,
+				"U_se IPS patch for FDS save file",
+				config,
+				"fds_use_patch_for_saves");
+	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
 }
 
