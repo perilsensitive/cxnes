@@ -1451,6 +1451,58 @@ static void window_size_menu_show_callback(GtkWidget *widget, gpointer userdata)
 	}
 }
 
+static GtkWidget *gui_build_input_config_menu(gpointer userdata)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	config_check_menu_item(menu, "_Mask opposite controller directions",
+	                       emu->config, "mask_opposite_directions");
+	config_check_menu_item(menu, "_Map Start/Select to 'Insert Coin' for VS. System games",
+	                       emu->config, "vs_coin_on_start");
+	config_check_menu_item(menu, "Swap Start/Select for VS. System games",
+	                       emu->config, "vs_swap_start_select");
+	config_check_menu_item(menu, "SDL GameController API Support",
+	                       emu->config, "gamecontroller");
+
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Input Binding Configuration...",
+			  gui_binding_configuration_dialog, userdata,
+			  NULL);
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Joystick Info...",
+			  gui_joystick_dialog, userdata,
+			  NULL);
+
+	return menu;
+}
+
+static GtkWidget *gui_build_video_config_menu(gpointer userdata)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	config_check_menu_item(menu, "_VSync", emu->config, "vsync");
+	config_check_menu_item(menu, "_Full screen at startup",
+	                       emu->config, "fullscreen");
+	config_check_menu_item(menu, "_Hide mouse cursor automatically",
+	                       emu->config, "autohide_cursor");
+	config_check_menu_item(menu, "_Scanline renderer",
+	                       emu->config, "scanline_renderer_enabled");
+
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
+			  gui_video_configuration_dialog, userdata,
+			  NULL);
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Scaler Configuration...",
+			  gui_scaler_configuration_dialog, userdata,
+			  NULL);
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "Pa_lette Configuration...",
+			  gui_palette_configuration_dialog, userdata,
+			  NULL);
+
+	return menu;
+}
+
 static GtkWidget *gui_build_fds_config_menu(void)
 {
 	GtkWidget *menu;
@@ -1461,12 +1513,54 @@ static GtkWidget *gui_build_fds_config_menu(void)
 	                       emu->config, "fds_bios_patch_enabled");
 	config_check_menu_item(menu, "_Automatic disk change",
 	                       emu->config, "fds_auto_disk_change_enabled");
-	config_check_menu_item(menu, "_Skip BIOS title screen",
-	                       emu->config, "fds_hide_bios_title_screen");
-	config_check_menu_item(menu, "S_kip license screen",
-	                       emu->config, "fds_hide_license_screen");
-	config_check_menu_item(menu, "Sa_ve changes as patch",
+	config_check_menu_item(menu, "_Save changes as patch",
 	                       emu->config, "fds_use_patch_for_saves");
+	config_check_menu_item(menu, "Skip _BIOS title screen",
+	                       emu->config, "fds_hide_bios_title_screen");
+	config_check_menu_item(menu, "Skip _license screen",
+	                       emu->config, "fds_hide_license_screen");
+
+	return menu;
+}
+
+static GtkWidget *gui_build_cheat_config_menu(gpointer userdata)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	config_check_menu_item(menu, "_Load Cheats on ROM Load",
+	                       emu->config, "autoload_cheats");
+	config_check_menu_item(menu, "_Save Cheats on ROM Close",
+	                       emu->config, "autosave_cheats");
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cheats...",
+	                  gui_cheat_dialog, userdata, NULL);
+
+	return menu;
+}
+
+static GtkWidget *gui_build_emulator_config_menu(void)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	config_check_menu_item(menu, "ROM _database",
+	                       emu->config, "db_enabled");
+	config_check_menu_item(menu, "Run in _background",
+	                       emu->config, "run_in_background");
+	config_check_menu_item(menu, "Run in background for _NSFs",
+	                       emu->config, "nsf_run_in_background");
+	config_check_menu_item(menu, "_Restore State on ROM Load",
+	                       emu->config, "autoload_state");
+	config_check_menu_item(menu, "_Save State on ROM Close",
+	                       emu->config, "autosave_state");
+	config_check_menu_item(menu, "_Autopatch",
+	                       emu->config, "autopatch_enabled");
+	config_check_menu_item(menu, "_Auto-WRAM (iNES Only)",
+	                       emu->config, "auto_wram");
+	config_check_menu_item(menu, "_Guess System Type from Filename",
+	                       emu->config, "guess_system_type_from_filename");
 
 	return menu;
 }
@@ -1644,29 +1738,14 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
-	gui_add_menu_item(menu, "_Video Configuration...",
-			  gui_video_configuration_dialog, gtkwindow,
-			  NULL);
-	gui_add_menu_item(menu, "_Scaler Configuration...",
-			  gui_scaler_configuration_dialog, gtkwindow,
-			  NULL);
-	gui_add_menu_item(menu, "Pa_lette Configuration...",
-			  gui_palette_configuration_dialog, gtkwindow,
-			  NULL);
 	gui_add_menu_item(menu, "_Audio Configuration...",
 			  gui_audio_configuration_dialog, gtkwindow,
 			  NULL);
 	gui_add_menu_item(menu, "V_olume Control...",
 			  gui_volume_control_dialog, gtkwindow,
 			  NULL);
-	gui_add_menu_item(menu, "_Input Binding Configuration...",
-			  gui_binding_configuration_dialog, gtkwindow,
-			  NULL);
 	gui_add_menu_item(menu, "_Path Configuration...",
 			  gui_path_configuration_dialog, gtkwindow,
-			  NULL);
-	gui_add_menu_item(menu, "_Cheats...",
-			  gui_cheat_dialog, gtkwindow,
 			  NULL);
 	gui_add_menu_item(menu, "Overcloc_king Configuration...",
 			  gui_overclocking_configuration_dialog, gtkwindow,
@@ -1677,15 +1756,26 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 	gui_add_menu_item(menu, "_ROM-Specific Configuration...",
 			  gui_rom_configuration_dialog, gtkwindow,
 			  is_sensitive_if_loaded);
-	gui_add_menu_item(menu, "_Joystick Info...",
-			  gui_joystick_dialog, gtkwindow,
-			  NULL);
+
+	item = gui_add_menu_item(menu, "_Emulator Options", NULL, NULL, NULL);
+	submenu = gui_build_emulator_config_menu();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	item = gui_add_menu_item(menu, "_Video Options", NULL, NULL, NULL);
+	submenu = gui_build_video_config_menu(gtkwindow);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	item = gui_add_menu_item(menu, "_Input Options", NULL, NULL, NULL);
+	submenu = gui_build_input_config_menu(gtkwindow);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	item = gui_add_menu_item(menu, "_Cheat Options", NULL, NULL, NULL);
+	submenu = gui_build_cheat_config_menu(gtkwindow);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	item = gui_add_menu_item(menu, "_FDS Options", NULL, NULL, NULL);
 	submenu = gui_build_fds_config_menu();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
 	return GTK_WIDGET(menu);
 }

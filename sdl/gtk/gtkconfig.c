@@ -1107,9 +1107,7 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	GtkWidget *dialog_box, *box, *box2;
 	GtkWidget *check;
 	GtkWidget *tmp;
-	GtkWidget *emu_frame, *input_frame, *ines_frame;
-	GtkWidget *state_frame;
-	GtkWidget *cheats_frame;
+	GtkWidget *emu_frame, *input_frame;
 	GtkWidget *grid;
 	GtkWidget *combo;
 	GtkWidget *main_grid;
@@ -1147,22 +1145,6 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo);
 	gtk_grid_attach(GTK_GRID(grid), tmp, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), combo, 1, 0, 1, 1);
-
-	check= config_checkbox(dialog, "Enable _ROM database", config,
-			       "db_enabled");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
-	check = config_checkbox(dialog, "Run in _background", config,
-					     "run_in_background");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
-	check = config_checkbox(dialog, "Run in background when playing _NSFs", config,
-					     "nsf_run_in_background");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog, "Auto_patch enabled", config,
-					     "autopatch_enabled");
-
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 
 	tmp = gtk_label_new_with_mnemonic("_Alternate emulation speed:");
 	box2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -1206,27 +1188,6 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_container_add(GTK_CONTAINER(input_frame), box);
 	gtk_grid_attach(GTK_GRID(main_grid), input_frame, 1, 0, 1, 1);
 
-	check = config_checkbox(dialog,
-				"P_revent Up+Down and Left+Right on controllers",
-				config,
-				"mask_opposite_directions");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"_Map Start/Select to 'Insert Coin' for VS. System games",
-				config,
-				"vs_coin_on_start");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"S_wap Start and Select for VS. System games",
-				config,
-				"vs_swap_start_select");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"SDL _GameController API Support",
-				config,
-				"gamecontroller");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
 	tmp = gtk_label_new_with_mnemonic("_Turbo rate:");
 	box2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	gtk_box_pack_start(GTK_BOX(box), box2, FALSE, FALSE, 0);
@@ -1242,45 +1203,6 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 
 	gtk_box_pack_start(GTK_BOX(box2), scale, FALSE, FALSE, 0);
 
-	cheats_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new_with_mnemonic(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Cheat Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(cheats_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(cheats_frame), GTK_SHADOW_NONE);
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(cheats_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), cheats_frame, 0, 1, 1, 1);
-
-	check = config_checkbox(dialog,
-				"Automatically load cheats when _loading ROM",
-				config,
-				"autoload_cheats");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"Automatically save cheats when _closing ROM",
-				config,
-				"autosave_cheats");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-
-	state_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new_with_mnemonic(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Savestate Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(state_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(state_frame), GTK_SHADOW_NONE);
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(state_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), state_frame, 0, 2, 1, 1);
-
-	check = config_checkbox(dialog,
-				"Automatically load state when l_oading ROM",
-				config,
-				"autoload_state");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"Automatically save state when cl_osing ROM",
-				config,
-				"autosave_state");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 #if 0
 	check = config_checkbox(dialog,
 				"Periodically save state _while playing",
@@ -1296,26 +1218,6 @@ static void configuration_setup_misc(GtkWidget *dialog, struct config *config)
 	gtk_box_pack_start(GTK_BOX(box2), tmp, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(box2), spinbutton, FALSE, FALSE, 0);
 #endif					   
-
-	ines_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new_with_mnemonic(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>ROM Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(ines_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(ines_frame), GTK_SHADOW_NONE);
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(ines_frame), box);
-	gtk_grid_attach(GTK_GRID(main_grid), ines_frame, 1, 1, 1, 1);
-	
-	check = config_checkbox(dialog,
-				"_Allocate 8KiB WRAM at $6000 (if possible) (iNES only)",
-				config,
-				"auto_wram");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-	check = config_checkbox(dialog,
-				"_Guess system type from ROM filename",
-				config,
-				"guess_system_type_from_filename");
-	gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
 }
 
 static void configuration_setup_path(GtkWidget *dialog, struct config *config)

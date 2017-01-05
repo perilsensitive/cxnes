@@ -326,11 +326,7 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	GtkWidget *display_options_frame;
 	GtkWidget *display_options_grid;
 
-	GtkWidget *check_fullscreen;
-	GtkWidget *check_vsync;
-	GtkWidget *check_autohide_cursor;
 	GtkWidget *combo_sprite_limit_mode;
-	GtkWidget *check_scanline_renderer;
 	GtkWidget *box;
 
 	GtkWidget *tmp;
@@ -348,25 +344,6 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 	gtk_box_pack_start(GTK_BOX(box), display_options_grid,
 			   FALSE, FALSE, 0);
 
-	check_vsync = config_checkbox(dialog, "_VSync",
-					   config, "vsync");
-
-	check_fullscreen = config_checkbox(dialog, "Switch to _fullscreen mode at startup",
-					   config, "fullscreen");
-
-	check_autohide_cursor = config_checkbox(dialog, "Automatically _hide mouse cursor",
-						config, "autohide_cursor");
-
-	check_scanline_renderer = config_checkbox(dialog,"Use scanline _renderer",
-					       config, "scanline_renderer_enabled");
-
-	gtk_grid_attach(GTK_GRID(display_options_grid), check_vsync,
-			0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_options_grid), check_fullscreen,
-			0, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_options_grid), check_autohide_cursor,
-			0, 2, 1, 1);
-
 	tmp = gtk_label_new_with_mnemonic("Allow more than 8 _sprites per scanline?");
 	combo_sprite_limit_mode = config_combo_box(dialog, config, "sprite_limit_mode");
 	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_sprite_limit_mode);
@@ -374,8 +351,6 @@ static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config 
 			0, 4, 1, 1);
 	gtk_grid_attach(GTK_GRID(display_options_grid), combo_sprite_limit_mode,
 			1, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_options_grid), check_scanline_renderer,
-			0, 5, 1, 1);
 
 	return display_options_frame;
 }
