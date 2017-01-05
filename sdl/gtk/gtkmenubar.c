@@ -1476,6 +1476,20 @@ static GtkWidget *gui_build_input_config_menu(gpointer userdata)
 	return menu;
 }
 
+static GtkWidget *gui_build_audio_config_menu(gpointer userdata)
+{
+	GtkWidget *menu;
+
+	menu = gtk_menu_new();
+
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Audio Configuration...",
+			  gui_audio_configuration_dialog, userdata, NULL);
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "V_olume Control...",
+			  gui_volume_control_dialog, userdata, NULL);
+
+	return menu;
+}
+
 static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 {
 	GtkWidget *menu;
@@ -1539,7 +1553,7 @@ static GtkWidget *gui_build_cheat_config_menu(gpointer userdata)
 	return menu;
 }
 
-static GtkWidget *gui_build_emulator_config_menu(void)
+static GtkWidget *gui_build_emulation_config_menu(gpointer userdata)
 {
 	GtkWidget *menu;
 
@@ -1562,6 +1576,8 @@ static GtkWidget *gui_build_emulator_config_menu(void)
 	config_check_menu_item(menu, "_Guess System Type from Filename",
 	                       emu->config, "guess_system_type_from_filename");
 
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "Overcloc_king Configuration...",
+			  gui_overclocking_configuration_dialog, userdata, NULL);
 	return menu;
 }
 
@@ -1738,17 +1754,8 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 
 	menu = GTK_MENU_SHELL(gtk_menu_new());
 
-	gui_add_menu_item(menu, "_Audio Configuration...",
-			  gui_audio_configuration_dialog, gtkwindow,
-			  NULL);
-	gui_add_menu_item(menu, "V_olume Control...",
-			  gui_volume_control_dialog, gtkwindow,
-			  NULL);
 	gui_add_menu_item(menu, "_Path Configuration...",
 			  gui_path_configuration_dialog, gtkwindow,
-			  NULL);
-	gui_add_menu_item(menu, "Overcloc_king Configuration...",
-			  gui_overclocking_configuration_dialog, gtkwindow,
 			  NULL);
 	gui_add_menu_item(menu, "_Misc Configuration...",
 			  gui_misc_configuration_dialog, gtkwindow,
@@ -1757,12 +1764,16 @@ static GtkWidget *gui_build_options_menu(GtkWidget *gtkwindow)
 			  gui_rom_configuration_dialog, gtkwindow,
 			  is_sensitive_if_loaded);
 
-	item = gui_add_menu_item(menu, "_Emulator Options", NULL, NULL, NULL);
-	submenu = gui_build_emulator_config_menu();
+	item = gui_add_menu_item(menu, "_Emulation Options", NULL, NULL, NULL);
+	submenu = gui_build_emulation_config_menu(gtkwindow);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	item = gui_add_menu_item(menu, "_Video Options", NULL, NULL, NULL);
 	submenu = gui_build_video_config_menu(gtkwindow);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+
+	item = gui_add_menu_item(menu, "_Audio Options", NULL, NULL, NULL);
+	submenu = gui_build_audio_config_menu(gtkwindow);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
 
 	item = gui_add_menu_item(menu, "_Input Options", NULL, NULL, NULL);
