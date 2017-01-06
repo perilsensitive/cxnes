@@ -38,10 +38,27 @@ void int_scale_callback(GtkScale *scale, gpointer user_data)
 void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 {
 	int *ptr;
+	int is_rom_config;
+	struct config *config;
+	int (*apply_config)(struct emu *);
 
 	ptr = (int *)user_data;
 
 	*ptr = gtk_check_menu_item_get_active(item);
+	config = g_object_get_data(G_OBJECT(item), "config_struct");
+	apply_config = g_object_get_data(G_OBJECT(item), "apply_config");
+
+	is_rom_config = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item),
+	                                                  "is_rom_config"));
+
+	if (apply_config)
+		apply_config(emu);
+
+	if (is_rom_config) {
+		emu_save_rom_config(emu);
+	} else {
+		config_save_main_config(config);
+	}
 }
 
 void toggle_callback(GtkToggleButton *toggle, gpointer user_data)
@@ -69,6 +86,26 @@ void spinbutton_double_callback(GtkSpinButton *button, gpointer user_data)
 	ptr = (double *)user_data;
 
 	*ptr = gtk_spin_button_get_value(button);
+}
+
+static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
+{
+	char *value;
+	char **ptr;
+
+	if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget)))
+		return;
+
+	ptr = (char **)userdata;
+	value = strdup(g_object_get_data(G_OBJECT(widget), "value"));
+
+	if (*ptr)
+		free(*ptr);
+	*ptr = value;
+
+	video_apply_config(emu);
+	config_save_main_config(emu->config);
+
 }
 
 void combo_box_callback(GtkComboBox *combo, gpointer user_data)
@@ -274,6 +311,51 @@ void default_button_entry_cb(GtkDialog *dialog, gint response_id,
 	gtk_entry_set_text(GTK_ENTRY(widget), *ptr ? *ptr : "");
 }
 
+GtkWidget *config_radio_menu(GtkWidget *menu,
+				   struct config *config,
+				   const char *name)
+{
+	GtkWidget *item;
+	GSList *group;
+	int i;
+	const char **data;
+	const char **valid_values;
+	const char **valid_value_names;
+	int valid_value_count;
+
+	menu = gtk_menu_new();
+	group = NULL;
+
+	if (!menu)
+		return NULL;
+
+	data = config_get_data_ptr(config, name);
+	valid_values =
+		(const char **)config_get_valid_values(name,
+						       &valid_value_count,
+						       &valid_value_names);
+
+	g_object_set_data(G_OBJECT(menu), "config_struct", config);
+	g_object_set_data(G_OBJECT(menu), "config_name", (char *)name);
+
+	for (i = 0; i < valid_value_count; i++) {
+		item = gtk_radio_menu_item_new_with_mnemonic(group,
+		                                             valid_value_names[i]);
+		g_object_set_data(G_OBJECT(item), "value", (char *)valid_values[i]);
+		g_signal_connect(G_OBJECT(item), "activate",
+		                 G_CALLBACK(config_radio_menu_callback), data);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+		group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	}
+
+	/*
+	g_signal_connect(G_OBJECT(menu), "show",
+			 G_CALLBACK(config_radio_menu_show_callback), group);
+			 */
+
+	return menu;
+}
+
 GtkWidget *config_combo_box(GtkWidget *dialog,
 				   struct config *config,
 				   const char *name)
@@ -435,19 +517,28 @@ GtkWidget *config_checkbox(GtkWidget *dialog,
 }
 
 GtkWidget *config_check_menu_item(GtkWidget *menu, const char *mnemonic,
-                                  struct config *config, const char *name)
+                                  struct config *config, const char *name,
+				  int (*apply_config)(struct emu *))
 {
 	GtkWidget *item;
+	int is_rom_config;
 	int *data;
+
+	data = config_get_data_ptr(config, name);
+	is_rom_config = config_is_rom_config(name);
+
+	if (!data || (is_rom_config < 0))
+		return NULL;
 
 	item = gtk_check_menu_item_new_with_mnemonic(mnemonic);
 	if (!item)
 		return NULL;
 
-	data = config_get_data_ptr(config, name);
-
 	g_object_set_data(G_OBJECT(item), "config_struct", config);
 	g_object_set_data(G_OBJECT(item), "config_name", (char *)name);
+	g_object_set_data(G_OBJECT(item), "is_rom_config",
+	                  GINT_TO_POINTER(is_rom_config));
+	g_object_set_data(G_OBJECT(item), "apply_config", apply_config);
 
 	g_signal_connect(G_OBJECT(item), "toggled",
 			 G_CALLBACK(menu_item_toggle_callback), data);

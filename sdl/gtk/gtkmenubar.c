@@ -1458,13 +1458,13 @@ static GtkWidget *gui_build_input_config_menu(gpointer userdata)
 	menu = gtk_menu_new();
 
 	config_check_menu_item(menu, "_Mask opposite controller directions",
-	                       emu->config, "mask_opposite_directions");
+	                       emu->config, "mask_opposite_directions", NULL);
 	config_check_menu_item(menu, "_Map Start/Select to 'Insert Coin' for VS. System games",
-	                       emu->config, "vs_coin_on_start");
+	                       emu->config, "vs_coin_on_start", NULL);
 	config_check_menu_item(menu, "Swap Start/Select for VS. System games",
-	                       emu->config, "vs_swap_start_select");
+	                       emu->config, "vs_swap_start_select", NULL);
 	config_check_menu_item(menu, "SDL GameController API Support",
-	                       emu->config, "gamecontroller");
+	                       emu->config, "gamecontroller", NULL);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Input Binding Configuration...",
 			  gui_binding_configuration_dialog, userdata,
@@ -1496,13 +1496,13 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 
 	menu = gtk_menu_new();
 
-	config_check_menu_item(menu, "_VSync", emu->config, "vsync");
+	config_check_menu_item(menu, "_VSync", emu->config, "vsync", NULL);
 	config_check_menu_item(menu, "_Full screen at startup",
-	                       emu->config, "fullscreen");
+	                       emu->config, "fullscreen", NULL);
 	config_check_menu_item(menu, "_Hide mouse cursor automatically",
-	                       emu->config, "autohide_cursor");
+	                       emu->config, "autohide_cursor", NULL);
 	config_check_menu_item(menu, "_Scanline renderer",
-	                       emu->config, "scanline_renderer_enabled");
+	                       emu->config, "scanline_renderer_enabled", NULL);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
 			  gui_video_configuration_dialog, userdata,
@@ -1524,15 +1524,15 @@ static GtkWidget *gui_build_fds_config_menu(void)
 	menu = gtk_menu_new();
 
 	config_check_menu_item(menu, "_High-level disk I/O",
-	                       emu->config, "fds_bios_patch_enabled");
+	                       emu->config, "fds_bios_patch_enabled", NULL);
 	config_check_menu_item(menu, "_Automatic disk change",
-	                       emu->config, "fds_auto_disk_change_enabled");
+	                       emu->config, "fds_auto_disk_change_enabled", NULL);
 	config_check_menu_item(menu, "_Save changes as patch",
-	                       emu->config, "fds_use_patch_for_saves");
+	                       emu->config, "fds_use_patch_for_saves", NULL);
 	config_check_menu_item(menu, "Skip _BIOS title screen",
-	                       emu->config, "fds_hide_bios_title_screen");
+	                       emu->config, "fds_hide_bios_title_screen", NULL);
 	config_check_menu_item(menu, "Skip _license screen",
-	                       emu->config, "fds_hide_license_screen");
+	                       emu->config, "fds_hide_license_screen", NULL);
 
 	return menu;
 }
@@ -1544,9 +1544,9 @@ static GtkWidget *gui_build_cheat_config_menu(gpointer userdata)
 	menu = gtk_menu_new();
 
 	config_check_menu_item(menu, "_Load Cheats on ROM Load",
-	                       emu->config, "autoload_cheats");
+	                       emu->config, "autoload_cheats", NULL);
 	config_check_menu_item(menu, "_Save Cheats on ROM Close",
-	                       emu->config, "autosave_cheats");
+	                       emu->config, "autosave_cheats", NULL);
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cheats...",
 	                  gui_cheat_dialog, userdata, NULL);
 
@@ -1560,21 +1560,21 @@ static GtkWidget *gui_build_emulation_config_menu(gpointer userdata)
 	menu = gtk_menu_new();
 
 	config_check_menu_item(menu, "ROM _database",
-	                       emu->config, "db_enabled");
+	                       emu->config, "db_enabled", NULL);
 	config_check_menu_item(menu, "Run in _background",
-	                       emu->config, "run_in_background");
+	                       emu->config, "run_in_background", NULL);
 	config_check_menu_item(menu, "Run in background for _NSFs",
-	                       emu->config, "nsf_run_in_background");
+	                       emu->config, "nsf_run_in_background", NULL);
 	config_check_menu_item(menu, "_Restore State on ROM Load",
-	                       emu->config, "autoload_state");
+	                       emu->config, "autoload_state", NULL);
 	config_check_menu_item(menu, "_Save State on ROM Close",
-	                       emu->config, "autosave_state");
+	                       emu->config, "autosave_state", NULL);
 	config_check_menu_item(menu, "_Autopatch",
-	                       emu->config, "autopatch_enabled");
+	                       emu->config, "autopatch_enabled", NULL);
 	config_check_menu_item(menu, "_Auto-WRAM (iNES Only)",
-	                       emu->config, "auto_wram");
+	                       emu->config, "auto_wram", NULL);
 	config_check_menu_item(menu, "_Guess System Type from Filename",
-	                       emu->config, "guess_system_type_from_filename");
+	                       emu->config, "guess_system_type_from_filename", NULL);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "Overcloc_king Configuration...",
 			  gui_overclocking_configuration_dialog, userdata, NULL);

@@ -1777,6 +1777,26 @@ static struct config_parameter *get_config_parameter(const char *name)
 	return parameter;
 }
 
+int config_is_rom_config(const char *name)
+{
+	struct config_parameter *parameter;
+	int count;
+
+	parameter = get_config_parameter(name);
+	if (!parameter)
+		return -1;
+
+	count = sizeof(rom_config_parameters) /
+		sizeof(rom_config_parameters[0]);
+
+	if ((parameter >= rom_config_parameters) &&
+	    (parameter < rom_config_parameters + count)) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int config_get_int_min(const char *name)
 {
 	struct config_parameter *param;

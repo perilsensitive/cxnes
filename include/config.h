@@ -255,6 +255,7 @@ void config_shutdown(void);
 const void *config_get_valid_values(const char *name, int *count,
 				    const char ***value_names);
 
+int config_is_rom_config(const char *name);
 int config_get_int_min(const char *name);
 int config_get_int_max(const char *name);
 unsigned int config_get_unsigned_min(const char *name);
