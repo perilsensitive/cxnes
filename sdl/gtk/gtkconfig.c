@@ -61,6 +61,47 @@ void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 	}
 }
 
+void config_radio_menu_show_callback(GtkWidget *widget, gpointer userdata)
+{
+	GtkRadioMenuItem *item;
+	GSList *group;
+	struct config *config;
+	char *name;
+	char *value;
+	char *data;
+
+	group = userdata;
+
+	if (!group)
+		return;
+
+	config = g_object_get_data(G_OBJECT(widget), "config_struct");
+	name = g_object_get_data(G_OBJECT(widget), "config_name");
+	data = config_get_data_ptr(config, name); 
+
+	while (group) {
+		item = group->data;
+		group = group->next;
+
+		value = g_object_get_data(G_OBJECT(item), "value");
+
+		if (strcmp(data, value) != 0)
+			continue;
+
+		g_signal_handlers_block_by_func(G_OBJECT(item),
+						G_CALLBACK(menu_item_toggle_callback),
+						NULL);
+
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
+
+		g_signal_handlers_unblock_by_func(
+		    G_OBJECT(item),
+		    G_CALLBACK(menu_item_toggle_callback),
+		    NULL);
+	}
+
+}
+
 void toggle_callback(GtkToggleButton *toggle, gpointer user_data)
 {
 	int *ptr;
@@ -92,6 +133,9 @@ static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
 {
 	char *value;
 	char **ptr;
+	int is_rom_config;
+	struct config *config;
+	int (*apply_config)(struct emu *);
 
 	if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget)))
 		return;
@@ -103,9 +147,20 @@ static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
 		free(*ptr);
 	*ptr = value;
 
-	video_apply_config(emu);
-	config_save_main_config(emu->config);
+	config = g_object_get_data(G_OBJECT(widget), "config_struct");
+	apply_config = g_object_get_data(G_OBJECT(widget), "apply_config");
 
+	is_rom_config = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+	                                                  "is_rom_config"));
+
+	if (apply_config)
+		apply_config(emu);
+
+	if (is_rom_config) {
+		emu_save_rom_config(emu);
+	} else {
+		config_save_main_config(config);
+	}
 }
 
 void combo_box_callback(GtkComboBox *combo, gpointer user_data)
@@ -348,10 +403,8 @@ GtkWidget *config_radio_menu(GtkWidget *menu,
 		group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
 	}
 
-	/*
 	g_signal_connect(G_OBJECT(menu), "show",
 			 G_CALLBACK(config_radio_menu_show_callback), group);
-			 */
 
 	return menu;
 }
