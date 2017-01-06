@@ -1241,13 +1241,10 @@ static int emu_set_rom_file(struct emu *emu, const char *rom_file)
 	if (!emu->rom_path)
 		return -1;
 
-	len = strlen(emu->rom_file) + 1;
+	/* 1 for the null, plus 4 for possible '.' and extension */
+	len = strlen(emu->rom_file) + 1 + 4;
 	
 	rom_ext = strrchr(rom_file, '.');
-	if (!rom_ext)
-		len += 4;
-	else
-		len += 4 - strlen(rom_ext);
 
 	emu->save_file = malloc(len);
 	emu->cfg_file = malloc(len);
