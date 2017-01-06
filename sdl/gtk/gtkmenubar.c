@@ -1502,7 +1502,8 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	config_check_menu_item(menu, "_Hide mouse cursor automatically",
 	                       emu->config, "autohide_cursor", NULL);
 	config_check_menu_item(menu, "_Scanline renderer",
-	                       emu->config, "scanline_renderer_enabled", NULL);
+	                       emu->config, "scanline_renderer_enabled",
+			       emu_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
 			  gui_video_configuration_dialog, userdata,
