@@ -25,12 +25,9 @@
 
 extern struct emu *emu;
 
-static void video_filter_changed_callback(GtkComboBox *widget,
-                                          gpointer user_data);
-static void filter_settings_callback(GtkWidget *widget, gpointer user_data);
 static void ntsc_filter_preset_callback(GtkWidget *widget, gpointer user_data);
 
-static void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data);
+void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data);
 
 static void rgba_to_gdkrgba(uint32_t rgba, GdkRGBA *color)
 {
@@ -175,8 +172,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	GtkWidget *spin_pal_last_scanline;
 	GtkWidget *spin_pal_first_pixel;
 	GtkWidget *spin_pal_last_pixel;
-	GtkWidget *combo_video_filter;
-	GtkWidget *button_filter_settings;
 	GtkWidget *filter_grid;
 	GtkWidget *scale;
 
@@ -252,25 +247,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	gtk_box_pack_start(GTK_BOX(box), filter_grid,
 			   FALSE, FALSE, 0);
 
-	tmp = gtk_label_new_with_mnemonic("_Filter:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 0, 1, 1);
-	combo_video_filter = config_combo_box(dialog, config, "video_filter");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
-	gtk_grid_attach(GTK_GRID(filter_grid), combo_video_filter, 1, 0, 1, 1);
-
-	button_filter_settings = gtk_button_new_with_label("Settings...");
-	g_signal_connect(G_OBJECT(button_filter_settings), "clicked",
-			 G_CALLBACK(filter_settings_callback), dialog);
-	g_object_set_data(G_OBJECT(button_filter_settings), "combo",
-			  combo_video_filter);
-	g_signal_connect(G_OBJECT(combo_video_filter), "changed",
-	                          G_CALLBACK(video_filter_changed_callback),
-	                          button_filter_settings);
-	video_filter_changed_callback(GTK_COMBO_BOX(combo_video_filter),
-	                              button_filter_settings);
-	gtk_grid_attach(GTK_GRID(filter_grid), button_filter_settings, 2, 0, 1, 1);
-
 	tmp = config_checkbox(dialog, "Emulate scan_lines",
 			      config, "scanlines_enabled");
 	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 1, 1, 1);
@@ -282,7 +258,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	scale = config_int_scale(0, 100, 0, 100, dialog, config,
 			       "scanline_intensity");
 
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_video_filter);
 	gtk_grid_attach(GTK_GRID(filter_grid), scale, 1, 2, 2, 1);
 
 	return box;
@@ -410,38 +385,6 @@ static GtkWidget *create_ntsc_palette_config_frame(GtkWidget *dialog, struct con
 	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), combo_ntsc_rgb_decoder,
 			1, 2, 1, 1);
 
-#if 0
-	tmp = gtk_label_new("Sharpness:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 0, 1, 1);
-	spin_ntsc_sharpness = config_double_spinbutton(dialog, config, 0.01,
-							"ntsc_filter_sharpness");
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_sharpness, 3, 0, 1, 1);
-	tmp = gtk_label_new("Resolution:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 1, 1, 1);
-	spin_ntsc_resolution = config_double_spinbutton(dialog, config, 0.01,
-						 "ntsc_filter_resolution");
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_resolution, 3, 1, 1, 1);
-	tmp = gtk_label_new("Artifacts:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 2, 1, 1);
-	spin_ntsc_artifacts = config_double_spinbutton(dialog, config, 0.01,
-						      "ntsc_filter_artifacts");
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_artifacts, 3, 2, 1, 1);
-	tmp = gtk_label_new("Fringing:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 3, 1, 1);
-	spin_ntsc_fringing = config_double_spinbutton(dialog, config, 0.01,
-							"ntsc_filter_fringing");
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_fringing, 3, 3, 1, 1);
-	tmp = gtk_label_new("Bleed:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 4, 1, 1);
-	spin_ntsc_bleed = config_double_spinbutton(dialog, config, 0.01,
-						   "ntsc_filter_bleed");
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_bleed, 3, 4, 1, 1);
-#endif
 	return ntsc_palette_options_frame;
 }
 
@@ -591,20 +534,6 @@ void gui_palette_configuration_dialog(GtkWidget *widget, gpointer user_data)
 				 widget, user_data);
 }
 
-static void filter_settings_callback(GtkWidget *widget, gpointer user_data)
-{
-	GtkWidget *combo;
-	const gchar * type;
-
-	combo = g_object_get_data(G_OBJECT(widget), "combo");
-
-	type = gtk_combo_box_get_active_id(GTK_COMBO_BOX(combo));
-
-	if (type && strcasecmp(type, "ntsc") == 0) {
-		gui_ntsc_filter_settings_dialog(NULL, user_data);
-	}
-}
-
 static void configuration_setup_ntsc_filter(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *dialog_box;
@@ -717,23 +646,6 @@ static void configuration_setup_ntsc_filter(GtkWidget *dialog, struct config *co
 	gtk_box_pack_start(GTK_BOX(dialog_box), button_grid, FALSE, FALSE, 8);
 }
 
-static void video_filter_changed_callback(GtkComboBox *widget, gpointer user_data)
-{
-	GtkWidget *button;
-	gboolean sensitive;
-	const gchar *tmp;
-
-	button = user_data;
-	tmp = gtk_combo_box_get_active_id(widget);
-
-	if (tmp && strcmp(tmp, "ntsc") == 0)
-		sensitive = TRUE;
-	else
-		sensitive = FALSE;
-
-	gtk_widget_set_sensitive(button, sensitive);
-}
-
 static void ntsc_filter_preset_callback(GtkWidget *widget, gpointer user_data)
 {
 	GtkWidget *dialog;
@@ -765,7 +677,7 @@ static void ntsc_filter_preset_callback(GtkWidget *widget, gpointer user_data)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(bleed), presets[preset][4]);
 }
 
-static void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data)
+void gui_ntsc_filter_settings_dialog(GtkWidget *widget, gpointer user_data)
 {
 	gui_configuration_dialog("NTSC Filter Settings",
 				 configuration_setup_ntsc_filter, 0,

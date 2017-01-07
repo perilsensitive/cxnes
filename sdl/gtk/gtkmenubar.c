@@ -44,6 +44,7 @@ static void remember_input_devices_callback(GtkRadioMenuItem *widget,
 static void input_port_connect_callback(GtkWidget *widget, gpointer user_data);
 static GtkWidget *gui_build_input_menu(void);
 static GtkWidget *gui_build_system_type_menu(const int mask);
+extern void gui_ntsc_filter_settings_dialog(GtkWidget *, gpointer);
 extern void gui_volume_control_dialog(GtkWidget *, gpointer);
 extern void gui_cheat_dialog(GtkWidget *, gpointer);
 extern void gui_video_configuration_dialog(GtkWidget *, gpointer);
@@ -1492,7 +1493,7 @@ static GtkWidget *gui_build_audio_config_menu(gpointer userdata)
 
 static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 {
-	GtkWidget *menu;
+	GtkWidget *menu, *submenu;
 
 	menu = gtk_menu_new();
 
@@ -1515,8 +1516,16 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	                  "pal_pixel_aspect_ratio", emu_apply_config);
 	config_radio_menu(menu, "Scaling mode", emu->config,
 	                  "scaling_mode", emu_apply_config);
-	config_radio_menu(menu, "Software filter", emu->config,
-	                  "video_filter", emu_apply_config);
+
+	submenu = config_radio_menu(menu, "Software filter", emu->config,
+	                            "video_filter", emu_apply_config);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu),
+			      gtk_separator_menu_item_new());
+
+	gui_add_menu_item(GTK_MENU_SHELL(submenu), "NTSC filter settings...",
+	                  gui_ntsc_filter_settings_dialog, userdata, NULL);
+	
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
 			  gui_video_configuration_dialog, userdata,
