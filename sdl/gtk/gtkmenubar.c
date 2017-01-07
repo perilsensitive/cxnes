@@ -1504,9 +1504,19 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	config_check_menu_item(menu, "_Scanline renderer",
 	                       emu->config, "scanline_renderer_enabled",
 			       emu_apply_config);
+	config_check_menu_item(menu, "S_tretch to fit", emu->config,
+	                       "stretch_to_fit", video_apply_config);
 	config_radio_menu(menu, "S_prite Limit",
 	                  emu->config, "sprite_limit_mode",
 	                  emu_apply_config);
+	config_radio_menu(menu, "_NTSC pixel aspect ratio", emu->config,
+	                  "ntsc_pixel_aspect_ratio", emu_apply_config);
+	config_radio_menu(menu, "_PAL pixel aspect ratio", emu->config,
+	                  "pal_pixel_aspect_ratio", emu_apply_config);
+	config_radio_menu(menu, "Scaling mode", emu->config,
+	                  "scaling_mode", emu_apply_config);
+	config_radio_menu(menu, "Software filter", emu->config,
+	                  "video_filter", emu_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
 			  gui_video_configuration_dialog, userdata,
@@ -1563,25 +1573,46 @@ static GtkWidget *gui_build_emulation_config_menu(gpointer userdata)
 
 	menu = gtk_menu_new();
 
+	config_radio_menu(menu, "_Default console type", emu->config,
+	                  "preferred_console_type", emu_apply_config);
+	config_check_menu_item(menu, "_Use filename to guess system type",
+	                       emu->config, "guess_system_type_from_filename", NULL);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
 	config_check_menu_item(menu, "ROM _database",
 	                       emu->config, "db_enabled", NULL);
+	config_check_menu_item(menu, "_Auto-patch",
+	                       emu->config, "autopatch_enabled", NULL);
+	config_check_menu_item(menu, "_Auto-WRAM (iNES Only)",
+	                       emu->config, "auto_wram", NULL);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
 	config_check_menu_item(menu, "Run in _background",
 	                       emu->config, "run_in_background", NULL);
 	config_check_menu_item(menu, "Run in background for _NSFs",
 	                       emu->config, "nsf_run_in_background", NULL);
-	config_check_menu_item(menu, "_Restore State on ROM Load",
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
+	config_check_menu_item(menu, "_Restore state on ROM load",
 	                       emu->config, "autoload_state", NULL);
-	config_check_menu_item(menu, "_Save State on ROM Close",
+	config_check_menu_item(menu, "_Save state on ROM close",
 	                       emu->config, "autosave_state", NULL);
-	config_check_menu_item(menu, "_Autopatch",
-	                       emu->config, "autopatch_enabled", NULL);
-	config_check_menu_item(menu, "_Auto-WRAM (iNES Only)",
-	                       emu->config, "auto_wram", NULL);
-	config_check_menu_item(menu, "_Guess System Type from Filename",
-	                       emu->config, "guess_system_type_from_filename", NULL);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
+			      gtk_separator_menu_item_new());
+
+	config_radio_menu(menu, "_Log level", emu->config,
+	                  "loglevel", emu_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "Overcloc_king Configuration...",
 			  gui_overclocking_configuration_dialog, userdata, NULL);
+
 	return menu;
 }
 

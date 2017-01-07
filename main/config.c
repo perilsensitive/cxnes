@@ -244,7 +244,7 @@ static const char *valid_palettes[] = {
 };
 
 static const char *valid_aspect_ratio_names[] = {
-	"NTSC (8:7)", "PAL (1.3862:1)", "Square (1:1)",
+	"NTSC (8:7)", "PAL (11:8)", "Square (1:1)",
 };
 
 static const char *valid_aspect_ratios[] = {

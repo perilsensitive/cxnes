@@ -167,9 +167,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *scaler_grid;
 
-	GtkWidget *combo_scaling_mode;
-	GtkWidget *combo_ntsc_aspect_ratio;
-	GtkWidget *combo_pal_aspect_ratio;
 	GtkWidget *spin_ntsc_first_scanline;
 	GtkWidget *spin_ntsc_last_scanline;
 	GtkWidget *spin_ntsc_first_pixel;
@@ -181,7 +178,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	GtkWidget *combo_video_filter;
 	GtkWidget *button_filter_settings;
 	GtkWidget *filter_grid;
-	GtkWidget *check_stretch_to_fit;
 	GtkWidget *scale;
 
 	GtkWidget *box, *scaling_box;
@@ -194,22 +190,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	gtk_grid_set_column_spacing(GTK_GRID(scaler_grid), 8);
 	gtk_grid_set_row_spacing(GTK_GRID(scaler_grid), 8);
 	gtk_box_pack_start(GTK_BOX(box), scaler_grid, FALSE, FALSE, 0);
-	tmp = gtk_label_new("NTSC");
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 1, 0, 1, 1);
-	tmp = gtk_label_new("PAL");
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 2, 0, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("Pixel Aspect _Ratio:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 1, 1, 1);
-	
-	combo_ntsc_aspect_ratio =
-		config_combo_box(dialog,
-				 config, "ntsc_pixel_aspect_ratio");
-	gtk_grid_attach(GTK_GRID(scaler_grid), combo_ntsc_aspect_ratio, 1, 1, 1, 1);
-	combo_pal_aspect_ratio =
-		config_combo_box(dialog,
-				 config, "pal_pixel_aspect_ratio");
-	gtk_grid_attach(GTK_GRID(scaler_grid), combo_pal_aspect_ratio, 2, 1, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("F_irst Scanline:");
 	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
@@ -262,19 +242,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 
 	scaling_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	gtk_box_pack_start(GTK_BOX(box), scaling_box, FALSE, FALSE, 0);
-
-	tmp = gtk_label_new_with_mnemonic("Scali_ng mode:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 6, 1, 1);
-	combo_scaling_mode = config_combo_box(dialog, config, "scaling_mode");
-	gtk_grid_attach(GTK_GRID(scaler_grid), combo_scaling_mode, 1, 6, 2, 1);
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_scaling_mode);
-
-	check_stretch_to_fit = config_checkbox(dialog,"S_tretch to fit",
-					       config, "stretch_to_fit");
-
-	gtk_grid_attach(GTK_GRID(scaler_grid), check_stretch_to_fit,
-			0, 7, 1, 1);
 
 	tmp = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 0);
