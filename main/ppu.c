@@ -884,13 +884,13 @@ int ppu_apply_config(struct ppu_state *ppu)
 
 	sprite_limit_mode = ppu->emu->config->sprite_limit_mode;
 
-	if (strcasecmp(sprite_limit_mode, "no") == 0) {
+	if (strcasecmp(sprite_limit_mode, "disabled") == 0) {
 		ppu->no_sprite_limit = 0;
 		ppu->allow_sprite_hiding = 0;
-	} else if (strcasecmp(sprite_limit_mode, "yes") == 0) {
+	} else if (strcasecmp(sprite_limit_mode, "enabled") == 0) {
 		ppu->no_sprite_limit = 1;
 		ppu->allow_sprite_hiding = 0;
-	} else if (strcasecmp(sprite_limit_mode, "dynamic") == 0) {
+	} else if (strcasecmp(sprite_limit_mode, "auto") == 0) {
 		ppu->no_sprite_limit = 1;
 		ppu->allow_sprite_hiding = 1;
 	}

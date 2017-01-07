@@ -38,13 +38,22 @@ void int_scale_callback(GtkScale *scale, gpointer user_data)
 void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 {
 	int *ptr;
-	int is_rom_config;
 	struct config *config;
+	int is_rom_config;
 	int (*apply_config)(struct emu *);
+	int status;
 
 	ptr = (int *)user_data;
 
-	*ptr = gtk_check_menu_item_get_active(item);
+	status = gtk_check_menu_item_get_active(item);
+
+	if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(item)))
+		return;
+
+	if (!!*ptr == !!status)
+		return;
+
+	*ptr = status;
 	config = g_object_get_data(G_OBJECT(item), "config_struct");
 	apply_config = g_object_get_data(G_OBJECT(item), "apply_config");
 
@@ -59,74 +68,6 @@ void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 	} else {
 		config_save_main_config(config);
 	}
-}
-
-void config_radio_menu_show_callback(GtkWidget *widget, gpointer userdata)
-{
-	GtkRadioMenuItem *item;
-	GSList *group;
-	struct config *config;
-	char *name;
-	char *value;
-	char *data;
-
-	group = userdata;
-
-	if (!group)
-		return;
-
-	config = g_object_get_data(G_OBJECT(widget), "config_struct");
-	name = g_object_get_data(G_OBJECT(widget), "config_name");
-	data = config_get_data_ptr(config, name); 
-
-	while (group) {
-		item = group->data;
-		group = group->next;
-
-		value = g_object_get_data(G_OBJECT(item), "value");
-
-		if (strcmp(data, value) != 0)
-			continue;
-
-		g_signal_handlers_block_by_func(G_OBJECT(item),
-						G_CALLBACK(menu_item_toggle_callback),
-						NULL);
-
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
-
-		g_signal_handlers_unblock_by_func(
-		    G_OBJECT(item),
-		    G_CALLBACK(menu_item_toggle_callback),
-		    NULL);
-	}
-
-}
-
-void toggle_callback(GtkToggleButton *toggle, gpointer user_data)
-{
-	int *ptr;
-
-	ptr = (int *)user_data;
-
-	*ptr = gtk_toggle_button_get_active(toggle);
-}
-
-void spinbutton_int_callback(GtkSpinButton *button, gpointer user_data)
-{
-	int *ptr;
-
-	ptr = (int *)user_data;
-
-	*ptr = gtk_spin_button_get_value(button);
-}
-
-void spinbutton_double_callback(GtkSpinButton *button, gpointer user_data)
-{
-	double *ptr;
-
-	ptr = (double *)user_data;
-
-	*ptr = gtk_spin_button_get_value(button);
 }
 
 static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
@@ -161,6 +102,89 @@ static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
 	} else {
 		config_save_main_config(config);
 	}
+}
+
+GtkWidget *config_radio_menu(GtkWidget *menu,
+				   const char *label,
+				   struct config *config,
+				   const char *name,
+				   int (*apply_config)(struct emu*))
+{
+	GtkWidget *item;
+	GSList *group;
+	int i;
+	const char **data;
+	const char **valid_values;
+	const char **valid_value_names;
+	int is_rom_config;
+	int valid_value_count;
+
+	item = gtk_menu_item_new_with_mnemonic(label);
+	if (!item)
+		return NULL;
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	menu = gtk_menu_new();
+	group = NULL;
+
+	if (!menu)
+		return NULL;
+
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), menu);
+	data = config_get_data_ptr(config, name);
+	is_rom_config = config_is_rom_config(name);
+	valid_values =
+		(const char **)config_get_valid_values(name,
+						       &valid_value_count,
+						       &valid_value_names);
+
+	for (i = 0; i < valid_value_count; i++) {
+		item = gtk_radio_menu_item_new_with_mnemonic(group,
+		                                             valid_value_names[i]);
+		g_object_set_data(G_OBJECT(item), "value", (char *)valid_values[i]);
+		if (strcmp(*data, valid_values[i]) == 0)
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), TRUE);
+		g_signal_connect(G_OBJECT(item), "activate",
+		                 G_CALLBACK(config_radio_menu_callback), data);
+		g_object_set_data(G_OBJECT(item), "apply_config", apply_config);
+		g_object_set_data(G_OBJECT(item), "is_rom_config",
+				  GINT_TO_POINTER(is_rom_config));
+		g_object_set_data(G_OBJECT(item), "config_struct", config);
+		g_object_set_data(G_OBJECT(item), "config_name", (char *)name);
+
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+		group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
+	}
+
+	return menu;
+}
+
+void toggle_callback(GtkToggleButton *toggle, gpointer user_data)
+{
+	int *ptr;
+
+	ptr = (int *)user_data;
+
+	*ptr = gtk_toggle_button_get_active(toggle);
+}
+
+void spinbutton_int_callback(GtkSpinButton *button, gpointer user_data)
+{
+	int *ptr;
+
+	ptr = (int *)user_data;
+
+	*ptr = gtk_spin_button_get_value(button);
+}
+
+void spinbutton_double_callback(GtkSpinButton *button, gpointer user_data)
+{
+	double *ptr;
+
+	ptr = (double *)user_data;
+
+	*ptr = gtk_spin_button_get_value(button);
 }
 
 void combo_box_callback(GtkComboBox *combo, gpointer user_data)
@@ -364,49 +388,6 @@ void default_button_entry_cb(GtkDialog *dialog, gint response_id,
 	config_reset_value(config, name);
 
 	gtk_entry_set_text(GTK_ENTRY(widget), *ptr ? *ptr : "");
-}
-
-GtkWidget *config_radio_menu(GtkWidget *menu,
-				   struct config *config,
-				   const char *name)
-{
-	GtkWidget *item;
-	GSList *group;
-	int i;
-	const char **data;
-	const char **valid_values;
-	const char **valid_value_names;
-	int valid_value_count;
-
-	menu = gtk_menu_new();
-	group = NULL;
-
-	if (!menu)
-		return NULL;
-
-	data = config_get_data_ptr(config, name);
-	valid_values =
-		(const char **)config_get_valid_values(name,
-						       &valid_value_count,
-						       &valid_value_names);
-
-	g_object_set_data(G_OBJECT(menu), "config_struct", config);
-	g_object_set_data(G_OBJECT(menu), "config_name", (char *)name);
-
-	for (i = 0; i < valid_value_count; i++) {
-		item = gtk_radio_menu_item_new_with_mnemonic(group,
-		                                             valid_value_names[i]);
-		g_object_set_data(G_OBJECT(item), "value", (char *)valid_values[i]);
-		g_signal_connect(G_OBJECT(item), "activate",
-		                 G_CALLBACK(config_radio_menu_callback), data);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-		group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(item));
-	}
-
-	g_signal_connect(G_OBJECT(menu), "show",
-			 G_CALLBACK(config_radio_menu_show_callback), group);
-
-	return menu;
 }
 
 GtkWidget *config_combo_box(GtkWidget *dialog,

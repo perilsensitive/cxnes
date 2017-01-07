@@ -116,15 +116,15 @@ static const char *valid_loglevel_names[] = {
 };
 
 static const char *valid_sprite_limit_modes[] = {
-	"no",
-	"yes",
-	"dynamic",
+	"disabled",
+	"enabled",
+	"auto",
 };
 
 static const char *valid_sprite_limit_mode_names[] = {
-	"No",
-	"Yes",
-	"Dynamic",
+	"Disabled",
+	"Enabled",
+	"Automatic",
 };
 
 static const char *valid_preferred_console_type_names[] = {

@@ -77,6 +77,11 @@ extern GtkWidget *config_check_menu_item(GtkWidget *menu,
 				         struct config *config,
 				         const char *name,
 					 int (*apply_config)(struct emu *));
+extern GtkWidget *config_radio_menu(GtkWidget *menu,
+				    const char *label,
+		 		    struct config *config,
+				    const char *name,
+				    int (*apply_config)(struct emu*));
 extern GtkWidget *config_int_spinbutton(GtkWidget *dialog,
 					struct config *config,
 					const char *name);

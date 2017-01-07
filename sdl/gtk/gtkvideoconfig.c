@@ -321,40 +321,6 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 	return box;
 }
 
-static GtkWidget *create_display_options_frame(GtkWidget *dialog, struct config *config)
-{
-	GtkWidget *display_options_frame;
-	GtkWidget *display_options_grid;
-
-	GtkWidget *combo_sprite_limit_mode;
-	GtkWidget *box;
-
-	GtkWidget *tmp;
-
-	display_options_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Display Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(display_options_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(display_options_frame), GTK_SHADOW_NONE);
-
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-	gtk_container_add(GTK_CONTAINER(display_options_frame), box);
-
-	display_options_grid = gtk_grid_new();
-	gtk_box_pack_start(GTK_BOX(box), display_options_grid,
-			   FALSE, FALSE, 0);
-
-	tmp = gtk_label_new_with_mnemonic("Allow more than 8 _sprites per scanline?");
-	combo_sprite_limit_mode = config_combo_box(dialog, config, "sprite_limit_mode");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_sprite_limit_mode);
-	gtk_grid_attach(GTK_GRID(display_options_grid), tmp,
-			0, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(display_options_grid), combo_sprite_limit_mode,
-			1, 4, 1, 1);
-
-	return display_options_frame;
-}
-
 static GtkWidget *create_palette_config_frame(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *palette_options_frame;
@@ -625,18 +591,14 @@ static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 	GtkWidget *dialog_box;
 	GtkWidget *box1;
 
-	GtkWidget *display_options_frame;
 	GtkWidget *osd_config_frame;
 
 	box1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_box_pack_start(GTK_BOX(dialog_box), box1, FALSE, FALSE, 8);
 
-	display_options_frame = create_display_options_frame(dialog, config);
 	osd_config_frame = create_osd_config_frame(dialog, config);
 
-	gtk_box_pack_start(GTK_BOX(box1), display_options_frame,
-			   FALSE, FALSE, 8);
 	gtk_box_pack_start(GTK_BOX(box1), osd_config_frame,
 			   FALSE, FALSE, 8);
 }

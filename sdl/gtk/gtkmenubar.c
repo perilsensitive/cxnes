@@ -1504,6 +1504,9 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	config_check_menu_item(menu, "_Scanline renderer",
 	                       emu->config, "scanline_renderer_enabled",
 			       emu_apply_config);
+	config_radio_menu(menu, "S_prite Limit",
+	                  emu->config, "sprite_limit_mode",
+	                  emu_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
 			  gui_video_configuration_dialog, userdata,
