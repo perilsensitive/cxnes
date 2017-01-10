@@ -72,27 +72,6 @@ static void color_button_callback(GtkColorButton *button, gpointer user_data)
 	*ptr = rgba;
 }
 
-static void palette_combo_box_callback(GtkComboBox *combo, gpointer user_data)
-{
-	GtkWidget *entry;
-	GtkWidget *button;
-	gboolean sensitive;
-	const gchar *tmp;
-
-	entry = g_object_get_data(G_OBJECT(combo), "custom_entry");
-	button = g_object_get_data(G_OBJECT(combo), "custom_button");
-
-	tmp = gtk_combo_box_get_active_id(combo);
-
-	if (tmp && strcmp(tmp, "custom") == 0)
-		sensitive = TRUE;
-	else
-		sensitive = FALSE;
-
-	gtk_widget_set_sensitive(entry, sensitive);
-	gtk_widget_set_sensitive(button, sensitive);
-}
-
 static void default_button_color_button_cb(GtkDialog *dialog,
 					   gint response_id,
 					   gpointer user_data)
@@ -272,131 +251,6 @@ static GtkWidget *create_cropping_box(GtkWidget *dialog, struct config *config)
 	return box;
 }
 
-static GtkWidget *create_palette_config_frame(GtkWidget *dialog, struct config *config)
-{
-	GtkWidget *palette_options_frame;
-	GtkWidget *palette_options_grid;
-	GtkWidget *combo_palette;
-	GtkWidget *palette_entry;
-	GtkWidget *button_custom_palette;
-
-	GtkWidget *tmp;
-
-	palette_options_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>Palette Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(palette_options_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(palette_options_frame), GTK_SHADOW_NONE);
-	palette_options_grid = gtk_grid_new();
-	gtk_container_set_border_width(GTK_CONTAINER(palette_options_grid), 4);
-	gtk_grid_set_column_spacing(GTK_GRID(palette_options_grid), 8);
-	gtk_grid_set_row_spacing(GTK_GRID(palette_options_grid), 8);
-
-	gtk_container_add(GTK_CONTAINER(palette_options_frame), palette_options_grid);
-
-	tmp = gtk_label_new_with_mnemonic("_Palette:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(palette_options_grid), tmp, 0, 0, 1, 1);
-	combo_palette = config_combo_box(dialog,
-					      config, "palette");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_palette);
-
-	gtk_grid_attach(GTK_GRID(palette_options_grid), combo_palette, 1, 0, 1, 1);
-
-	/* Add widgets for custom palette file */
-	palette_entry = config_entry(dialog, config, "palette_path");
-	gtk_grid_attach(GTK_GRID(palette_options_grid), palette_entry, 2, 0, 2, 1);
-	gtk_entry_set_width_chars(GTK_ENTRY(palette_entry), 25);
-	button_custom_palette = gtk_button_new_with_label("Browse...");
-	gtk_grid_attach(GTK_GRID(palette_options_grid), button_custom_palette, 4, 0, 1, 1);
-	g_object_set_data(G_OBJECT(button_custom_palette), "dialog",
-			  dialog);
-	g_signal_connect(G_OBJECT(button_custom_palette), "clicked",
-			 G_CALLBACK(file_chooser_callback), palette_entry);
-	g_object_set_data(G_OBJECT(combo_palette), "custom_entry", palette_entry);
-	g_object_set_data(G_OBJECT(combo_palette), "custom_button", button_custom_palette);
-	g_signal_connect(G_OBJECT(combo_palette), "changed",
-			 G_CALLBACK(palette_combo_box_callback), NULL);
-	palette_combo_box_callback(GTK_COMBO_BOX(combo_palette), NULL);
-
-	return palette_options_frame;
-}
-
-static GtkWidget *create_ntsc_palette_config_frame(GtkWidget *dialog, struct config *config)
-{
-	GtkWidget *ntsc_palette_options_frame;
-	GtkWidget *ntsc_palette_options_grid;
-	GtkWidget *spin_ntsc_saturation;
-	GtkWidget *spin_ntsc_hue;
-	GtkWidget *spin_ntsc_contrast;
-	GtkWidget *spin_ntsc_brightness;
-	GtkWidget *spin_ntsc_gamma;
-	GtkWidget *combo_ntsc_rgb_decoder;
-
-	GtkWidget *tmp;
-
-	ntsc_palette_options_frame = gtk_frame_new(NULL);
-	tmp = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(tmp), "<b>YIQ Palette Options</b>");
-	gtk_frame_set_label_widget(GTK_FRAME(ntsc_palette_options_frame), tmp);
-	gtk_frame_set_shadow_type(GTK_FRAME(ntsc_palette_options_frame), GTK_SHADOW_NONE);
-	ntsc_palette_options_grid = gtk_grid_new();
-	gtk_container_set_border_width(GTK_CONTAINER(ntsc_palette_options_grid), 4);
-	gtk_grid_set_column_homogeneous(GTK_GRID(ntsc_palette_options_grid), TRUE);
-	gtk_grid_set_column_spacing(GTK_GRID(ntsc_palette_options_grid), 8);
-	gtk_grid_set_row_spacing(GTK_GRID(ntsc_palette_options_grid), 8);
-
-	gtk_container_add(GTK_CONTAINER(ntsc_palette_options_frame),
-			  ntsc_palette_options_grid);
-
-	tmp = gtk_label_new_with_mnemonic("_Saturation:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 0, 1, 1);
-	spin_ntsc_saturation = config_double_spinbutton(dialog, config, 0.01,
-							"ntsc_palette_saturation");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_saturation);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_saturation, 1, 0, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("_Hue:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 1, 1, 1);
-	spin_ntsc_hue = config_double_spinbutton(dialog, config, 0.1,
-						 "ntsc_palette_hue");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_hue);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_hue, 1, 1, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("_Contrast:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 1, 1, 1);
-	spin_ntsc_contrast = config_double_spinbutton(dialog, config, 0.01,
-						      "ntsc_palette_contrast");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_contrast);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_contrast, 3, 1, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("_Brightness:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 0, 1, 1);
-	spin_ntsc_brightness = config_double_spinbutton(dialog, config, 0.01,
-							"ntsc_palette_brightness");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_brightness);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_brightness, 3, 0, 1, 1);
-	tmp = gtk_label_new_with_mnemonic("_Gamma:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 2, 1, 1);
-	spin_ntsc_gamma = config_double_spinbutton(dialog, config, 0.01,
-						   "ntsc_palette_gamma");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_gamma);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_gamma, 3, 2, 1, 1);
-
-	tmp = gtk_label_new_with_mnemonic("_RGB Decoder:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 2, 1, 1);
-	combo_ntsc_rgb_decoder = config_combo_box(dialog, config,
-						  "ntsc_rgb_decoder");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_ntsc_rgb_decoder);
-	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), combo_ntsc_rgb_decoder,
-			1, 2, 1, 1);
-
-	return ntsc_palette_options_frame;
-}
-
 static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *osd_options_frame;
@@ -471,28 +325,101 @@ static GtkWidget *create_osd_config_frame(GtkWidget *dialog, struct config *conf
 	return osd_options_frame;
 }
 
-static void configuration_setup_palette(GtkWidget *dialog, struct config *config)
+static void configuration_setup_custom_palette(GtkWidget *dialog, struct config *config)
 {
-	GtkWidget *dialog_box;
-	GtkWidget *row1_box;
-	GtkWidget *row2_box;
-	GtkWidget *palette_config_frame;
-	GtkWidget *ntsc_palette_config_frame;
+	GtkWidget *palette_options_grid;
+	GtkWidget *palette_entry;
+	GtkWidget *button_custom_palette;
+	GtkWidget *dialog_box, *tmp;
 
-	row1_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-	row2_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-	palette_config_frame = create_palette_config_frame(dialog, config);
-	ntsc_palette_config_frame = create_ntsc_palette_config_frame(dialog, config);
-	gtk_box_pack_start(GTK_BOX(dialog_box), row1_box, FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(dialog_box), row2_box, FALSE, FALSE, 8);
+	palette_options_grid = gtk_grid_new();
+	gtk_box_pack_start(GTK_BOX(dialog_box), palette_options_grid,
+			   FALSE, FALSE, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(palette_options_grid), 4);
+	gtk_grid_set_column_spacing(GTK_GRID(palette_options_grid), 8);
+	gtk_grid_set_row_spacing(GTK_GRID(palette_options_grid), 8);
 
-	gtk_box_set_spacing(GTK_BOX(row1_box), 70);
+	/* Add widgets for custom palette file */
+	tmp = gtk_label_new_with_mnemonic("_Custom Palette Path:");
+	palette_entry = config_entry(dialog, config, "palette_path");
+	gtk_grid_attach(GTK_GRID(palette_options_grid), tmp, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(palette_options_grid), palette_entry, 2, 0, 2, 1);
+	gtk_entry_set_width_chars(GTK_ENTRY(palette_entry), 25);
+	button_custom_palette = gtk_button_new_with_label("Browse...");
+	gtk_grid_attach(GTK_GRID(palette_options_grid), button_custom_palette, 4, 0, 1, 1);
+	g_object_set_data(G_OBJECT(button_custom_palette), "dialog",
+			  dialog);
+	g_signal_connect(G_OBJECT(button_custom_palette), "clicked",
+			 G_CALLBACK(file_chooser_callback), palette_entry);
+}
 
-	gtk_box_pack_start(GTK_BOX(row1_box), palette_config_frame,
-			   FALSE, FALSE, 8);
-	gtk_box_pack_start(GTK_BOX(row2_box), ntsc_palette_config_frame,
-			   FALSE, FALSE, 8);
+static void configuration_setup_yiq_palette(GtkWidget *dialog, struct config *config)
+{
+	GtkWidget *ntsc_palette_options_grid;
+	GtkWidget *spin_ntsc_saturation;
+	GtkWidget *spin_ntsc_hue;
+	GtkWidget *spin_ntsc_contrast;
+	GtkWidget *spin_ntsc_brightness;
+	GtkWidget *spin_ntsc_gamma;
+	GtkWidget *combo_ntsc_rgb_decoder;
+	GtkWidget *dialog_box;
+
+	GtkWidget *tmp;
+
+	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+	ntsc_palette_options_grid = gtk_grid_new();
+	gtk_box_pack_start(GTK_BOX(dialog_box), ntsc_palette_options_grid,
+	                   FALSE, FALSE, 8);
+	gtk_container_set_border_width(GTK_CONTAINER(ntsc_palette_options_grid), 4);
+	gtk_grid_set_column_homogeneous(GTK_GRID(ntsc_palette_options_grid), TRUE);
+	gtk_grid_set_column_spacing(GTK_GRID(ntsc_palette_options_grid), 8);
+	gtk_grid_set_row_spacing(GTK_GRID(ntsc_palette_options_grid), 8);
+
+	tmp = gtk_label_new_with_mnemonic("_Saturation:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 0, 1, 1);
+	spin_ntsc_saturation = config_double_spinbutton(dialog, config, 0.01,
+							"ntsc_palette_saturation");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_saturation);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_saturation, 1, 0, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("_Hue:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 1, 1, 1);
+	spin_ntsc_hue = config_double_spinbutton(dialog, config, 0.1,
+						 "ntsc_palette_hue");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_hue);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_hue, 1, 1, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("_Contrast:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 1, 1, 1);
+	spin_ntsc_contrast = config_double_spinbutton(dialog, config, 0.01,
+						      "ntsc_palette_contrast");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_contrast);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_contrast, 3, 1, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("_Brightness:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 0, 1, 1);
+	spin_ntsc_brightness = config_double_spinbutton(dialog, config, 0.01,
+							"ntsc_palette_brightness");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_brightness);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_brightness, 3, 0, 1, 1);
+	tmp = gtk_label_new_with_mnemonic("_Gamma:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 2, 2, 1, 1);
+	spin_ntsc_gamma = config_double_spinbutton(dialog, config, 0.01,
+						   "ntsc_palette_gamma");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_gamma);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), spin_ntsc_gamma, 3, 2, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("_RGB Decoder:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), tmp, 0, 2, 1, 1);
+	combo_ntsc_rgb_decoder = config_combo_box(dialog, config,
+						  "ntsc_rgb_decoder");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), combo_ntsc_rgb_decoder);
+	gtk_grid_attach(GTK_GRID(ntsc_palette_options_grid), combo_ntsc_rgb_decoder,
+			1, 2, 1, 1);
 }
 
 static void configuration_setup_cropping(GtkWidget *dialog, struct config *config)
@@ -543,10 +470,17 @@ void gui_video_configuration_dialog(GtkWidget *widget, gpointer user_data)
 				 widget, user_data);
 }
 
-void gui_palette_configuration_dialog(GtkWidget *widget, gpointer user_data)
+void gui_custom_palette_configuration_dialog(GtkWidget *widget, gpointer user_data)
 {
-	gui_configuration_dialog("Palette Configuration",
-				 configuration_setup_palette, 0,
+	gui_configuration_dialog("Custom Palette Settings",
+				 configuration_setup_custom_palette, 0,
+				 widget, user_data);
+}
+
+void gui_yiq_palette_configuration_dialog(GtkWidget *widget, gpointer user_data)
+{
+	gui_configuration_dialog("YIQ Palette Settings",
+				 configuration_setup_yiq_palette, 0,
 				 widget, user_data);
 }
 
