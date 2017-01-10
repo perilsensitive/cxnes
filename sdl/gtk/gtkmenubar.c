@@ -1528,7 +1528,7 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "NTSC filter settings...",
 	                  gui_ntsc_filter_settings_dialog, userdata, NULL);
 	
-	config_check_menu_item(submenu, "Emulate scanlines", emu->config,
+	config_check_menu_item(submenu, "Emulated scanlines", emu->config,
 	                       "scanlines_enabled", video_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Emulated scanline settings...",
