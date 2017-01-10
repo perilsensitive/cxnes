@@ -47,7 +47,7 @@ static GtkWidget *gui_build_system_type_menu(const int mask);
 extern void gui_ntsc_filter_settings_dialog(GtkWidget *, gpointer);
 extern void gui_volume_control_dialog(GtkWidget *, gpointer);
 extern void gui_cheat_dialog(GtkWidget *, gpointer);
-extern void gui_video_configuration_dialog(GtkWidget *, gpointer);
+extern void gui_osd_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_scanline_settings_dialog(GtkWidget *, gpointer);
 extern void gui_cropping_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_yiq_palette_configuration_dialog(GtkWidget *, gpointer);
@@ -1534,8 +1534,8 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Emulated scanline settings...",
 	                  gui_scanline_settings_dialog, userdata, NULL);
 
-	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Settings...",
-			  gui_video_configuration_dialog, userdata,
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_On-Scren Display Settings...",
+			  gui_osd_configuration_dialog, userdata,
 			  NULL);
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cropping Settings...",
 			  gui_cropping_configuration_dialog, userdata,
