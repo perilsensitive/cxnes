@@ -1542,7 +1542,7 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 			  NULL);
 
 	submenu = config_radio_menu(menu, "Palette", emu->config,
-	                            "palette", emu_apply_config);
+	                            "palette", video_apply_config);
 
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Custom palette settings...",
 	                  gui_custom_palette_configuration_dialog, userdata, NULL);
