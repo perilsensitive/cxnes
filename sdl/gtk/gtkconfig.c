@@ -47,9 +47,6 @@ void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 
 	status = gtk_check_menu_item_get_active(item);
 
-	if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(item)))
-		return;
-
 	if (!!*ptr == !!status)
 		return;
 

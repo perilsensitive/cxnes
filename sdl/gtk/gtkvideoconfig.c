@@ -160,96 +160,18 @@ void ntsc_auto_tune_callback(GtkToggleButton *toggle, gpointer user_data)
 	gtk_widget_set_sensitive(widget, !gtk_toggle_button_get_active(toggle));
 }
 
-static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
+static void configuration_setup_scanlines(GtkWidget *dialog, struct config *config)
 {
-	GtkWidget *scaler_grid;
-
-	GtkWidget *spin_ntsc_first_scanline;
-	GtkWidget *spin_ntsc_last_scanline;
-	GtkWidget *spin_ntsc_first_pixel;
-	GtkWidget *spin_ntsc_last_pixel;
-	GtkWidget *spin_pal_first_scanline;
-	GtkWidget *spin_pal_last_scanline;
-	GtkWidget *spin_pal_first_pixel;
-	GtkWidget *spin_pal_last_pixel;
 	GtkWidget *filter_grid;
-	GtkWidget *scale;
-
-	GtkWidget *box, *scaling_box;
-
 	GtkWidget *tmp;
+	GtkWidget *scale;
+	GtkWidget *dialog_box;
 
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-
-	scaler_grid = gtk_grid_new();
-	gtk_grid_set_column_spacing(GTK_GRID(scaler_grid), 8);
-	gtk_grid_set_row_spacing(GTK_GRID(scaler_grid), 8);
-	gtk_box_pack_start(GTK_BOX(box), scaler_grid, FALSE, FALSE, 0);
-
-	tmp = gtk_label_new_with_mnemonic("F_irst Scanline:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 2, 1, 1);
-	spin_ntsc_first_scanline =
-		config_int_spinbutton(dialog, config,
-				      "ntsc_first_scanline");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_first_scanline);
-	spin_pal_first_scanline =
-		config_int_spinbutton(dialog, config,
-				      "pal_first_scanline");
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_first_scanline, 1, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_first_scanline, 2, 2, 1, 1);
-
-	tmp = gtk_label_new_with_mnemonic("L_ast Scanline:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 3, 1, 1);
-	spin_ntsc_last_scanline =
-		config_int_spinbutton(dialog, config,
-				      "ntsc_last_scanline");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_last_scanline);
-	spin_pal_last_scanline =
-		config_int_spinbutton(dialog, config,
-				      "pal_last_scanline");
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_last_scanline, 1, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_last_scanline, 2, 3, 1, 1);
-
-	tmp = gtk_label_new_with_mnemonic("First _Pixel:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 4, 1, 1);
-	spin_ntsc_first_pixel =
-		config_int_spinbutton(dialog, config,
-				      "ntsc_first_pixel");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_first_pixel);
-	spin_pal_first_pixel =
-		config_int_spinbutton(dialog, config,"pal_first_pixel");
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_first_pixel, 1, 4, 1, 1);
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_first_pixel, 2, 4, 1, 1);
-
-	tmp = gtk_label_new_with_mnemonic("Last P_ixel:");
-	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
-	gtk_grid_attach(GTK_GRID(scaler_grid), tmp, 0, 5, 1, 1);
-	spin_ntsc_last_pixel =
-		config_int_spinbutton(dialog, config, "ntsc_last_pixel");
-	spin_pal_last_pixel =
-		config_int_spinbutton(dialog, config, "pal_last_pixel");
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_ntsc_last_pixel, 1, 5, 1, 1);
-	gtk_grid_attach(GTK_GRID(scaler_grid), spin_pal_last_pixel, 2, 5, 1, 1);
-	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_last_pixel);
-
-	scaling_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-	gtk_box_pack_start(GTK_BOX(box), scaling_box, FALSE, FALSE, 0);
-
-	tmp = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 0);
-
-
+	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	filter_grid = gtk_grid_new();
 	gtk_grid_set_column_spacing(GTK_GRID(filter_grid), 8);
-	gtk_box_pack_start(GTK_BOX(box), filter_grid,
+	gtk_box_pack_start(GTK_BOX(dialog_box), filter_grid,
 			   FALSE, FALSE, 0);
-
-	tmp = config_checkbox(dialog, "Emulate scan_lines",
-			      config, "scanlines_enabled");
-	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 1, 1, 1);
 
 	tmp = gtk_label_new_with_mnemonic("Scanline _Intensity:");
 	gtk_grid_attach(GTK_GRID(filter_grid), tmp, 0, 2, 1, 1);
@@ -259,6 +181,93 @@ static GtkWidget *create_scaler_box(GtkWidget *dialog, struct config *config)
 			       "scanline_intensity");
 
 	gtk_grid_attach(GTK_GRID(filter_grid), scale, 1, 2, 2, 1);
+
+}
+
+static GtkWidget *create_cropping_box(GtkWidget *dialog, struct config *config)
+{
+	GtkWidget *cropping_grid;
+
+	GtkWidget *spin_ntsc_first_scanline;
+	GtkWidget *spin_ntsc_last_scanline;
+	GtkWidget *spin_ntsc_first_pixel;
+	GtkWidget *spin_ntsc_last_pixel;
+	GtkWidget *spin_pal_first_scanline;
+	GtkWidget *spin_pal_last_scanline;
+	GtkWidget *spin_pal_first_pixel;
+	GtkWidget *spin_pal_last_pixel;
+
+	GtkWidget *box, *scaling_box;
+
+	GtkWidget *tmp;
+
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+
+	cropping_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(cropping_grid), 8);
+	gtk_grid_set_row_spacing(GTK_GRID(cropping_grid), 8);
+	gtk_box_pack_start(GTK_BOX(box), cropping_grid, FALSE, FALSE, 0);
+
+	tmp = gtk_label_new("NTSC");
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 1, 0, 1, 1);
+	tmp = gtk_label_new("PAL");
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 2, 0, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("F_irst Scanline:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 0, 2, 1, 1);
+	spin_ntsc_first_scanline =
+		config_int_spinbutton(dialog, config,
+				      "ntsc_first_scanline");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_first_scanline);
+	spin_pal_first_scanline =
+		config_int_spinbutton(dialog, config,
+				      "pal_first_scanline");
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_ntsc_first_scanline, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_pal_first_scanline, 2, 2, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("L_ast Scanline:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 0, 3, 1, 1);
+	spin_ntsc_last_scanline =
+		config_int_spinbutton(dialog, config,
+				      "ntsc_last_scanline");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_last_scanline);
+	spin_pal_last_scanline =
+		config_int_spinbutton(dialog, config,
+				      "pal_last_scanline");
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_ntsc_last_scanline, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_pal_last_scanline, 2, 3, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("First _Pixel:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 0, 4, 1, 1);
+	spin_ntsc_first_pixel =
+		config_int_spinbutton(dialog, config,
+				      "ntsc_first_pixel");
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_first_pixel);
+	spin_pal_first_pixel =
+		config_int_spinbutton(dialog, config,"pal_first_pixel");
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_ntsc_first_pixel, 1, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_pal_first_pixel, 2, 4, 1, 1);
+
+	tmp = gtk_label_new_with_mnemonic("Last P_ixel:");
+	gtk_widget_set_halign(tmp, GTK_ALIGN_START);
+	gtk_grid_attach(GTK_GRID(cropping_grid), tmp, 0, 5, 1, 1);
+	spin_ntsc_last_pixel =
+		config_int_spinbutton(dialog, config, "ntsc_last_pixel");
+	spin_pal_last_pixel =
+		config_int_spinbutton(dialog, config, "pal_last_pixel");
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_ntsc_last_pixel, 1, 5, 1, 1);
+	gtk_grid_attach(GTK_GRID(cropping_grid), spin_pal_last_pixel, 2, 5, 1, 1);
+	gtk_label_set_mnemonic_widget(GTK_LABEL(tmp), spin_ntsc_last_pixel);
+
+	scaling_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	gtk_box_pack_start(GTK_BOX(box), scaling_box, FALSE, FALSE, 0);
+
+	tmp = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_box_pack_start(GTK_BOX(box), tmp, FALSE, FALSE, 0);
+
 
 	return box;
 }
@@ -486,14 +495,14 @@ static void configuration_setup_palette(GtkWidget *dialog, struct config *config
 			   FALSE, FALSE, 8);
 }
 
-static void configuration_setup_scaler(GtkWidget *dialog, struct config *config)
+static void configuration_setup_cropping(GtkWidget *dialog, struct config *config)
 {
 	GtkWidget *dialog_box;
-	GtkWidget *scaler_box;
+	GtkWidget *cropping_box;
 
 	dialog_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-	scaler_box = create_scaler_box(dialog, config);
-	gtk_box_pack_start(GTK_BOX(dialog_box), scaler_box, FALSE, FALSE, 8);
+	cropping_box = create_cropping_box(dialog, config);
+	gtk_box_pack_start(GTK_BOX(dialog_box), cropping_box, FALSE, FALSE, 8);
 }
 
 static void configuration_setup_video(GtkWidget *dialog, struct config *config)
@@ -513,10 +522,17 @@ static void configuration_setup_video(GtkWidget *dialog, struct config *config)
 			   FALSE, FALSE, 8);
 }
 
-void gui_scaler_configuration_dialog(GtkWidget *widget, gpointer user_data)
+void gui_cropping_configuration_dialog(GtkWidget *widget, gpointer user_data)
 {
-	gui_configuration_dialog("Scaler Configuration",
-				 configuration_setup_scaler, 0,
+	gui_configuration_dialog("Cropping Settings",
+				 configuration_setup_cropping, 0,
+				 widget, user_data);
+}
+
+void gui_scanline_settings_dialog(GtkWidget *widget, gpointer user_data)
+{
+	gui_configuration_dialog("Emulated Scanline Settings",
+				 configuration_setup_scanlines, 0,
 				 widget, user_data);
 }
 

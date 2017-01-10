@@ -48,7 +48,8 @@ extern void gui_ntsc_filter_settings_dialog(GtkWidget *, gpointer);
 extern void gui_volume_control_dialog(GtkWidget *, gpointer);
 extern void gui_cheat_dialog(GtkWidget *, gpointer);
 extern void gui_video_configuration_dialog(GtkWidget *, gpointer);
-extern void gui_scaler_configuration_dialog(GtkWidget *, gpointer);
+extern void gui_scanline_settings_dialog(GtkWidget *, gpointer);
+extern void gui_cropping_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_palette_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_binding_configuration_dialog(GtkWidget *, gpointer);
 extern void gui_audio_configuration_dialog(GtkWidget *, gpointer);
@@ -1526,14 +1527,19 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "NTSC filter settings...",
 	                  gui_ntsc_filter_settings_dialog, userdata, NULL);
 	
+	config_check_menu_item(submenu, "Emulate scanlines", emu->config,
+	                       "scanlines_enabled", video_apply_config);
 
-	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Configuration...",
+	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Emulated scanline settings...",
+	                  gui_scanline_settings_dialog, userdata, NULL);
+
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Video Settings...",
 			  gui_video_configuration_dialog, userdata,
 			  NULL);
-	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Scaler Configuration...",
-			  gui_scaler_configuration_dialog, userdata,
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cropping Settings...",
+			  gui_cropping_configuration_dialog, userdata,
 			  NULL);
-	gui_add_menu_item(GTK_MENU_SHELL(menu), "Pa_lette Configuration...",
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "Pa_lette Settings..",
 			  gui_palette_configuration_dialog, userdata,
 			  NULL);
 
