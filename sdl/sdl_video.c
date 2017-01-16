@@ -479,7 +479,12 @@ static void video_apply_palette_and_filter(struct emu *emu)
 			pal = palette_rp2c03b;
 		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
 
-			pal = palette_rp2c04_master;
+		} else if (strcasecmp(emu->config->palette,
+		                      "firebrandx_nostalgia") == 0) {
+			pal = palette_firebrandx_nostalgia;
+		} else if (strcasecmp(emu->config->palette,
+		                      "firebrandx_nes_classic") == 0) {
+			pal = palette_firebrandx_nes_classic;
 		} else if (strcasecmp(emu->config->palette, "custom") == 0) {
 			if (emu->config->palette_path) {
 				is_custom = 1;
