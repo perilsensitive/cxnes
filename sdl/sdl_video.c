@@ -478,7 +478,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		} else if (strcasecmp(emu->config->palette, "rp2c03b") == 0) {
 			pal = palette_rp2c03b;
 		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
-
+			pal = palette_rp2c04_master;
 		} else if (strcasecmp(emu->config->palette,
 		                      "firebrandx_nostalgia") == 0) {
 			pal = palette_firebrandx_nostalgia;
