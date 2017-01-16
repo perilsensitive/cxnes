@@ -91,6 +91,12 @@ struct SDL_Window
 typedef struct SDL_Window SDL_Window;
 #endif
 
+struct palette_list_entry
+{
+	const char *name;
+	const uint8_t *palette;
+};
+
 #if _WIN32
 HANDLE disable_screensaver_request;
 POWER_REQUEST_CONTEXT disable_screensaver_request_context;
@@ -212,6 +218,16 @@ static float const consumer_decoder [6] =
 	1.30832608599486, 0.849636894623442, -0.0918542466336432,
 	-0.653576925369436, -1.48628965095479, 1.33826121271772,
 	
+};
+
+static struct palette_list_entry palette_list[] = {
+	{ "rc2c03b",                palette_rc2c03b },
+	{ "rp2c03b",                palette_rp2c03b },
+	{ "rp2c04",                 palette_rp2c04_master  },
+	{ "fceux",                  palette_fceux  },
+	{ "firebrandx_nostalgia",   palette_firebrandx_nostalgia },
+	{ "firebrandx_nes_classic", palette_firebrandx_nes_classic },
+	{ "yiq",                    NULL },
 };
 
 /* Sony CXA2025AS US */
@@ -445,6 +461,7 @@ static void video_apply_palette_and_filter(struct emu *emu)
 		const char *do_merge_fields;
 		uint8_t *tmp_pal;
 		int is_rgb, is_custom;
+		int palette_count;
 		int i;
 
 		ppu_type = ppu_get_type(emu->ppu);
@@ -473,24 +490,20 @@ static void video_apply_palette_and_filter(struct emu *emu)
 
 		is_custom = 0;
 
-		if (strcasecmp(emu->config->palette, "rc2c03b") == 0) {
-			pal = palette_rc2c03b;
-		} else if (strcasecmp(emu->config->palette, "rp2c03b") == 0) {
-			pal = palette_rp2c03b;
-		} else if (strcasecmp(emu->config->palette, "rp2c04") == 0) {
-			pal = palette_rp2c04_master;
-		} else if (strcasecmp(emu->config->palette,
-		                      "firebrandx_nostalgia") == 0) {
-			pal = palette_firebrandx_nostalgia;
-		} else if (strcasecmp(emu->config->palette,
-		                      "firebrandx_nes_classic") == 0) {
-			pal = palette_firebrandx_nes_classic;
-		} else if (strcasecmp(emu->config->palette, "custom") == 0) {
-			if (emu->config->palette_path) {
-				is_custom = 1;
+
+		palette_count = sizeof(palette_list) / sizeof(palette_list[0]);
+
+		for (i = 0; i < palette_count; i++) {
+			if (strcasecmp(emu->config->palette,
+			               palette_list[i].name) == 0) {
+				pal = palette_list[i].palette;
+				break;
 			}
-		} else if (strcasecmp(emu->config->palette, "yiq") == 0) {
-			pal = NULL;
+		}
+
+		if (strcasecmp(emu->config->palette, "custom") == 0) {
+			if (emu->config->palette_path)
+				is_custom = 1;
 		}
 
 		if (emu->config->ntsc_filter_auto_tune) {

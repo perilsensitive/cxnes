@@ -229,7 +229,7 @@ static const char *valid_video_filter_names[] = {
 static const char *valid_palette_names[] = {
 	"Auto", "YIQ", "RP2C03B", "RC2C03B", "RP2C04",
 	"Nostalgia (FBX)", "NES-Classic (FBX)",
-	"Custom"
+	"FCEUX Default", "Custom"
 };
 
 static const char *valid_ntsc_filter_merge_fields_values[] = {
@@ -243,7 +243,7 @@ static const char *valid_ntsc_filter_merge_fields_names[] = {
 static const char *valid_palettes[] = {
 	"auto", "yiq", "rp2c03b","rc2c03b", "rp2c04",
 	"firebrandx_nostalgia", "firebrandx_nes_classic",
-	"custom"
+	"fceux", "custom"
 };
 
 static const char *valid_aspect_ratio_names[] = {
