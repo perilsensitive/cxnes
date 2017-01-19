@@ -60,6 +60,11 @@
 
 const struct system_type_info system_type_info[] = {
 	{
+		.type = EMU_SYSTEM_TYPE_PREFERRED,
+		.value = "preferred",
+		.description = "Preferred",
+	},
+	{
 		.type = EMU_SYSTEM_TYPE_AUTO,
 		.value = "auto",
 		.description = "Auto",
@@ -228,7 +233,7 @@ int emu_init(struct emu *emu)
 	return 0;
 }
 
-static enum system_type find_system_type_by_config_value(const char *value)
+enum system_type emu_find_system_type_by_config_value(const char *value)
 {
 	int i;
 
@@ -419,53 +424,6 @@ void emu_set_remember_overclock_mode(struct emu *emu, int enabled)
 	}
 }
 
-void emu_set_remember_system_type(struct emu *emu, int enabled)
-{
-	struct config *config;
-	const char *rom_type;
-	const char *rom_type_name;
-	enum system_type system_type;
-
-	rom_type = NULL;
-	rom_type_name = NULL;
-
-	if (enabled)
-		system_type = emu->system_type;
-	else
-		system_type = EMU_SYSTEM_TYPE_AUTO;
-
-	config = emu->config;
-
-	if (system_type_is_vs(emu->system_type)) {
-		rom_type_name = "rom_vs_ppu_type";
-		rom_type = find_config_value_by_system_type(system_type);
-	} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
-		rom_type_name = "rom_console_type";
-		if (enabled)
-			rom_type = find_config_value_by_system_type(system_type);
-		else
-			rom_type = "preferred";
-	}
-
-	if (emu->loaded && (enabled != config->remember_system_type)) {
-		char *path;
-
-		config->remember_system_type = enabled;
-
-		if (rom_type_name && rom_type) {
-			rom_config_set(emu->config, rom_type_name, rom_type);
-
-		}
-
-		path = emu_generate_rom_config_path(emu, 1);
-		if (path) {
-			config_save_rom_config(emu->config, path);
-			free(path);
-		}
-	}
-
-}
-
 int emu_set_system_type(struct emu *emu, enum system_type system_type)
 {
 	int old_system_type;
@@ -473,12 +431,15 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 	const char *preferred_type;
 	const char *rom_type;
 	const char *rom_type_name;
+	enum system_type orig_system_type;
 
 	rom_type = NULL;
 	rom_type_name = NULL;
 
 	if (system_type == EMU_SYSTEM_TYPE_UNDEFINED)
 		return -1;
+
+	orig_system_type = system_type;
 
 	config = emu->config;
 
@@ -501,32 +462,29 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
 			rom_type = config->rom_console_type;
 			rom_type_name = "rom_console_type";
-			preferred_type = config->preferred_console_type;
-
-			if (strcasecmp(rom_type, "preferred") == 0)
-				rom_type = preferred_type;
 		}
 
 		if (rom_type)
-			system_type = find_system_type_by_config_value(rom_type);
+			system_type = emu_find_system_type_by_config_value(rom_type);
 	} else {
-		if (system_type_is_vs(system_type) || system_type_is_vs(emu->system_type)) {
+		if (system_type_is_vs(system_type) ||
+		    system_type_is_vs(emu->system_type)) {
 			rom_type_name = "rom_vs_ppu_type";
-			rom_type = find_config_value_by_system_type(system_type);
 		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
-			preferred_type = config->preferred_console_type;
 			rom_type_name = "rom_console_type";
-			rom_type = find_config_value_by_system_type(system_type);
-
-			if (strcasecmp(rom_type, "preferred") == 0)
-				rom_type = preferred_type;
 		}
+		rom_type = find_config_value_by_system_type(system_type);
 	}
 
 	emu->system_type = system_type;
 	emu->nes_framerate = NTSC_FRAMERATE;
 	emu->clock_rate = NTSC_MASTER_CLOCK_RATE;
 	ppu_set_reset_connected(emu->ppu, 1);
+
+	if (system_type == EMU_SYSTEM_TYPE_PREFERRED) {
+		preferred_type = config->preferred_console_type;
+		system_type = emu_find_system_type_by_config_value(preferred_type);
+	}
 
 	if (system_type == EMU_SYSTEM_TYPE_AUTO)
 		system_type = emu->guessed_system_type;
@@ -600,15 +558,12 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 
 	emu_set_framerate(emu, emu->nes_framerate);
 
-	if (emu->loaded && (system_type != old_system_type)) {
+	if (emu->loaded && (orig_system_type != old_system_type)) {
 		char *path;
 
 		video_apply_config(emu);
 		audio_apply_config(emu);
 		emu_apply_config(emu);
-
-		if (!emu->config->remember_system_type)
-			rom_type = "auto";
 
 		if (rom_type_name && rom_type) {
 			rom_config_set(emu->config, rom_type_name, rom_type);

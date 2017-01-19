@@ -1074,18 +1074,6 @@ static void remember_overclock_mode_callback(GtkRadioMenuItem *widget,
 	}
 }
 
-static void remember_system_type_callback(GtkRadioMenuItem *widget,
-					  gpointer user_data)
-{
-	int active;
-
-	active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
-
-	if (active != emu->config->remember_system_type) {
-		emu_set_remember_system_type(emu, active);
-	}
-}
-
 static void remember_input_devices_callback(GtkRadioMenuItem *widget,
 					    gpointer user_data)
 {
@@ -1168,19 +1156,18 @@ static void system_type_menu_show_callback(GtkWidget *menu, gpointer user_data)
 	GtkRadioMenuItem *item;
 	GSList *group;
 	int system_type;
-	const gchar *label;
-	GtkRadioMenuItem *auto_item;
-	GtkWidget *remember;
-	char buffer[30];
+	const gchar *auto_label, *preferred_label;
+	GtkRadioMenuItem *auto_item, *preferred_item;
+	char buffer[40];
+	int preferred_type;
 
 	group = user_data;
-	label = NULL;
+	auto_label = NULL;
+	preferred_label = NULL;
 	auto_item = NULL;
+	preferred_item = NULL;
 
-	remember = g_object_get_data(G_OBJECT(menu), "remember");
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(remember),
-				       emu->config->remember_system_type);
+	preferred_type = emu_find_system_type_by_config_value(emu->config->preferred_console_type);
 
 	while (group) {
 		item = group->data;
@@ -1189,10 +1176,21 @@ static void system_type_menu_show_callback(GtkWidget *menu, gpointer user_data)
 		system_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item),
 								"system_type"));
 
+		if (system_type == preferred_type) {
+			if (preferred_type == EMU_SYSTEM_TYPE_AUTO) {
+				preferred_label = "Auto";
+			} else {
+				preferred_label =
+					gtk_menu_item_get_label(GTK_MENU_ITEM(item));
+			}
+		}
+
 		if (system_type == emu->guessed_system_type) {
-			label = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
+			auto_label = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
 		} else if (system_type == EMU_SYSTEM_TYPE_AUTO) {
 			auto_item = item;
+		} else if (system_type == EMU_SYSTEM_TYPE_PREFERRED) {
+			preferred_item = item;
 		}
 
 		if (emu->system_type != system_type)
@@ -1209,10 +1207,16 @@ static void system_type_menu_show_callback(GtkWidget *menu, gpointer user_data)
 						  NULL);
 	}
 
-	if (auto_item && label) {
-		snprintf(buffer, sizeof(buffer), "Auto [%s]", label);
+	if (preferred_item && preferred_label) {
+		snprintf(buffer, sizeof(buffer), "Preferred [%s]", preferred_label);
+		gtk_menu_item_set_label(GTK_MENU_ITEM(preferred_item), buffer);
+	}
+
+	if (auto_item && auto_label) {
+		snprintf(buffer, sizeof(buffer), "Auto [%s]", auto_label);
 		gtk_menu_item_set_label(GTK_MENU_ITEM(auto_item), buffer);
 	}
+
 }
 
 static GtkWidget *gui_build_overclock_mode_menu(void)
@@ -1294,15 +1298,6 @@ static GtkWidget *gui_build_system_type_menu(int value)
 				 G_CALLBACK(system_type_callback),
 				 GINT_TO_POINTER(system_type_info[i].type));
 	}
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
-			      gtk_separator_menu_item_new());
-
-	item = gtk_check_menu_item_new_with_mnemonic("_Remember System Type");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_object_set_data(G_OBJECT(menu), "remember", item);
-	g_signal_connect(G_OBJECT(item), "toggled",
-			 G_CALLBACK(remember_system_type_callback), NULL);
 
 	g_signal_connect(G_OBJECT(menu), "show",
 			 G_CALLBACK(system_type_menu_show_callback),
@@ -1519,6 +1514,15 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	config_radio_menu(menu, "Scaling mode", emu->config,
 	                  "scaling_mode", emu_apply_config);
 
+	submenu = config_radio_menu(menu, "Palette", emu->config,
+	                            "palette", video_apply_config);
+
+	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Custom palette settings...",
+	                  gui_custom_palette_configuration_dialog, userdata, NULL);
+	gui_add_menu_item(GTK_MENU_SHELL(submenu), "YIQ Palette Settings..",
+			  gui_yiq_palette_configuration_dialog, userdata,
+			  NULL);
+
 	submenu = config_radio_menu(menu, "Software filter", emu->config,
 	                            "video_filter", emu_apply_config);
 
@@ -1539,15 +1543,6 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 			  NULL);
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cropping Settings...",
 			  gui_cropping_configuration_dialog, userdata,
-			  NULL);
-
-	submenu = config_radio_menu(menu, "Palette", emu->config,
-	                            "palette", video_apply_config);
-
-	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Custom palette settings...",
-	                  gui_custom_palette_configuration_dialog, userdata, NULL);
-	gui_add_menu_item(GTK_MENU_SHELL(submenu), "YIQ Palette Settings..",
-			  gui_yiq_palette_configuration_dialog, userdata,
 			  NULL);
 
 	return menu;

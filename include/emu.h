@@ -60,6 +60,7 @@ enum system_type {
 	EMU_SYSTEM_TYPE_NES_RGB,
 	EMU_SYSTEM_TYPE_PAL_NES,
 	EMU_SYSTEM_TYPE_DENDY,
+	EMU_SYSTEM_TYPE_PREFERRED = 0x0f,
 	EMU_SYSTEM_TYPE_VS_RP2C03B = 0x10,
 	EMU_SYSTEM_TYPE_VS_RP2C03G = 0x11,
 	EMU_SYSTEM_TYPE_VS_RP2C04_0001 = 0x12,
@@ -196,9 +197,9 @@ void emu_save_rom_config(struct emu *emu);
 
 int emu_set_framerate(struct emu *emu, int framerate);
 
-void emu_set_remember_system_type(struct emu *emu, int enabled);
 void emu_set_remember_overclock_mode(struct emu *emu, int enabled);
 
+enum system_type emu_find_system_type_by_config_value(const char *value);
 /* FIXME not sure where to put this */
 int osdprintf(const char *format, ...);
 void emu_overclock(struct emu *emu, uint32_t cycles, int enabled);

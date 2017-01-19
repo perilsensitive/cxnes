@@ -148,7 +148,7 @@ static const char *vs_controller_mode_names[] = {
 };
 
 static const char *valid_rom_console_type_names[] = {
-	"Use Preferred Console Type",
+	"Preferred",
 	"Automatic",
 	"Famicom (RP2C02 PPU)",
 	"Famicom RGB (RP2C03B PPU)",
