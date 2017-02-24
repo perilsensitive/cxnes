@@ -323,6 +323,8 @@
 
 #define BOARD_TYPE_RETROUSB_CUFROM         INES_TO_BOARD_TYPE( 29,  0, 0, 0)
 
+#define BOARD_TYPE_MAGIC_KID_GOOGOO        INES_TO_BOARD_TYPE(190,  0, 0, 0)
+
 /* These are handled internally to the iNES ROM loader because they're
    essentially duplicates or subsets of other mappers.  They're listed
    here so that I can automate extracting the list of supported mappers
