@@ -53,16 +53,12 @@ static CPU_WRITE_HANDLER(magic_kid_googoo_write_handler)
 
 	switch (addr & 0xe000) {
 	case 0x8000:
-		board->prg_banks[1].bank = value & 0x07;
-		board_prg_sync(board);
+	case 0xc000:
+		update_prg_bank(board, 1, ((addr & 0x4000) >> 11) |
+		                          (value & 0x07));
 		break;
 	case 0xa000:
-		board->chr_banks0[addr & 0x03].bank = value;
-		board_chr_sync(board, 0);
-		break;
-	case 0xc000:
-		board->prg_banks[1].bank = (value & 0x07) | 0x08;
-		board_prg_sync(board);
+		update_chr0_bank(board, addr & 0x03, value);
 		break;
 	}
 }
