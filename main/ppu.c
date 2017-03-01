@@ -2444,7 +2444,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 
 int ppu_run(struct ppu_state *ppu, int cycles)
 {
-	if (emu_resetting(ppu->emu) || ppu->catching_up || ppu->overclocking)
+	if (emu_resetting(ppu->emu) || ppu->catching_up)
 		return ppu->cycles * ppu->ppu_clock_divider;
 
 	ppu->catching_up = 1;
@@ -2455,6 +2455,31 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 	/* printf("here: %d,%d\n", ppu->scanline, ppu->scanline_cycle); */
 
 	while (1) {
+loop_start:
+		if (ppu->overclocking) {
+			int remaining = cycles - ppu->cycles;
+
+			if (ppu->overclocking < remaining)
+				remaining = ppu->overclocking;
+
+			ppu->cycles += remaining;
+			ppu->overclocking -= remaining;
+
+			if (!ppu->overclocking) {
+				int oc_cycles = ppu->overclock_scanlines * 341;
+				ppu->scanline++;
+				ppu->scanline_cycle = 0;
+				cycles -= oc_cycles;
+				ppu->cycles -= oc_cycles;
+				ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+			}
+
+			if (ppu->cycles >= cycles)
+				goto end;
+
+			continue;
+		}
+
 		/* This includes the dummy scanline */
 		while (ppu->scanline < 240) {
 			if (ppu->scanline_cycle == 0) {
@@ -2519,10 +2544,10 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				ppu->overclock_start_timestamp =
 				    ppu->cycles * ppu->ppu_clock_divider;
 				ppu->overclock_end_timestamp = ppu->overclock_start_timestamp + (ppu->overclock_scanlines * 341 * ppu->ppu_clock_divider);
-				ppu->overclocking = 1;
+				ppu->overclocking = ppu->overclock_scanlines * 341;
 				ppu->scanline--;
 				ppu->scanline_cycle = 340;
-				goto end;
+				goto loop_start;
 			}
 
 			if (ppu->cycles >= cycles)
@@ -2575,10 +2600,10 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 					    ppu->overclock_start_timestamp +
 					    (ppu->overclock_scanlines * 341 *
 					     ppu->ppu_clock_divider);
-					ppu->overclocking = 1;
+					ppu->overclocking = ppu->overclock_scanlines * 341;
 					ppu->scanline--;
 					ppu->scanline_cycle = 340;
-					goto end;
+					goto loop_start;
 				}
 
 				ppu->scanline = -1;
@@ -2614,6 +2639,9 @@ end:
 		a12_timer_run(ppu->emu->a12_timer, ppu->cycles);
 
 	ppu->catching_up = 0;
+
+	if (ppu->overclocking)
+		return ppu->overclock_start_timestamp;
 
 	return ppu->cycles * ppu->ppu_clock_divider;
 }
@@ -3109,6 +3137,11 @@ uint32_t ppu_get_cycles(struct ppu_state *ppu, int *scanline, int *cycle,
 
 	*cycle = ppu->scanline_cycle;
 	*odd_frame = ppu->odd_frame;
+
+	if (ppu->overclocking) {
+		return ppu->overclock_start_timestamp;
+	}
+
 	return ppu->cycles * ppu->ppu_clock_divider;
 }
 
@@ -3319,15 +3352,6 @@ void ppu_end_overclock(struct ppu_state *ppu, int cycles)
 	if (!ppu->overclocking)
 		return;
 
-	if (cycles < ppu->overclock_end_timestamp)
-		return;
-
-	ppu->overclocking = 0;
-	ppu->scanline++;
-	ppu->scanline_cycle = 0;
-	cycles -= ppu->overclock_end_timestamp;
-	cycles += ppu->cycles * ppu->ppu_clock_divider;
-	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
 	ppu_run(ppu, cycles);
 }
 
