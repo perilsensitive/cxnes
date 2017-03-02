@@ -107,13 +107,13 @@
 	        printf("add_cycle: %d %d,%d (%d)\n", \
 		       ppu->odd_frameppu->scanline,ppu->scanline_cycle, ppu->cycles);	\
 		ppu->cycles++;	\
-		update_v_from_t(ppu);	\
+		update_v_from_t(ppu, 1);	\
 		ppu->scanline_cycle++;	\
 }
 
 #define add_cycle_nodebug() {		\
 		ppu->cycles++;	\
-		update_v_from_t(ppu);	\
+		update_v_from_t(ppu, 1);	\
 		ppu->scanline_cycle++;	\
 }
 
@@ -444,16 +444,18 @@ static uint8_t power_up_palette[] = {
 /* 	printf("\n"); */
 /* } */
 
-static void update_v_from_t(struct ppu_state *ppu)
+static void update_v_from_t(struct ppu_state *ppu, int cycles)
 {
 	if (!ppu->wrote_2006)
 		return;
 
-	if (ppu->cycles < (ppu->wrote_2006))
-		return;
+	if (ppu->wrote_2006 < cycles)
+		cycles = ppu->wrote_2006;
 
-	ppu->wrote_2006 = 0;
-	ppu->scroll_address = ppu->scroll_address_latch;
+	ppu->wrote_2006 -= cycles;
+
+	if (!ppu->wrote_2006)
+		ppu->scroll_address = ppu->scroll_address_latch;
 }
 
 //#define read_mem(x) (read_pagemap[(x) >> PPU_PAGE_SHIFT][(x) & PPU_PAGE_MASK])
@@ -1106,9 +1108,6 @@ uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 	ppu_run(ppu, cycles);
 
 	ppu->cycles -= ppu->frame_cycles;
-	if (ppu->wrote_2006 >= ppu->frame_cycles) {
-		ppu->wrote_2006 -= ppu->frame_cycles;
-	}
 	if (ppu->ctrl_reg & CTRL_REG_NMI_ENABLE) {
 		cpu_interrupt_schedule(ppu->emu->cpu, IRQ_NMI,
 				       ppu->vblank_timestamp);
@@ -1846,7 +1845,7 @@ static int do_disabled_scanline(struct ppu_state *ppu, int cycles)
 
 	ppu->cycles += needed;
 	ppu->scanline_cycle += needed;
-	update_v_from_t(ppu);
+	update_v_from_t(ppu, needed);
 
 	if (ppu->scanline == -1) {
 		if (ppu->scanline_cycle > 1)
@@ -2348,6 +2347,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 	}
 
 	ppu->scanline_cycle = 1;
+	update_v_from_t(ppu, 1);
 	while (ppu->scanline_cycle < 257) {
 		int left, right, attr;
 		int even, odd;
@@ -2355,7 +2355,13 @@ static int do_whole_scanline(struct ppu_state *ppu)
 		int i;
 
 		start_nametable_fetch(ppu);
+		if (ppu->scanline_cycle == 1)
+			update_v_from_t(ppu, 1);
+
 		finish_nametable_fetch(ppu);
+		if (ppu->scanline_cycle == 2)
+			update_v_from_t(ppu, 1);
+
 
 		start_attribute_fetch(ppu);
 		attr = do_attribute_fetch(ppu);
@@ -2458,7 +2464,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 	}
 
 	ppu->cycles += 341;
-	update_v_from_t(ppu);
+	update_v_from_t(ppu, 341);
 
 	return 0;
 }
@@ -2485,7 +2491,7 @@ loop_start:
 
 			ppu->cycles += remaining;
 			ppu->overclocking -= remaining;
-			update_v_from_t(ppu);
+			update_v_from_t(ppu, remaining);
 
 			if (!ppu->overclocking) {
 				int oc_cycles = ppu->overclock_scanlines * 341;
@@ -2494,10 +2500,6 @@ loop_start:
 				cycles -= oc_cycles;
 				ppu->cycles -= oc_cycles;
 				ppu->overclock_mode = OVERCLOCK_MODE_NONE;
-
-				if (ppu->wrote_2006) {
-					ppu->wrote_2006 -= oc_cycles;
-				}
 			}
 
 			if (ppu->cycles >= cycles)
@@ -2559,7 +2561,7 @@ loop_start:
 				needed = left_in_line;
 
 			ppu->cycles += needed;
-			update_v_from_t(ppu);
+			update_v_from_t(ppu, needed);
 			ppu->scanline_cycle += needed;
 			ppu->scanline += ppu->scanline_cycle / 341;
 			ppu->scanline_cycle %= 341;
@@ -2612,7 +2614,7 @@ loop_start:
 				needed = left_in_frame;
 
 			ppu->cycles += needed;
-			update_v_from_t(ppu);
+			update_v_from_t(ppu, needed);
 			ppu->scanline_cycle += needed;
 			ppu->scanline += ppu->scanline_cycle / 341;
 			ppu->scanline_cycle %= 341;
@@ -2952,7 +2954,7 @@ static CPU_WRITE_HANDLER(write_address_reg)
 		    (ppu->scroll_address_latch & 0xff) | (value & 0x3f) << 8;
 	} else {
 		//ppu->wrote_2006 = ppu->scanline_cycle;
-		ppu->wrote_2006 = ppu->cycles + 4;
+		ppu->wrote_2006 = 3;
 		//printf("preparing to wtf: %d\n", ppu->cycles);
 		ppu->scroll_address_latch =
 		    (ppu->scroll_address_latch & 0x7f00) | value;
