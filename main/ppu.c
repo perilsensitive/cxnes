@@ -107,13 +107,13 @@
 	        printf("add_cycle: %d %d,%d (%d)\n", \
 		       ppu->odd_frameppu->scanline,ppu->scanline_cycle, ppu->cycles);	\
 		ppu->cycles++;	\
-		update_v_from_t(ppu, 1);	\
+		scroll_addr_update(ppu, 1);	\
 		ppu->scanline_cycle++;	\
 }
 
 #define add_cycle_nodebug() {		\
 		ppu->cycles++;	\
-		update_v_from_t(ppu, 1);	\
+		scroll_addr_update(ppu, 1);	\
 		ppu->scanline_cycle++;	\
 }
 
@@ -230,7 +230,7 @@ static const uint8_t xflip_lookup[256] = {
 };
 
 struct ppu_state {
-	int overclocking;
+	int overclock_cycles;
 	int overclock_start_timestamp;
 	int overclock_end_timestamp;
 	int overclock_mode;
@@ -367,7 +367,7 @@ struct ppu_state {
 
 	int a12_timer_enabled;
 
-	int wrote_2006;
+	int scroll_addr_update_delay;
 	int sprite_overflow_flag;
 };
 
@@ -421,7 +421,7 @@ static struct state_item ppu_state_items[] = {
 
 	STATE_8BIT(ppu_state, burst_phase),
 
-	STATE_16BIT(ppu_state, wrote_2006),
+	STATE_16BIT(ppu_state, scroll_addr_update_delay),
 	
 	STATE_ITEM_END(),
 };
@@ -444,17 +444,17 @@ static uint8_t power_up_palette[] = {
 /* 	printf("\n"); */
 /* } */
 
-static void update_v_from_t(struct ppu_state *ppu, int cycles)
+static INLINE void scroll_addr_update(struct ppu_state *ppu, int cycles)
 {
-	if (!ppu->wrote_2006)
+	if (!ppu->scroll_addr_update_delay)
 		return;
 
-	if (ppu->wrote_2006 < cycles)
-		cycles = ppu->wrote_2006;
+	if (ppu->scroll_addr_update_delay < cycles)
+		cycles = ppu->scroll_addr_update_delay;
 
-	ppu->wrote_2006 -= cycles;
+	ppu->scroll_addr_update_delay -= cycles;
 
-	if (!ppu->wrote_2006)
+	if (!ppu->scroll_addr_update_delay)
 		ppu->scroll_address = ppu->scroll_address_latch;
 }
 
@@ -985,7 +985,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 	}
 
 	ppu->overclock_mode = OVERCLOCK_MODE_NONE;
-	ppu->overclocking = 0;
+	ppu->overclock_cycles = 0;
 
 	if (!hard && !ppu->reset_connected) {
 		/* If the reset line isn't connected, the PPU just
@@ -1048,7 +1048,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 		ppu->first_frame_flag = 1;
 	}
 
-	ppu->wrote_2006 = 0;
+	ppu->scroll_addr_update_delay = 0;
 
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines - 1) * 341 - 1;
@@ -1845,7 +1845,7 @@ static int do_disabled_scanline(struct ppu_state *ppu, int cycles)
 
 	ppu->cycles += needed;
 	ppu->scanline_cycle += needed;
-	update_v_from_t(ppu, needed);
+	scroll_addr_update(ppu, needed);
 
 	if (ppu->scanline == -1) {
 		if (ppu->scanline_cycle > 1)
@@ -2025,34 +2025,8 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			ppu->right_tile_latch = do_bg_tile_fetch(ppu);
 			sprite_eval(ppu);
 			if (ppu->scanline_cycle == 256) {
-				//if ((ppu->wrote_2006 < 255) || (ppu->wrote_2006 > 256)) {
-					/*The PPU does some odd things if you
-					* complete the second $2006 write
-					* exactly at the start of cycle 256.
-					*
-					* The fine vertical scroll value is
-					* kept from what was written to $2006,
-					* but the rest seems unpredictable and
-					* appears to depend on the value that
-					* was written to the scroll address.
-					* I haven't tested this on actual
-					* hardware, but this is what happens
-					* in Visual 2C02.  Here, the scroll
-					* increment is skipped; while not quite
-					* accurate this appears to work for
-					* the games affected by this behavior.
-					*
-					* Two games, to my knowledge, require
-					* this to be emulated to avoid the
-					*"shaky status bar syndrome":
-					*
-					* - Cosmic Wars (J)
-					* - The Simpsons: Bart vs. the Space
-					*   Mutants (U)
-					*/
-					increment_y_scroll(ppu);
-					increment_x_scroll(ppu);
-				//}
+				increment_y_scroll(ppu);
+				increment_x_scroll(ppu);
 
 				/* If there are fewer than 8 sprites on this
 				   scanline, then the overwritten sprite zero
@@ -2347,7 +2321,7 @@ static int do_whole_scanline(struct ppu_state *ppu)
 	}
 
 	ppu->scanline_cycle = 1;
-	update_v_from_t(ppu, 1);
+	scroll_addr_update(ppu, 1);
 	while (ppu->scanline_cycle < 257) {
 		int left, right, attr;
 		int even, odd;
@@ -2356,11 +2330,11 @@ static int do_whole_scanline(struct ppu_state *ppu)
 
 		start_nametable_fetch(ppu);
 		if (ppu->scanline_cycle == 1)
-			update_v_from_t(ppu, 1);
+			scroll_addr_update(ppu, 1);
 
 		finish_nametable_fetch(ppu);
 		if (ppu->scanline_cycle == 2)
-			update_v_from_t(ppu, 1);
+			scroll_addr_update(ppu, 1);
 
 
 		start_attribute_fetch(ppu);
@@ -2464,7 +2438,6 @@ static int do_whole_scanline(struct ppu_state *ppu)
 	}
 
 	ppu->cycles += 341;
-	update_v_from_t(ppu, 341);
 
 	return 0;
 }
@@ -2483,17 +2456,17 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 
 	while (1) {
 loop_start:
-		if (ppu->overclocking) {
+		if (ppu->overclock_cycles) {
 			int remaining = cycles - ppu->cycles;
 
-			if (ppu->overclocking < remaining)
-				remaining = ppu->overclocking;
+			if (ppu->overclock_cycles < remaining)
+				remaining = ppu->overclock_cycles;
 
 			ppu->cycles += remaining;
-			ppu->overclocking -= remaining;
-			update_v_from_t(ppu, remaining);
+			ppu->overclock_cycles -= remaining;
+			scroll_addr_update(ppu, remaining);
 
-			if (!ppu->overclocking) {
+			if (!ppu->overclock_cycles) {
 				int oc_cycles = ppu->overclock_scanlines * 341;
 				ppu->scanline++;
 				ppu->scanline_cycle = 0;
@@ -2561,7 +2534,7 @@ loop_start:
 				needed = left_in_line;
 
 			ppu->cycles += needed;
-			update_v_from_t(ppu, needed);
+			scroll_addr_update(ppu, needed);
 			ppu->scanline_cycle += needed;
 			ppu->scanline += ppu->scanline_cycle / 341;
 			ppu->scanline_cycle %= 341;
@@ -2572,7 +2545,7 @@ loop_start:
 				ppu->overclock_start_timestamp =
 				    ppu->cycles * ppu->ppu_clock_divider;
 				ppu->overclock_end_timestamp = ppu->overclock_start_timestamp + (ppu->overclock_scanlines * 341 * ppu->ppu_clock_divider);
-				ppu->overclocking = ppu->overclock_scanlines * 341;
+				ppu->overclock_cycles = ppu->overclock_scanlines * 341;
 				ppu->scanline--;
 				ppu->scanline_cycle = 340;
 				goto loop_start;
@@ -2614,7 +2587,7 @@ loop_start:
 				needed = left_in_frame;
 
 			ppu->cycles += needed;
-			update_v_from_t(ppu, needed);
+			scroll_addr_update(ppu, needed);
 			ppu->scanline_cycle += needed;
 			ppu->scanline += ppu->scanline_cycle / 341;
 			ppu->scanline_cycle %= 341;
@@ -2629,7 +2602,7 @@ loop_start:
 					    ppu->overclock_start_timestamp +
 					    (ppu->overclock_scanlines * 341 *
 					     ppu->ppu_clock_divider);
-					ppu->overclocking = ppu->overclock_scanlines * 341;
+					ppu->overclock_cycles = ppu->overclock_scanlines * 341;
 					ppu->scanline--;
 					ppu->scanline_cycle = 340;
 					goto loop_start;
@@ -2669,7 +2642,7 @@ end:
 
 	ppu->catching_up = 0;
 
-	if (ppu->overclocking)
+	if (ppu->overclock_cycles)
 		return ppu->overclock_start_timestamp;
 
 	return ppu->cycles * ppu->ppu_clock_divider;
@@ -2953,9 +2926,7 @@ static CPU_WRITE_HANDLER(write_address_reg)
 		ppu->scroll_address_latch =
 		    (ppu->scroll_address_latch & 0xff) | (value & 0x3f) << 8;
 	} else {
-		//ppu->wrote_2006 = ppu->scanline_cycle;
-		ppu->wrote_2006 = 3;
-		//printf("preparing to wtf: %d\n", ppu->cycles);
+		ppu->scroll_addr_update_delay = 3;
 		ppu->scroll_address_latch =
 		    (ppu->scroll_address_latch & 0x7f00) | value;
 
@@ -3094,11 +3065,6 @@ static CPU_WRITE_HANDLER(write_data_reg)
 
 	ppu_run(ppu, cycles);
 
-	/*
-	if (ppu->wrote_2006)
-		printf("wtf: %d %d %d %d\n", ppu->wrote_2006, ppu->cycles, ppu->scanline, ppu->scanline_cycle);
-		*/
-
 	address = ppu->scroll_address & 0x3fff;
 	increment_scroll_address(ppu);
 	if (!ppu->rendering)
@@ -3172,7 +3138,7 @@ uint32_t ppu_get_cycles(struct ppu_state *ppu, int *scanline, int *cycle,
 	*cycle = ppu->scanline_cycle;
 	*odd_frame = ppu->odd_frame;
 
-	if (ppu->overclocking) {
+	if (ppu->overclock_cycles) {
 		return ppu->overclock_start_timestamp;
 	}
 
@@ -3383,7 +3349,7 @@ int ppu_get_burst_phase(struct ppu_state *ppu)
 
 void ppu_end_overclock(struct ppu_state *ppu, int cycles)
 {
-	if (!ppu->overclocking)
+	if (!ppu->overclock_cycles)
 		return;
 
 	ppu_run(ppu, cycles);
@@ -3391,7 +3357,7 @@ void ppu_end_overclock(struct ppu_state *ppu, int cycles)
 
 void ppu_set_overclock_mode(struct ppu_state *ppu, int mode, int scanlines)
 {
-	ppu->overclocking = 0;
+	ppu->overclock_cycles = 0;
 	ppu->overclock_mode = mode;
 	ppu->overclock_scanlines = scanlines;
 }
