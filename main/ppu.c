@@ -2455,32 +2455,6 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 	/* printf("here: %d,%d\n", ppu->scanline, ppu->scanline_cycle); */
 
 	while (1) {
-loop_start:
-		if (ppu->overclock_cycles) {
-			int remaining = cycles - ppu->cycles;
-
-			if (ppu->overclock_cycles < remaining)
-				remaining = ppu->overclock_cycles;
-
-			ppu->cycles += remaining;
-			ppu->overclock_cycles -= remaining;
-			scroll_addr_update(ppu, remaining);
-
-			if (!ppu->overclock_cycles) {
-				int oc_cycles = ppu->overclock_scanlines * 341;
-				ppu->scanline++;
-				ppu->scanline_cycle = 0;
-				cycles -= oc_cycles;
-				ppu->cycles -= oc_cycles;
-				ppu->overclock_mode = OVERCLOCK_MODE_NONE;
-			}
-
-			if (ppu->cycles >= cycles)
-				goto end;
-
-			continue;
-		}
-
 		/* This includes the dummy scanline */
 		while (ppu->scanline < 240) {
 			if (ppu->scanline_cycle == 0) {
@@ -2546,9 +2520,6 @@ loop_start:
 				    ppu->cycles * ppu->ppu_clock_divider;
 				ppu->overclock_end_timestamp = ppu->overclock_start_timestamp + (ppu->overclock_scanlines * 341 * ppu->ppu_clock_divider);
 				ppu->overclock_cycles = ppu->overclock_scanlines * 341;
-				ppu->scanline--;
-				ppu->scanline_cycle = 340;
-				goto loop_start;
 			}
 
 			if (ppu->cycles >= cycles)
@@ -2557,6 +2528,27 @@ loop_start:
 
 		/* first vblank cycle */
 		if (ppu->scanline == 240 + ppu->post_render_scanlines) {
+			if (ppu->overclock_cycles) {
+				int remaining = cycles - ppu->cycles;
+
+				if (ppu->overclock_cycles < remaining)
+					remaining = ppu->overclock_cycles;
+
+				ppu->cycles += remaining;
+				ppu->overclock_cycles -= remaining;
+				scroll_addr_update(ppu, remaining);
+
+				if (!ppu->overclock_cycles) {
+					int oc_cycles = ppu->overclock_scanlines * 341;
+					cycles -= oc_cycles;
+					ppu->cycles -= oc_cycles;
+					ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+				}
+
+				if (ppu->cycles >= cycles)
+					goto end;
+			}
+
 			if (ppu->scanline_cycle == 0) {
 				add_cycle();
 				if (ppu->cycles >= cycles)
@@ -2572,7 +2564,9 @@ loop_start:
 		}
 
 		/* Rest of frame */
-		if (ppu->scanline >= 240 + ppu->post_render_scanlines) {
+		if ((ppu->scanline >= 240 + ppu->post_render_scanlines) &&
+		    (ppu->scanline <  240 + ppu->post_render_scanlines +
+		     ppu->vblank_scanlines)) {
 			int needed;
 			int left_in_frame;
 
@@ -2603,37 +2597,57 @@ loop_start:
 					    (ppu->overclock_scanlines * 341 *
 					     ppu->ppu_clock_divider);
 					ppu->overclock_cycles = ppu->overclock_scanlines * 341;
-					ppu->scanline--;
-					ppu->scanline_cycle = 340;
-					goto loop_start;
 				}
 
-				ppu->scanline = -1;
-				if (RENDERING_ENABLED())
-					ppu->rendering = 1;
-
-				if (ppu->ppu_type == PPU_TYPE_RP2C02)
-					ppu->odd_frame ^= 1;
-
-				ppu->first_frame_flag = 0;
-				ppu->vblank_timestamp = 341 *
-					(241 + ppu->post_render_scanlines) + 1;
-				if (ppu->odd_frame && RENDERING_ENABLED())
-					ppu->vblank_timestamp--;
-				ppu->vblank_timestamp *=
-					ppu->ppu_clock_divider;
-				ppu->vblank_timestamp += ppu->cycles *
-					ppu->ppu_clock_divider;
-
-				/* if (ppu->a12_timer_enabled) */
-				/* 	a12_timer_run(ppu->emu->a12_timer, ppu->cycles); */
 			}
-
-			if (ppu->cycles >= cycles)
-				goto end;
 		}
 
+		if (ppu->scanline == 240 + ppu->post_render_scanlines +
+		    ppu->vblank_scanlines) {
+			if (ppu->overclock_cycles) {
+				int remaining = cycles - ppu->cycles;
 
+				if (ppu->overclock_cycles < remaining)
+					remaining = ppu->overclock_cycles;
+
+				ppu->cycles += remaining;
+				ppu->overclock_cycles -= remaining;
+				scroll_addr_update(ppu, remaining);
+
+				if (!ppu->overclock_cycles) {
+					int oc_cycles = ppu->overclock_scanlines * 341;
+					cycles -= oc_cycles;
+					ppu->cycles -= oc_cycles;
+					ppu->overclock_mode = OVERCLOCK_MODE_NONE;
+				}
+
+				if (ppu->cycles >= cycles)
+					goto end;
+			}
+
+			ppu->scanline = -1;
+			if (RENDERING_ENABLED())
+				ppu->rendering = 1;
+
+			if (ppu->ppu_type == PPU_TYPE_RP2C02)
+				ppu->odd_frame ^= 1;
+
+			ppu->first_frame_flag = 0;
+			ppu->vblank_timestamp = 341 *
+				(241 + ppu->post_render_scanlines) + 1;
+			if (ppu->odd_frame && RENDERING_ENABLED())
+				ppu->vblank_timestamp--;
+			ppu->vblank_timestamp *=
+				ppu->ppu_clock_divider;
+			ppu->vblank_timestamp += ppu->cycles *
+				ppu->ppu_clock_divider;
+
+			/* if (ppu->a12_timer_enabled) */
+			/* 	a12_timer_run(ppu->emu->a12_timer, ppu->cycles); */
+		}
+
+		if (ppu->cycles >= cycles)
+			goto end;
 	}
 
 end:
@@ -3139,6 +3153,8 @@ uint32_t ppu_get_cycles(struct ppu_state *ppu, int *scanline, int *cycle,
 	*odd_frame = ppu->odd_frame;
 
 	if (ppu->overclock_cycles) {
+		*cycle = 340;
+		*scanline = ppu->scanline - 1;
 		return ppu->overclock_start_timestamp;
 	}
 
