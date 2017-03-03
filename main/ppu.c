@@ -103,21 +103,6 @@
 #define EXRAM_MODE_WRAM      2
 #define EXRAM_MODE_WRAM_RO   3
 #define EXRAM_MODE_DISABLED  4
-#define add_cycle_debug() {			     \
-	        printf("add_cycle: %d %d,%d (%d)\n", \
-		       ppu->odd_frameppu->scanline,ppu->scanline_cycle, ppu->cycles);	\
-		ppu->cycles++;	\
-		scroll_addr_update(ppu, 1);	\
-		ppu->scanline_cycle++;	\
-}
-
-#define add_cycle_nodebug() {		\
-		ppu->cycles++;	\
-		scroll_addr_update(ppu, 1);	\
-		ppu->scanline_cycle++;	\
-}
-
-#define add_cycle() add_cycle_nodebug()
 
 #define return_if_done() { \
 		if (ppu->cycles >= cycles)  {	\
@@ -443,6 +428,18 @@ static uint8_t power_up_palette[] = {
 /* 	printf("scroll_address: %x\n", ppu->scroll_address); */
 /* 	printf("\n"); */
 /* } */
+
+static INLINE void add_cycle(struct ppu_state *ppu)
+{
+	ppu->cycles++;
+	ppu->scanline_cycle++;
+	if (ppu->scroll_addr_update_delay) {
+		ppu->scroll_addr_update_delay--;
+
+		if (!ppu->scroll_addr_update_delay)
+			ppu->scroll_address = ppu->scroll_address_latch;
+	}
+}
 
 static INLINE void scroll_addr_update(struct ppu_state *ppu, int cycles)
 {
@@ -1895,7 +1892,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 	while (ppu->scanline_cycle < 341) {
 		switch (ppu->scanline_cycle) {
 		case 0:
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   1: case   9: case  17: case  25:
 		case  33: case  41: case  49: case  57:
@@ -1927,7 +1924,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			}
 			start_nametable_fetch(ppu);
 			sprite_read(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   2: case  10: case  18: case  26:
 		case  34: case  42: case  50: case  58:
@@ -1946,7 +1943,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			finish_nametable_fetch(ppu);
 			sprite_eval(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   3: case  11: case  19: case  27:
 		case  35: case  43: case  51: case  59:
@@ -1959,7 +1956,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			start_attribute_fetch(ppu);
 			sprite_read(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   4: case  12: case  20: case  28:
 		case  36: case  44: case  52: case  60:
@@ -1972,7 +1969,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			ppu->attribute_latch = do_attribute_fetch(ppu);
 			sprite_eval(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   5: case  13: case  21: case  29:
 		case  37: case  45: case  53: case  61:
@@ -1985,7 +1982,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			start_left_bg_tile_fetch();
 			sprite_read(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   6: case  14: case  22: case  30:
 		case  38: case  46: case  54: case  62:
@@ -1998,7 +1995,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			ppu->left_tile_latch = do_bg_tile_fetch(ppu);
 			sprite_eval(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   7: case  15: case  23: case  31:
 		case  39: case  47: case  55: case  63:
@@ -2011,7 +2008,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			render_pixel(ppu);
 			start_right_bg_tile_fetch();
 			sprite_read(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case   8: case  16: case  24: case  32:
 		case  40: case  48: case  56: case  64:
@@ -2043,7 +2040,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 			} else {
 				increment_x_scroll(ppu);
 			}
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 			if (ppu->scanline_cycle < 257)
 				continue;
@@ -2067,41 +2064,41 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 				}
 			}
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 258: case 266: case 274: case 282:
 		case 290: case 298: case 306: case 314:
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 259: case 267: case 275: case 283:
 		case 291: case 299: case 307: case 315:
 			start_nametable_fetch(ppu);	/* garbage */
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 260: case 268: case 276: case 284:
 		case 292: case 300: case 308: case 316:
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 261: case 269: case 277: case 285:
 		case 293: case 301: case 309: case 317:
 			load_sprite_address(ppu, 0);
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 262: case 270: case 278: case 286:
 		case 294: case 302: case 310: case 318:
 			finish_left_spr_tile_fetch();
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 263: case 271: case 279: case 287:
 		case 295: case 303: case 311: case 319:
 			load_sprite_address(ppu, 1);
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 264: case 272: case 280: case 288:
 		case 296: case 304: case 312: case 320:
@@ -2118,7 +2115,7 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 					SCROLL_VERTICAL;
 			}
 			ppu->oam_addr_reg = 0;
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 			if (ppu->scanline_cycle < 321)
 				continue;
@@ -2132,19 +2129,19 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 				load_bg_shift_register(ppu);
 			}
 			start_nametable_fetch(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 322:
 		case 330:
 		case 338:
 			finish_nametable_fetch(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 323:
 		case 331:
 		case 339:
 			start_attribute_fetch(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 324:
 		case 332:
@@ -2166,32 +2163,32 @@ static int do_partial_scanline(struct ppu_state *ppu, int cycles)
 						ppu->burst_phase = (ppu->burst_phase + 1) % 3;
 //						printf("burst_phase = %d (long)\n", ppu->burst_phase);
 					}
-					add_cycle();
+					add_cycle(ppu);
 				}
 				return 0;
 			}
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 325:
 		case 333:
 			start_left_bg_tile_fetch();
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 326:
 		case 334:
 			ppu->left_tile_latch = do_bg_tile_fetch(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 327:
 		case 335:
 			start_right_bg_tile_fetch();
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		case 328:
 		case 336:
 			ppu->right_tile_latch = do_bg_tile_fetch(ppu);
 			increment_x_scroll(ppu);
-			add_cycle();
+			add_cycle(ppu);
 			return_if_done();
 		}
 	}
@@ -2471,7 +2468,7 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 				do_disabled_scanline(ppu, cycles);
 				if (ppu->cycles >= cycles)
 					goto end;
-			} else if (0 && ppu->use_scanline_renderer &&
+			} else if (-1 && ppu->use_scanline_renderer &&
 				   ppu->scanline >= 0 &&
 				   ppu->scanline_cycle == 0 &&
 				   ((cycles - ppu->cycles) >= 341)) {
@@ -2550,14 +2547,14 @@ int ppu_run(struct ppu_state *ppu, int cycles)
 			}
 
 			if (ppu->scanline_cycle == 0) {
-				add_cycle();
+				add_cycle(ppu);
 				if (ppu->cycles >= cycles)
 					goto end;
 			}
 
 			if (ppu->scanline_cycle == 1) {
 				ppu->status_reg |= STATUS_REG_VBLANK_FLAG;
-				add_cycle();
+				add_cycle(ppu);
 				if (ppu->cycles >= cycles)
 					goto end;
 			}
