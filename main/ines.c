@@ -56,27 +56,25 @@ struct ines_header {
 
 static const char ines_id[4] = { 'N', 'E', 'S', 0x1a };
 
-/* Header garbage strings that have been spotted in the wild. */
-static const char *garbage[] = {
-	"DiskDude!",
-	"DisNi0330",		/* looks like DiskDude! got overwritten by Ni0330 */
-	"demiforce",
-	"iskDude!",		/* Sometimes a ROM will be "fixed" by overwriting the first 'D'
-				   with a 0x00 byte.
-				 */
-	"vimm.net",		/* Unconfirmed (usually, I've seen this at the end of the file) */
-	"rinkaku",
-	"GitM-DX",		/* Unconfirmed */
-	"Ni0330",
-	"NI2.1",
-	"aster",
-	"sl1me",
-	"NeCo/WIN",
-	"NI 1.3",		/* FIXME also "NI\x001.3", not sure how to check that */
-	"NI1.3",
-	"Turk",
-	"MJR",
-	NULL,
+static const char garbage[][10] = {
+	{ 9, 'D', 'i', 's', 'k', 'D', 'u', 'd', 'e', '!' }, /* DiskDude! */
+	{ 9, 'D', 'i', 's', 'N', 'i', '0', '3', '3', '0' }, /* DisNi0330 */
+	{ 9, 'd', 'e', 'm', 'i', 'f', 'o', 'r', 'c', 'e' }, /* demiforce */
+	{ 8,   0, 'i', 's', 'k', 'D', 'u', 'd', 'e', '!' }, /* iskDude!  */
+	{ 8,   0, 'N', 'e', 'C', 'o', '/', 'W', 'I', 'N' }, /* NeCo/WIN  */
+	{ 8,   0, 'v', 'i', 'm', 'm', '.', 'n', 'e', 't' }, /* vimm.net  */
+	{ 7,   0,   0, 'r', 'i', 'n', 'k', 'a', 'k', 'u' }, /* rinkaku   */
+	{ 7,   0,   0, 'G', 'i', 't', 'M', '-', 'D', 'X' }, /* GitM-DX   */
+	{ 6,   0,   0,   0, 'N', 'i', '0', '3', '3', '0' }, /* NI 0330   */
+	{ 6,   0,   0,   0, 'N', 'I', ' ', '1', '.', '3' }, /* NI 1.3    */
+	{ 6,   0,   0,   0, 'N', 'I',   0, '1', '.', '3' }, /* NI\x001.3 */
+	{ 5,   0,   0,   0,   0, 'N', 'I', '2', '.', '1' }, /* NI2.1     */
+	{ 5,   0,   0,   0,   0, 'N', 'I', '1', '.', '3' }, /* NI1.3     */
+	{ 5,   0,   0,   0,   0, 's', 'l', '1', 'm', 'e' }, /* sl1me     */
+	{ 5,   0,   0,   0,   0, 'a', 's', 't', 'e', 'r' }, /* aster     */
+	{ 4,   0,   0,   0,   0,   0, 'T', 'u', 'r', 'k' }, /* Turk      */
+	{ 3,   0,   0,   0,   0,   0,   0, 'M', 'J', 'R' }, /* MJR       */
+	{ 0 }
 };
 
 struct ines_board_map {
@@ -101,16 +99,10 @@ static int remove_garbage_from_header(uint8_t * buffer)
 
 	max_len = 0;
 	for (i = 0; garbage[i]; i++) {
-		int len = strlen(garbage[i]);
-		if (memcmp(buffer + 16 - len, garbage[i], len) == 0) {
-			/* This should handle the case where multiple
-			   strings match.  Some strings spotted in the
-			   wild look like one known string that
-			   overwrote the end of another, longer known
-			   string.
-			 */
-			if (len > max_len)
-				max_len = len;
+		int len = garbage[i][0];
+		if (memcmp(buffer + 16 - len, garbage[i] + (10 - len), len) == 0) {
+			max_len = len;
+			break;
 		}
 	}
 
@@ -131,13 +123,18 @@ static int remove_garbage_from_header(uint8_t * buffer)
 	if (!max_len) {
 		if ((buffer[7] & 0x0c) == 0x08) {
 			if (buffer[14] || buffer[15])
-			    max_len = 8;
+				max_len = 8;
 		} else {
 			if (buffer[12] || buffer[13] ||
 			    buffer[14] || buffer[15]) {
 				max_len = 9;
 			}
 		}
+
+		/* If both the VS. and PC10 flags are set, byte 7
+		 * is probably bad. */
+		if (buffer[7] & 0x03)
+			max_len = 9;
 	}
 
 	if (max_len) {
