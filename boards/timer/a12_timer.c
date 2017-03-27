@@ -82,6 +82,7 @@ struct a12_timer {
 	int has_short_frame;
 	int variant;
 	int a12_rise_delta;
+	int edge;
 	int irq_enabled;
 	int counter_enabled;
 	int reload_flag;
@@ -121,6 +122,7 @@ static struct state_item a12_timer_state_items[] = {
 	STATE_8BIT(a12_timer, counter_enabled), /* BOOLEAN */
 	STATE_8BIT(a12_timer, irq_enabled), /* BOOLEAN */
 	STATE_8BIT(a12_timer, reload_flag), /* BOOLEAN */
+	STATE_16BIT(a12_timer, edge),
 	STATE_ITEM_END(),
 };
 
@@ -196,42 +198,27 @@ int a12_timer_init(struct emu *emu, int variant)
 //	variant = A12_TIMER_VARIANT_ACCLAIM_MC_ACC;
 	timer->variant = variant;
 
+	timer->delay = 0;
+	timer->force_reload_delay = 0;
+	timer->alt = 0;
+	timer->a12_rise_delta = 4;
+	timer->edge = 0;
+
 	switch (variant) {
 	case A12_TIMER_VARIANT_MMC3_STD:
-		timer->delay = 0;
-		timer->force_reload_delay = 0;
-		timer->alt = 0;
-		timer->a12_rise_delta = 4;
 		break;
 	case A12_TIMER_VARIANT_MMC3_ALT:
-		timer->delay = 0;
-		timer->force_reload_delay = 0;
 		timer->alt = 1;
-		timer->a12_rise_delta = 4;
 		break;
 	case A12_TIMER_VARIANT_RAMBO1:
-		timer->delay = 0;
 		timer->force_reload_delay = 1;
-		timer->alt = 0;
-		timer->a12_rise_delta = 4;
 		break;
 	case A12_TIMER_VARIANT_TAITO_TC0190FMC:
 		timer->delay = 12;
-		timer->force_reload_delay = 0;
-		timer->alt = 0;
-		timer->a12_rise_delta = 4;
 		break;
 	case A12_TIMER_VARIANT_ACCLAIM_MC_ACC:
 		timer->delay = 4;
-		timer->force_reload_delay = 0;
-		timer->alt = 0;
-		/* I'm sure this is wrong, but it's the minimum value
-		   that works for Mickey's Safari in Letterland.  I'm
-		   99% sure that the rise delta for the MC-ACC *is*
-		   longer than the MMC3's, but not sure exactly how
-		   much.
-		*/
-		timer->a12_rise_delta = 11;
+		timer->edge = 0x1000;
 		break;
 	}
 
@@ -685,18 +672,6 @@ static void a12_timer_schedule_irq(struct a12_timer *timer)
 
 			}
 
-			/* if (timer->a12_rise_delta >= 4) { */
-			/* 	if ((cycle >= 5) && (cycle < 253)) { */
-			/* 		cycles += 253 - cycle; */
-			/* 		cycle = 253; */
-			/* 	} else if ((cycle >= 261) && (cycle < 317)) { */
-			/* 		cycles += 317 - cycle; */
-			/* 		cycle = 317; */
-			/* 	} else if ((cycle >= 325) && (cycle < 333)) { */
-			/* 		cycles += 333 - cycle; */
-			/* 		cycle = 333; */
-			/* 	} */
-			/* } */
 			next_clock = calculate_next_clock(timer, increment,
 							  starting_cycles,
 							  cycles);
@@ -781,6 +756,7 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 	int prescaler_wrapped;
 	int counter_limit;
 	int counter_delta;
+	int edge;
 
 	if (rendering) {
 		printf("called while rendering: %d %d\n", scanline, scanline_cycle);
@@ -807,7 +783,9 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 		counter_limit = 0;
 	}
 
-	if (prev_a12 && !address) {
+	edge = timer->edge;
+
+	if ((prev_a12 ^ edge) && (!address ^ edge)) {
 		timer->next_clock = (cycles - timer->frame_start_cpu_cycles);
 		timer->next_clock /= emu->cpu_clock_divider;
 		timer->next_clock += timer->a12_rise_delta;
@@ -911,13 +889,6 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 	}
 
 	timer->reload_flag = 0;
-//not_connected:
-	//timer->next_clock = cycles + timer->a12_rise_delta * timer->emu->ppu_clock_divider;
-
-      /* if (!timer->counter && timer->irq_enabled) { */
-      /*        printf("irq would fire at %d (%d,%d)\n", cycles, scanline, scanline_cycle); */
-      /* } */
-
 }
 
 static CPU_WRITE_HANDLER(a12_timer_ctrl_handler)
@@ -1155,7 +1126,9 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 	int next_cycle;
 	int clocks;
 	int tmp;
+	int edge;
 
+	edge = timer->edge;
 	emu = timer->emu;
 	prev_a12 = timer->prev_a12;
 	scanline = timer->scanline;
@@ -1253,13 +1226,13 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			}
 		}
 
-		if (prev_a12 && !address) {
+		if ((prev_a12 ^ edge) && (!address ^ edge)) {
 			timer->next_clock = (cycles - timer->frame_start_cpu_cycles);
 			timer->next_clock /= emu->cpu_clock_divider;
 			timer->next_clock += timer->a12_rise_delta;
 			timer->next_clock *= emu->cpu_clock_divider;
 			timer->next_clock += timer->frame_start_cpu_cycles;
-		} else if (!prev_a12 && address) {
+		} else if ((!prev_a12 ^ edge) && (address ^ edge)) {
 			if (cycles > timer->next_clock)
 				clock = 1;
 
