@@ -3,7 +3,7 @@
 use strict;
 
 my $emu_bin = '../cxnes';
-my $emu_options = '-o blargg_test_rom_hack_enabled=true --regression-test';
+my $emu_options = '-o blargg_test_rom_hack_enabled=true -o default_overclock_mode=disabled --regression-test';
 my $romdir = 'nes_test_roms';
 
 # FIXME commandline options
