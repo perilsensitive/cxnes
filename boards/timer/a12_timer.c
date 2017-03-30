@@ -202,7 +202,7 @@ int a12_timer_init(struct emu *emu, int variant)
 	timer->force_reload_delay = 0;
 	timer->alt = 0;
 	timer->a12_rise_delta = 4;
-	timer->edge = 0;
+	timer->edge = 0x1000;
 
 	switch (variant) {
 	case A12_TIMER_VARIANT_MMC3_STD:
@@ -218,7 +218,7 @@ int a12_timer_init(struct emu *emu, int variant)
 		break;
 	case A12_TIMER_VARIANT_ACCLAIM_MC_ACC:
 		timer->delay = 4;
-		timer->edge = 0x1000;
+		timer->edge = 0x0000;
 		break;
 	}
 
@@ -756,7 +756,6 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 	int prescaler_wrapped;
 	int counter_limit;
 	int counter_delta;
-	int edge;
 
 	if (rendering) {
 		printf("called while rendering: %d %d\n", scanline, scanline_cycle);
@@ -783,16 +782,18 @@ void a12_timer_hook(struct emu *emu, int address, int scanline,
 		counter_limit = 0;
 	}
 
-	edge = timer->edge;
-
-	if ((prev_a12 ^ edge) && (!address ^ edge)) {
+	if (prev_a12 && !address) {
 		timer->next_clock = (cycles - timer->frame_start_cpu_cycles);
 		timer->next_clock /= emu->cpu_clock_divider;
 		timer->next_clock += timer->a12_rise_delta;
 		timer->next_clock *= emu->cpu_clock_divider;
 		timer->next_clock += timer->frame_start_cpu_cycles;
-		return;
+
+		if (timer->edge)
+			return;
 	} else if ((prev_a12 && address) || (!prev_a12 && !address)) {
+		return;
+	} else if (!timer->edge) {
 		return;
 	}
 
@@ -1126,9 +1127,7 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 	int next_cycle;
 	int clocks;
 	int tmp;
-	int edge;
 
-	edge = timer->edge;
 	emu = timer->emu;
 	prev_a12 = timer->prev_a12;
 	scanline = timer->scanline;
@@ -1226,17 +1225,25 @@ void a12_timer_run(struct a12_timer *timer, uint32_t cycle_count)
 			}
 		}
 
-		if ((prev_a12 ^ edge) && (!address ^ edge)) {
+		if (prev_a12 && !address) {
+			if (!timer->edge) {
+				if (cycles > timer->next_clock) {
+					clock = 1;
+				}
+			}
+
 			timer->next_clock = (cycles - timer->frame_start_cpu_cycles);
 			timer->next_clock /= emu->cpu_clock_divider;
 			timer->next_clock += timer->a12_rise_delta;
 			timer->next_clock *= emu->cpu_clock_divider;
 			timer->next_clock += timer->frame_start_cpu_cycles;
-		} else if ((!prev_a12 ^ edge) && (address ^ edge)) {
-			if (cycles > timer->next_clock)
-				clock = 1;
+		} else if (!prev_a12 && address) {
+			if (timer->edge) {
+				if (cycles > timer->next_clock)
+					clock = 1;
 
-			timer-> next_clock = ~0;
+				timer-> next_clock = ~0;
+			}
 		}
 
 		if (clock) {
