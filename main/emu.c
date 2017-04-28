@@ -1306,13 +1306,6 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 			rom_free(rom);
 			return -1;
 		}
-
-		/* Modify rom_buffer_size so that it doesn't
-		   include padding or the size of the bios rom.
-		*/
-		rom->buffer_size /= 65500;
-		rom->buffer_size *= 65500;
-		rom->buffer_size += 16;
 	}
 
 	archive_patchfiles = rom_find_archive_autopatches(emu->config, rom);
