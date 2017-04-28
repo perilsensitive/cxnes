@@ -152,6 +152,8 @@ struct emu {
 	int overclocking;
 
 	struct rom *rom;
+	uint8_t *bios;
+	size_t bios_size;
 	char *rom_path;
 	char *rom_file;
 	char *save_file;

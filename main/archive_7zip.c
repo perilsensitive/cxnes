@@ -323,6 +323,4 @@ static int p7zip_read_file_by_name(struct archive *archive, const char *name,
 		return -1;
 
 	return p7zip_read_file_by_index(archive, i, ptr);
-
-	return 0;
 }

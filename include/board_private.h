@@ -59,6 +59,7 @@ enum {
 	CHIP_TYPE_CIRAM,
 	CHIP_TYPE_MAPPER_RAM,
 	CHIP_TYPE_MAPPER_RAM_NV,
+	CHIP_TYPE_BIOS,
 };
 
 #define update_prg_bank(board, slot, value) { \
@@ -190,6 +191,7 @@ struct board {
 	struct chip vram[2];
 	struct chip ciram;
 	struct chip mapper_ram;
+	struct chip bios;
 
 	uint8_t *fill_mode_nmt;
 	struct range_list *modified_ranges;

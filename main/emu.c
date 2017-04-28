@@ -230,6 +230,9 @@ int emu_init(struct emu *emu)
 	cpu_set_pagetable_entry(emu->cpu, 0x2000, SIZE_64K - SIZE_8K, NULL,
 				CPU_PAGE_READWRITE);
 
+	emu->bios = NULL;
+	emu->bios_size = 0;
+
 	return 0;
 }
 
@@ -720,6 +723,11 @@ void emu_deinit(struct emu *emu)
 
 	rom_config_reset(emu->config);
 
+	if (emu->bios)
+		free(emu->bios);
+
+	emu->bios = NULL;
+	emu->bios_size = 0;
 	emu->rom = NULL;
 	emu->rom_path = NULL;
 	emu->rom_file = NULL;

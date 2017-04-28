@@ -24,6 +24,7 @@
 #include "fds.h"
 #include "crc32.h"
 #include "sha1.h"
+#include "archive.h"
 
 #define FDS_MAGIC "\x01*NINTENDO-HVC*"
 #define FDS_MAGIC_LENGTH 15
@@ -527,20 +528,81 @@ int fds_validate_image(struct rom *rom, struct fds_block_list **block_listp, int
      version) or specify the location in the config file.
  */
 
-int fds_load_bios(struct emu *emu, struct rom *rom)
-{
-	uint8_t *tmp;
-	char *bios_file;
-	size_t new_size, old_size;
-	size_t bios_size;
-	int rc = 0;
+static uint8_t *fds_load_compressed_bios(struct emu *emu, struct rom *rom,
+                                         size_t *size) {
+	struct archive *archive;
+	struct archive_file_list_entry *entry;
+	char *bios_path;
+	uint8_t *buffer;
+	size_t buffer_size;
+	char *c;
+	int length;
 
-	/* Look for the BIOS at the location which the
-	   user configured, then try the cxnes data
-	   directory.  If that doesn't work, try the
-	   same directory as the rom, then try the
-	   configured rom path, if any.
-	*/
+	if (!rom->compressed_filename)
+		return NULL;
+
+	if (archive_open(&archive, rom->filename) < 0)
+		return NULL;
+
+	length = strlen(rom->compressed_filename) +
+		 strlen(DEFAULT_FDS_BIOS) + 1;
+
+	bios_path = malloc(length + 1);
+	if (!bios_path) {
+		archive_close(&archive);
+		return NULL;
+	}
+
+	strncpy(bios_path, rom->compressed_filename, length + 1);
+	c = strrchr(bios_path, '/');
+	if (c)
+		c++;
+	else
+		c = bios_path;
+
+	*c = '\0';
+
+	length -= strlen(bios_path);
+
+	strncat(c, DEFAULT_FDS_BIOS, length);
+
+	entry = archive_get_file_entry(archive, bios_path);
+
+	if (entry) {
+		buffer_size = entry->size;
+		buffer = malloc(buffer_size);
+
+		if (buffer) {
+			if (archive_read_file_by_name(archive, entry->name,
+			                              buffer)) {
+				free(buffer);
+				buffer = NULL;
+			}
+		}
+	}
+
+	archive_close(&archive);
+	free(bios_path);
+
+	if (buffer && size)
+		*size = buffer_size;
+
+	return buffer;
+}
+
+/* Look for the BIOS at the location which the
+   user configured, then try the cxnes data
+   directory.  If that doesn't work, try the
+   same directory as the rom, then try the
+   configured rom path, if any.
+*/
+static uint8_t *fds_load_bios_from_file(struct emu *emu, struct rom *rom,
+                                        size_t *size)
+{
+	char *bios_file;
+	size_t bios_size;
+	uint8_t *bios_buffer;
+
 	bios_file = config_get_fds_bios(emu->config);
 	if (!bios_file) {
 		char *romfile_path, *buffer;
@@ -583,66 +645,109 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 		if (!buffer || !check_file_exists(buffer)) {
 			err_message("Unable to locate FDS BIOS\n");
 			free(buffer);
-			return 1;
+			free(bios_file);
+			return NULL;
 		}
 
 		bios_file = buffer;
 	}
 
-	old_size = rom->buffer_size;
-	new_size = ((rom->buffer_size - 16) / SIZE_8K) + 1;
-
-	if ((rom->buffer_size - 16) % SIZE_8K)
-		new_size += 1;
-
-	new_size *= SIZE_8K;
-	new_size += 16;
-
-	tmp = realloc(rom->buffer, new_size);
-	if (!tmp) {
-		free(bios_file);
-		return -1;
-	}
-
-	rom->buffer = tmp;
-	rom->buffer_size = new_size;
-	rom->info.total_prg_size = new_size - 16;
-
-	memset(rom->buffer + old_size, 0, new_size - old_size);
-
 	bios_size = get_file_size(bios_file);
 
-	if (bios_size != 8192) {
+	bios_buffer = malloc(bios_size);
+	if (!bios_buffer) {
+		free(bios_file);
+		return NULL;
+	}
+
+	if (readfile(bios_file, bios_buffer, bios_size)) {
+		free(bios_buffer);
+		bios_buffer = NULL;
+	}
+
+	free(bios_file);
+
+	if (bios_buffer && size)
+		*size = bios_size;
+
+	return bios_buffer;
+}
+
+int fds_load_bios(struct emu *emu, struct rom *rom)
+{
+	uint8_t *file_buffer;
+	uint8_t *bios_buffer;
+	size_t file_size, rom_size;
+	struct rom *fds_rom = NULL;
+	uint8_t *ptr;
+	int rc = 0;
+
+	/* Don't try to load bios if already loaded */
+	if (emu->bios)
+		return 0;
+
+	file_buffer = fds_load_compressed_bios(emu, rom, &file_size);
+
+	if (!file_buffer)
+		file_buffer = fds_load_bios_from_file(emu, rom, &file_size);
+
+	if (!file_buffer)
+		return -1;
+
+	bios_buffer = NULL;
+
+	if (file_size != SIZE_8K) {
 		/* Try loading the supplied file name as a regular rom,
 		   then copy the last 8K of PRG as the BIOS. There is a dump
 		   of the FDS BIOS in iNES format, and of course there is
 		   always going to be someone who tries using that version
 		   regardless of what documentation says.
 		*/
-		struct rom *fds_rom;
-		fds_rom = rom_load_file(emu, bios_file);
-		if (!fds_rom || rom->info.total_prg_size < SIZE_8K) {
-			err_message("Invalid FDS BIOS\n");
-			rc = 1;
-		} else {
-			off_t offset = fds_rom->info.total_prg_size - SIZE_8K;
-			memcpy(rom->buffer + new_size - SIZE_8K,
-			       fds_rom->buffer + fds_rom->offset + offset,
-			       SIZE_8K);
+		rom_load_file_data(emu, strdup("junk"), &fds_rom, file_buffer,
+		                   file_size);
 
-			rom_free(fds_rom);
+		if (!fds_rom) {
+			ptr = file_buffer;
+			rom_size = file_size;
+		} else {
+			ptr = fds_rom->buffer + fds_rom->offset;
+			rom_size = fds_rom->info.total_prg_size;
+			file_buffer = NULL;
 		}
-	} else if (!rc && readfile(bios_file, rom->buffer + new_size - SIZE_8K,
-				   SIZE_8K)) {
+	} else {
+		ptr = file_buffer;
+		rom_size = file_size;
+	}
+
+	if (rom_size >= SIZE_8K) {
+		ptr += rom_size - SIZE_8K;
+		bios_buffer = malloc(SIZE_8K);
+	} else {
+		err_message("Invalid FDS BIOS\n");
 		rc = 1;
 	}
 
-	free(bios_file);
+	if (bios_buffer)
+		memcpy(bios_buffer, ptr, SIZE_8K);
+	else
+		rc = 1;
 
-	fix_vc_bios(rom->buffer + new_size - SIZE_8K);
+	if (fds_rom)
+		rom_free(fds_rom);
+
+	if (file_buffer)
+		free(file_buffer);
+
+	if (!rc) {
+		fix_vc_bios(bios_buffer);
+		emu->bios = bios_buffer;
+		emu->bios_size = SIZE_8K;
+	} else {
+		if (bios_buffer)
+			free(bios_buffer);
+	}
 
 	return rc;
-	
 }
 
 /*

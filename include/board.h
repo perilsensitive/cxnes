@@ -48,6 +48,7 @@ enum map_type {
 	MAP_TYPE_FILL,
 	MAP_TYPE_ZERO,
 	MAP_TYPE_AUTO,
+	MAP_TYPE_BIOS,
 	MAP_TYPE_END = -1
 };
 
@@ -132,5 +133,6 @@ int board_save_state(struct board *board, struct save_state *state);
 int board_load_state(struct board *board, struct save_state *state);
 void board_write_ips_save(struct board *board, struct range_list *range_list);
 int board_type_has_mapper_controlled_mirroring(uint32_t board_type);
+int board_store_bios_data(struct board *board, uint8_t *data, size_t size);
 
 #endif				/* __BOARD_H__ */

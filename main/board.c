@@ -1392,6 +1392,16 @@ static int board_init_ram_chips(struct board *board)
 	board_init_ram(board, total_volatile_size);
 	board_init_nvram(board, total_nonvolatile_size);
 
+	/* Init the struct holding the FDS bios (if loaded) */
+	if (board->emu->bios) {
+		board->bios.data = board->emu->bios;
+		board->bios.size = board->emu->bios_size;
+	} else {
+		board->bios.data = NULL;
+		board->bios.size = 0;
+	}
+	board->bios.type = CHIP_TYPE_BIOS;
+
 	/* Any board-specific post-load functions may only change
 	   the contents pointed to by nv_ram_data.  Freeing or
 	   resizing the buffer is not allowed.
@@ -1864,6 +1874,7 @@ int board_init(struct emu *emu, struct rom *rom)
 	if (!board)
 		return 1;
 
+	printf("calling board init\n");
 	memset(board, 0, sizeof(*board));
 	emu->board = board;
 	board->emu = emu;
@@ -2189,6 +2200,11 @@ void board_cleanup(struct board *board)
 	board_write_ips_save(board, board->modified_ranges);
 	free_range_list(&board->modified_ranges);
 	board_cleanup_ram_chips(board);
+	if (board->bios.data) {
+		/* emu.c owns the bios data */
+		board->bios.size = 0;
+		board->bios.data = NULL;
+	}
 
 	if (board->ciram.data)
 		free(board->ciram.data);
@@ -2316,7 +2332,8 @@ void board_prg_sync(struct board *board)
 
 		and = board->prg_and;
 		or = board->prg_or;
-		if (b->type != MAP_TYPE_ROM) {
+		if ((b->type != MAP_TYPE_ROM) &&
+		    (b->type != MAP_TYPE_BIOS)) {
 			and = board->wram_and;
 			or = board->wram_or;
 		}
@@ -2354,6 +2371,11 @@ void board_prg_sync(struct board *board)
 		case MAP_TYPE_MAPPER_RAM:
 			data = board->mapper_ram.data;
 			data_size = board->mapper_ram.size;
+			break;
+		case MAP_TYPE_BIOS:
+			data = board->bios.data;
+			data_size = board->bios.size;
+			perms &= MAP_PERM_READ;
 			break;
 		default:
 			log_err("board_prg_sync: invalid type %d\n",

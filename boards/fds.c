@@ -133,7 +133,7 @@ static struct board_funcs fds_funcs = {
 
 static struct bank fds_init_prg[] = {
 	{0, 0, SIZE_32K, 0x6000, MAP_PERM_READWRITE, MAP_TYPE_RAM0},
-	{-1, 0, SIZE_8K, 0xe000, MAP_PERM_READ, MAP_TYPE_ROM},
+	{-1, 0, SIZE_8K, 0xe000, MAP_PERM_READ, MAP_TYPE_BIOS},
 	{.type = MAP_TYPE_END},
 };
 

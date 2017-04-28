@@ -150,3 +150,27 @@ int archive_read_file_by_name(struct archive *archive, const char *name, uint8_t
 
 	return archive->functions->read_file_by_name(archive, name, ptr);
 }
+
+struct archive_file_list_entry *archive_get_file_entry(struct archive *archive,
+                                                       const char *filename)
+{
+	struct archive_file_list *list;
+	struct archive_file_list_entry *entry;
+	int i;
+
+	if (!archive || !filename)
+		return NULL;
+
+	entry = NULL;
+
+	list = archive->file_list;
+
+	for (i = 0; i < list->count; i++) {
+		if (strcasecmp(list->entries[i].name, filename) == 0) {
+			entry = &list->entries[i];
+			break;
+		}
+	}
+
+	return entry;
+}

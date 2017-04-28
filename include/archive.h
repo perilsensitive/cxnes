@@ -62,10 +62,12 @@ struct archive {
 	void *private;
 };
 
-int archive_open(struct archive **archive, const char *filename);
-int archive_close(struct archive **archive);
-int archive_read_file_by_index(struct archive *archive, int index, uint8_t *ptr);
-int archive_read_file_by_name(struct archive *archive, const char *name, uint8_t *ptr);
-int archive_create_empty_file_list(struct archive *archive, int count);
+int archive_open(struct archive **, const char *filename);
+int archive_close(struct archive **);
+int archive_read_file_by_index(struct archive *, int index, uint8_t *ptr);
+int archive_read_file_by_name(struct archive *, const char *name, uint8_t *ptr);
+int archive_create_empty_file_list(struct archive *, int count);
+struct archive_file_list_entry *archive_get_file_entry(struct archive *,
+                                                       const char *filename);
 
 #endif /* __ARCHIVE_H__ */

@@ -85,9 +85,9 @@ static const char *russia_filename_strings[] = {
 int rom_apply_patches(struct rom *rom, int count,
 		      char **patchfiles, int from_archive);
 
-static int rom_load_file_data(struct emu *emu, const char *filename,
-			      struct rom **romptr, uint8_t *buffer,
-			      size_t size)
+int rom_load_file_data(struct emu *emu, const char *filename,
+                       struct rom **romptr, uint8_t *buffer,
+                       size_t size)
 {
 	struct rom *rom;
 	int rc;

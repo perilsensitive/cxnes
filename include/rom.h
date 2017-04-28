@@ -104,4 +104,7 @@ extern void rom_get_info(struct rom *rom, struct text_buffer *tbuffer);
 extern struct rom *rom_alloc(const char *filename, uint8_t *buffer, size_t size);
 extern void rom_free(struct rom *);
 extern void rom_guess_system_type_from_filename(struct rom *rom, int trust_timing);
+extern int rom_load_file_data(struct emu *emu, const char *filename,
+                              struct rom **romptr, uint8_t *buffer,
+                              size_t size);
 #endif				/* __ROM_H__ */
