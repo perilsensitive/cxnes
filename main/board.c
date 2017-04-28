@@ -1392,14 +1392,8 @@ static int board_init_ram_chips(struct board *board)
 	board_init_ram(board, total_volatile_size);
 	board_init_nvram(board, total_nonvolatile_size);
 
-	/* Init the struct holding the FDS bios (if loaded) */
-	if (board->emu->bios) {
-		board->bios.data = board->emu->bios;
-		board->bios.size = board->emu->bios_size;
-	} else {
-		board->bios.data = NULL;
-		board->bios.size = 0;
-	}
+	board->bios.data = NULL;
+	board->bios.size = 0;
 	board->bios.type = CHIP_TYPE_BIOS;
 
 	/* Any board-specific post-load functions may only change

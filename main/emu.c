@@ -1342,14 +1342,6 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 		}
 	}
 
-	if (rom->info.board_type == BOARD_TYPE_FDS) {
-		if (fds_load_bios(emu, rom)) {
-			rom_free(rom);
-			return 1;
-		}
-		rom->info.total_prg_size = rom->buffer_size - 16;
-	}
-	
 	emu->rom = rom;
 	if (emu_set_rom_file(emu, rom->filename)) {
 		return 1;

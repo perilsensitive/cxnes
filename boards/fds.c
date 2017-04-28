@@ -463,6 +463,15 @@ static int fds_init(struct board *board)
 
 	input_connect_handlers(fds_handlers, emu);
 
+	/* Load BIOS and set up mapping */
+	if (!fds_load_bios(emu, emu->rom)) {
+		board->bios.data = emu->bios;
+		board->bios.size = emu->bios_size;
+		board_prg_sync(emu->board);
+	} else {
+		return 1;
+	}
+
 	return 0;
 }
 
