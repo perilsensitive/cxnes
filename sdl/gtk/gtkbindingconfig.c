@@ -571,7 +571,7 @@ static void configuration_setup_bindings(GtkWidget *dialog, struct config *confi
 
 	gtk_box_pack_start(GTK_BOX(box), grid, TRUE, TRUE, 8);
 	gtk_container_add(GTK_CONTAINER(binding_window), tree);
-	gtk_widget_set_size_request(binding_window, 600, 400);
+	gtk_widget_set_size_request(binding_window, 400, 200);
 
 	button = gtk_button_new_with_mnemonic("_Add");
 	g_signal_connect(G_OBJECT(button), "clicked",
