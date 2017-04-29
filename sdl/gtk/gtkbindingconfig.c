@@ -32,8 +32,6 @@ extern struct emu *emu;
 
 static GtkWidget *grab_event_dialog;
 static GtkWidget *label, *category, *action, *bind;
-static GtkWidget *check_alt, *check_ctrl, *check_shift, *check_gui;
-static GtkWidget *check_mod1, *check_mod2, *check_mod3, *check_kbd;
 static GtkWidget *grab, *delete, *add, *set_all;
 static GtkTreeStore *store;
 static GtkWidget *tree;
@@ -70,7 +68,6 @@ static gboolean row_is_visible(GtkTreeModel *model, GtkTreeIter *iter, gpointer 
 static void clear_store(GtkTreeStore *store);
 static void apply_input_bindings(GtkTreeStore *store);
 static void delete_callback(GtkButton *button, gpointer user_data);
-static void mod_toggle_callback(GtkToggleButton *button, gpointer user_data);
 static void binding_selected_callback(GtkTreeSelection *selection, gpointer user_data);
 static void set_all_callback(GtkButton *button, gpointer data);
 extern int input_convert_event(SDL_Event *event,
@@ -104,32 +101,6 @@ static void setup_tree_actions(GtkTreeStore *store)
 				   emu_action_id_map[i].emu_action_id,
 				   -1);
 	}
-
-	gtk_tree_store_append(store, &action_iter, NULL);
-	gtk_tree_store_set(store, &action_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod1",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD1,
-			   -1);
-	gtk_tree_store_append(store, &action_iter, NULL);
-	gtk_tree_store_set(store, &action_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod2",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD2,
-			   -1);
-	gtk_tree_store_append(store, &action_iter, NULL);
-	gtk_tree_store_set(store, &action_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Mod3",
-			   COLUMN_ACTION_ID, INPUT_MOD_MOD3,
-			   -1);
-	gtk_tree_store_append(store, &action_iter, NULL);
-	gtk_tree_store_set(store, &action_iter,
-			   COLUMN_CATEGORY, "Modifiers",
-			   COLUMN_ACTION, "Kbd",
-			   COLUMN_ACTION_ID, INPUT_MOD_KBD,
-			   -1);
-
 }
 
 static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
@@ -163,10 +134,6 @@ static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
 							  "text", COLUMN_ACTION, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
 
-	column = gtk_tree_view_column_new_with_attributes("Modifiers", renderer,
-							  "text", COLUMN_MODSTRING, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-
 	column = gtk_tree_view_column_new_with_attributes("Binding", renderer,
 							  "text", COLUMN_BINDING, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
@@ -191,7 +158,7 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 				 uint32_t device, uint32_t index, uint32_t misc)
 {
 	GtkTreeModel *model;
-	GtkTreeIter action_iter, binding_iter;
+	GtkTreeIter action_iter;
 	uint32_t data;
 	char buffer[80];
 	gchar *action_name;
@@ -218,18 +185,6 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 	input_event.event.common.misc = misc;
 	if (get_binding_name(buffer, sizeof(buffer), &input_event) <0)
 		return;
-
-	gtk_tree_store_append(store, &binding_iter, &action_iter);
-	gtk_tree_store_set(store, &binding_iter,
-			   COLUMN_BINDING, buffer,
-			   COLUMN_CATEGORY, "Modifiers",
-			   /* COLUMN_ACTION, action_name, */
-			   COLUMN_ACTION_ID, data,
-			   COLUMN_TYPE, type,
-			   COLUMN_DEVICE, device,
-			   COLUMN_INDEX, index,
-			   COLUMN_MISC, misc,
-			   -1);
 
 	g_free(action_name);
 }
@@ -606,10 +561,7 @@ static void configuration_setup_bindings(GtkWidget *dialog, struct config *confi
 					  category_names[i]);
 	}
 
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(category_combo),
-				  "Modifiers", "Modifiers");
-
-	gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(category_combo), 2);
+	gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(category_combo), 1);
 
 	gtk_combo_box_set_active_id(GTK_COMBO_BOX(category_combo),
 				    category_names[0]);
@@ -676,70 +628,6 @@ static void configuration_setup_bindings(GtkWidget *dialog, struct config *confi
 	gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), bind, 1, 1, 1, 1);
 
-	check_alt = gtk_check_button_new_with_mnemonic("_Alt");
-	check_ctrl = gtk_check_button_new_with_mnemonic("C_trl");
-	check_shift = gtk_check_button_new_with_mnemonic("_Shift");
-#if _WIN32
-	check_gui = gtk_check_button_new_with_mnemonic("_Windows");
-#else
-	check_gui = gtk_check_button_new_with_mnemonic("_GUI");
-#endif
-	check_mod1 = gtk_check_button_new_with_mnemonic("Mod_1");
-	check_mod2 = gtk_check_button_new_with_mnemonic("Mod_2");
-	check_mod3 = gtk_check_button_new_with_mnemonic("Mod_3");
-	check_kbd = gtk_check_button_new_with_mnemonic("_Kbd");
-
-	g_signal_connect(G_OBJECT(check_alt), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_ALT));
-	g_object_set_data(G_OBJECT(check_alt), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_shift), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_SHIFT));
-	g_object_set_data(G_OBJECT(check_shift), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_ctrl), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_CTRL));
-	g_object_set_data(G_OBJECT(check_ctrl), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_gui), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_GUI));
-	g_object_set_data(G_OBJECT(check_gui), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_mod1), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_MOD1));
-	g_object_set_data(G_OBJECT(check_mod1), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_mod2), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_MOD2));
-	g_object_set_data(G_OBJECT(check_mod2), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_mod3), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_MOD3));
-	g_object_set_data(G_OBJECT(check_mod3), "selection",
-			  selection);
-	g_signal_connect(G_OBJECT(check_kbd), "toggled",
-			 G_CALLBACK(mod_toggle_callback),
-			 GINT_TO_POINTER(INPUT_MOD_BITS_KBD));
-	g_object_set_data(G_OBJECT(check_kbd), "selection",
-			  selection);
-
-	gtk_grid_attach(GTK_GRID(grid), check_shift, 4, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_ctrl, 5, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_alt, 6, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_gui, 7, 0, 1, 1);
-
-	gtk_grid_attach(GTK_GRID(grid), check_mod1, 4, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_mod2, 5, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_mod3, 6, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), check_kbd, 7, 1, 1, 1);
-
 	path = gtk_tree_path_new_first();
 	gtk_tree_view_expand_to_path(GTK_TREE_VIEW(tree), path);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(tree), path, NULL,
@@ -796,7 +684,6 @@ void gui_binding_configuration_dialog(GtkWidget *widget, gpointer user_data)
 	if (response == GTK_RESPONSE_ACCEPT) {
 		input_reset_bindings();
 		apply_input_bindings(store);
-		input_configure_keyboard_modifiers();
 		config_save_main_config(config);
 	}
 
@@ -966,48 +853,13 @@ static void delete_callback(GtkButton *button, gpointer user_data)
 	}
 }
 
-static void mod_toggle_callback(GtkToggleButton *button, gpointer user_data)
-{
-	gboolean toggled;
-	char buffer[80];
-	gint mask;
-	GtkTreeSelection *selection;
-	GtkTreeIter filter_iter, iter;
-	GtkTreeModel *filter_model, *model;
-	gboolean rc;
-
-	model = GTK_TREE_MODEL(store);
-	selection = g_object_get_data(G_OBJECT(button), "selection");
-
-	rc = gtk_tree_selection_get_selected(selection, &filter_model, &filter_iter);
-	if (!rc)
-		return;
-
-	model = gtk_tree_model_filter_get_model(GTK_TREE_MODEL_FILTER(filter_model));
-	gtk_tree_model_filter_convert_iter_to_child_iter(GTK_TREE_MODEL_FILTER(filter_model),
-								 &iter, &filter_iter);
-	toggled = gtk_toggle_button_get_active(button);
-
-	mask = GPOINTER_TO_INT(user_data);
-
-	if (toggled)
-		mod_bits |= mask;
-	else
-		mod_bits &= ~mask;
-
-	get_modifier_string(buffer, sizeof(buffer), mod_bits);
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
-			   COLUMN_MODSTRING, buffer,
-			   COLUMN_MODMASK, mod_bits, -1);
-}
-
 static void binding_selected_callback(GtkTreeSelection *selection, gpointer user_data)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter, parent_iter;
 	gchar *category_string, *action_string, *binding_string;
 	gboolean rc;
-	gboolean is_event, is_binding, is_modifier;
+	gboolean is_event, is_binding;
 
 	rc = gtk_tree_selection_get_selected(selection, &model, &iter);
 	if (!rc)
@@ -1023,33 +875,6 @@ static void binding_selected_callback(GtkTreeSelection *selection, gpointer user
 			   COLUMN_MISC, &grabbed_event.event.common.misc,
 			   COLUMN_ACTION_ID, &binding_config_action_id,
 			   -1);
-
-	is_modifier = !strcmp(category_string, "Modifiers");
-		
-
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_mod1),
-				     mod_bits & INPUT_MOD_BITS_MOD1);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_mod2),
-				     mod_bits & INPUT_MOD_BITS_MOD2);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_mod3),
-				     mod_bits & INPUT_MOD_BITS_MOD3);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_kbd),
-				     mod_bits & INPUT_MOD_BITS_KBD);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_ctrl),
-				     mod_bits & INPUT_MOD_BITS_CTRL);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_shift),
-				     mod_bits & INPUT_MOD_BITS_SHIFT);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_alt),
-				     mod_bits & INPUT_MOD_BITS_ALT);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_gui),
-				     mod_bits & INPUT_MOD_BITS_GUI);
 
 	gtk_entry_set_text(GTK_ENTRY(category),
 			   category_string ? category_string : "");
@@ -1075,15 +900,6 @@ static void binding_selected_callback(GtkTreeSelection *selection, gpointer user
 	gtk_widget_set_sensitive(grab, is_binding);
 	gtk_widget_set_sensitive(add, is_binding || is_event);
 	gtk_widget_set_sensitive(delete, is_binding || is_event);
-
-	gtk_widget_set_sensitive(check_alt, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_ctrl, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_shift, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_gui, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_mod1, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_mod2, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_mod3, is_binding && !is_modifier);
-	gtk_widget_set_sensitive(check_kbd, is_binding && !is_modifier);
 
 	g_free(category_string);
 	if (action_string)
@@ -1152,17 +968,13 @@ static void apply_input_bindings(GtkTreeStore *store)
 			if (event.common.type == 0)
 				continue;
 					
-			if (strcmp(category, "Modifiers") == 0) {
-				input_add_modifier(&event, emu_actionid);
-			} else {
-				emu_action =
-					input_lookup_emu_action(emu_actionid);
-				if (!emu_action) {
-					emu_action = input_insert_emu_action(emu_actionid);
-				}
-				input_insert_event(&event, modmask,
-						   emu_action);
+			emu_action =
+				input_lookup_emu_action(emu_actionid);
+			if (!emu_action) {
+				emu_action = input_insert_emu_action(emu_actionid);
 			}
+			input_insert_event(&event, modmask,
+					   emu_action);
 		} while (gtk_tree_model_iter_next(model, &binding_iter));
 		g_free(category);
 	} while (gtk_tree_model_iter_next(model, &action_iter));

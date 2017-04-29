@@ -890,81 +890,35 @@ struct binding_item default_modifiers[] = {
 struct binding_item default_bindings[] = {
 /* Misc. Input Bindings */
 	{ .name = "Keyboard Tab", .value = "ALT_SPEED" },
-	{ .name = "Keyboard F12", .value = "OVERCLOCK_POST_RENDER" },
-	{ .name = "[CTRL] Keyboard F12", .value = "OVERCLOCK_DISABLED" },
-	{ .name = "[SHIFT] Keyboard F12", .value = "OVERCLOCK_VBLANK" },
-	{ .name = "[ALT] Keyboard F12", .value = "OVERCLOCK_DEFAULT" },
-	{ .name = "[CTRL] Keyboard F6", .value = "DEVICE_CONNECT_PORT1" },
-	{ .name = "Keyboard F6", .value = "DEVICE_SELECT_PORT1" },
-	{ .name = "[CTRL] Keyboard F7", .value = "DEVICE_CONNECT_PORT2" },
-	{ .name = "Keyboard F7", .value = "DEVICE_SELECT_PORT2" },
-	{ .name = "[CTRL] Keyboard F8", .value = "DEVICE_CONNECT_EXP" },
-	{ .name = "Keyboard F8", .value = "DEVICE_SELECT_EXP" },
 
-	{ .name = "[ALT] Keyboard Return", .value = "TOGGLE_FULLSCREEN" },
-	{ .name = "[CTRL] Keyboard F", .value = "TOGGLE_FPS" },
-	{ .name = "[SHIFT] Keyboard U", .value = "TOGGLE_SPRITE_LIMIT" },
-	{ .name = "[SHIFT] Keyboard T", .value = "HARD_RESET" },
-	{ .name = "[SHIFT] Keyboard R", .value = "SOFT_RESET" },
-	{ .name = "[SHIFT] Keyboard P", .value = "PAUSE" },
+	{ .name = "Keyboard P", .value = "PAUSE" },
+	{ .name = "Keyboard Pause", .value = "PAUSE" },
 	{ .name = "Keyboard Escape", .value = "TOGGLE_MENUBAR" },
-	{ .name = "Keyboard F11", .value = "TOGGLE_MOUSE_GRAB" },
-	{ .name = "[ALT] Keyboard X", .value = "QUIT" },
-	{ .name = "[ALT] Keyboard S", .value = "SAVE_SCREENSHOT" },
 
-	{ .name = "[SHIFT] Keyboard F5", .value = "STATE_SAVE_SELECTED" },
-	{ .name = "[SHIFT] Keyboard -", .value = "STATE_SAVE_OLDEST" },
-	{ .name = "[SHIFT] Keyboard 0", .value = "STATE_SAVE_0" },
-	{ .name = "[SHIFT] Keyboard 1", .value = "STATE_SAVE_1" },
-	{ .name = "[SHIFT] Keyboard 2", .value = "STATE_SAVE_2" },
-	{ .name = "[SHIFT] Keyboard 3", .value = "STATE_SAVE_3" },
-	{ .name = "[SHIFT] Keyboard 4", .value = "STATE_SAVE_4" },
-	{ .name = "[SHIFT] Keyboard 5", .value = "STATE_SAVE_5" },
-	{ .name = "[SHIFT] Keyboard 6", .value = "STATE_SAVE_6" },
-	{ .name = "[SHIFT] Keyboard 7", .value = "STATE_SAVE_7" },
-	{ .name = "[SHIFT] Keyboard 8", .value = "STATE_SAVE_8" },
-	{ .name = "[SHIFT] Keyboard 9", .value = "STATE_SAVE_9" },
-	{ .name = "Keyboard F5", .value = "STATE_LOAD_SELECTED" },
-	{ .name = "Keyboard -", .value = "STATE_LOAD_NEWEST" },
-	{ .name = "Keyboard 0", .value = "STATE_LOAD_0" },
-	{ .name = "Keyboard 1", .value = "STATE_LOAD_1" },
-	{ .name = "Keyboard 2", .value = "STATE_LOAD_2" },
-	{ .name = "Keyboard 3", .value = "STATE_LOAD_3" },
-	{ .name = "Keyboard 4", .value = "STATE_LOAD_4" },
-	{ .name = "Keyboard 5", .value = "STATE_LOAD_5" },
-	{ .name = "Keyboard 6", .value = "STATE_LOAD_6" },
-	{ .name = "Keyboard 7", .value = "STATE_LOAD_7" },
-	{ .name = "Keyboard 8", .value = "STATE_LOAD_8" },
-	{ .name = "Keyboard 9", .value = "STATE_LOAD_9" },
-	{ .name = "[CTRL] Keyboard 0", .value = "STATE_SELECT_0" },
-	{ .name = "[CTRL] Keyboard 1", .value = "STATE_SELECT_1" },
-	{ .name = "[CTRL] Keyboard 2", .value = "STATE_SELECT_2" },
-	{ .name = "[CTRL] Keyboard 3", .value = "STATE_SELECT_3" },
-	{ .name = "[CTRL] Keyboard 4", .value = "STATE_SELECT_4" },
-	{ .name = "[CTRL] Keyboard 5", .value = "STATE_SELECT_5" },
-	{ .name = "[CTRL] Keyboard 6", .value = "STATE_SELECT_6" },
-	{ .name = "[CTRL] Keyboard 7", .value = "STATE_SELECT_7" },
-	{ .name = "[CTRL] Keyboard 8", .value = "STATE_SELECT_8" },
-	{ .name = "[CTRL] Keyboard 9", .value = "STATE_SELECT_9" },
-	{ .name = "[CTRL] Keyboard PageUp", .value = "STATE_SELECT_NEXT" },
-	{ .name = "[CTRL] Keyboard PageDown", .value = "STATE_SELECT_PREV" },
+	{ .name = "Keyboard 0", .value = "STATE_SELECT_0" },
+	{ .name = "Keyboard 1", .value = "STATE_SELECT_1" },
+	{ .name = "Keyboard 2", .value = "STATE_SELECT_2" },
+	{ .name = "Keyboard 3", .value = "STATE_SELECT_3" },
+	{ .name = "Keyboard 4", .value = "STATE_SELECT_4" },
+	{ .name = "Keyboard 5", .value = "STATE_SELECT_5" },
+	{ .name = "Keyboard 6", .value = "STATE_SELECT_6" },
+	{ .name = "Keyboard 7", .value = "STATE_SELECT_7" },
+	{ .name = "Keyboard 8", .value = "STATE_SELECT_8" },
+	{ .name = "Keyboard 9", .value = "STATE_SELECT_9" },
 
-/* VS. System Input Bindings */
-	/* { .name = "1", .value = "DIP_SWITCH_1" }, */
-	/* { .name = "2", .value = "DIP_SWITCH_2" }, */
-	/* { .name = "3", .value = "DIP_SWITCH_3" }, */
-	/* { .name = "4", .value = "DIP_SWITCH_4" }, */
-	/* { .name = "5", .value = "DIP_SWITCH_5" }, */
-	/* { .name = "6", .value = "DIP_SWITCH_6" }, */
-	/* { .name = "7", .value = "DIP_SWITCH_7" }, */
-	/* { .name = "8", .value = "DIP_SWITCH_8" }, */
-
-	{ .name = "[CTRL] Keyboard F4", .value = "VS_SERVICE_SWITCH,FDS_EJECT" },
-	{ .name = "[SHIFT] Keyboard F4", .value = "FDS_SELECT" },
-	{ .name = "Keyboard F4", .value = "VS_COIN_SWITCH_1,FDS_FLIP" },
+	{ .name = "Keyboard F2", .value = "TOGGLE_FULLSCREEN" },
+	{ .name = "Keyboard F3", .value = "TOGGLE_FPS" },
+	{ .name = "Keyboard F4", .value = "QUIT" },
+	{ .name = "Keyboard F5", .value = "STATE_SAVE_SELECTED" },
+	{ .name = "Keyboard F6", .value = "FDS_SELECT" },
+	{ .name = "Keyboard F7", .value = "STATE_LOAD_SELECTED" },
+	{ .name = "Keyboard F8", .value = "VS_SERVICE_SWITCH,FDS_EJECT" },
+	{ .name = "Keyboard F8", .value = "VS_COIN_SWITCH_1,FDS_FLIP" },
+	{ .name = "Keyboard F9", .value = "SOFT_RESET" },
+	{ .name = "Keyboard F11", .value = "HARD_RESET" },
+	{ .name = "Keyboard F12", .value = "SAVE_SCREENSHOT" },
 
 /* Controller Input Bindings */
-	{ .name = "Keyboard F9", .value = "SWITCH_FOUR_PLAYER_MODE" },
 	{ .name = "Keyboard Up", .value = "CONTROLLER_1_UP" },
 	{ .name = "Keyboard Down", .value = "CONTROLLER_1_DOWN" },
 	{ .name = "Keyboard Left", .value = "CONTROLLER_1_LEFT" },
@@ -2002,8 +1956,6 @@ void config_load_default_bindings(void)
 						 default_modifiers[i].value);
 		}
 	}
-
-	input_configure_keyboard_modifiers();
 }
 
 void config_replace(struct config *dest, struct config *src)

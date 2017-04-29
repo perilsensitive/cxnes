@@ -44,14 +44,6 @@ static union input_new_event *event_queue;
 static int event_queue_size = 0;
 static int event_queue_count = 0;
 
-#define KEYBOARD_MODIFIER_COUNT 8
-const char *keyboard_modifiers[] = {
-	"Left Ctrl", "Right Ctrl",
-	"Left Alt", "Right Alt",
-	"Left Shift", "Right Shift",
-	"Left GUI", "Right GUI",
-};
-
 const char *category_names[] = {
 	"Controller 1",
 	"Controller 2",
@@ -450,14 +442,7 @@ static char *controller_axes[] = {
 };
 
 const char *modifier_names[INPUT_MOD_COUNT] = {
-	"MOD1",
-	"MOD2",
-	"MOD3",
 	"KBD",
-	"CTRL",
-	"ALT",
-	"SHIFT",
-	"GUI",
 };
 
 static int ignore_events;
@@ -1894,30 +1879,7 @@ static void configure_modifier(const char *key, const char *value)
 
 void input_configure_modifier(const char *name, const char *value)
 {
-	int i;
-
-	for (i = 0; i < KEYBOARD_MODIFIER_COUNT; i++) {
-		if (!strcasecmp(name, keyboard_modifiers[i])) {
-			log_err("Cannot change modifier for keyboard "
-				"modifier key %s\n", name);
-
-			return;
-		}
-	}
-
 	configure_modifier(name, value);
-}
-
-void input_configure_keyboard_modifiers(void)
-{
-	configure_modifier("Keyboard Left Ctrl", "ctrl");
-	configure_modifier("Keyboard Right Ctrl", "ctrl");
-	configure_modifier("Keyboard Left Alt", "alt");
-	configure_modifier("Keyboard Right Alt", "alt");
-	configure_modifier("Keyboard Left Shift", "shift");
-	configure_modifier("Keyboard Right Shift", "shift");
-	configure_modifier("Keyboard Left GUI", "gui");
-	configure_modifier("Keyboard Right GUI", "gui");
 }
 
 int input_init(struct emu *emu)

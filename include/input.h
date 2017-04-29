@@ -24,25 +24,10 @@
 
 #define EVENT_HASH_SIZE 8
 
-#define INPUT_MOD_COUNT                 8
-#define INPUT_MOD_MOD1                  0
-#define INPUT_MOD_MOD2                  1
-#define INPUT_MOD_MOD3                  2
-#define INPUT_MOD_KBD                   3
-#define INPUT_MOD_CTRL                  4
-#define INPUT_MOD_ALT                   5
-#define INPUT_MOD_SHIFT                 6
-#define INPUT_MOD_GUI                   7
-#define INPUT_MOD_BITS_MOD1          (1 << INPUT_MOD_MOD1)
-#define INPUT_MOD_BITS_MOD2          (1 << INPUT_MOD_MOD2)
-#define INPUT_MOD_BITS_MOD3          (1 << INPUT_MOD_MOD3)
+#define INPUT_MOD_COUNT                 1
+#define INPUT_MOD_KBD                   0
 #define INPUT_MOD_BITS_KBD           (1 << INPUT_MOD_KBD)
-#define INPUT_MOD_BITS_CTRL          (1 << INPUT_MOD_CTRL)
-#define INPUT_MOD_BITS_ALT           (1 << INPUT_MOD_ALT)
-#define INPUT_MOD_BITS_SHIFT         (1 << INPUT_MOD_SHIFT)
-#define INPUT_MOD_BITS_GUI           (1 << INPUT_MOD_GUI)
-#define INPUT_MOD_BITS_ALL           (INPUT_MOD_BITS_MOD1 | INPUT_MOD_BITS_MOD2 | \
-				INPUT_MOD_BITS_MOD3 | INPUT_MOD_BITS_KBD)
+#define INPUT_MOD_BITS_ALL           (INPUT_MOD_BITS_KBD)
 
 struct input_event_handler {
 	uint32_t id;
