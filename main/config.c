@@ -1662,16 +1662,11 @@ static void config_set(struct config *config,
 	int offset;
 
 	offset = 0;
-	sscanf(name, " modifier %n", &offset);
+	sscanf(name, " binding %n", &offset);
 	if (offset) {
-		input_configure_modifier(name + offset, value);
+		input_bind(name + offset, value);
 	} else {
-		sscanf(name, " binding %n", &offset);
-		if (offset) {
-			input_bind(name + offset, value);
-		} else {
-			config_set_item(config, parameters, name, value);
-		}
+		config_set_item(config, parameters, name, value);
 	}
 }
 
@@ -1949,11 +1944,6 @@ void config_load_default_bindings(void)
 		for (i = 0; default_bindings[i].name; i++) {
 			input_bind(default_bindings[i].name,
 				   default_bindings[i].value);
-		}
-
-		for (i = 0; default_modifiers[i].name; i++) {
-			input_configure_modifier(default_modifiers[i].name,
-						 default_modifiers[i].value);
 		}
 	}
 }

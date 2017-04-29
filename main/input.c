@@ -441,15 +441,9 @@ static char *controller_axes[] = {
 	"Right Trigger", NULL
 };
 
-const char *modifier_names[INPUT_MOD_COUNT] = {
-	"KBD",
-};
-
 static int ignore_events;
-static int mod_bits;
 struct input_event_node *event_hash[EVENT_HASH_SIZE];
 static struct emu_action *emu_action_list;
-static int modifier_count[INPUT_MOD_COUNT];
 extern int running;
 static struct input_mouse_motion_event motion_event;
 extern int center_x, center_y;
@@ -457,7 +451,6 @@ extern int mouse_grabbed;
 
 extern struct emu *emu;
 
-static int get_effective_modifiers(struct input_event_node *event, int mod);
 static struct input_event_node *input_lookup_event(union input_new_event *input_new_event);
 int input_handle_event(union input_new_event *input_event, int force);
 
@@ -870,7 +863,7 @@ int input_bind(const char *binding, const char *emu_actions)
 				token, binding);
 		} else {
 			e = input_lookup_emu_action(emu_action);
-			input_insert_event(&event, mod, e);
+			input_insert_event(&event, e);
 		}
 		
 		token = strtok_r(NULL, ",", &saveptr);
@@ -943,7 +936,6 @@ void input_release_all(void)
 {
 	struct input_event_node *p;
 	struct emu_action *event;
-	int effective_mods;
 	int i, j;
 
 	for (i = 0; i < EVENT_HASH_SIZE; i++) {
@@ -951,11 +943,8 @@ void input_release_all(void)
 			if (!p->pressed)
 				continue;
 
-			effective_mods = get_effective_modifiers(p, mod_bits);
 			for (j = 0; j < p->mapping_count; j++) {
 				event = p->mappings[j].emu_action;
-				if (p->mappings[j].mod_bits != effective_mods)
-					continue;
 
 				if (!event)
 					continue;
@@ -970,117 +959,6 @@ void input_release_all(void)
 			p->pressed = 0;
 		}
 	}
-
-	for (i = 0; i < INPUT_MOD_COUNT; i++)
-		modifier_count[i] = 0;
-
-	/* Since MOD_KBD is a toggle, leave it set if it was set.
-	   Clear all other modifiers.
-	*/
-	mod_bits &= INPUT_MOD_BITS_KBD;
-}
-
-static void input_update_mod_bits(int mod, int set)
-{
-	int new_mod_bits;
-	struct input_event_node *p;
-	struct emu_action *old, *new;
-	int effective_mods;
-	int i, j;
-
-	if (mod == INPUT_MOD_KBD) {
-		if (!set)
-			return;
-
-		set = !(mod_bits & (1 << mod));
-	}
-
-	if (set) {
-		modifier_count[mod]++;
-	} else if (modifier_count[mod] > 0) {
-		modifier_count[mod]--;
-	}
-
-	if (modifier_count[mod])
-		new_mod_bits = mod_bits | (1 << mod);
-	else
-		new_mod_bits = mod_bits & ~(1 << mod);
-
-	if (new_mod_bits == mod_bits)
-		return;
-
-	/* Handle synthetic press events triggered by the new modifier
-	 * set */
-	for (i = 0; i < EVENT_HASH_SIZE; i++) {
-		for (p = event_hash[i]; p; p = p->next) {
-			if (!p->pressed || (p->modifier >= 0))
-				continue;
-
-			effective_mods =
-				get_effective_modifiers(p, new_mod_bits);
-			for (j = 0; j < p->mapping_count; j++) {
-				new = p->mappings[j].emu_action;
-
-				if (!EMU_ACTION_IS_BUTTON(new))
-					continue;
-
-				if (p->mappings[j].mod_bits !=
-				    effective_mods) {
-					continue;
-				}
-
-				if (!new)
-					continue;
-
-				new->count++;
-
-				if ((new->count == 1) && new->handler)
-					new->handler(new->data, 1, new->id);
-			}
-		}
-	}
-
-	/* Handle synthetic release events triggered by the new modifier
-	 * set */
-	for (i = 0; i < EVENT_HASH_SIZE; i++) {
-		for (p = event_hash[i]; p; p = p->next) {
-			int is_pressed = 0;
-			if (!p->pressed || (p->modifier >= 0))
-				continue;
-
-			effective_mods =
-				get_effective_modifiers(p, mod_bits);
-			for (j = 0; j < p->mapping_count; j++) {
-				old = p->mappings[j].emu_action;
-
-				if (!EMU_ACTION_IS_BUTTON(old))
-					continue;
-
-				if (p->mappings[j].mod_bits !=
-				    effective_mods) {
-					continue;
-				}
-
-				if (!old || !old->count)
-					continue;
-
-				old->count--;
-
-				if (old->count == 0) {
-					if (old->handler) {
-						old->handler(old->data, 0,
-							     old->id);
-					}
-				} else {
-					is_pressed++;
-				}
-			}
-
-			/* if (!is_pressed) */
-			/* 	p->pressed = 0; */
-		}
-	}
-	mod_bits = new_mod_bits;
 }
 
 void input_get_mouse_state(int *x, int *y, int *xrel, int *yrel)
@@ -1118,10 +996,8 @@ int input_handle_event(union input_new_event *input_event, int force)
 	struct input_event_node *p;
 	struct emu_action *e;
 	int old_count;
-	int mod, m;
 	int call_handler;
 	int is_button, is_axis;
-	int effective_mods;
 	int was_pressed;
 	struct config *config;
 
@@ -1133,7 +1009,6 @@ int input_handle_event(union input_new_event *input_event, int force)
 	if (ignore_events)
 		return 0;
 
-	mod = mod_bits;
 	config = emu->config;
 
 	/* Check if event exists and if so what modifier it is */
@@ -1189,28 +1064,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 	}
 
 	if ((is_button || is_axis) && (was_pressed != p->pressed)) {
-		/* Update modifier status, if necessary */
-		m = p->modifier;
-		/* Modifier keys can have bindings, but
-		   without modifiers */
-		if (m >= 0) {
-			/* keyboard lock mode overrides all modifiers except
-			   MOD_KBD */
-			if (p->event.common.type == INPUT_EVENT_TYPE_KEYBOARD) {
-				if ((mod_bits & INPUT_MOD_BITS_KBD) &&
-				    (m != INPUT_MOD_KBD)) {
-					mod = INPUT_MOD_BITS_KBD;
-					m = -1;
-				} else {
-					mod = 0;
-				}
-			} else {
-				mod = 0;
-			}
-		}
-
-		if (m >= 0)
-			input_update_mod_bits(m, p->pressed);
+		/* FIXME */
 	} else if (is_button && (was_pressed == p->pressed)) {
 		/* exit early for buttons, as there is nothing
 		   else to do for them.  Axes can still be handled
@@ -1219,11 +1073,7 @@ int input_handle_event(union input_new_event *input_event, int force)
 		return 0;
 	}
 
-	effective_mods = get_effective_modifiers(p, mod);
 	for (index = 0; index < p->mapping_count; index++) {
-		if (p->mappings[index].mod_bits != effective_mods)
-			continue;
-
 		e = p->mappings[index].emu_action;
 		if (!e)
 			continue;
@@ -1615,7 +1465,6 @@ static struct input_event_handler misc_handlers[] = {
 };
 
 struct input_event_node *input_insert_event(union input_new_event *event,
-				       int mod,
 				       struct emu_action *emu_action)
 {
 	struct input_event_node **e;
@@ -1692,7 +1541,6 @@ struct input_event_node *input_insert_event(union input_new_event *event,
 		native_event->event.common.misc = misc;
 		native_event->mapping_count = 0;
 		native_event->mapping_max = 0;
-		native_event->modifier = -1;
 		native_event->mappings = NULL;
 		native_event->pressed = 0;
 		native_event->next = NULL;
@@ -1709,8 +1557,7 @@ struct input_event_node *input_insert_event(union input_new_event *event,
 	}
 
 	for (i = 0; i < native_event->mapping_count; i++) {
-		if ((native_event->mappings[i].mod_bits == mod) &&
-		    (native_event->mappings[i].emu_action == emu_action)) {
+		if ((native_event->mappings[i].emu_action == emu_action)) {
 			return native_event;
 		}
 	}
@@ -1729,59 +1576,10 @@ struct input_event_node *input_insert_event(union input_new_event *event,
 		native_event->mapping_max++;
 	}
 
-	native_event->mappings[i].mod_bits = mod;
 	native_event->mappings[i].emu_action = emu_action;
 	native_event->mapping_count++;
 
 	return native_event;
-}
-
-int input_add_modifier(union input_new_event *event, int mod)
-{
-	struct input_event_node *native_event;
-
-	if (mod >= INPUT_MOD_COUNT)
-		return -1;
-
-	native_event = input_lookup_event(event);
-	if (!native_event)
-		native_event = input_insert_event(event, 0, NULL);
-
-	if (!native_event)
-		return -1;
-
-	native_event->modifier = mod;
-
-	return 0;
-}
-
-static int get_effective_modifiers(struct input_event_node *event, int mod)
-{
-	int mod_tries[3] = { mod, mod & ~INPUT_MOD_BITS_KBD, 0 };
-	int i;
-
-	for (i = 0; i < 3; i++) {
-		int j;
-
-		for (j = 0; j < event->mapping_count; j++) {
-			if (event->mappings[j].mod_bits == mod_tries[i]) {
-				break;
-			}
-		}
-
-		/* Stop processing on the first pass if this is a key
-		   event and keyboard lock is enabled.
-		*/
-		if ((event->event.common.type == INPUT_EVENT_TYPE_KEYBOARD) &&
-		    (mod & INPUT_MOD_BITS_KBD) && (i == 0)) {
-			break;
-		}
-
-		if ((j < event->mapping_count) || (mod_tries[i] == 0))
-			break;
-	}
-
-	return mod_tries[i];
 }
 
 static struct input_event_node *input_lookup_event(union input_new_event *event)
@@ -1818,70 +1616,6 @@ static struct input_event_node *input_lookup_event(union input_new_event *event)
 	return native_event;
 }
 
-int input_validate_modifier(const char *modifier)
-{
-	const char *ptr;
-	union input_new_event event;
-	char buf[80];
-
-	memset(&event, 0, sizeof(event));
-	sanitize_binding(buf, modifier, sizeof(buf));
-	ptr = buf + 9;
-
-	if (!parse_keyboard_binding(ptr, &event) &&
-	    !parse_joystick_binding(ptr, &event) &&
-	    !parse_mouse_binding(ptr, &event)) {
-		return 0;
-	}
-
-	return 1;
-}
-
-static void configure_modifier(const char *key, const char *value)
-{
-	union input_new_event event;
-	char buf[80];
-	int mod;
-	int i;
-
-	mod = -1;
-
-	memset(&event, 0, sizeof(event));
-	sanitize_binding(buf, key, sizeof(buf));
-
-	if (!parse_keyboard_binding(buf, &event) &&
-	    !parse_joystick_binding(buf, &event) &&
-	    !parse_mouse_binding(buf, &event)) {
-		log_err("invalid event %s\n", key);
-		return;
-	}
-
-	for (i = 0; i < INPUT_MOD_COUNT; i++) {
-		if (strcasecmp(value, modifier_names[i]) == 0) {
-			mod = i;
-			break;
-		}
-	}
-
-	if ((mod == INPUT_MOD_COUNT) && (strcasecmp(value, "none") != 0)) {
-		log_err("invalid modifier %s\n", value);
-		return;
-	}
-
-	if (input_add_modifier(&event, mod) < 0) {
-		log_err("error adding modifier\n");
-	} /* else if (mod >= 0) { */
-	/* 	printf("assigning modifier %s (%x) to %s\n", value, mod, key); */
-	/* } else { */
-	/* 	printf("clearing modifier %d from %s\n", mod, key); */
-	/* } */
-}
-
-void input_configure_modifier(const char *name, const char *value)
-{
-	configure_modifier(name, value);
-}
-
 int input_init(struct emu *emu)
 {
 	int i;
@@ -1895,8 +1629,6 @@ int input_init(struct emu *emu)
 
 	input_connect_handlers(misc_handlers, emu);
 
-	memset(modifier_count, 0, sizeof(modifier_count));
-	mod_bits = 0;
 	ignore_events = 0;
 	event_queue = NULL;
 	event_queue_size = 0;
@@ -2071,39 +1803,6 @@ int get_binding_name(char *buffer, int size, struct input_event_node *e)
 	return 0;
 }
 
-void get_modifier_string(char *buffer, int size, int modbits)
-{
-	int m;
-	int remaining;
-	char *ptr;
-	int len;
-
-	buffer[0] = 0;
-
-	if (!modbits)
-		return;
-
-	/* Need room for "] " */
-	remaining = size - 2;
-	ptr = buffer;
-	for (m = 0; m < 8; m++) {
-		if (!(modbits & (1 << m)))
-			continue;
-
-		snprintf(ptr, remaining, "-%s", modifier_names[m]);
-		len = strlen(ptr);
-		ptr += len;
-		remaining -= len;
-	}
-
-
-	len = strlen(buffer);
-	buffer[0] = '[';
-	buffer[len] = ']';
-	buffer[len + 1] = ' ';
-	buffer[len + 2] = '\0';
-}
-
 static int append_data(char **buffer, int *used, int *size, const char *data, int len)
 {
 	int remaining;
@@ -2138,9 +1837,7 @@ void input_get_binding_config(char **config_data, size_t *config_data_size)
 {
 	struct input_event_node *e;
 	char buffer[80];
-	char modbuffer[80];
 	int i, j;
-	int mod;
 
 	char *data;
 	int data_size;
@@ -2174,90 +1871,50 @@ void input_get_binding_config(char **config_data, size_t *config_data_size)
 			if (get_binding_name(buffer, sizeof(buffer), e) < 0)
 				continue;
 
-			if ((e->modifier >= 0) && (e->modifier <= INPUT_MOD_KBD)) {
-				intptr_t offset;
+			namecount = 0;
+			for (j = 0; j < e->mapping_count; j++) {
+				int event_count;
+				int k;
+				uint32_t id;
+				const char *name;
+				int len;
 
-				offset = used;
-				strings[string_count] = (char *)offset;
-				string_count++;
-				append_data(&data, &used, &data_size,
-					    "modifier ", 9);
-				append_data(&data, &used, &data_size,
-					    buffer, strlen(buffer));
-				append_data(&data, &used, &data_size,
-					    " = ", 3);
-				append_data(&data, &used, &data_size,
-					    modifier_names[e->modifier],
-					    strlen(modifier_names[e->modifier]));
-#if _WIN32
-				append_data(&data, &used, &data_size,
-					    "\r\n", 3);
-#else
-				append_data(&data, &used, &data_size,
-					    "\n", 2);
-#endif				
-			}
+				id = e->mappings[j].emu_action->id;
+				event_count = sizeof(emu_action_id_map) /
+					sizeof(emu_action_id_map[0]);
+				name = NULL;
 
-			for (mod = 0; mod < 256; mod++) {
-				modbuffer[0] = '\0';
+				for (k = 0; k < event_count; k++) {
+					if (emu_action_id_map[k].emu_action_id ==
+					    id) {
+						name = emu_action_id_map[k].name;
+						break;
+					}
+				}
 
-				if (!e->mapping_count)
+				if (!name)
 					continue;
 
-				get_modifier_string(modbuffer,
-						    sizeof(modbuffer), mod);
+				len = strlen(name);
+				if (namecount) {
+					len++;
+					append_data(&data, &used, &data_size, ", ", 2);
+				} else {
+					intptr_t offset;
 
-				namecount = 0;
-				for (j = 0; j < e->mapping_count; j++) {
-					int event_count;
-					int k;
-					uint32_t id;
-					const char *name;
-					int len;
+					offset = used;
+					append_data(&data, &used, &data_size, "binding ", 8); 
+					append_data(&data, &used, &data_size, buffer,
+						    strlen(buffer));
+					append_data(&data, &used, &data_size, " = ", 3);
 
-					if (e->mappings[j].mod_bits != mod)
-						continue;
-
-					id = e->mappings[j].emu_action->id;
-					event_count = sizeof(emu_action_id_map) /
-						sizeof(emu_action_id_map[0]);
-					name = NULL;
-
-					for (k = 0; k < event_count; k++) {
-						if (emu_action_id_map[k].emu_action_id ==
-						    id) {
-							name = emu_action_id_map[k].name;
-							break;
-						}
-					}
-
-					if (!name)
-						continue;
-
-					len = strlen(name);
-					if (namecount) {
-						len++;
-						append_data(&data, &used, &data_size, ", ", 2);
-					} else {
-						intptr_t offset;
-
-						offset = used;
-						append_data(&data, &used, &data_size, "binding ", 8); 
-						append_data(&data, &used, &data_size, modbuffer,
-							    strlen(modbuffer));
-						append_data(&data, &used, &data_size, buffer,
-						            strlen(buffer));
-						append_data(&data, &used, &data_size, " = ", 3);
-
-						strings[string_count] = (char *)offset;
-						string_count++;
-					}
-
-					
-					append_data(&data, &used, &data_size, name, strlen(name));
-					namecount++;
-
+					strings[string_count] = (char *)offset;
+					string_count++;
 				}
+
+				
+				append_data(&data, &used, &data_size, name, strlen(name));
+				namecount++;
 
 				if (namecount) {
 #if _WIN32

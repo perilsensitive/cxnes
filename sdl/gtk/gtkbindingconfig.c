@@ -190,15 +190,14 @@ static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
 }
 
 static int add_binding_to_view(GtkTreeStore *store, const char *category,
-			       const char *binding_name, const char *modstring,
-			       const char *action_name,	uint32_t action,	uint32_t type,
-			       uint32_t device, uint32_t index,
-			       uint32_t misc, uint32_t modmask, int select_new_row)
+			       const char *binding_name, const char *action_name,
+			       uint32_t action,	uint32_t type, uint32_t device,
+			       uint32_t index, uint32_t misc, int select_new_row)
 {
 	GtkTreeModel *model;
 	GtkTreeIter action_iter, binding_iter;
 	int action_id;
-	int t, d, i, m, mod;
+	int t, d, i, m;
 	int found;
 
 	model = GTK_TREE_MODEL(store);
@@ -227,12 +226,10 @@ static int add_binding_to_view(GtkTreeStore *store, const char *category,
 					   COLUMN_DEVICE, &d,
 					   COLUMN_INDEX, &i,
 					   COLUMN_MISC, &m,
-					   COLUMN_MODMASK, &mod,
 					   -1);
 
 			if ((type == t) && (device == d) &&
-			    (index == i) && (misc == m) &&
-			    (mod == modmask)) {
+			    (index == i) && (misc == m)) {
 				found = 1;
 				break;
 			}
@@ -246,13 +243,11 @@ static int add_binding_to_view(GtkTreeStore *store, const char *category,
 				   COLUMN_CATEGORY, category,
 				   /* COLUMN_ACTION, action_name, */
 				   COLUMN_BINDING, binding_name,
-				   COLUMN_MODSTRING, modstring,
 				   COLUMN_ACTION_ID, action,
 				   COLUMN_TYPE, type,
 				   COLUMN_DEVICE, device,
 				   COLUMN_INDEX, index,
 				   COLUMN_MISC, misc,
-				   COLUMN_MODMASK, modmask,
 				   -1);
 	}
 
@@ -498,13 +493,13 @@ static void grab_event_callback(GtkButton *button, gpointer user_data)
 
 			name = gtk_entry_get_text(GTK_ENTRY(action));
 			category_name = gtk_entry_get_text(GTK_ENTRY(category));
-			add_binding_to_view(store, category_name, buffer, NULL,
+			add_binding_to_view(store, category_name, buffer,
 					    name, binding_config_action_id,
 					    grabbed_event.event.common.type,
 					    grabbed_event.event.common.device,
 					    grabbed_event.event.common.index,
 					    grabbed_event.event.common.misc,
-					    0, 1);
+					    1);
 		}
 	}
 }
@@ -700,7 +695,6 @@ static void load_default_bindings(GtkTreeStore *store,
 {
 	struct input_event_node event;
 	char binding_name[80];
-	char modifier_string[80];
 	uint32_t emu_action;
 	char *saveptr;
 	char *token;
@@ -737,44 +731,18 @@ static void load_default_bindings(GtkTreeStore *store,
 				end--;
 			}
 
-			if (modifiers) {
-				int j;
+			if (emu_action_lookup_by_name(token, &emu_action) < 0)
+				goto loop_end;
 
-				mod = -1;
-				for (j = 0; j < INPUT_MOD_COUNT; j++) {
-					if (strcasecmp(token, modifier_names[j]) == 0) {
-						mod = j;
-						break;
-					}
-				}
+			get_event_name_and_category(emu_action, &name, &category);
 
-				if (mod >= 0) {
-					add_modifier_to_view(store, mod,
-							     event.event.common.type,
-							     event.event.common.device,
-							     event.event.common.index,
-							     event.event.common.misc);
-				}
-			} else {
-				if (emu_action_lookup_by_name(token, &emu_action) < 0)
-					goto loop_end;
-
-				get_event_name_and_category(emu_action, &name, &category);
-
-				get_modifier_string(modifier_string,
-						    sizeof(modifier_string),
-						    mod);
-
-				add_binding_to_view(store, category, binding_name,
-						    modifier_string, name,
-						    emu_action,
-						    event.event.common.type,
-						    event.event.common.device,
-						    event.event.common.index,
-						    event.event.common.misc,
-						    mod, 0);
-			}
-
+			add_binding_to_view(store, category, binding_name,
+					    name, emu_action,
+					    event.event.common.type,
+					    event.event.common.device,
+					    event.event.common.index,
+					    event.event.common.misc,
+					    0);
 loop_end:
 
 			token = strtok_r(NULL, ",", &saveptr);
@@ -789,7 +757,6 @@ static void load_binding(GtkTreeStore *store, struct input_event_node *event)
 	int i;
 	char *name, *category;
 	char binding_name[80];
-	char modifier_string[80];
 
 	get_binding_name(binding_name, sizeof(binding_name), event);
 
@@ -803,13 +770,11 @@ static void load_binding(GtkTreeStore *store, struct input_event_node *event)
 
 	for (i = 0; i < event->mapping_count; i++) {
 		uint32_t id = event->mappings[i].emu_action->id;
-		uint32_t mod_bits = event->mappings[i].mod_bits;
 		get_event_name_and_category(id, &name, &category);
-		get_modifier_string(modifier_string, sizeof(modifier_string), mod_bits);
-		add_binding_to_view(store, category, binding_name, modifier_string, name,
+		add_binding_to_view(store, category, binding_name, name,
 				    id, event->event.common.type,
 				    event->event.common.device, event->event.common.index,
-				    event->event.common.misc, mod_bits, 0);
+				    event->event.common.misc, 0);
 	}
 }
 
@@ -973,8 +938,7 @@ static void apply_input_bindings(GtkTreeStore *store)
 			if (!emu_action) {
 				emu_action = input_insert_emu_action(emu_actionid);
 			}
-			input_insert_event(&event, modmask,
-					   emu_action);
+			input_insert_event(&event, emu_action);
 		} while (gtk_tree_model_iter_next(model, &binding_iter));
 		g_free(category);
 	} while (gtk_tree_model_iter_next(model, &action_iter));

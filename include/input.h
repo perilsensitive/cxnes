@@ -238,7 +238,6 @@ int input_bindings_loaded(void);
 void input_configure_keyboard_modifiers(void);
 int input_add_modifier(union input_new_event *event, int mod);
 struct input_event_node *input_insert_event(union input_new_event *event,
-				       int mod,
 				       struct emu_action *emu_action);
 int input_queue_event(union input_new_event *event);
 int input_process_queue(int force);
