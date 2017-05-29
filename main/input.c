@@ -727,47 +727,17 @@ static void sanitize_binding(char *dest, const char *src, int dest_len)
 	dest[j] = '\0';
 }
 
-int input_parse_binding(const char *string, union input_new_event *event,
-			int *modp)
+int input_parse_binding(const char *string, union input_new_event *event)
 {
 	const char *ptr;
-	int mod;
-	int modifier_start, modifier_end, binding_start;
-	char *modifier_tmp;
-	char *saveptr, *token;
+	int binding_start;
 	char buf[80];
-	int len;
 
 	memset(event, 0, sizeof(*event));
 
-	modifier_start = modifier_end = binding_start = 0;
-	sscanf(string, " [ %n%*[^]]%n ] %n%*s", &modifier_start, &modifier_end,
-	       &binding_start);
+	binding_start = 0;
+	sscanf(string, " %n%*s", &binding_start);
 
-	modifier_tmp = NULL;
-	mod = 0;
-	len = modifier_end - modifier_start;
-	modifier_tmp = malloc(len + 1);
-	if (!modifier_tmp)
-		return -1;
-
-	memcpy(modifier_tmp, string + modifier_start, len);
-	modifier_tmp[len] = '\0';
-
-	token = strtok_r(modifier_tmp, "-", &saveptr);
-	while (token) {
-		int i;
-
-		for (i = 0; i < INPUT_MOD_COUNT; i++) {
-			if (strcasecmp(token, modifier_names[i]) == 0) {
-				mod |= 1 << i;
-				break;
-			}
-		}
-		token = strtok_r(NULL, "-", &saveptr);
-	}
-
-	free(modifier_tmp);
 	ptr = string + binding_start;
 
 	sanitize_binding(buf, ptr, sizeof(buf));
@@ -778,9 +748,6 @@ int input_parse_binding(const char *string, union input_new_event *event,
 			
 		return -1;
 	}
-
-	if (modp)
-		*modp = mod;
 
 	return 0;
 }
@@ -816,7 +783,6 @@ int input_bind(const char *binding, const char *emu_actions)
 	char *saveptr;
 	int i;
 	char *token;
-	int mod;
 
 	tmp = strdup(emu_actions);
 	if (!tmp)
@@ -824,7 +790,7 @@ int input_bind(const char *binding, const char *emu_actions)
 
 	memset(&event, 0, sizeof(event));
 
-	if (input_parse_binding(binding, &event, &mod) != 0) {
+	if (input_parse_binding(binding, &event) != 0) {
 		log_err("invalid binding %s\n", binding);
 		return -1;
 	}
@@ -832,9 +798,6 @@ int input_bind(const char *binding, const char *emu_actions)
 	input_event = input_lookup_event(&event);
 	if (input_event) {
 		for (i = 0; i < input_event->mapping_count; i++) {
-			if (input_event->mappings[i].mod_bits != mod)
-				continue;
-			
 			memmove(&input_event->mappings[i],
 				&input_event->mappings[i+1],
 				sizeof(input_event->mappings[i]) *
@@ -1684,7 +1647,7 @@ int input_validate_binding_name(const char *name)
 {
 	union input_new_event event;
 
-	return !input_parse_binding(name, &event, NULL);
+	return !input_parse_binding(name, &event);
 }
 
 int get_binding_name(char *buffer, int size, struct input_event_node *e)

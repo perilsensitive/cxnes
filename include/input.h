@@ -246,7 +246,6 @@ int input_get_num_joysticks(void);
 const char *input_get_joystick_name(int index);
 int input_get_joystick_guid(int index, char *buffer, size_t size);
 int input_joystick_is_gamecontroller(int index);
-int input_parse_binding(const char *string, union input_new_event *event,
-			int *modp);
+int input_parse_binding(const char *string, union input_new_event *event);
 int emu_action_lookup_by_name(const char *name, uint32_t *ptr);
 #endif				/* __INPUT_H__ */

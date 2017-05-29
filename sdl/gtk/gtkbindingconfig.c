@@ -154,41 +154,6 @@ static void setup_tree(GtkWidget **treeptr, GtkTreeStore **storeptr,
 	*selectionptr = selection;
 }
 
-static void add_modifier_to_view(GtkTreeStore *store, int mod, uint32_t type,
-				 uint32_t device, uint32_t index, uint32_t misc)
-{
-	GtkTreeModel *model;
-	GtkTreeIter action_iter;
-	uint32_t data;
-	char buffer[80];
-	gchar *action_name;
-	struct input_event_node input_event;
-
-	if (mod > INPUT_MOD_KBD)
-		return;
-
-	model = GTK_TREE_MODEL(store);
-
-	gtk_tree_model_iter_children(model, &action_iter, NULL);
-	do {
-		gtk_tree_model_get(model, &action_iter,
-				   COLUMN_ACTION, &action_name,
-				   COLUMN_ACTION_ID, &data, -1);
-
-		if (mod == data)
-			break;
-	} while (gtk_tree_model_iter_next(model, &action_iter));
-
-	input_event.event.common.type = type;
-	input_event.event.common.device = device;
-	input_event.event.common.index = index;
-	input_event.event.common.misc = misc;
-	if (get_binding_name(buffer, sizeof(buffer), &input_event) <0)
-		return;
-
-	g_free(action_name);
-}
-
 static int add_binding_to_view(GtkTreeStore *store, const char *category,
 			       const char *binding_name, const char *action_name,
 			       uint32_t action,	uint32_t type, uint32_t device,
@@ -699,14 +664,13 @@ static void load_default_bindings(GtkTreeStore *store,
 	char *saveptr;
 	char *token;
 	char *tmp;
-	int mod;
 	int i;
 
 	for (i = 0; bindings[i].name; i++) {
 		char *name = bindings[i].name;
 		char *value = bindings[i].value;
 
-		if (input_parse_binding(name, &event.event, &mod) != 0)
+		if (input_parse_binding(name, &event.event) != 0)
 			continue;
 
 		get_binding_name(binding_name, sizeof(binding_name),
@@ -759,14 +723,6 @@ static void load_binding(GtkTreeStore *store, struct input_event_node *event)
 	char binding_name[80];
 
 	get_binding_name(binding_name, sizeof(binding_name), event);
-
-	if (event->modifier >= 0) {
-		add_modifier_to_view(store, event->modifier,
-				     event->event.common.type,
-				     event->event.common.device,
-				     event->event.common.index,
-				     event->event.common.misc);
-	}
 
 	for (i = 0; i < event->mapping_count; i++) {
 		uint32_t id = event->mappings[i].emu_action->id;
