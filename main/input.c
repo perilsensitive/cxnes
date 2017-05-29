@@ -777,11 +777,9 @@ int input_bind(const char *binding, const char *emu_actions)
 {
 	union input_new_event event;
 	struct emu_action *e;
-	struct input_event_node *input_event;
 	uint32_t emu_action;
 	char *tmp;
 	char *saveptr;
-	int i;
 	char *token;
 
 	tmp = strdup(emu_actions);
@@ -793,18 +791,6 @@ int input_bind(const char *binding, const char *emu_actions)
 	if (input_parse_binding(binding, &event) != 0) {
 		log_err("invalid binding %s\n", binding);
 		return -1;
-	}
-
-	input_event = input_lookup_event(&event);
-	if (input_event) {
-		for (i = 0; i < input_event->mapping_count; i++) {
-			memmove(&input_event->mappings[i],
-				&input_event->mappings[i+1],
-				sizeof(input_event->mappings[i]) *
-				(input_event->mapping_count - i));
-			input_event->mapping_count--;
-			i--;
-		}
 	}
 
 	saveptr = NULL;
