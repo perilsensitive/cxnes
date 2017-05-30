@@ -2029,7 +2029,49 @@ int input_process_queue(int force)
 	return 0;
 }
 
+static void input_release_keys(int mode)
+{
+	struct input_event_node *p;
+	struct emu_action *event;
+	const int key_prefix = ACTION_KEYBOARD_F8 & ACTION_PREFIX_MASK;
+	int i, j;
+
+	for (i = 0; i < EVENT_HASH_SIZE; i++) {
+		for (p = event_hash[i]; p; p = p->next) {
+			if (p->event.type != INPUT_EVENT_TYPE_KEYBOARD)
+				continue;
+
+			if (!p->pressed)
+				continue;
+
+			for (j = 0; j < p->mapping_count; j++) {
+				event = p->mappings[j].emu_action;
+
+				if (!event)
+					continue;
+
+				if ((event->id & ACTION_PREFIX_MASK) ==
+				    key_prefix) {
+					if (!mode)
+						continue;
+				} else if (mode) {
+						continue;
+				}
+
+				if (event->handler && event->count) {
+					event->handler(event->data, 0,
+						       event->id);
+				}
+				event->count = 0;
+			}
+
+			p->pressed = 0;
+		}
+	}
+}
+
 void input_set_keyboard_mode(int mode)
 {
+	input_release_keys(keyboard_mode);
 	keyboard_mode = mode;
 }
