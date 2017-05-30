@@ -184,14 +184,12 @@ struct emu_action {
 };
 
 struct input_event_mapping {
-	int mod_bits;
 	struct emu_action *emu_action;
 };
 
 struct input_event_node {
 	union input_new_event event;
 
-	int modifier;
 	int pressed;
 	int mapping_count;
 	int mapping_max;
