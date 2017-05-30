@@ -102,6 +102,8 @@ struct emu_action_id_map emu_action_id_map[] = {
 	EMU_ACTION_ID_MAP(TOGGLE_MOUSE_GRAB, VIDEO, "Mouse Grab Toggle"),
 	EMU_ACTION_ID_MAP(HARD_RESET, EMULATOR, "Hard Reset"),
 	EMU_ACTION_ID_MAP(SOFT_RESET, EMULATOR, "Soft Reset"),
+	EMU_ACTION_ID_MAP(KEYBOARD_DISABLE, KEYBOARD, "Keyboard Disable"),
+	EMU_ACTION_ID_MAP(KEYBOARD_ENABLE, EMULATOR, "Keyboard Enable"),
 	EMU_ACTION_ID_MAP(QUIT, EMULATOR, "Quit"),
 	EMU_ACTION_ID_MAP(TOGGLE_CHEATS, EMULATOR, "Cheats Toggle"),
 	EMU_ACTION_ID_MAP(DEVICE_SELECT_PORT1, INPUT, "Port 1 Device Select"),
@@ -448,6 +450,7 @@ extern int running;
 static struct input_mouse_motion_event motion_event;
 extern int center_x, center_y;
 extern int mouse_grabbed;
+static int keyboard_mode = 0;
 
 extern struct emu *emu;
 
@@ -1027,6 +1030,19 @@ int input_handle_event(union input_new_event *input_event, int force)
 		if (!e)
 			continue;
 
+		if (input_event->type == INPUT_EVENT_TYPE_KEYBOARD) {
+			int prefix = (e->id & ACTION_PREFIX_MASK);
+			int key_prefix = (ACTION_KEYBOARD_F8 &
+					ACTION_PREFIX_MASK);
+
+			if (key_prefix == prefix) {
+				if (!keyboard_mode)
+					continue;
+			} else if (keyboard_mode) {
+					continue;
+			}
+		}
+
 		if (emu->board && emu_system_is_vs(emu) &&
 		    config->vs_coin_on_start) {
 			uint32_t id = ACTION_VS_COIN_SWITCH_1;
@@ -1248,6 +1264,10 @@ static int misc_buttons(void *data, uint32_t pressed, uint32_t button)
 		if (pressed)
 			emu_reset(emu, 0);
 		break;
+	case ACTION_KEYBOARD_ENABLE:
+		if (pressed)
+			input_set_keyboard_mode(1);
+		break;
 	case ACTION_PAUSE:
 		if (pressed)
 			emu_pause(emu, !emu_paused(emu));
@@ -1396,6 +1416,7 @@ static struct input_event_handler misc_handlers[] = {
 	{ ACTION_TOGGLE_MOUSE_GRAB, misc_buttons },
 	{ ACTION_HARD_RESET, misc_buttons },
 	{ ACTION_SOFT_RESET, misc_buttons },
+	{ ACTION_KEYBOARD_ENABLE, misc_buttons },
 	{ ACTION_QUIT, misc_buttons },
 	{ ACTION_TOGGLE_CHEATS, misc_buttons },
 	{ ACTION_DEVICE_SELECT_PORT1, misc_buttons },
@@ -2006,4 +2027,9 @@ int input_process_queue(int force)
 	}
 
 	return 0;
+}
+
+void input_set_keyboard_mode(int mode)
+{
+	keyboard_mode = mode;
 }

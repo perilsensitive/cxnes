@@ -634,7 +634,6 @@ void gui_binding_configuration_dialog(GtkWidget *widget, gpointer user_data)
 		if (response == RESET_TO_DEFAULT) {
 			clear_store(store);
 			load_default_bindings(store, default_bindings, 0);
-			load_default_bindings(store, default_modifiers, 1);
 			gtk_tree_view_expand_all(GTK_TREE_VIEW(tree));
 			continue;
 		}

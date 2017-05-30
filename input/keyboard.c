@@ -187,7 +187,9 @@ static int keyboard_set_key(void *data, uint32_t pressed, uint32_t key)
 	mask = 0;
 	offset = 0;
 
-	if (key == ACTION_KEYBOARD_ENABLE) {
+	if (key == ACTION_KEYBOARD_DISABLE) {
+		if (pressed)
+			input_set_keyboard_mode(0);
 		return 0;
 	}
 

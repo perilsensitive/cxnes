@@ -56,7 +56,6 @@ struct binding_item {
 };
 
 extern struct binding_item default_bindings[];
-extern struct binding_item default_modifiers[];
 
 struct config {
 	/* PPU/Video options */

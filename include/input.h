@@ -211,6 +211,7 @@ extern struct input_event_node *event_hash[EVENT_HASH_SIZE];
 extern struct emu_action_id_map emu_action_id_map[];
 extern const char *category_names[];
 
+void input_set_keyboard_mode(int mode);
 int input_bind(const char *binding, const char *actions);
 void input_ignore_events(int ignore);
 void input_release_all(void);
