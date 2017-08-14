@@ -2524,7 +2524,8 @@ static int cpu_do_oam_dma(struct cpu_state *cpu)
 	}
 
 	max -= cpu->cycles;
-	max /= cpu->cpu_clock_divider + 2;
+	max /= cpu->cpu_clock_divider;
+	max += 2;
 	max += cpu->oam_dma_step * 2;
 	if (max > 254 * 2)
 		max = 254 * 2;
