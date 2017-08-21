@@ -401,6 +401,31 @@ static int fds_validate_image_real(struct rom *rom, struct fds_block_list *block
      that requires a different format, you'll probably need to apply
      it directly to the image using a separate application.
 
+     cxNES can properly handle patches in UPS or BPS format, regardless
+     of whether or not the patch expects the input and output files
+     to have headers.  This is done by using the input and output size
+     fields of the patch header to determine whether or not a header
+     is expected (size is multiple of 65500 + 16 bytes) or not (size
+     is just a multiple of 65500).  IPS patches don't have this
+     information available, so cxNES uses a different method.
+
+     For IPS patches, cxNES makes a copy of the image data (so far) and
+     attempts to apply the patch as if a header were expected.  It then
+     tries to validate the resulting data to make sure the disk image
+     wasn't corrupted.  If so, it tries again (on a fresh copy of the
+     data) to apply the patch as if a header weren't expected.
+
+     If the patch doesn't corrupt any of the disk metadata when applied,
+     then it is assumed to have been applied correctly.  Unfortunately,
+     this does not always work.  It is possible to apply some patches
+     both with and without a header in the source data and have neither
+     method corrupt disk metadata.  So this method isn't foolproof, but
+     it works for A) all patches for headered images (since cxNES stores
+     a header internally and B) patches for non-headered images that
+     would corrupt metadata when applied to a headered image.  For others,
+     the patch will need to be converted to a headered patch or a UPS/BPS
+     patch.
+
      cxNES saves writes to the disk image in IPS format (with a .sav
      extension however); this allows the original disk image to remain
      unmodified.  The patch includes all bytes written to disk, not
