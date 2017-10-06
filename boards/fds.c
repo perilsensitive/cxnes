@@ -969,32 +969,36 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 		m2_timer_set_reload_hi(emu->m2_timer, value, cycles);
 		break;
 	case 0x4022:
-		if (value & 0x01)
-			flags = M2_TIMER_FLAG_RELOAD;
-		else
-			flags = M2_TIMER_FLAG_ONE_SHOT |
-				M2_TIMER_FLAG_AUTO_IRQ_DISABLE;
+		if (!(_diskio_enabled & 0x01))
+			break;
 
+		flags = M2_TIMER_FLAG_RELOAD;
+		if (!(value & 0x01))
+			flags |= M2_TIMER_FLAG_AUTO_IRQ_DISABLE;
+
+		if ((value & 0x01) == 1)
 		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_flags(emu->m2_timer, flags, cycles);
 
 		board->irq_control = value & 0x03;
 
-		if (value & 0x02)
-			m2_timer_force_reload(emu->m2_timer, cycles);
-		if ((value & 0x03) == 0x02)
-			m2_timer_set_reload(emu->m2_timer, 0, cycles);
-		    
+		m2_timer_force_reload(emu->m2_timer, cycles);
 
-		m2_timer_set_enabled(emu->m2_timer, value & 0x02,
+		m2_timer_set_enabled(emu->m2_timer, value & 0x03,
 				     cycles);
 		break;
 	case 0x4023:
-		_diskio_enabled = value & 0x01;
+		_diskio_enabled = value;
+		m2_timer_set_enabled(emu->m2_timer, ((value & 0x01) &&
+		                     board->irq_control), cycles);
+
+		if (!(value & 0x01))
+			m2_timer_ack(emu->m2_timer, cycles);
+
 		fds_audio_enable(emu->fds_audio, cycles, value & 0x02);
 		break;
 	case 0x4024:
-		if (!_diskio_enabled)
+		if (!(_diskio_enabled & 0x01))
 			break;
 
 		_status_reg &= ~FDS_STATUS_XFER;
@@ -1022,7 +1026,7 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 		}
 		standard_mirroring_handler(emu, 0, value, cycles);
 
-		if (!_diskio_enabled)
+		if (!(_diskio_enabled & 0x01))
 			break;
 
 		/* invert the sense of the SCAN bit so that
@@ -1066,7 +1070,7 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 
 		break;
 	case 0x4026:
-		if (!_diskio_enabled)
+		if (!(_diskio_enabled & 0x01))
 			break;
 
 		_output_reg = value;
@@ -1104,7 +1108,7 @@ static CPU_READ_HANDLER(fds_read_handler)
 		schedule_disk_interrupt(board, cycles);
 		break;
 	case 0x4031:
-		if (!_diskio_enabled)
+		if (!(_diskio_enabled & 0x01))
 			break;
 
 		if (board->emu->config->fds_auto_disk_change_enabled && (_auto_eject_state != AUTO_EJECT_DISABLED)) {
@@ -1121,7 +1125,7 @@ static CPU_READ_HANDLER(fds_read_handler)
 		schedule_disk_interrupt(board, cycles);
 		break;
 	case 0x4032:
-		if (!_diskio_enabled)
+		if (!(_diskio_enabled & 0x01))
 			break;
 
 		/* Upper 5 bits are open-bus */
@@ -1472,7 +1476,7 @@ static CPU_READ_HANDLER(fds_bios_read_write_byte)
 
 	fds_run(board, cycles);
 
-	if (!_diskio_enabled || !_bios_patch_enabled ||
+	if (!(_diskio_enabled & 0x01) || !_bios_patch_enabled ||
 	    !cpu_is_opcode_fetch(emu->cpu)) {
 		return value;
 	}
