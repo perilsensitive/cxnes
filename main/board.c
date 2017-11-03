@@ -50,6 +50,7 @@ extern int running;
 extern struct board_info board_unl_magic_kid_googoo;
 extern struct board_info board_bmc_marioparty7in1;
 extern struct board_info board_bmc_n625092;
+extern struct board_info board_unl_ks7031;
 extern struct board_info board_unl_ks7037;
 extern struct board_info board_unl_ks7057;
 extern struct board_info board_unl_smb2j;
@@ -258,6 +259,7 @@ static struct board_info *board_info_list[] = {
 	&board_unl_txc_22211a,
 	&board_unl_txc_22211b,
 	&board_bmc_n625092,
+	&board_unl_ks7031,
 	&board_unl_ks7037,
 	&board_unl_ks7057,
 	&board_whirlwind_2706,
@@ -565,6 +567,7 @@ static struct board_name_mapping mapping_list[] =  {
 	{ "KONAMI-SLROM", BOARD_TYPE_SxROM },
 	{ "KONAMI-TLROM", BOARD_TYPE_TxROM },
 	{ "KONAMI-UNROM", BOARD_TYPE_UxROM },
+	{ "KS7031", BOARD_TYPE_UNL_KS7031 },
 	{ "MXMDHTWO / TXC", BOARD_TYPE_BNROM },
 	{ "NAMCOT-3301", BOARD_TYPE_NROM },
 	{ "NAMCOT-3302", BOARD_TYPE_NROM },
