@@ -31241,7 +31241,7 @@ WRAM0: 2k
 WRAM0-Battery: True
 %%
 Name: Vs. Ice Climber (set IC4-4 B-1)
-System: VS-RP2C04-0004
+System: VS-ICE-CLIMBER
 Board: VS-UNISYSTEM
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31254,7 +31254,6 @@ CRC: 1CA45A6D
 SHA1: BDCD92FC82EDF09B00A9FF852DC2A96BEFAC1B99
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: vsbungelingbay
 %%
 Name: Vs. Mach Rider (Endurance Course Version)
 System: VS-RP2C04-0002
@@ -31317,7 +31316,7 @@ WRAM0: 2k
 WRAM0-Battery: True
 %%
 Name: Vs. Pinball (Japan, set PN3 B)
-System: VS-RP2C03B
+System: VS-PINBALL-JAPAN
 Board: VS-UNISYSTEM-PINBALL-J
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31330,10 +31329,9 @@ CRC: 66471EFE
 SHA1: 5CD3A16DEFAAEDC714CCC39F821E3034E5465D5F
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: vspinballj
 %%
 Name: Vs. Pinball (US, set PN4 E-1)
-System: VS-RP2C04-0001
+System: VS-PINBALL-USA
 Board: VS-UNISYSTEM-PINBALL
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31346,7 +31344,6 @@ CRC: CA3E9B1A
 SHA1: 1A4EC64E576BAD64DAF320AEED0BE1B8B50D21DF
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: swapped
 %%
 Name: Vs. Platoon
 System: VS-RP2C04-0001
@@ -31364,7 +31361,7 @@ WRAM0: 2k
 WRAM0-Battery: True
 %%
 Name: Vs. Raid on Bungeling Bay (RD4-2 B)
-System: VS-RP2C04-0002
+System: VS-RAID-ON-BUNGELING-BAY
 Board: VS-UNISYSTEM
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31377,10 +31374,9 @@ CRC: B7C37203
 SHA1: 9E11D7BA0E3268B62EBB5B2865AF7E110DF9E836
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: vsbungelingbay
 %%
 Name: Vs. Skate Kids. (Graphic hack of Super Mario Bros.)
-System: VS-RP2C04-0004
+System: VS-SUPER-MARIO-BROS
 Board: VS-UNISYSTEM
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31393,7 +31389,6 @@ CRC: 40EF00FE
 SHA1: F1D74F4D5AD730A99074A0BBB21A4D60A8068402
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: swapped
 %%
 Name: Vs. Slalom
 System: VS-RP2C04-0002
@@ -31531,7 +31526,7 @@ WRAM0: 2k
 WRAM0-Battery: True
 %%
 Name: Vs. Super Mario Bros. (set ?, harder)
-System: VS-RP2C04-0004
+System: VS-SUPER-MARIO-BROS
 Board: VS-UNISYSTEM
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31544,10 +31539,9 @@ CRC: 7CFF0F84
 SHA1: 91FA719B4B05ADBAC0B9D507D2051ED361D1DED4
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: swapped
 %%
 Name: Vs. Super Mario Bros. (set SM4-4 E)
-System: VS-RP2C04-0004
+System: VS-SUPER-MARIO-BROS
 Board: VS-UNISYSTEM
 Mirroring: Four-Screen
 PRG: 8k, 8k, 8k, 8k
@@ -31560,10 +31554,9 @@ CRC: 98E3C75A
 SHA1: B21AA940728ED80C72EE23C251C96E42CC84B2D6
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: swapped
 %%
 Name: Vs. Super SkyKid
-System: VS-RP2C04-0001
+System: VS-SUPER-SKY-KID
 Board: NAMCOT-108
 Mirroring: Four-Screen
 PRG: 32k
@@ -31576,7 +31569,6 @@ CRC: 21A653C7
 SHA1: 40A801FF63DB5E719A8A53537C1C78F398483FC8
 WRAM0: 2k
 WRAM0-Battery: True
-VS-Controller-Mode: vssuperskykid
 %%
 Name: Vs. Super Xevious
 System: VS-RP2C04-0001
@@ -53672,8 +53664,6 @@ Name: Zooming Secretary
 Board: NROM
 System: NES-NTSC
 Mirroring: Horizontal
-iNES Mapper: 0
-NES 2.0 Submapper: 0
 PRG: 32768
 PRG-CRC: B2DAF1CA
 PRG-SHA1: 401b64b9150bd9155fb32a009f573b9ed015fbd7

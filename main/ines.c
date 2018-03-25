@@ -615,9 +615,10 @@ int ines_load(struct emu *emu, struct rom *rom)
 			mirroring = MIRROR_H;
 	}
 
-	if (header.vs_system)
+	if (header.vs_system) {
 		system_type =
 			vs_ppu_type_to_system_type(header.vs_ppu_version);
+	}
 	else if (header.playchoice)
 		system_type = EMU_SYSTEM_TYPE_PLAYCHOICE;
 	else if (header.tv_system == 1)

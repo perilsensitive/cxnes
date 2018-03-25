@@ -165,6 +165,36 @@ const struct system_type_info system_type_info[] = {
 		.description = "VS. (RC2C05-05 PPU)",
 	},
 	{
+		.type = EMU_SYSTEM_TYPE_VS_SUPER_MARIO_BROS,
+		.value = "super-mario-bros",
+		.description = "Vs. Super Mario Bros.",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID,
+		.value = "super-sky-kid",
+		.description = "Vs. Super SkyKid",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_PINBALL_JAPAN,
+		.value = "pinball-japan",
+		.description = "Vs. Pinball (Japan)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_PINBALL_USA,
+		.value = "pinball-usa",
+		.description = "Vs. Pinball (USA)",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_ICE_CLIMBER,
+		.value = "ice-climber",
+		.description = "Vs. Ice Climber",
+	},
+	{
+		.type = EMU_SYSTEM_TYPE_VS_RAID_ON_BUNGELING_BAY,
+		.value = "raid-on-bungeling-bay",
+		.description = "Vs. Raid on Bungeling Bay",
+	},
+	{
 		.type = EMU_SYSTEM_TYPE_PLAYCHOICE,
 		.value = "playchoice",
 		.description = "PlayChoice (RP2C03B PPU)",
@@ -528,6 +558,36 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 		ppu_set_type(emu->ppu, PPU_TYPE_DENDY);
 		emu->nes_framerate = DENDY_FRAMERATE;
 		emu->clock_rate = DENDY_MASTER_CLOCK_RATE;
+		break;
+	case EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0001);
+		break;
+	case EMU_SYSTEM_TYPE_VS_ICE_CLIMBER:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0004);
+		break;
+	case EMU_SYSTEM_TYPE_VS_RAID_ON_BUNGELING_BAY:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0002);
+		break;
+	case EMU_SYSTEM_TYPE_VS_SUPER_MARIO_BROS:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0004);
+		break;
+	case EMU_SYSTEM_TYPE_VS_PINBALL_JAPAN:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RC2C03B);
+		break;
+	case EMU_SYSTEM_TYPE_VS_PINBALL_USA:
+		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
+		apu_set_type(emu->apu, APU_TYPE_RP2A03);
+		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0001);
 		break;
 	case EMU_SYSTEM_TYPE_VS_RP2C03B:
 	case EMU_SYSTEM_TYPE_VS_RP2C03G:
@@ -1131,7 +1191,9 @@ int emu_system_is_vs(struct emu *emu)
 	else
 		type = emu->system_type;
 
-	if ((type & EMU_SYSTEM_TYPE_MASK) == 0x10)
+	type &= EMU_SYSTEM_TYPE_MASK;
+
+	if ((type == 0x10) || (type == 0x20))
 		return 1;
 
 	return 0;

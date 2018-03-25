@@ -74,10 +74,16 @@ enum system_type {
 	EMU_SYSTEM_TYPE_VS_RC2C05_03 = 0x1a,
 	EMU_SYSTEM_TYPE_VS_RC2C05_04 = 0x1b,
 	EMU_SYSTEM_TYPE_VS_RC2C05_05 = 0x1c,
-	EMU_SYSTEM_TYPE_PLAYCHOICE = 0x20,
-	EMU_SYSTEM_TYPE_AUTO = 0x30,
+	EMU_SYSTEM_TYPE_PLAYCHOICE = 0x30,
+	EMU_SYSTEM_TYPE_AUTO = 0x40,
 	EMU_SYSTEM_TYPE_UNDEFINED = 0xff,
-	EMU_SYSTEM_TYPE_MASK = 0xf0
+	EMU_SYSTEM_TYPE_MASK = 0xf0,
+	EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID = 0x20,
+	EMU_SYSTEM_TYPE_VS_RAID_ON_BUNGELING_BAY = 0x21,
+	EMU_SYSTEM_TYPE_VS_ICE_CLIMBER = 0x22,
+	EMU_SYSTEM_TYPE_VS_SUPER_MARIO_BROS = 0x23,
+	EMU_SYSTEM_TYPE_VS_PINBALL_JAPAN = 0x24,
+	EMU_SYSTEM_TYPE_VS_PINBALL_USA = 0x25,
 };
 
 struct system_type_info {
@@ -88,7 +94,8 @@ struct system_type_info {
 
 extern const struct system_type_info system_type_info[];
 
-#define system_type_is_vs(x) (((x) & EMU_SYSTEM_TYPE_MASK) == 0x10)
+#define system_type_is_vs(x) ((((x) & EMU_SYSTEM_TYPE_MASK) == 0x10) || \
+                              (((x) & EMU_SYSTEM_TYPE_MASK) == 0x20))
 #define vs_system_type_to_ppu_type(x) ((x) & 0x0f)
 #define vs_ppu_type_to_system_type(x) ((x) | 0x10)
 

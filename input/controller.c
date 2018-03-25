@@ -236,16 +236,18 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 		if (emu_system_is_vs(dev->emu)) {
 			int c, tmp;
 			int vs_standard_controls;
+			int type = dev->emu->system_type;
 
 			vs_standard_controls = 1;
+			if (type == EMU_SYSTEM_TYPE_AUTO)
+				type = dev->emu->guessed_system_type;
 
-			switch (state->common_state->vs_controller_mode) {
-			case VS_CONTROLLER_MODE_STANDARD:
-				break;
-			case VS_CONTROLLER_MODE_BUNGELINGBAY:
+			switch (type) {
+			case EMU_SYSTEM_TYPE_VS_RAID_ON_BUNGELING_BAY:
+			case EMU_SYSTEM_TYPE_VS_ICE_CLIMBER:
 				state->latch |= BUTTON_ST;
 				break;
-			case VS_CONTROLLER_MODE_VSSUPERSKYKID:
+			case EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID:
 				if (dev->port == 0) {
 					tmp = state->common_state->port_mapping[1];
 					if (tmp >= 0) {
@@ -260,10 +262,11 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 					}
 				}
 				break;
-			case VS_CONTROLLER_MODE_SWAPPED:
+			case EMU_SYSTEM_TYPE_VS_SUPER_MARIO_BROS:
+			case EMU_SYSTEM_TYPE_VS_PINBALL_USA:
 				vs_standard_controls = 0;
 				break;
-			case VS_CONTROLLER_MODE_VSPINBALLJ:
+			case EMU_SYSTEM_TYPE_VS_PINBALL_JAPAN:
 				if (dev->port == 1) {
 					tmp = state->common_state->port_mapping[0];
 					if (tmp >= 0) {
@@ -280,6 +283,8 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 					}
 				}
 				vs_standard_controls = 0;
+				break;
+			default:
 				break;
 			}
 

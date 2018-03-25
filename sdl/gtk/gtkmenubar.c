@@ -1283,7 +1283,12 @@ static GtkWidget *gui_build_system_type_menu(int value)
 	group = NULL;
 
 	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
-		if (((system_type_info[i].type & 0xf0) != value) &&
+		if (((system_type_info[i].type & 0xf0) != 0x20) &&
+		    ((system_type_info[i].type & 0xf0) != 0x10) &&
+		    (value == 0x10)) {
+			continue;
+		}
+		if ((value != 0x10) && ((system_type_info[i].type & 0xf0) != value) &&
 		    (system_type_info[i].type != EMU_SYSTEM_TYPE_AUTO)) {
 			continue;
 		}
@@ -1787,7 +1792,7 @@ static GtkWidget *gui_build_emulator_menu(void)
 	g_object_set_data(G_OBJECT(menu), "vs_menu", submenu);
 
 	submenu = 
-		gui_build_system_type_menu(0x20);
+		gui_build_system_type_menu(0x30);
 	g_object_set_data(G_OBJECT(menu), "playchoice_menu", submenu);
 
 	g_signal_connect(G_OBJECT(menu), "show",
