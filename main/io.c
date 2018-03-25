@@ -1299,16 +1299,6 @@ void io_set_auto_device(struct io_state *io, int port, int id)
 		io->auto_device_id[port] = id;
 }
 
-void io_set_auto_vs_controller_mode(struct io_state *io, int mode)
-{
-	io->auto_vs_controller_mode = mode;
-}
-
-int io_get_auto_vs_controller_mode(struct io_state *io)
-{
-	return io->auto_vs_controller_mode;
-}
-
 int io_save_state(struct io_state *io, struct save_state *state)
 {
 	struct io_device *device;

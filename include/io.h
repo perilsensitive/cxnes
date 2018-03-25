@@ -144,8 +144,6 @@ void io_set_four_player_mode(struct io_state *io, int mode,
 			     int display);
 void io_set_auto_four_player_mode(struct io_state *io, int mode);
 void io_set_auto_device(struct io_state *io, int port, int id);
-void io_set_auto_vs_controller_mode(struct io_state *io, int mode);
-int io_get_auto_vs_controller_mode(struct io_state *io);
 
 int io_get_four_player_mode(struct io_state *io);
 int io_get_auto_four_player_mode(struct io_state *io);

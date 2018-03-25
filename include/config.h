@@ -213,8 +213,7 @@ struct config {
 	double dynamic_rate_adjustment_buffer_range;
 
 	const char *preferred_console_type;
-	const char *rom_console_type;
-	const char *rom_vs_ppu_type;
+	const char *rom_system_type;
 	const char *overclock_mode;
 	const char *default_overclock_mode;
 	int frames_before_overclock;

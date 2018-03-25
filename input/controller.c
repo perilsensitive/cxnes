@@ -247,7 +247,7 @@ static void controller_write(struct io_device *dev, uint8_t data, int mode,
 			case EMU_SYSTEM_TYPE_VS_ICE_CLIMBER:
 				state->latch |= BUTTON_ST;
 				break;
-			case EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID:
+			case EMU_SYSTEM_TYPE_VS_SUPER_SKYKID:
 				if (dev->port == 0) {
 					tmp = state->common_state->port_mapping[1];
 					if (tmp >= 0) {

@@ -1151,8 +1151,6 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	GtkWidget *check;
 	GtkWidget *tmp;
 	GtkWidget *input_frame;
-	GtkWidget *combo;
-	GtkWidget *label;
 	GtkWidget *grid;
 #if 0
 	GtkWidget *emu_frame;
@@ -1174,17 +1172,6 @@ static void configuration_setup_rom_specific(GtkWidget *dialog,
 	gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
 	gtk_box_pack_start(GTK_BOX(box), grid, FALSE, FALSE, 0);
-
-	label = gtk_label_new_with_mnemonic("_Vs. Controller Mode");
-	combo = config_combo_box(dialog, config, "vs_controller_mode");
-	gtk_label_set_mnemonic_widget(GTK_LABEL(label), combo);
-	gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), combo, 1, 0, 1, 1);
-
-	if (!emu_system_is_vs(emu)) {
-		gtk_widget_set_sensitive(label, FALSE);
-		gtk_widget_set_sensitive(combo, FALSE);
-	}
 
 	check = config_checkbox(dialog, "_Swap Start and Select buttons", config,
 					     "swap_start_select");

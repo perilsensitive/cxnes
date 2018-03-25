@@ -137,17 +137,7 @@ static const char *valid_preferred_console_type_names[] = {
 	"Dendy",
 };
 
-static const char *valid_vs_controller_modes[] = {
-	"auto", "standard", "swapped", "vssuperskykid",
-	"vspinballj", "vsbungelingbay"
-};
-
-static const char *vs_controller_mode_names[] = {
-	"Auto", "Standard", "Swapped", "Vs. Super SkyKid",
-	"Vs. Pinball (Japan)", "Vs. Raid on Bungeling Bay"
-};
-
-static const char *valid_rom_console_type_names[] = {
+static const char *valid_rom_system_type_names[] = {
 	"Preferred",
 	"Automatic",
 	"Famicom (RP2C02 PPU)",
@@ -156,6 +146,23 @@ static const char *valid_rom_console_type_names[] = {
 	"NTSC NES RGB (RP2C03B PPU)",
 	"PAL NES (RP2C07 PPU)",
 	"Dendy",
+	"RP2C03B", "RP2C03G", "RP2C04-0001", "RP2C04-0002",
+	"RP2C04-0003", "RP2C04-0004", "RP2C03B", "RP2C03C",
+	"RC2C05-01", "RC2C05-02", "RC2C05-03", "RC2C05-04",
+	"RC2C05-05", "Vs. Super Mario Bros.", "Vs. Super SkyKid",
+	"Vs. Pinball (Japan)", "Vs. Pinball (USA)", "Vs. Ice Climber",
+	"Vs. Raid on Bungeling Bay", "PlayChoice",
+};
+
+static const char *valid_rom_system_type_values[] = {
+	"preferred", "auto", "famicom", "famicom_rgb", "nes", "nes_rgb",
+	"pal_nes", "dendy",
+	"rp2c03b", "rp2c03g", "rp2c04-0001", "rp2c04-0002",
+	"rp2c04-0003", "rp2c04-0004", "rc2c03b", "rc2c03c",
+	"rc2c05-01","rc2c05-02","rc2c05-03","rc2c05-04",
+	"rc2c05-05", "vs-super-mario-bros", "vs-super-skykid",
+	"vs-pinball-japan", "vs-pinball-usa", "vs-ice-climber",
+	"vs-raid-on-bungeling-bay", "playchoice",
 };
 
 static const char *valid_rom_overclock_values[] = {
@@ -187,27 +194,6 @@ static const char *valid_default_overclock_mode_names[] = {
 static const char *valid_preferred_console_type_values[] = {
 	"auto", "famicom", "famicom_rgb", "nes", "nes_rgb",
 	"pal_nes", "dendy"
-};
-
-static const char *valid_rom_console_type_values[] = {
-	"preferred", "auto", "famicom", "famicom_rgb", "nes", "nes_rgb",
-	"pal_nes", "dendy"
-};
-
-static const char *valid_rom_vs_ppu_type_names[] = {
-	"Automatic",
-	"RP2C03B", "RP2C03G", "RP2C04-0001", "RP2C04-0002",
-	"RP2C04-0003", "RP2C04-0004", "RP2C03B", "RP2C03C",
-	"RC2C05-01", "RC2C05-02", "RC2C05-03", "RC2C05-04",
-	"RC2C05-05",
-};
-
-static const char *valid_rom_vs_ppu_type_values[] = {
-	"auto",
-	"rp2c03b", "rp2c03g", "rp2c04-0001", "rp2c04-0002",
-	"rp2c04-0003", "rp2c04-0004", "rc2c03b", "rc2c03c",
-	"rc2c05-01","rc2c05-02","rc2c05-03","rc2c05-04",
-	"rc2c05-05",
 };
 
 static const char *valid_rgb_decoder_names[] = {
@@ -468,16 +454,11 @@ static struct config_parameter rom_config_parameters[] = {
 	CONFIG_BOOLEAN(remember_overclock_mode, 0),
 	CONFIG_BOOLEAN(remember_input_devices, 0),
 	CONFIG_BOOLEAN(remember_system_type, 0),
-	CONFIG_STRING_LIST(rom_console_type, "preferred",
-			   valid_rom_console_type_values,
-			   valid_rom_console_type_names),
-	CONFIG_STRING_LIST(rom_vs_ppu_type, "auto",
-			   valid_rom_vs_ppu_type_values,
-			   valid_rom_vs_ppu_type_names),
+	CONFIG_STRING_LIST(rom_system_type, "preferred",
+			   valid_rom_system_type_values,
+			   valid_rom_system_type_names),
 	CONFIG_BOOLEAN(swap_a_b, 0),
 	CONFIG_BOOLEAN(swap_start_select, 0),
-	CONFIG_STRING_LIST(vs_controller_mode, "auto",
-		           valid_vs_controller_modes, vs_controller_mode_names),
 	CONFIG_STRING_LIST(default_port1_device, "auto",
 			   valid_port1_devices, port1_device_names),
 	CONFIG_STRING_LIST(default_port2_device, "auto",

@@ -31556,7 +31556,7 @@ WRAM0: 2k
 WRAM0-Battery: True
 %%
 Name: Vs. Super SkyKid
-System: VS-SUPER-SKY-KID
+System: VS-SUPER-SKYKID
 Board: NAMCOT-108
 Mirroring: Four-Screen
 PRG: 32k

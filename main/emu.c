@@ -166,32 +166,32 @@ const struct system_type_info system_type_info[] = {
 	},
 	{
 		.type = EMU_SYSTEM_TYPE_VS_SUPER_MARIO_BROS,
-		.value = "super-mario-bros",
+		.value = "vs-super-mario-bros",
 		.description = "Vs. Super Mario Bros.",
 	},
 	{
-		.type = EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID,
-		.value = "super-sky-kid",
+		.type = EMU_SYSTEM_TYPE_VS_SUPER_SKYKID,
+		.value = "vs-super-skykid",
 		.description = "Vs. Super SkyKid",
 	},
 	{
 		.type = EMU_SYSTEM_TYPE_VS_PINBALL_JAPAN,
-		.value = "pinball-japan",
+		.value = "vs-pinball-japan",
 		.description = "Vs. Pinball (Japan)",
 	},
 	{
 		.type = EMU_SYSTEM_TYPE_VS_PINBALL_USA,
-		.value = "pinball-usa",
+		.value = "vs-pinball-usa",
 		.description = "Vs. Pinball (USA)",
 	},
 	{
 		.type = EMU_SYSTEM_TYPE_VS_ICE_CLIMBER,
-		.value = "ice-climber",
+		.value = "vs-ice-climber",
 		.description = "Vs. Ice Climber",
 	},
 	{
 		.type = EMU_SYSTEM_TYPE_VS_RAID_ON_BUNGELING_BAY,
-		.value = "raid-on-bungeling-bay",
+		.value = "vs-raid-on-bungeling-bay",
 		.description = "Vs. Raid on Bungeling Bay",
 	},
 	{
@@ -489,23 +489,27 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 	if (old_system_type == EMU_SYSTEM_TYPE_UNDEFINED) {
 		emu->guessed_system_type = system_type;
 
-		if (system_type_is_vs(system_type)) {
-			rom_type = config->rom_vs_ppu_type;
-			rom_type_name = "rom_vs_ppu_type";
-		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
-			rom_type = config->rom_console_type;
-			rom_type_name = "rom_console_type";
+		rom_type = config->rom_system_type;
+		rom_type_name = "rom_system_type";
+
+		if (rom_type) {
+			if (system_type_is_vs(emu->guessed_system_type) &&
+			    !system_type_is_vs(system_type)) {
+				system_type = EMU_SYSTEM_TYPE_AUTO;
+			} else if (!system_type_is_vs(emu->guessed_system_type) &&
+			           (emu->guessed_system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) &&
+				   system_type_is_vs(system_type)) {
+				system_type = EMU_SYSTEM_TYPE_PREFERRED;
+			}
+		} else {
+			if (system_type_is_vs(system_type)) {
+				system_type = EMU_SYSTEM_TYPE_AUTO;
+			}
 		}
 
-		if (rom_type)
-			system_type = emu_find_system_type_by_config_value(rom_type);
+		printf("is now: %x\n", system_type);
 	} else {
-		if (system_type_is_vs(system_type) ||
-		    system_type_is_vs(emu->system_type)) {
-			rom_type_name = "rom_vs_ppu_type";
-		} else if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) {
-			rom_type_name = "rom_console_type";
-		}
+		rom_type_name = "rom_system_type";
 		rom_type = find_config_value_by_system_type(system_type);
 	}
 
@@ -559,7 +563,7 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 		emu->nes_framerate = DENDY_FRAMERATE;
 		emu->clock_rate = DENDY_MASTER_CLOCK_RATE;
 		break;
-	case EMU_SYSTEM_TYPE_VS_SUPER_SKY_KID:
+	case EMU_SYSTEM_TYPE_VS_SUPER_SKYKID:
 		cpu_set_type(emu->cpu, CPU_TYPE_RP2A03);
 		apu_set_type(emu->apu, APU_TYPE_RP2A03);
 		ppu_set_type(emu->ppu, PPU_TYPE_RP2C04_0001);
@@ -1418,7 +1422,6 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 	video_show_cursor(emu->paused);
 
 	io_set_auto_four_player_mode(emu->io, rom->info.four_player_mode);
-	io_set_auto_vs_controller_mode(emu->io, rom->info.vs_controller_mode);
 	for (i = 0; i < 5; i++) {
 		io_set_auto_device(emu->io, i, rom->info.auto_device_id[i]);
 	}

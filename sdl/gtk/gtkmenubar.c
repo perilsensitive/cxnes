@@ -1285,6 +1285,7 @@ static GtkWidget *gui_build_system_type_menu(int value)
 	for (i = 0; system_type_info[i].type != EMU_SYSTEM_TYPE_UNDEFINED; i++) {
 		if (((system_type_info[i].type & 0xf0) != 0x20) &&
 		    ((system_type_info[i].type & 0xf0) != 0x10) &&
+		    (system_type_info[i].type != EMU_SYSTEM_TYPE_AUTO) &&
 		    (value == 0x10)) {
 			continue;
 		}
