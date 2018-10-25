@@ -21,50 +21,12 @@
 
 static struct io_device vs_unisystem_bankswitch;
 
-static CPU_READ_HANDLER(vs_pinball_read_handler)
-{
-	return 0xea; /* NOP */
-}
-
 static int vs_unisystem_init(struct board *board)
 {
 	struct io_device *device;
-	int addr;
 
 	device = io_register_device(board->emu->io, &vs_unisystem_bankswitch, -1);
 	io_connect_device(device);
-
-	/* Vs. Pinball (both known versions) has a bug that prevents
-	   the player from entering his or her initials in some cases.
-	   Patch out an extra controller read routine call that occurs
-	   before NMI on the name entry screen to work around this.
-
-	   Other emulators don't seem to have this problem because
-	   they emulate the PPU frame starting at VBlank (instead of
-	   the top of the frame, which is where the PPU starts when
-	   reset), so the controller read call during NMI is the first
-	   one to see the updated input state.
-
-	   This bug is harder to hit on real hardware since the extra
-	   pre-NMI read that causes the problem happens early in the
-	   frame, around scanline 6 or 7.  This leaves at least 254
-	   scanlines where the player's button press can happen and
-	   still be read correctly.
-
-	   It's an ugly hack, but other solutions either require a lot
-	   more code, add input latency or both.
-	*/
-
-	addr = 0;
-	if (board->info->board_type == BOARD_TYPE_VS_PINBALL)
-		addr = 0x8e1b;
-	else if (board->info->board_type == BOARD_TYPE_VS_PINBALLJ)
-		addr = 0x8e04;
-
-	if (addr) {
-		cpu_set_read_handler(board->emu->cpu, addr, 3, 0,
-				     vs_pinball_read_handler);
-	}
 
 	return 0;
 }

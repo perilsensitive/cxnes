@@ -1032,10 +1032,14 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 		ppu->first_frame_flag = 1;
 	}
 
+	/*
 	ppu->frame_cycles = (241 + ppu->post_render_scanlines +
 			     ppu->vblank_scanlines - 1) * 341 - 1;
 	ppu->visible_cycles = ppu->frame_cycles -
 	                      (ppu->vblank_scanlines) * 341;
+			      */
+	ppu->frame_cycles = 240 * 341 - 1;
+	ppu->visible_cycles = ppu->frame_cycles;
 	cpu_set_frame_cycles(ppu->emu->cpu,
 	                     ppu->visible_cycles * ppu->ppu_clock_divider,
 			     ppu->frame_cycles * ppu->ppu_clock_divider);
