@@ -67,7 +67,7 @@ static void fourscore_write(struct io_device *dev, uint8_t value,
 static int controller_common_connect(struct io_device *dev);
 static void controller_common_disconnect(struct io_device *dev);
 static void controller_common_end_frame(struct io_device *dev, uint32_t cycles);
-static int controller_common_set_button(void *data, uint32_t pressed, uint32_t button);
+int controller_common_set_button(void *data, uint32_t pressed, uint32_t button);
 static int controller_common_apply_config(struct io_device *dev);
 
 #define BUTTON_A 1
@@ -204,7 +204,7 @@ static CPU_WRITE_HANDLER(io_write_handler)
 
 	if (!io->queue_processed) {
 		input_poll_events();
-		input_process_queue(0);
+		input_process_queue(0, emu);
 		io->queue_processed = 1;
 	}
 
@@ -257,7 +257,7 @@ static CPU_READ_HANDLER(io_read_handler)
 
 	if (!io->queue_processed) {
 		input_poll_events();
-		input_process_queue(0);
+		input_process_queue(0, emu);
 		io->queue_processed = 1;
 	}
 
@@ -1180,7 +1180,7 @@ static void controller_common_end_frame(struct io_device *dev, uint32_t cycles)
 	}
 }
 
-static int controller_common_set_button(void *data, uint32_t pressed, uint32_t button)
+int controller_common_set_button(void *data, uint32_t pressed, uint32_t button)
 {
 	struct io_device *dev;
 	struct controller_common_state *state;

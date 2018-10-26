@@ -448,14 +448,16 @@ struct input_event_node *event_hash[EVENT_HASH_SIZE];
 static struct emu_action *emu_action_list;
 extern int running;
 static struct input_mouse_motion_event motion_event;
-extern int center_x, center_y;
-extern int mouse_grabbed;
 static int keyboard_mode = 0;
+
+/* FIXME These were in video.c, moved here for now */
+static int center_x, center_y;
+static int mouse_grabbed;
 
 extern struct emu *emu;
 
 static struct input_event_node *input_lookup_event(union input_new_event *input_new_event);
-int input_handle_event(union input_new_event *input_event, int force);
+int input_handle_event(union input_new_event *input_event, int force, struct emu *emu);
 
 static int parse_mouse_binding(const char *buffer, union input_new_event *event)
 {
@@ -941,7 +943,7 @@ void input_get_mouse_state(int *x, int *y, int *xrel, int *yrel)
 	motion_event.yrel = 0;
 }
 
-int input_handle_event(union input_new_event *input_event, int force)
+int input_handle_event(union input_new_event *input_event, int force, struct emu *emu)
 {
 	int value;
 	int index;
@@ -2010,7 +2012,7 @@ int input_queue_event(union input_new_event *event)
 	return 0;
 }
 
-int input_process_queue(int force)
+int input_process_queue(int force, struct emu *emu)
 {
 	int i;
 	union input_new_event *event;
@@ -2018,7 +2020,7 @@ int input_process_queue(int force)
 	for (i = 0; i < event_queue_count; i++) {
 		event = &event_queue[i];
 		if (!event->common.processed) {
-			input_handle_event(event, force);
+			input_handle_event(event, force, emu);
 		}
 	}
 
