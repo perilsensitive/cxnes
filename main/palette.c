@@ -171,7 +171,7 @@ int load_external_palette(uint8_t *palette, const char *filename)
 {
 	int size;
 
-	if (!palette)
+	if (!palette || !filename)
 		return -1;
 
 	size = get_file_size(filename);
