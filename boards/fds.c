@@ -182,6 +182,8 @@ static void fds_init_modified_ranges(struct board *board)
 
 	side_size = board->emu->rom->disk_side_size;
 
+	offset = 0;
+
 	fds_validate_image(board->emu->rom, &block_list, 0);
 	if (!block_list)
 		return;
@@ -261,6 +263,7 @@ static void fds_write_save(struct board *board)
 
 	dirty_blocks = NULL;
 
+	offset = 0;
 	side_size = board->emu->rom->disk_side_size;
 
 	/* printf("flushing dirty disk data\n"); */
@@ -268,7 +271,7 @@ static void fds_write_save(struct board *board)
 	if (!board->emu->config->fds_use_patch_for_saves) {
 		size_t buffer_size;
 		uint8_t *buffer;
-		char *save_file;
+		char *save_file = NULL;
 
 		buffer_size = board->emu->rom->buffer_size;
 		buffer = malloc(buffer_size);
