@@ -25,7 +25,6 @@
 struct ppu_state;
 
 int ppu_run(struct ppu_state *ppu, int cycles);
-void ppu_begin_frame(struct ppu_state *, uint32_t * buf, uint32_t *nes_pixel_buf);
 uint32_t ppu_end_frame(struct ppu_state *, uint32_t cycles);
 int ppu_apply_config(struct ppu_state *ppu);
 void ppu_reset(struct ppu_state *, int hard);
@@ -88,5 +87,7 @@ uint8_t ppu_peek(struct ppu_state *ppu, int addr);
 void ppu_poke(struct ppu_state *ppu, int address, uint8_t value);
 void ppu_set_overclock_mode(struct ppu_state *ppu, int mode, int scanlines);
 void ppu_end_overclock(struct ppu_state *ppu, int cycles);
+uint32_t *ppu_get_pixel_buffer(struct ppu_state *ppu);
+uint32_t ppu_get_pixel_color(struct ppu_state *ppu, int x, int y);
 
 #endif				/* __PPU_H__ */

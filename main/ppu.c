@@ -311,8 +311,7 @@ struct ppu_state {
 	int hide_sprites;
 	int hide_bg;
 
-	uint32_t *buf;
-	uint32_t *nes_pixel_buf;
+	uint32_t *pixel_buf;
 
 	/* Set when ppu_run() is called and cleared when it's done
 	   to make sure we don't nest ppu_run() calls.
@@ -810,6 +809,7 @@ int ppu_init(struct emu *emu)
 	ppu = malloc(sizeof(*ppu));
 	if (!ppu)
 		return 0;
+
 	memset(ppu, 0, sizeof(*ppu));
 
 	emu->ppu = ppu;
@@ -832,6 +832,10 @@ int ppu_init(struct emu *emu)
 	ppu->allow_sprite_hiding = 0;
 	ppu->hide_sprites = 0;
 	ppu->hide_bg = 0;
+	ppu->pixel_buf = malloc(256 * 240 * sizeof(*ppu->pixel_buf));
+
+	if (!ppu->pixel_buf)
+		return 0;
 
 	for (addr = 0x2000; addr < 0x4000; addr += 8) {
 		cpu_set_read_handler(emu->cpu, addr + 2, 1, 0, read_status_reg);
@@ -884,10 +888,10 @@ int ppu_apply_config(struct ppu_state *ppu)
 
 	sprite_limit_mode = ppu->emu->config->sprite_limit_mode;
 
-	if (strcasecmp(sprite_limit_mode, "disabled") == 0) {
+	if (strcasecmp(sprite_limit_mode, "never") == 0) {
 		ppu->no_sprite_limit = 0;
 		ppu->allow_sprite_hiding = 0;
-	} else if (strcasecmp(sprite_limit_mode, "enabled") == 0) {
+	} else if (strcasecmp(sprite_limit_mode, "always") == 0) {
 		ppu->no_sprite_limit = 1;
 		ppu->allow_sprite_hiding = 0;
 	} else if (strcasecmp(sprite_limit_mode, "auto") == 0) {
@@ -1003,7 +1007,7 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 
 	if (hard) {
 		memset(ppu->oam, 0xff, sizeof(ppu->oam));
-		memcpy(ppu->palette, power_up_palette, sizeof(ppu->palette));
+		memcpy(ppu->palette, power_up_palette, sizeof(power_up_palette));
 		if (ppu->do_palette_lookup) {
 			int i;
 
@@ -1081,12 +1085,6 @@ void ppu_reset(struct ppu_state *ppu, int hard)
 	cpu_interrupt_cancel(ppu->emu->cpu, IRQ_NMI);
 }
 
-void ppu_begin_frame(struct ppu_state *ppu, uint32_t * buf, uint32_t *nes_pixel_buf)
-{
-	ppu->buf = buf;
-	ppu->nes_pixel_buf = nes_pixel_buf;
-}
-
 uint32_t ppu_end_frame(struct ppu_state *ppu, uint32_t cycles)
 {
 	uint32_t tmp;
@@ -1150,7 +1148,7 @@ static INLINE void plot_pixel(struct ppu_state *ppu, int bg_pixel, int x)
 	index = ppu->translated_palette[pixel] & ppu->palette_mask;
 	index |= ppu->emphasis;
 
-	ppu->nes_pixel_buf[(ppu->scanline * 256) + x] = index;
+	ppu->pixel_buf[(ppu->scanline * 256) + x] = index;
 }
 
 static INLINE void render_disabled_pixels(struct ppu_state *ppu, int x, int count)
@@ -1183,7 +1181,7 @@ static INLINE void render_disabled_pixels(struct ppu_state *ppu, int x, int coun
 		index = ppu->translated_palette[pixel] & ppu->palette_mask;
 		index |= ppu->emphasis;
 
-		ppu->nes_pixel_buf[(ppu->scanline * 256) + x] = index;
+		ppu->pixel_buf[(ppu->scanline * 256) + x] = index;
 		x++;
 		count--;
 	}
@@ -3340,4 +3338,17 @@ void ppu_set_overclock_mode(struct ppu_state *ppu, int mode, int scanlines)
 	ppu->overclocking = 0;
 	ppu->overclock_mode = mode;
 	ppu->overclock_scanlines = scanlines;
+}
+
+uint32_t *ppu_get_pixel_buffer(struct ppu_state *ppu)
+{
+	return ppu->pixel_buf;
+}
+
+uint32_t ppu_get_pixel_color(struct ppu_state *ppu, int x, int y)
+{
+	if ((x < 0 || x > 255) || (y < 0 || y > 239))
+		return 0;
+
+	return ppu->pixel_buf[y * 256 + x];
 }

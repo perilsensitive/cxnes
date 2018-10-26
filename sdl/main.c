@@ -514,7 +514,7 @@ static int main_loop(struct emu *emu)
 			continue;
 		}
 
-		cycles = emu_run_frame(emu, nes_screen, nes_pixel_screen);
+		cycles = emu_run_frame(emu);
 		if (testing && test_duration > 0) {
 			test_duration--;
 			if (!test_duration) {
