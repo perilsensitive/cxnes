@@ -22,9 +22,9 @@
 
 #include <stdint.h>
 
-extern const uint8_t palette_firebrandx_nes_classic[62 * 3];
-extern const uint8_t palette_firebrandx_nostalgia[63 * 3];
-extern const uint8_t palette_fceux[62 * 3];
+extern const uint8_t palette_firebrandx_nes_classic[64 * 3];
+extern const uint8_t palette_firebrandx_nostalgia[64 * 3];
+extern const uint8_t palette_fceux[64 * 3];
 const uint8_t rp2c04_yuv_lookup[64];
 extern const uint8_t palette_rc2c03b[64 * 3];
 extern const uint8_t palette_rp2c03b[64 * 3];

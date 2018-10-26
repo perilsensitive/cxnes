@@ -161,4 +161,6 @@ void io_set_remember_input_devices(struct io_state *io, int enabled);
 int io_save_state(struct io_state *io, struct save_state *state);
 int io_load_state(struct io_state *io, struct save_state *state);
 
+int controller_common_set_button(void *data, uint32_t pressed, uint32_t button);
+
 #endif				/* __IO_H__ */
