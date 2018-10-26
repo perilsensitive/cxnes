@@ -1271,20 +1271,6 @@ static int controller_common_apply_config(struct io_device *dev)
 	if (state->turbo_cycle_length & 1)
 		state->turbo_pressed_frames++;
 
-	if (!strcasecmp(config->vs_controller_mode, "auto")) {
-		state->vs_controller_mode = dev->emu->io->auto_vs_controller_mode;
-	} else if (!strcasecmp(config->vs_controller_mode, "standard")) {
-		state->vs_controller_mode = VS_CONTROLLER_MODE_STANDARD;
-	} else if (!strcasecmp(config->vs_controller_mode, "swapped")) {
-		state->vs_controller_mode = VS_CONTROLLER_MODE_SWAPPED;
-	} else if (!strcasecmp(config->vs_controller_mode, "vssuperskykid")) {
-		state->vs_controller_mode = VS_CONTROLLER_MODE_VSSUPERSKYKID;
-	} else if (!strcasecmp(config->vs_controller_mode, "vspinballj")) {
-		state->vs_controller_mode = VS_CONTROLLER_MODE_VSPINBALLJ;
-	} else if (!strcasecmp(config->vs_controller_mode, "vsbungelingbay")) {
-		state->vs_controller_mode = VS_CONTROLLER_MODE_BUNGELINGBAY;
-	}
-
 	return 0;
 }
 
