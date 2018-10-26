@@ -170,8 +170,11 @@ static uint8_t zapper_read(struct io_device *dev, int port,
 		light = 0;
 	} else {
 		if (!state->away_from_screen) {
+			struct ppu_state *ppu;
+			ppu = dev->emu->ppu;
+
 			color =
-			    video_get_pixel_color(x, y);
+			    ppu_get_pixel_color(ppu, x, y);
 			light = check_pixel(color);
 		}
 	}
