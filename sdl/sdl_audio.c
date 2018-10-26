@@ -64,10 +64,14 @@ static SDL_cond *audiobuf_cond;
 
 extern struct emu *emu;
 
+struct audio_state {
+	struct emu *emu;
+};
+
 static void audio_callback(void* unused, uint8_t* out, int byte_count);
 extern void update_clock(int);
 
-void audio_add_delta(unsigned time, int delta)
+void audio_add_delta(struct audio_state *audio, unsigned time, int delta)
 {
 	if (!blip)
 		return;
@@ -224,6 +228,15 @@ static int audio_setup(struct emu *emu)
 int audio_init(struct emu *emu)
 {
 
+	struct audio_state *audio;
+
+	audio = malloc(sizeof(*audio));
+	if (!audio)
+		return 0;
+
+	audio->emu = emu;
+	emu->audio = audio;
+
 	sdl_audio_device = -1;
 	dynamic_rate_enabled = 0;
 	force_stereo = 0;
@@ -236,8 +249,11 @@ int audio_init(struct emu *emu)
 	return 0;
 }
 
-int audio_shutdown(void)
+int audio_cleanup(struct audio_state *audio)
 {
+	audio->emu->audio = NULL;
+	free(audio);
+
 	SDL_PauseAudioDevice(sdl_audio_device, 1 );
 	SDL_CloseAudioDevice(sdl_audio_device);
 	playing = 0;
@@ -252,11 +268,14 @@ int audio_shutdown(void)
 	return 0;
 }
 
-int audio_apply_config(struct emu *emu)
+int audio_apply_config(struct audio_state *audio)
 {
+	struct emu *emu;
+	emu = audio->emu;
+
 	if (sdl_audio_device >= 0) {
 		/* FIXME flush existing audio data */
-		audio_shutdown();
+		audio_cleanup(emu->audio);
 	}
 	audio_init(emu);
 	audio_setup(emu);
@@ -354,7 +373,7 @@ int audio_buffer_check(void)
 	return rc;
 }
 
-void audio_fill_buffer(uint32_t cycles)
+void audio_fill_buffer(struct audio_state *audio, uint32_t cycles)
 {
 //	double level;
 	int samples;
@@ -537,4 +556,8 @@ void audio_mute(int muted)
 	SDL_LockMutex(audiobuf_lock);
 	audio_muted = !!muted;
 	SDL_UnlockMutex(audiobuf_lock);
+}
+
+void audio_reset(struct audio_state *audio)
+{
 }

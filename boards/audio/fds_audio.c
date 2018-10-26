@@ -404,7 +404,7 @@ static void update_amplitude(struct fds_audio_state *audio, uint32_t cycles)
 
 	delta = amp - audio->volume.last_amplitude;
 	if (delta) {
-		audio_add_delta(cycles, delta);
+		audio_add_delta(audio->emu->audio, cycles, delta);
 		audio->volume.last_amplitude = amp;
 	}
 }

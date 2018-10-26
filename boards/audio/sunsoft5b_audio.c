@@ -310,7 +310,8 @@ void sunsoft5b_audio_update_amplitude(struct sunsoft5b_audio_state *audio,
 	}
 
 	if (out != audio->last_amplitude) {
-		audio_add_delta(cycles, out - audio->last_amplitude);
+		audio_add_delta(audio->emu->audio, cycles,
+		                out - audio->last_amplitude);
 		audio->last_amplitude = out;
 	}
 }

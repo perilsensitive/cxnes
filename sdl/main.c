@@ -525,7 +525,7 @@ static int main_loop(struct emu *emu)
 		}
 
 		if (!testing)
-			audio_fill_buffer(cycles);
+			audio_fill_buffer(emu->audio, cycles);
 
 		if (display_fps) {
 			fps_timer--;
@@ -899,7 +899,6 @@ int main(int argc, char **argv)
 	emu_cleanup(emu);
 	if (!testing) {
 		video_shutdown();
-		audio_shutdown();
 		input_shutdown();
 	} else {
 		video_shutdown_testing();
@@ -944,7 +943,6 @@ int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles
 	if (!testing) {
 		log_apply_config(emu);
 		video_apply_config(emu);
-		audio_apply_config(emu);
 	}
 	/* FIXME input_apply_config(emu); */
 	emu_apply_config(emu);
@@ -996,9 +994,6 @@ int close_rom(struct emu *emu)
 	if (gui_enabled)
 		gui_enable_event_timer();
 #endif
-
-	if (!testing)
-		audio_shutdown();
 
 	video_set_screensaver_enabled(1);
 

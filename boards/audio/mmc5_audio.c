@@ -136,7 +136,7 @@ static void mmc5_audio_update_amplitude(struct mmc5_audio_state *audio,
 
 	delta = -(out - audio->last_amplitude);
 	if (delta) {
-		audio_add_delta(cycles, delta);
+		audio_add_delta(audio->emu->audio, cycles, delta);
 		audio->last_amplitude = out;
 	}
 }

@@ -138,7 +138,8 @@ static void update_amplitude(struct vrc6_audio_state *audio, uint32_t cycles)
 
 	if (amplitude != audio->last_amplitude) {
 		int delta = amplitude - audio->last_amplitude;
-		audio_add_delta(audio->timestamp, delta);
+		audio_add_delta(audio->emu->audio,
+		                audio->timestamp, delta);
 		audio->last_amplitude = amplitude;
 	}
 }

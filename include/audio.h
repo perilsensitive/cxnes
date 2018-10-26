@@ -22,13 +22,17 @@
 
 #include "emu.h"
 
+struct audio_state;
+
 int audio_init(struct emu *emu);
-int audio_shutdown(void);
-int audio_fill_buffer(uint32_t cycles);
-void audio_add_delta(unsigned time, int delta);
+void audio_cleanup(struct audio_state *audio);
+int audio_fill_buffer(struct audio_state *audio, uint32_t cycles);
+void audio_add_delta(struct audio_state *audio, unsigned time, int delta);
 int audio_buffer_check(void);
 void audio_pause(int);
-int audio_apply_config(struct emu *emu);
+int audio_apply_config(struct audio_state *audio);
 void audio_mute(int);
+
+void audio_reset(struct audio_state *audio);
 
 #endif				/* __AUDIO_H__ */

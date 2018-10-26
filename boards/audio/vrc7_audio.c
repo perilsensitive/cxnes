@@ -188,10 +188,12 @@ CPU_WRITE_HANDLER(vrc7_audio_write_handler)
 
 		if (!audio->muted && muted) {
 			delta = -audio->last_amplitude;
-			audio_add_delta(cycles, delta);
+			audio_add_delta(audio->emu->audio,
+			                cycles, delta);
 		} else if (audio->muted && !muted) {
 			delta = audio->last_amplitude;
-			audio_add_delta(cycles, delta);
+			audio_add_delta(audio->emu->audio,
+			                cycles, delta);
 		}
 
 		audio->muted = muted;
@@ -217,8 +219,10 @@ void vrc7_audio_run(struct vrc7_audio_state *audio, uint32_t cycles)
 		timestamp += 36 * audio->emu->apu_clock_divider;
 		OPLL_calc(audio->opll);
 		delta = update_amplitude(audio);
-		if (delta)
-			audio_add_delta(timestamp, delta);
+		if (delta) {
+			audio_add_delta(audio->emu-> audio,
+			                timestamp, delta);
+		}
 		clocks--;
 	}
 

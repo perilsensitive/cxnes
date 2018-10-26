@@ -245,9 +245,9 @@ int emu_init(struct emu *emu)
 	   up correctly.  The rest can be initialized in any order. */
 	cpu_init(emu);
 	ppu_init(emu);
-
 	apu_init(emu);
 	io_init(emu);
+	audio_init(emu);
 
 	cpu_set_pagetable_entry(emu->cpu, 0x0000, SIZE_2K, emu->ram,
 				CPU_PAGE_READWRITE);
@@ -421,7 +421,6 @@ int emu_set_framerate(struct emu *emu, int framerate)
 	if (old_framerate != framerate) {
 		if (emu->config->alternate_speed_mute)
 			audio_mute(framerate != emu->nes_framerate);
-		audio_apply_config(emu);
 		emu_apply_config(emu);
 	}
 
@@ -629,7 +628,6 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 		char *path;
 
 		video_apply_config(emu);
-		audio_apply_config(emu);
 		emu_apply_config(emu);
 
 		if (rom_type_name && rom_type) {
@@ -675,7 +673,6 @@ int emu_patch_rom(struct emu *emu, char *patch_filename)
 	rc = emu_load_rom_common(emu, rom, 1, args);
 
 	video_apply_config(emu);
-	audio_apply_config(emu);
 	emu_apply_config(emu);
 
 	emu_reset(emu, 1);
@@ -754,11 +751,15 @@ void emu_deinit(struct emu *emu)
 	if (emu->io)
 		io_cleanup(emu->io);
 
+	if (emu->audio)
+		audio_cleanup(emu->audio);
+
 	emu->board = NULL;
 	emu->apu = NULL;
 	emu->ppu = NULL;
 	emu->cpu = NULL;
 	emu->io = NULL;
+	emu->audio = NULL;
 
 	if (emu->cheats)
 		cheat_deinit(emu->cheats);
@@ -816,6 +817,7 @@ int emu_apply_config(struct emu *emu)
 	rc |= board_apply_config(emu->board);
 	rc |= io_apply_config(emu->io);
 	rc |= cheat_apply_config(emu->cheats);
+	rc |= audio_apply_config(emu->audio);
 
 	return rc;
 }
@@ -837,6 +839,7 @@ int emu_reset(struct emu *emu, int hard)
 	board_reset(emu->board, hard);
 	cheat_reset(emu, hard);
 	io_reset(emu->io, hard);
+	audio_reset(emu->audio);
 	emu->resetting = 0;
 
 	emu->blargg_reset_timer = -1;

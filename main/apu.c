@@ -1345,7 +1345,7 @@ static void apu_update_amplitude(struct apu_state *apu, uint32_t cycles)
 
 	delta = out - apu->last_amplitude;
 	if (delta) {
-		audio_add_delta(cycles, delta);
+		audio_add_delta(apu->emu->audio, cycles, delta);
 		apu->last_amplitude = out;
 	}
 

@@ -27,6 +27,7 @@ struct ppu_state;
 struct apu_state;
 struct io_state;
 struct cheat_state;
+struct audio_state;
 struct board;
 struct emu;
 struct rom;
@@ -114,6 +115,7 @@ struct emu {
 	struct board *board;
 	struct config *config;
 	struct cheat_state *cheats;
+	struct audio_state *audio;
 
 	struct vrc6_audio_state *vrc6_audio;
 	struct vrc7_audio_state *vrc7_audio;

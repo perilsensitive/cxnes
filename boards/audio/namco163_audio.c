@@ -142,7 +142,8 @@ void namco163_audio_run(struct namco163_audio_state *audio,
 		delta = amp - audio->last_amp[channel];
 
 		if (delta) {
-			audio_add_delta(audio->timestamp, delta);
+			audio_add_delta(audio->emu->audio,
+			                audio->timestamp, delta);
 			audio->last_amp[channel] = amp;
 		}
 
