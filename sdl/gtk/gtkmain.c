@@ -958,7 +958,7 @@ static gboolean gui_process_sdl_events(gpointer user_data)
 	emu = user_data;
 	process_events();
 	input_poll_events();
-	input_process_queue(1);
+	input_process_queue(1, emu);
 	if (emu_loaded(emu) && !emu_paused(emu)) {
 		return FALSE;
 	}

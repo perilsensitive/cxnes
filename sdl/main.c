@@ -496,7 +496,7 @@ static int main_loop(struct emu *emu)
 #endif
 		{
 			if (!emu->loaded || emu->paused)
-				input_process_queue(1);
+				input_process_queue(1, emu);
 		}
 
 		if (mouse_grabbed) {
@@ -596,7 +596,7 @@ static int main_loop(struct emu *emu)
 
 		process_events();
 		input_poll_events();
-		input_process_queue(1);
+		input_process_queue(1, emu);
 	}
 
 	return 0;
