@@ -124,7 +124,7 @@ static uint32_t rgb_palette[512];
 uint32_t *nes_screen;
 static int nes_screen_width = 256;
 static int nes_screen_height = 240;
-uint32_t nes_pixel_screen[NES_WIDTH*NES_HEIGHT];
+uint32_t *nes_pixel_screen;
 static int integer_scaling_factor;
 static nes_ntsc_t ntsc;
 static nes_ntsc_setup_t ntsc_setup;
@@ -1479,6 +1479,9 @@ void video_calc_nes_coord(int *x, int *y)
 void video_update_texture(void)
 {
 	int width;
+
+	if (!nes_pixel_screen)
+		nes_pixel_screen = ppu_get_pixel_buffer(emu->ppu);
 
 	if (current_filter == FILTER_NTSC)
 		width = NES_NTSC_OUT_WIDTH(NES_WIDTH);
