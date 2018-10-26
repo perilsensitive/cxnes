@@ -34,6 +34,14 @@
 #include "actions.h"
 #include "input.h"
 
+#ifndef PACKAGE_NAME
+#define PACKAGE_NAME "cxnes"
+#endif
+
+#ifndef DATADIR
+#define DATADIR ""
+#endif
+
 #define BUF_SIZE 256
 #define DEFAULT_DATA_DIR "cxnes"
 #define DEFAULT_MAIN_CONFIG "cxnes.cfg"
@@ -48,6 +56,10 @@
 #define DEFAULT_STATE_PATH "state"
 #define DEFAULT_ROMCFG_PATH "romcfg"
 #define DEFAULT_SCREENSHOT_PATH "screenshot"
+
+#ifndef DEFAULT_OSD_FONT
+#define DEFAULT_OSD_FONT ""
+#endif
 
 struct config_binding {
 	char name[32];
@@ -116,8 +128,8 @@ static const char *valid_loglevel_names[] = {
 };
 
 static const char *valid_sprite_limit_modes[] = {
-	"disabled",
-	"enabled",
+	"never",
+	"always",
 	"auto",
 };
 
@@ -536,7 +548,7 @@ static struct config_parameter rom_config_parameters[] = {
 };
 
 static struct config_parameter config_parameters[] = {
-	CONFIG_STRING_LIST(sprite_limit_mode, "no",
+	CONFIG_STRING_LIST(sprite_limit_mode, "never",
 			   valid_sprite_limit_modes,
 			   valid_sprite_limit_mode_names),
 	CONFIG_STRING_LIST(loglevel, "info",
