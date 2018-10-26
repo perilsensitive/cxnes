@@ -88,7 +88,7 @@ struct range_list *add_range(struct range_list **ranges, int off, int len)
 	/* Insert range into the list */
 	new_range = malloc(sizeof(*new_range));
 	if (!new_range) {
-		log_err("add_range: malloc() failed\n");
+		log_err("%s", "add_range: malloc() failed\n");
 		return NULL;
 	}
 
@@ -342,7 +342,7 @@ int patch_apply_ups(uint8_t **data, size_t *data_size, off_t data_offset,
 
 	/* Make sure the header is valid */
 	if (memcmp(patch, "UPS1", 4) != 0) {
-		log_err("patch_apply_ups: invalid UPS header\n");
+		log_err("%s", "patch_apply_ups: invalid UPS header\n");
 		return -1;
 	}
 
@@ -350,7 +350,7 @@ int patch_apply_ups(uint8_t **data, size_t *data_size, off_t data_offset,
 	expected_data_size = decode(patch, &patch_offset);
 
 	if (expected_data_size != *data_size - data_offset) {
-		log_err("patch_apply_ups: expected data size (%zu) "
+		log_err("%s", "patch_apply_ups: expected data size (%zu) "
 			"does not equal actual data size (%zu)\n",
 			expected_data_size, *data_size);
 		return -1;
@@ -359,7 +359,7 @@ int patch_apply_ups(uint8_t **data, size_t *data_size, off_t data_offset,
 
 	real_target = malloc(target_size + target_offset);
 	if (!real_target) {
-		log_err("patch_apply_ups: malloc() failed\n");
+		log_err("%s", "patch_apply_ups: malloc() failed\n");
 		return -1;
 	}
 
@@ -427,7 +427,7 @@ int patch_apply_bps(uint8_t **data, size_t *data_size, off_t data_offset,
 
 	/* Make sure the header is valid */
 	if (memcmp(patch, "BPS1", 4) != 0) {
-		log_err("patch_apply_bps: invalid BPS header\n");
+		log_err("%s", "patch_apply_bps: invalid BPS header\n");
 		return -1;
 	}
 
@@ -435,7 +435,7 @@ int patch_apply_bps(uint8_t **data, size_t *data_size, off_t data_offset,
 	expected_data_size = decode(patch, &patch_offset);
 
 	if (expected_data_size != *data_size - data_offset) {
-		log_err("patch_apply_bps: expected data size (%zu) "
+		log_err("%s", "patch_apply_bps: expected data size (%zu) "
 			"does not equal actual data size (%zu)\n",
 			expected_data_size, *data_size);
 		return -1;
@@ -448,7 +448,7 @@ int patch_apply_bps(uint8_t **data, size_t *data_size, off_t data_offset,
 
 	real_target = malloc(target_size + target_offset);
 	if (!real_target) {
-		log_err("patch_apply_bps: malloc() failed\n");
+		log_err("%s", "patch_apply_bps: malloc() failed\n");
 		return -1;
 	}
 	target = real_target + target_offset;
@@ -532,11 +532,11 @@ int patch_apply_ips(uint8_t **data, size_t *data_size, off_t data_offset,
 	/* Make sure the header and footer are valid, and allow for
 	   the "truncate" extension after the footer. */
 	if (memcmp(patch, "PATCH", 5) != 0) {
-		log_err("patch_apply_ips: invalid IPS header\n");
+		log_err("%s", "patch_apply_ips: invalid IPS header\n");
 		return -1;
 	} else if ((memcmp(patch + patch_size - 3, "EOF", 3) != 0) &&
 		   (memcmp(patch + patch_size - 6, "EOF", 3) != 0)) {
-		log_err("patch_apply_ips: invalid IPS footer\n");
+		log_err("%s", "patch_apply_ips: invalid IPS footer\n");
 		return -1;
 	}
 
@@ -575,7 +575,7 @@ int patch_apply_ips(uint8_t **data, size_t *data_size, off_t data_offset,
 
 	real_target = malloc(target_size + target_offset);
 	if (!real_target) {
-		log_err("patch_apply_bps: malloc() failed\n");
+		log_err("%s", "patch_apply_bps: malloc() failed\n");
 		return -1;
 	}
 

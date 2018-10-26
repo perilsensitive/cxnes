@@ -40,7 +40,7 @@ static void fix_vc_bios(uint8_t *bios)
 	    (bios[0x73e] == 0x4c) && (bios[0x73f] == 0x43) &&
 	    (bios[0x740] == 0xe7) && (bios[0x7a4] == 0x42) &&
 	    (bios[0xef4] == 0x42)) {
-		log_info("VC FDS bios detected; fixing\n");
+		log_info("%s", "VC FDS bios detected; fixing\n");
 
 		bios[0x239] = 0x85;
 		bios[0x406] = 0x85;

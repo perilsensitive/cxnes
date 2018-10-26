@@ -1464,15 +1464,15 @@ void cpu_set_type(struct cpu_state *cpu, int type)
 	switch (type) {
 	case CPU_TYPE_RP2A03:
 		cpu->cpu_clock_divider = 12;
-		log_dbg("CPU: RP2A03\n");
+		log_dbg("%s", "CPU: RP2A03\n");
 		break;
 	case CPU_TYPE_RP2A07:
 		cpu->cpu_clock_divider = 16;
-		log_dbg("CPU: RP2A07\n");
+		log_dbg("%s", "CPU: RP2A07\n");
 		break;
 	case CPU_TYPE_DENDY:
 		cpu->cpu_clock_divider = 15;
-		log_dbg("CPU: DENDY\n");
+		log_dbg("%s", "CPU: DENDY\n");
 		break;
 	default:
 		log_dbg("invalid cpu type %d\n", type);

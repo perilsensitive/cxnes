@@ -929,7 +929,7 @@ void emu_toggle_bg(struct emu *emu)
 
 void blargg_reset_request(struct emu *emu)
 {
-	log_dbg("blargg test rom requested reset\n");
+	log_dbg("%s", "blargg test rom requested reset\n");
 	emu->blargg_reset_timer = 10;
 }
 
