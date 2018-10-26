@@ -2121,7 +2121,7 @@ void board_write_ips_save(struct board *board, struct range_list *range_list)
 {
 	uint8_t *p;
 	uint8_t *data_to_patch;
-	char *save_file;
+	char *save_file = NULL;
 	uint32_t size;
 
 	if (range_list == NULL)

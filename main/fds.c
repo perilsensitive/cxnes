@@ -593,6 +593,8 @@ static uint8_t *fds_load_compressed_bios(struct emu *emu, struct rom *rom,
 
 	entry = archive_get_file_entry(archive, bios_path);
 
+	buffer = NULL;
+
 	if (entry) {
 		buffer_size = entry->size;
 		buffer = malloc(buffer_size);
@@ -706,6 +708,8 @@ int fds_load_bios(struct emu *emu, struct rom *rom)
 	struct rom *fds_rom = NULL;
 	uint8_t *ptr;
 	int rc = 0;
+
+	file_size = 0;
 
 	/* Don't try to load bios if already loaded */
 	if (emu->bios)
