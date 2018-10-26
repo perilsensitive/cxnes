@@ -466,9 +466,10 @@ static char **rom_posix_find_autopatches(const char *patch_path,
 	paths = (char *)(path_list + patch_glob.gl_pathc + 1);
 	for (i = 0; i < patch_glob.gl_pathc; i++) {
 		int len = strlen(patch_glob.gl_pathv[i]) + 1;
-		strncpy(paths, patch_glob.gl_pathv[i], len);
+		strncpy(paths, patch_glob.gl_pathv[i], length);
 		path_list[i] = paths;
 		paths += len;
+		length -= len;
 	}
 	path_list[i] = NULL;
 
