@@ -156,7 +156,6 @@ struct io_device *io_find_device_by_config_id(struct io_state *io, int port, con
 void io_device_connect(struct io_state *io, int port, int connected);
 void io_device_select(struct io_state *io, int port, int id);
 int io_device_connected(struct io_state *io, int port);
-void io_set_remember_input_devices(struct io_state *io, int enabled);
 
 int io_save_state(struct io_state *io, struct save_state *state);
 int io_load_state(struct io_state *io, struct save_state *state);

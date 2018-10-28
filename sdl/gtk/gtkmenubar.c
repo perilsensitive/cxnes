@@ -63,6 +63,70 @@ extern void gui_joystick_dialog(GtkWidget *, gpointer);
 extern int open_rom(struct emu *emu, char *filename, int patch_count, char **patchfiles);
 extern int close_rom(struct emu *emu);
 
+static void set_remember_input_devices(struct emu *emu, int enabled)
+{
+	struct io_device *device;
+	struct io_state *io;
+
+	io = emu->io;
+
+	if (enabled == emu->config->remember_input_devices)
+		return;
+
+	emu->config->remember_input_devices = enabled;
+
+	if (enabled) {
+		const char *config_names[] = { "default_port1_device", "default_port2_device",
+					       "default_port3_device", "default_port4_device",
+					       "default_exp_device", };
+
+		const char *four_player_string;
+		int i;
+
+		for (i = PORT_1; i <= PORT_EXP; i++) {
+			int id = io_get_selected_device_id(io, i);
+			const char *device_string;
+			device = io_find_device(io, i, id);
+
+			if (id == IO_DEVICE_AUTO) {
+				device_string = "auto";
+			} else {
+				device_string = device->config_id;
+			}
+
+			rom_config_set(emu->config, config_names[i],
+				       device_string);
+		}
+
+		four_player_string = "auto";
+		switch (io_get_four_player_mode(io)) {
+		case FOUR_PLAYER_MODE_AUTO:
+			four_player_string = "auto";
+			break;
+		case FOUR_PLAYER_MODE_NONE:
+			four_player_string = "none";
+			break;
+		case FOUR_PLAYER_MODE_FC:
+			four_player_string = "famicom";
+			break;
+		case FOUR_PLAYER_MODE_NES:
+			four_player_string = "nes";
+			break;
+		}
+
+		rom_config_set(emu->config, "four_player_mode", four_player_string);
+	} else {
+		rom_config_set(emu->config, "default_port1_device", "auto");
+		rom_config_set(emu->config, "default_port2_device", "auto");
+		rom_config_set(emu->config, "default_port3_device", "auto");
+		rom_config_set(emu->config, "default_port4_device", "auto");
+		rom_config_set(emu->config, "default_exp_device", "auto");
+		rom_config_set(emu->config, "four_player_mode", "auto");
+	}
+
+	emu_save_rom_config(emu);
+}
+
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)
 {
 	quit_callback();
@@ -1083,7 +1147,7 @@ static void remember_input_devices_callback(GtkRadioMenuItem *widget,
 	active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
 
 	if (active != emu->config->remember_input_devices) {
-		io_set_remember_input_devices(emu->io, active);
+		set_remember_input_devices(emu, active);
 	}
 }
 
