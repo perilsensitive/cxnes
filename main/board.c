@@ -2250,7 +2250,7 @@ void board_toggle_dip_switch(struct board *board, int sw)
 	board->dip_switches ^= (1 << (sw - 1));
 	board->emu->config->dip_switch[sw - 1] ^= 1;
 
-	emu_save_rom_config(board->emu);
+	config_save_rom_config(board->emu->config);
 
 	osdprintf("DIP switch %d %s", sw,
 		  board->dip_switches & (1 << (sw - 1)) ?
@@ -2272,7 +2272,7 @@ void board_set_dip_switch(struct board *board, int sw, int on)
 
 	board->emu->config->dip_switch[sw - 1] = on;
 
-	emu_save_rom_config(board->emu);
+	config_save_rom_config(board->emu->config);
 }
 
 int board_get_num_dip_switches(struct board *board)

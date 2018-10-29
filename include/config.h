@@ -58,6 +58,7 @@ struct binding_item {
 extern struct binding_item default_bindings[];
 
 struct config {
+	struct emu *emu;
 	/* PPU/Video options */
 	const char *sprite_limit_mode;
 	int remember_system_type;
@@ -240,7 +241,7 @@ void config_replace(struct config *dest, struct config *src);
 int config_load_main_config(struct config *config);
 int config_load_rom_config(struct config *config, char *filename);
 int config_save_main_config(struct config *config);
-int config_save_rom_config(struct config *config, const char *path);
+int config_save_rom_config(struct config *config);
 void config_print_current_config(struct config *);
 char *config_get_path(struct config *, int prefix, const char *path, int user);
 char *config_get_cfg_dir(struct config *);

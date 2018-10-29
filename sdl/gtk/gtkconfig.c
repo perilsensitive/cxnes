@@ -61,7 +61,7 @@ void menu_item_toggle_callback(GtkCheckMenuItem *item, gpointer user_data)
 		apply_config(emu);
 
 	if (is_rom_config) {
-		emu_save_rom_config(emu);
+		config_save_rom_config(config);
 	} else {
 		config_save_main_config(config);
 	}
@@ -95,7 +95,7 @@ static void config_radio_menu_callback(GtkWidget *widget, gpointer userdata)
 		apply_config(emu);
 
 	if (is_rom_config) {
-		emu_save_rom_config(emu);
+		config_save_rom_config(config);
 	} else {
 		config_save_main_config(config);
 	}
@@ -1535,7 +1535,7 @@ void gui_configuration_dialog(const char *name,
 		log_apply_config(emu);
 		video_apply_config(emu);
 		if (rom_specific) {
-			emu_save_rom_config(emu);
+			config_save_rom_config(emu->config);
 		} else {
 			config_save_main_config(emu->config);
 		}

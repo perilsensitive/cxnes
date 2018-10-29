@@ -1900,6 +1900,7 @@ struct config *config_init(struct emu *emu)
 	if (configptr)
 		memset(configptr, 0, sizeof(*configptr));
 
+	configptr->emu = emu;
 	emu->config = configptr;
 
 	/* Initialize with default values */
@@ -2053,9 +2054,15 @@ int config_save_main_config(struct config *config)
 	return rc;
 }
 
-int config_save_rom_config(struct config *config, const char *path)
+int config_save_rom_config(struct config *config)
 {
 	int rc;
+
+	char *path;
+
+	path = emu_generate_rom_config_path(config->emu, 1);
+	if (!path)
+		return 0;
 
 	if (!config_check_changed(config, rom_config_parameters) &&
 	    !check_file_exists(path)) {
@@ -2063,6 +2070,8 @@ int config_save_rom_config(struct config *config, const char *path)
 	}
 
 	rc = config_save_file(config, rom_config_parameters, 1, path);
+
+	free(path);
 
 	return rc;
 }

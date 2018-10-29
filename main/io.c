@@ -763,7 +763,7 @@ void io_device_select(struct io_state *io, int port, int id)
 			config_id = device->config_id;
 		
 		rom_config_set(io->emu->config, config_param, config_id);
-		emu_save_rom_config(io->emu);
+		config_save_rom_config(io->emu->config);
 	}
 
 	real_id = id;
@@ -926,7 +926,7 @@ void io_set_four_player_mode(struct io_state *io, int mode, int display)
 		mode_str = "auto";
 
 	rom_config_set(io->emu->config, "four_player_mode", mode_str);
-	emu_save_rom_config(io->emu);
+	config_save_rom_config(io->emu->config);
 
 	if (!display)
 		return;

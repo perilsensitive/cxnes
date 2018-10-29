@@ -124,7 +124,7 @@ static void set_remember_input_devices(struct emu *emu, int enabled)
 		rom_config_set(emu->config, "four_player_mode", "auto");
 	}
 
-	emu_save_rom_config(emu);
+	config_save_rom_config(emu->config);
 }
 
 static void file_quit_callback(GtkWidget *widget, gpointer userdata)

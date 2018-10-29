@@ -204,7 +204,6 @@ int emu_system_is_vs(struct emu *emu);
 void emu_load_rom_cfg(struct emu *emu);
 void emu_save_rom_config(struct emu *emu);
 void emu_load_cheat(struct emu *emu);
-void emu_save_rom_config(struct emu *emu);
 
 int emu_set_framerate(struct emu *emu, int framerate);
 

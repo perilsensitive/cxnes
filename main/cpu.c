@@ -2753,12 +2753,7 @@ void cpu_set_overclock(struct cpu_state *cpu, const char *mode, int display)
 */
 
 	if (emu->config->remember_overclock_mode && emu->loaded) {
-		char *path;
 		rom_config_set(emu->config, "overclock_mode", mode);
-		path = emu_generate_rom_config_path(emu, 1);
-		if (path) {
-			config_save_rom_config(emu->config, path);
-			free(path);
-		}
+		config_save_rom_config(emu->config);
 	}
 }

@@ -447,12 +447,7 @@ void emu_set_remember_overclock_mode(struct emu *emu, int enabled)
 	config->remember_overclock_mode = enabled;
 
 	if (emu->loaded) {
-		char *path;
-		path = emu_generate_rom_config_path(emu, 1);
-		if (path) {
-			config_save_rom_config(emu->config, path);
-			free(path);
-		}
+		config_save_rom_config(emu->config);
 	}
 }
 
@@ -625,8 +620,6 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 	emu_set_framerate(emu, emu->nes_framerate);
 
 	if (emu->loaded && (orig_system_type != old_system_type)) {
-		char *path;
-
 		video_apply_config(emu);
 		emu_apply_config(emu);
 
@@ -637,11 +630,7 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 
 			emu_reset(emu, 1);
 
-			path = emu_generate_rom_config_path(emu, 1);
-			if (path) {
-				config_save_rom_config(emu->config, path);
-				free(path);
-			}
+			config_save_rom_config(emu->config);
 		}
 	}
 
@@ -1328,19 +1317,6 @@ void emu_load_rom_cfg(struct emu *emu)
 	return;
 }
 
-
-void emu_save_rom_config(struct emu *emu)
-{
-	char *path;
-
-	path = emu_generate_rom_config_path(emu, 1);
-	if (path) {
-		config_save_rom_config(emu->config, path);
-		free(path);
-	}
-}
-
-
 void emu_load_cheat(struct emu *emu)
 {
 	char *buffer;
@@ -1360,7 +1336,6 @@ void emu_load_cheat(struct emu *emu)
 
 	free(buffer);
 }
-
 
 static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 			       int patch_count, char **patchfiles)
