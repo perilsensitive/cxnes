@@ -44,9 +44,9 @@ cxnes_SOURCES = \
 	sdl/main.c \
 	sdl/file_io.c \
 	sdl/log.c \
-	sdl/sdl_audio.c \
-	sdl/sdl_input.c \
-	sdl/sdl_video.c \
+	sdl/audio.c \
+	sdl/input.c \
+	sdl/video.c \
 	input/vs_unisystem.c \
 	input/arkanoid.c \
 	input/keyboard.c \
