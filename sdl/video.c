@@ -150,11 +150,6 @@ static SDL_Color osd_fg_color;
 static SDL_Color osd_bg_color;
 static int osd_timer = 0;
 
-#if GUI_ENABLED
-static int mouse_lastx;
-static int mouse_lasty;
-#endif
-
 static int paused_due_to_lost_focus;
 
 /* OSD Options */
@@ -197,8 +192,13 @@ static int view_w, view_h;
 extern struct emu *emu;
 
 #if GUI_ENABLED
+static int mouse_lastx;
+static int mouse_lasty;
 extern int gui_enabled;
+
+extern void gui_enable_event_timer(void);
 #endif
+
 
 /* static float const default_decoder [6] = { */
 /* 	0.956f, 0.621f, -0.272f, -0.647f, -1.105f, 1.702f */
@@ -1860,4 +1860,12 @@ void video_set_screensaver_enabled(int enabled)
 		                PowerRequestDisplayRequired);
 #endif
 	}
+}
+
+void video_pause(int pause)
+{
+#if GUI_ENABLED
+	if (pause)
+		gui_enable_event_timer();
+#endif
 }

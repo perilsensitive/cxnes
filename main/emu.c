@@ -206,10 +206,6 @@ const struct system_type_info system_type_info[] = {
 	}
 };
 
-#if GUI_ENABLED
-extern void gui_enable_event_timer(void);
-#endif
-
 void emu_deinit(struct emu *emu);
 char *emu_generate_rom_config_path(struct emu *emu, int save);
 static int emu_set_rom_file(struct emu *emu, const char *rom_file);
@@ -931,10 +927,7 @@ void emu_pause(struct emu *emu, int pause)
 	if (emu->loaded) {
 		emu->paused = pause;
 		audio_pause(pause);
-#if GUI_ENABLED
-		if (pause)
-			gui_enable_event_timer();
-#endif
+		video_pause(pause);
 		video_set_screensaver_enabled(pause);
 		video_show_cursor(emu->paused);
 	}
