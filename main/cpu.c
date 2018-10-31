@@ -1233,7 +1233,7 @@ static void decode_opcode(struct cpu_state *cpu, int addr)
 	       cpu->P & I_FLAG ? 'I' : '.',
 	       cpu->P & Z_FLAG ? 'Z' : '.', cpu->P & C_FLAG ? 'C' : '.');
 
-	log_warn("\n");
+	log_warn("%s", "\n");
 }
 
 static void brk(struct cpu_state *cpu)
