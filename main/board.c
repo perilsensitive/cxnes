@@ -1871,7 +1871,6 @@ int board_init(struct emu *emu, struct rom *rom)
 	if (!board)
 		return 1;
 
-	printf("calling board init\n");
 	memset(board, 0, sizeof(*board));
 	emu->board = board;
 	board->emu = emu;

@@ -500,8 +500,6 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 				system_type = EMU_SYSTEM_TYPE_AUTO;
 			}
 		}
-
-		printf("is now: %x\n", system_type);
 	} else {
 		rom_type_name = "rom_system_type";
 		rom_type = find_config_value_by_system_type(system_type);
