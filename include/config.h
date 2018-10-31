@@ -239,7 +239,7 @@ void rom_config_set(struct config *, const char *name, const char *value);
 struct config *config_copy(struct config *config);
 void config_replace(struct config *dest, struct config *src);
 int config_load_main_config(struct config *config);
-int config_load_rom_config(struct config *config, char *filename);
+int config_load_rom_config(struct config *config);
 int config_save_main_config(struct config *config);
 int config_save_rom_config(struct config *config);
 void config_print_current_config(struct config *);

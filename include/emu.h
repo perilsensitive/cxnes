@@ -201,7 +201,6 @@ const char *emu_get_system_type_name(enum system_type type);
 int emu_select_next_system_type(struct emu *emu);
 int emu_system_is_vs(struct emu *emu);
 
-void emu_load_rom_cfg(struct emu *emu);
 void emu_load_cheat(struct emu *emu);
 
 int emu_set_framerate(struct emu *emu, int framerate);

@@ -34,7 +34,7 @@ int config_load_main_config(struct config *config)
 	return 0;
 }
 
-int config_load_rom_config(struct config *config, char *filename)
+int config_load_rom_config(struct config *config)
 {
 	return 0;
 }

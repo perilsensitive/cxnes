@@ -247,19 +247,26 @@ int config_load_main_config(struct config *config)
 	return rc;
 }
 
-int config_load_rom_config(struct config *config, char *filename)
+int config_load_rom_config(struct config *config)
 {
+	char *filename;
 	int skip;
 	int rc;
 
 	rc = 0;
 	skip = config->skip_romcfg;
 
+	filename = emu_generate_rom_config_path(config->emu, 1);
+	if (!filename)
+		return 0;
+
 	printf("%s ROM config file %s\n",
 	       skip ? "Skipping" : "Loading", filename);
 	if (!skip)
 		rc = config_load_file(config, rom_config_parameters,
 				      filename);
+
+	free(filename);
 
 	return rc;
 }

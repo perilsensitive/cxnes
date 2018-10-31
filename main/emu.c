@@ -1296,21 +1296,6 @@ static int emu_set_rom_file(struct emu *emu, const char *rom_file)
 	return 0;
 }
 
-void emu_load_rom_cfg(struct emu *emu)
-{
-	char *buffer;
-
-	buffer = emu_generate_rom_config_path(emu, 0);
-	
-	if (check_file_exists(buffer)) {
-		printf("Config file: %s\n", buffer);
-		config_load_rom_config(emu->config, buffer);
-	}
-
-	free(buffer);
-	return;
-}
-
 void emu_load_cheat(struct emu *emu)
 {
 	char *buffer;
@@ -1377,7 +1362,7 @@ static int emu_load_rom_common(struct emu *emu, struct rom *rom,
 		return 1;
 	}
 
-	emu_load_rom_cfg(emu);
+	config_load_rom_config(emu->config);
 
 	if (emu_set_system_type(emu, rom->info.system_type) < 0)
 		return 1;
