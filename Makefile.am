@@ -73,6 +73,7 @@ cxnes_SOURCES = \
 	main/input.c \
 	main/palette.c \
 	main/config.c \
+	main/config_flatfile.c \
 	main/cheat.c \
 	main/io.c \
 	main/apu.c \
