@@ -482,33 +482,24 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 
 	if (old_system_type == EMU_SYSTEM_TYPE_UNDEFINED) {
 		emu->guessed_system_type = system_type;
+		system_type = emu_find_system_type_by_config_value(emu->config->rom_system_type);
 
-		rom_type = config->rom_system_type;
-		rom_type_name = "rom_system_type";
-
-		if (rom_type) {
-			if (system_type_is_vs(emu->guessed_system_type) &&
-			    !system_type_is_vs(system_type)) {
+		if (system_type_is_vs(emu->guessed_system_type)) {
+			if (!system_type_is_vs(system_type))
 				system_type = EMU_SYSTEM_TYPE_AUTO;
-			} else if (!system_type_is_vs(emu->guessed_system_type) &&
-			           (emu->guessed_system_type != EMU_SYSTEM_TYPE_PLAYCHOICE) &&
-				   system_type_is_vs(system_type)) {
-				system_type = EMU_SYSTEM_TYPE_PREFERRED;
-			}
+		} else if (emu->guessed_system_type == EMU_SYSTEM_TYPE_PLAYCHOICE) {
+			if (system_type != EMU_SYSTEM_TYPE_PLAYCHOICE)
+				system_type = EMU_SYSTEM_TYPE_AUTO;
 		} else {
-			if (system_type_is_vs(system_type)) {
-				system_type = EMU_SYSTEM_TYPE_AUTO;
+			if (system_type_is_vs(system_type) ||
+			    (system_type == EMU_SYSTEM_TYPE_PLAYCHOICE)) {
+				system_type = EMU_SYSTEM_TYPE_PREFERRED;
 			}
 		}
 	} else {
 		rom_type_name = "rom_system_type";
 		rom_type = find_config_value_by_system_type(system_type);
 	}
-
-	emu->system_type = system_type;
-	emu->nes_framerate = NTSC_FRAMERATE;
-	emu->clock_rate = NTSC_MASTER_CLOCK_RATE;
-	ppu_set_reset_connected(emu->ppu, 1);
 
 	if (system_type == EMU_SYSTEM_TYPE_PREFERRED) {
 		preferred_type = config->preferred_console_type;
@@ -517,6 +508,11 @@ int emu_set_system_type(struct emu *emu, enum system_type system_type)
 
 	if (system_type == EMU_SYSTEM_TYPE_AUTO)
 		system_type = emu->guessed_system_type;
+
+	emu->system_type = system_type;
+	emu->nes_framerate = NTSC_FRAMERATE;
+	emu->clock_rate = NTSC_MASTER_CLOCK_RATE;
+	ppu_set_reset_connected(emu->ppu, 1);
 
 	switch (system_type) {
 	case EMU_SYSTEM_TYPE_FAMICOM:
