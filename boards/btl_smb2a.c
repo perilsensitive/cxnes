@@ -62,10 +62,12 @@ static CPU_WRITE_HANDLER(btl_smb2a_write_handler)
 	switch (addr) {
 	case 0x8000:
 		m2_timer_ack(emu->m2_timer, cycles);
-		m2_timer_set_enabled(emu->m2_timer, 0, cycles);
+		m2_timer_set_counter_enabled(emu->m2_timer, 0, cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, 0, cycles);
 		break;
 	case 0xa000:
-		m2_timer_set_enabled(emu->m2_timer, 1, cycles);
+		m2_timer_set_counter_enabled(emu->m2_timer, 1, cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
 		m2_timer_set_counter(emu->m2_timer, 4096, cycles);
 		break;
 	case 0xe000:

@@ -75,7 +75,8 @@ static CPU_WRITE_HANDLER(sunsoft3_write_handler)
 	case 0xd800:
 		value &= 0x10;
 		m2_timer_ack(emu->m2_timer, cycles);
-		m2_timer_set_enabled(emu->m2_timer, value, cycles);
+		m2_timer_set_counter_enabled(emu->m2_timer, value, cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, value, cycles);
 		irq_counter_load_toggle = 0;
 		break;
 	case 0xf800:
@@ -89,7 +90,8 @@ static void sunsoft3_reset(struct board *board, int hard)
 	if (hard) {
 		m2_timer_set_flags(board->emu->m2_timer,
 				   M2_TIMER_FLAG_IRQ_ON_RELOAD, 0);
-		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_counter_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_irq_enabled(board->emu->m2_timer, 0, 0);
 		irq_counter_load_toggle = 0;
 	}
 }

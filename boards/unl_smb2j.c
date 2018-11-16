@@ -72,10 +72,13 @@ static CPU_WRITE_HANDLER(unl_smb2j_write_handler)
 		value &= 0x01;
 		m2_timer_ack(emu->m2_timer, cycles);
 		if (value) {
-			m2_timer_set_enabled(emu->m2_timer, 1, cycles);
+			m2_timer_set_counter_enabled(emu->m2_timer, 1, cycles);
+			m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
 			m2_timer_set_counter(emu->m2_timer, 5750, cycles);
 		} else {
-			m2_timer_set_enabled(emu->m2_timer, 0, cycles);
+			m2_timer_ack(emu->m2_timer, cycles);
+			m2_timer_set_counter_enabled(emu->m2_timer, 0, cycles);
+			m2_timer_set_irq_enabled(emu->m2_timer, 0, cycles);
 		}
 		break;
 	case 0x4027:

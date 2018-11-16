@@ -496,7 +496,8 @@ void fds_reset(struct board *board, int hard)
 		m2_timer_set_flags(board->emu->m2_timer,
 				   M2_TIMER_FLAG_ONE_SHOT |
 				   M2_TIMER_FLAG_AUTO_IRQ_DISABLE, 0);
-		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_counter_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_irq_enabled(board->emu->m2_timer, 0, 0);
 	}
 
 	if (hard || _bios_patch_enabled) {
@@ -979,24 +980,30 @@ static CPU_WRITE_HANDLER(fds_write_handler)
 		if (!(value & 0x01))
 			flags |= M2_TIMER_FLAG_AUTO_IRQ_DISABLE;
 
-		if ((value & 0x01) == 1)
-		m2_timer_ack(emu->m2_timer, cycles);
+		if ((value & 0x02) != 2)
+			m2_timer_ack(emu->m2_timer, cycles);
+
 		m2_timer_set_flags(emu->m2_timer, flags, cycles);
 
 		board->irq_control = value & 0x03;
 
+		/* ACK is happening here and it shouldn't be */
 		m2_timer_force_reload(emu->m2_timer, cycles);
 
-		m2_timer_set_enabled(emu->m2_timer, value & 0x03,
-				     cycles);
+		m2_timer_set_counter_enabled(emu->m2_timer, value & 0x03,
+				             cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, value & 0x03,
+				         cycles);
 		break;
 	case 0x4023:
 		_diskio_enabled = value;
-		m2_timer_set_enabled(emu->m2_timer, ((value & 0x01) &&
-		                     board->irq_control), cycles);
-
 		if (!(value & 0x01))
 			m2_timer_ack(emu->m2_timer, cycles);
+
+		m2_timer_set_counter_enabled(emu->m2_timer, ((value & 0x01) &&
+		                             board->irq_control), cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, ((value & 0x01) &&
+		                         board->irq_control), cycles);
 
 		fds_audio_enable(emu->fds_audio, cycles, value & 0x02);
 		break;

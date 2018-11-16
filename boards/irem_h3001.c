@@ -112,6 +112,7 @@ static void irem_h3001_reset(struct board *board, int hard)
 	if (hard) {
 		m2_timer_set_flags(board->emu->m2_timer,
 				   M2_TIMER_FLAG_ONE_SHOT, 0);
+		m2_timer_ack(board->emu->m2_timer, 0);
 		m2_timer_set_irq_enabled(board->emu->m2_timer, 0, 0);
 		board->prg_banks[1].bank = 0x00;
 		board->prg_banks[2].bank = 0x01;

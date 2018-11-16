@@ -69,10 +69,13 @@ static CPU_WRITE_HANDLER(btl_smb2b_write_handler)
 		break;
 	case 0x4120:
 		if (value & 0x01) {
-			m2_timer_set_enabled(emu->m2_timer, 1, cycles);
+			m2_timer_set_counter_enabled(emu->m2_timer, 1, cycles);
+			m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
 			m2_timer_set_counter(emu->m2_timer, 4096, cycles);
 		} else {
-			m2_timer_set_enabled(emu->m2_timer, 0, cycles);
+			m2_timer_ack(emu->m2_timer, cycles);
+			m2_timer_set_counter_enabled(emu->m2_timer, 0, cycles);
+			m2_timer_set_irq_enabled(emu->m2_timer, 0, cycles);
 		}
 		break;
 	}

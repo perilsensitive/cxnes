@@ -104,7 +104,6 @@ void m2_timer_schedule_irq(struct m2_timer *timer, uint32_t cycles)
 	int counter;
 	int limit;
 
-	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	cpu_interrupt_cancel(timer->emu->cpu, IRQ_M2_TIMER);
 
 	if (!timer->counter_enabled || !timer->irq_enabled)
@@ -419,6 +418,13 @@ void m2_timer_force_reload(struct m2_timer *timer, uint32_t cycles)
 
 void m2_timer_set_enabled(struct m2_timer *timer, int enabled, uint32_t cycles)
 {
+	enabled = !!enabled;
+
+	/* FIXME should we ack here or should the caller do it? */
+	if ((enabled != !!timer->irq_enabled) ||
+	    (enabled != !!timer->counter_enabled)) {
+		m2_timer_ack(timer, cycles);
+	}
 	m2_timer_set_counter_enabled(timer, enabled, cycles);
 	m2_timer_set_irq_enabled(timer, enabled, cycles);
 }
@@ -543,6 +549,7 @@ void m2_timer_set_size(struct m2_timer *timer, int size, uint32_t cycles)
 
 	timer->mask = ~(~0 << size);
 
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 }
 
@@ -563,6 +570,7 @@ void m2_timer_set_prescaler_size(struct m2_timer *timer, int size, uint32_t cycl
 
 	timer->prescaler_mask = ~(~0 << size);
 
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 }
 
@@ -609,6 +617,7 @@ void m2_timer_set_prescaler(struct m2_timer *timer, int prescaler, uint32_t cycl
 {
 	m2_timer_run(timer, cycles);
 	timer->prescaler = prescaler;
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 }
 
@@ -616,6 +625,7 @@ void m2_timer_set_prescaler_reload(struct m2_timer *timer, int value, uint32_t c
 {
 	m2_timer_run(timer, cycles);
 	timer->prescaler_reload = value;
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 }
 
@@ -623,6 +633,7 @@ void m2_timer_set_prescaler_decrement(struct m2_timer *timer, int value, uint32_
 {
 	m2_timer_run(timer, cycles);
 	timer->prescaler_decrement = value;
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 }
 
@@ -630,6 +641,7 @@ void m2_timer_set_irq_delay(struct m2_timer *timer, int value, uint32_t cycles)
 {
 	m2_timer_run(timer, cycles);
 	timer->delay = value;
+	cpu_interrupt_ack(timer->emu->cpu, IRQ_M2_TIMER);
 	m2_timer_schedule_irq(timer, cycles);
 	
 }

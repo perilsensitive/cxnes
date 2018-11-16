@@ -455,6 +455,7 @@ static CPU_WRITE_HANDLER(bandai_write_handler)
 		break;
 	case 0x0a:
 		m2_timer_force_reload(emu->m2_timer, cycles);
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_irq_enabled(emu->m2_timer, value & 1, cycles);
 		break;
 	case 0x0b:
@@ -476,7 +477,11 @@ static void bandai_reset(struct board *board, int hard)
 {
 	if (hard) {
 		int i;
+		m2_timer_ack(board->emu->m2_timer, 0);
 		m2_timer_set_irq_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_flags(board->emu->m2_timer,
+		                   M2_TIMER_FLAG_RELOAD, 0);
+
 		if (board->info->board_type == BOARD_TYPE_BANDAI_JUMP2) {
 			board->prg_and = 0x0f;
 			board->prg_or = 0x00;
@@ -484,8 +489,6 @@ static void bandai_reset(struct board *board, int hard)
 				board->chr_banks0[i].bank = i;
 		}
 	}
-
-	m2_timer_set_flags(board->emu->m2_timer, M2_TIMER_FLAG_RELOAD, 0);
 
 	_x24c0x_scl[0] = 0;
 	_x24c0x_scl[1] = 0;

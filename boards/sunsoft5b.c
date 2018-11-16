@@ -176,7 +176,8 @@ static CPU_WRITE_HANDLER(sunsoft5b_write_handler)
 static void sunsoft5b_reset(struct board *board, int hard)
 {
 	if (hard) {
-		m2_timer_set_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_counter_enabled(board->emu->m2_timer, 0, 0);
+		m2_timer_set_irq_enabled(board->emu->m2_timer, 0, 0);
 	}
 	sunsoft5b_audio_reset(board->emu->sunsoft5b_audio, hard);
 }

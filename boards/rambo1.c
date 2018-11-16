@@ -245,6 +245,7 @@ static CPU_WRITE_HANDLER(rambo1_irq_reload)
 	
 	if (board->irq_control != (value & 1)) {
 		board->irq_control = value & 1;
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_counter_enabled(emu->m2_timer, value & 0x01, cycles);
 		a12_timer_set_counter_enabled(emu->a12_timer, !(value & 0x01), cycles);
 	}
@@ -270,10 +271,12 @@ static CPU_WRITE_HANDLER(rambo1_irq_disable)
 
 	board = emu->board;
 	
-	if (board->irq_control)
+	if (board->irq_control) {
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_irq_enabled(emu->m2_timer, 0, cycles);
-	else
+	} else {
 		a12_timer_set_irq_enabled(emu->a12_timer, 0, cycles);
+	}
 }
 
 static CPU_WRITE_HANDLER(rambo1_irq_enable)
@@ -282,8 +285,10 @@ static CPU_WRITE_HANDLER(rambo1_irq_enable)
 
 	board = emu->board;
 
-	if (board->irq_control)
+	if (board->irq_control) {
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_irq_enabled(emu->m2_timer, 1, cycles);
-	else
+	} else {
 		a12_timer_set_irq_enabled(emu->a12_timer, 1, cycles);
+	}
 }

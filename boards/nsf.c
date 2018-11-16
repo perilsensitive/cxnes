@@ -204,6 +204,7 @@ static void nsf_reset(struct board *board, int hard)
 		       board->wram[1].size);
 
 		m2_timer_set_flags(emu->m2_timer, M2_TIMER_FLAG_RELOAD, 0);
+		m2_timer_ack(emu->m2_timer, 0);
 		m2_timer_set_irq_enabled(emu->m2_timer, 0, 0);
 
 		if (cpu_get_type(emu->cpu) == CPU_TYPE_RP2A07)
@@ -335,6 +336,7 @@ static CPU_WRITE_HANDLER(nsf_write_handler)
 	case 0x4029:
 		m2_timer_force_reload(emu->m2_timer, cycles);
 		if ((value & 1) && !m2_timer_get_irq_enabled(emu->m2_timer)) {
+			m2_timer_ack(emu->m2_timer, cycles);
 			m2_timer_set_irq_enabled(emu->m2_timer, value & 1, cycles);
 		}
 		_counter_status = 0x00;

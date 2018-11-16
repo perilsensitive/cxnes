@@ -255,6 +255,8 @@ static CPU_WRITE_HANDLER(vrc7_write_handler)
 	case 0xf000:
 		emu->board->irq_control = value;
 
+		m2_timer_ack(emu->m2_timer, cycles);
+
 		timer_flags = M2_TIMER_FLAG_COUNT_UP |
 			M2_TIMER_FLAG_RELOAD |
 			M2_TIMER_FLAG_IRQ_ON_RELOAD;

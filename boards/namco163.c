@@ -244,10 +244,13 @@ static CPU_WRITE_HANDLER(namco163_write_handler)
 //	printf("wrote %x to %x\n", value, addr);
 
 	if (addr < 0x5800) {
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_counter_lo(emu->m2_timer, value, cycles);
 	} else if (addr < 0x6000) {
+		m2_timer_ack(emu->m2_timer, cycles);
 		m2_timer_set_counter_hi(emu->m2_timer, value, cycles);
-		m2_timer_set_enabled(emu->m2_timer, value & 0x80, cycles);
+		m2_timer_set_counter_enabled(emu->m2_timer, value & 0x80, cycles);
+		m2_timer_set_irq_enabled(emu->m2_timer, value & 0x80, cycles);
 	} else if (addr < 0xc000) {
 		namco163_map_chr(board, addr, value);
 		return;
