@@ -242,8 +242,6 @@ main/version.c: $(VERSION_C_DEPS)
 
 install-data-local:
 	@$(NORMAL_INSTALL)
-	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)/cheatdb
-	$(INSTALL_DATA) data/cheatdb/* $(DESTDIR)$(pkgdatadir)/cheatdb
 
 uninstall-local:
 	@$(NORMAL_UNINSTALL)
