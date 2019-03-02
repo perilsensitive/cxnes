@@ -1608,7 +1608,7 @@ static GtkWidget *gui_build_video_config_menu(gpointer userdata)
 	gui_add_menu_item(GTK_MENU_SHELL(submenu), "Emulated scanline settings...",
 	                  gui_scanline_settings_dialog, userdata, NULL);
 
-	gui_add_menu_item(GTK_MENU_SHELL(menu), "_On-Scren Display Settings...",
+	gui_add_menu_item(GTK_MENU_SHELL(menu), "_On-Screen Display Settings...",
 			  gui_osd_configuration_dialog, userdata,
 			  NULL);
 	gui_add_menu_item(GTK_MENU_SHELL(menu), "_Cropping Settings...",

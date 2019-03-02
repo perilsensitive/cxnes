@@ -447,7 +447,7 @@ void gui_scanline_settings_dialog(GtkWidget *widget, gpointer user_data)
 
 void gui_video_configuration_dialog(GtkWidget *widget, gpointer user_data)
 {
-	gui_configuration_dialog("On-Scren Display Configuration",
+	gui_configuration_dialog("On-Screen Display Configuration",
 				 configuration_setup_osd, 0,
 				 widget, user_data);
 }
