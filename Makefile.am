@@ -234,7 +234,7 @@ if ZIP_ENABLED
 cxnes_SOURCES += main/unzip.c main/ioapi.c
 endif
 
-VERSION_C_DEPS = $(shell git rev-parse --is-inside-work-tree > /dev/null 2>&1 && echo .git/HEAD .git/packed-refs .git/refs/heads/* .git/refs/tags/*) VERSION
+VERSION_C_DEPS = $(shell git rev-parse --is-inside-work-tree > /dev/null 2>&1 && echo .git/HEAD) VERSION
 VERSION_STRING = $(shell git describe 2>/dev/null || cat VERSION)
 
 main/version.c: $(VERSION_C_DEPS)
