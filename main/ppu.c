@@ -837,6 +837,8 @@ int ppu_init(struct emu *emu)
 	if (!ppu->pixel_buf)
 		return 0;
 
+	memset(ppu->pixel_buf, 0, 256 * 240 * sizeof(*ppu->pixel_buf));
+
 	for (addr = 0x2000; addr < 0x4000; addr += 8) {
 		cpu_set_read_handler(emu->cpu, addr + 2, 1, 0, read_status_reg);
 		cpu_set_write_handler(emu->cpu, addr + 2, 1, 0, write_2xxx);

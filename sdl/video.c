@@ -124,7 +124,7 @@ static uint32_t rgb_palette[512];
 uint32_t *nes_screen;
 static int nes_screen_width = 256;
 static int nes_screen_height = 240;
-uint32_t *nes_pixel_screen;
+uint32_t *nes_pixel_screen = NULL;
 static int integer_scaling_factor;
 static nes_ntsc_t ntsc;
 static nes_ntsc_setup_t ntsc_setup;
