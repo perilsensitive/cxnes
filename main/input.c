@@ -1908,7 +1908,7 @@ void input_get_binding_config(char **config_data, size_t *config_data_size)
 		binding_config_size = 0;
 		for (i = 0; i < string_count; i++)  {
 			strings[i] += (intptr_t)data - 0;
-			binding_config_size += strlen(strings[i]);
+			binding_config_size += strlen(strings[i]) + 1;
 		}
 
 		config_buffer = *config_data;
