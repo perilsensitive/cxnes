@@ -332,7 +332,7 @@ static void mmc5_update_ram_perms(struct board *board, int value)
 	board_prg_sync(board);
 }
 
-void mmc5_update__mirroring(struct board *board, int value)
+void mmc5_update_mirroring(struct board *board, int value)
 {
 	int i;
 	int type;
@@ -427,6 +427,8 @@ static void mmc5_schedule_irq(struct emu *emu, uint32_t cycles)
 		emu->ppu_clock_divider;
 
 	difference = target - current;
+	if (difference < 0)
+		difference += cpu_get_frame_cycles(emu->cpu);
 	board->irq_counter = cycles + difference;
 	if (_ppu_rendering && board->irq_control &&
 	    (board->irq_counter >= cycles)) {
@@ -437,7 +439,9 @@ static void mmc5_schedule_irq(struct emu *emu, uint32_t cycles)
 				       board->irq_counter);
 
 		difference = vblank - current;
-		/* printf("scheduling board run for %d\n", cycles + difference); */
+		if (difference < 0)
+			difference += cpu_get_frame_cycles(emu->cpu);
+		/* printf("scheduling board run for %d (%d, %d)\n", cycles + difference, cycles, difference); */
 		_vblank_target = cycles + difference;
 		cpu_board_run_schedule(emu->cpu, _vblank_target);
 	}
@@ -500,12 +504,12 @@ static CPU_WRITE_HANDLER(mmc5_write_handler)
 			_exram_mode = value;
 			ppu_use_exram(emu->ppu, _exram_mode, cycles);
 			if (_exram_mode == 0 || _exram_mode == 1) {
-				mmc5_update__mirroring(board, _mirroring);
+				mmc5_update_mirroring(board, _mirroring);
 			}
 		}
 		break;
 	case 0x5105:
-		mmc5_update__mirroring(board, value);
+		mmc5_update_mirroring(board, value);
 		break;
 	case 0x5106:
 		if (_fill_mode_tile != value) {
