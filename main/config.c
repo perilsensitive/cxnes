@@ -1902,6 +1902,8 @@ struct config *config_copy(struct config *config)
 		*ptr = tmp;
 	}
 
+	new_config->data_path_list = NULL;
+
 	return new_config;
 }
 
