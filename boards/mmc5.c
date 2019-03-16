@@ -153,8 +153,10 @@ struct board_info board_exrom_compat = {
 	.write_handlers = mmc5_write_handlers,
 	.max_prg_rom_size = SIZE_1024K,
 	.max_chr_rom_size = SIZE_1024K,
-	.max_wram_size = {SIZE_32K, SIZE_32K},
-	.flags = BOARD_INFO_FLAG_MIRROR_M,
+	.min_wram_size = {SIZE_32K, SIZE_8K},
+	.max_wram_size = {SIZE_32K, SIZE_8K},
+	.flags = BOARD_INFO_FLAG_MIRROR_M |
+	         BOARD_INFO_FLAG_WRAM0_NV,
 	.mapper_ram_size = SIZE_1K,
 };
 
